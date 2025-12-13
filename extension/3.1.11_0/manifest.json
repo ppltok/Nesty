@@ -1,0 +1,32 @@
+{
+   "action": {
+      "default_icon": {
+         "128": "assets/icon-128.png",
+         "16": "assets/icon-16.png",
+         "48": "assets/icon-48.png"
+      },
+      "default_title": "Add to Babylist Button"
+   },
+   "background": {
+      "service_worker": "serviceWorker.js",
+      "type": "module"
+   },
+   "description": "Add items to your Babylist registry from any store.",
+   "homepage_url": "https://www.babylist.com",
+   "host_permissions": [ "*://*.babylist.com/*" ],
+   "icons": {
+      "128": "assets/icon-128.png",
+      "16": "assets/icon-16.png",
+      "48": "assets/icon-48.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvFfamcSly/Z8HTILF5RcbnLMA0P7/SRi4N7o4j19LzRGEfIdDaSIGFvNjbKl4VhzUsOnL6qJ+up1qxzxPBkEkNUFWw4u4twt3jpvpZYo+kq3BIhTo3p3ajNYYZz5V6D5Su7AF3CeKjB6ri1+XI6R1GQfnoJlO2M4k7bh9OnoaNdhh3kZfrjrvkRaIc4yjxZG29un7j6ksdzRiqdXk9lInFbQQIeceLn2mbYAs2BlzwX2WOLYRCt83uVsVO0ZEXNJYVmycm5TzpditqG+jt6GLctuGXaKyO8uebEOUxrIrtSSqv6R9GHqJjWuKEAg/IchFps+BUrvEyImviXyr5wYkwIDAQAB",
+   "manifest_version": 3,
+   "name": "Add to Babylist Button",
+   "permissions": [ "cookies", "activeTab", "scripting" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "3.1.11",
+   "web_accessible_resources": [ {
+      "matches": [ "http://*/*", "https://*/*" ],
+      "resources": [ "assets/*.woff", "assets/*.woff2", "assets/babylistScraper.js", "clientSide.js" ]
+   } ]
+}
