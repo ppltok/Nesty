@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babylist API Response Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .info {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 20px;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .output pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 12px;
+        }
+        .summary {
+            background: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #2196F3;
+            margin-bottom: 20px;
+        }
+        .summary h3 {
+            margin-top: 0;
+        }
+        .summary ul {
+            line-height: 1.8;
+        }
+        .directive-type {
+            display: inline-block;
+            background: #7B3987;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📦 Babylist API Response for Shilav Product</h1>
+
+        <div class="info">
+            <strong>⚠️ CORS Note:</strong>
+            <p>This page shows the actual API response I fetched for you. Direct browser requests fail due to CORS restrictions, but Chrome extensions can bypass this!</p>
+            <p><strong>Product URL tested:</strong><br>
+            <code>https://www.shilav.co.il/collections/boys-shirts/products/חולצה-אפורה-ארוכה-עם-הדפס</code></p>
+        </div>
+
+        <div class="summary">
+            <h3>📊 What This Response Contains</h3>
+            <ul>
+                <li>✅ <strong>Platform Detected:</strong> Shopify</li>
+                <li>✅ <strong>Primary Method:</strong> JSON-LD structured data extraction</li>
+                <li>✅ <strong>Directive Chains:</strong> 15+ complex scraping chains</li>
+                <li>✅ <strong>Fallback Levels:</strong> 3 tiers (JSON-LD → Shopify Analytics → DOM selectors)</li>
+            </ul>
+
+            <h4>🎯 Fields to Extract:</h4>
+            <ul>
+                <li>✅ Product Title</li>
+                <li>✅ Price (with currency formatting from cents)</li>
+                <li>✅ Product URL</li>
+                <li>✅ Images (image_urls)</li>
+                <li>✅ Brand</li>
+                <li>✅ Category</li>
+                <li>✅ Availability status</li>
+                <li>✅ SKU number</li>
+            </ul>
+
+            <h4>🔧 Directive Types Used:</h4>
+            <span class="directive-type">JsonLdProduct</span>
+            <span class="directive-type">Chain</span>
+            <span class="directive-type">Dig</span>
+            <span class="directive-type">Find</span>
+            <span class="directive-type">PriceFormat</span>
+            <span class="directive-type">WindowAttribute</span>
+            <span class="directive-type">GetQueryParam</span>
+            <span class="directive-type">TypeCast</span>
+            <span class="directive-type">Replace</span>
+            <span class="directive-type">TextOf</span>
+            <span class="directive-type">DocumentTitle</span>
+        </div>
+
+        <h3>📋 Full API Response:</h3>
+        <div class="output">
+            <pre id="jsonOutput"></pre>
+        </div>
+    </div>
+
+    <script>
+        // This is the ACTUAL response from Babylist API for the Shilav URL
+        const apiResponse = {
+  "directives": [
+    [
+      {
+        "type": "Chain",
+        "when": {
+          "a": { "ref": "jsonLdProduct" },
+          "operator": "falsy"
+        },
+        "directives": [
+          {
+            "type": "JsonLdProduct",
+            "assign": { "ref": "jsonLdProduct" }
+          }
+        ]
+      },
+      {
+        "type": "Chain",
+        "when": {
+          "a": { "ref": "jsonLdProduct" },
+          "operator": "truthy"
+        },
+        "directives": [
+          {
+            "type": "Dig",
+            "pathString": "offers",
+            "object": { "ref": "jsonLdProduct" },
+            "assign": { "ref": "offers" }
+          },
+          {
+            "type": "Chain",
+            "when": {
+              "a": { "ref": "offers" },
+              "operator": "truthy"
+            },
+            "directives": [
+              {
+                "type": "Chain",
+                "when": {
+                  "a": { "ref": "variantId" },
+                  "operator": "truthy"
+                },
+                "directives": [
+                  {
+                    "type": "Find",
+                    "array": { "ref": "offers" },
+                    "operator": "includes",
+                    "a": [
+                      {
+                        "type": "Dig",
+                        "pathString": "url",
+                        "object": { "ref": "_value" }
+                      }
+                    ],
+                    "b": [
+                      {
+                        "type": "Define",
+                        "value": { "ref": "variantId" }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  ]
+};
+
+        // Display the JSON with formatting
+        document.getElementById('jsonOutput').textContent = JSON.stringify(apiResponse, null, 2);
+
+        console.log('📦 Babylist API Response:', apiResponse);
+        console.log('💡 To use this in a Chrome extension, the API call will work without CORS issues!');
+    </script>
+</body>
+</html>

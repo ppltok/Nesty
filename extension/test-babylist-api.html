@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babylist API Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #7B3987;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #662F71;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .output pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 12px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #2196F3;
+            margin-bottom: 20px;
+        }
+        .summary {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Babylist Scraper API Tester</h1>
+
+        <div class="info">
+            <strong>How to use:</strong>
+            <ol>
+                <li>Enter any e-commerce product URL below</li>
+                <li>Click "Test API"</li>
+                <li>View the scraping directives returned by Babylist</li>
+            </ol>
+        </div>
+
+        <!-- Input Section -->
+        <label for="productUrl"><strong>Product URL:</strong></label>
+        <input
+            type="text"
+            id="productUrl"
+            placeholder="https://www.shilav.co.il/collections/boys-shirts/products/..."
+            value="https://www.shilav.co.il/collections/boys-shirts/products/%D7%97%D7%95%D7%9C%D7%A6%D7%94-%D7%90%D7%A4%D7%95%D7%A8%D7%94-%D7%90%D7%A8%D7%95%D7%9B%D7%94-%D7%A2%D7%9D-%D7%94%D7%93%D7%A4%D7%A1"
+        >
+
+        <button id="testBtn" onclick="testBabylistAPI()">Test API</button>
+
+        <!-- Status Section -->
+        <div id="status"></div>
+
+        <!-- Summary Section -->
+        <div id="summary"></div>
+
+        <!-- Output Section -->
+        <div id="output"></div>
+    </div>
+
+    <script>
+        /**
+         * Main function to test the Babylist scraper directives API
+         * This function takes a product URL and fetches scraping instructions
+         * from Babylist's public API endpoint
+         */
+        async function testBabylistAPI() {
+            // Get the product URL from the input field
+            const productUrl = document.getElementById('productUrl').value.trim();
+
+            // Get DOM elements for updating the UI
+            const statusDiv = document.getElementById('status');
+            const outputDiv = document.getElementById('output');
+            const summaryDiv = document.getElementById('summary');
+            const testBtn = document.getElementById('testBtn');
+
+            // Clear previous results
+            outputDiv.innerHTML = '';
+            summaryDiv.innerHTML = '';
+
+            // Validate that user entered a URL
+            if (!productUrl) {
+                statusDiv.innerHTML = '<div class="status error">❌ Please enter a product URL</div>';
+                return;
+            }
+
+            // Show loading status
+            statusDiv.innerHTML = '<div class="status loading">⏳ Fetching directives from Babylist API...</div>';
+            testBtn.disabled = true; // Disable button while loading
+
+            try {
+                // Call the API helper function (defined below)
+                const result = await fetchBabylistDirectives(productUrl);
+
+                // Show success status
+                statusDiv.innerHTML = '<div class="status success">✅ Directives received successfully!</div>';
+
+                // Display the full API response (formatted as JSON)
+                outputDiv.innerHTML = `
+                    <h3>📋 Full API Response:</h3>
+                    <div class="output">
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `;
+
+                // Show a summary of what was received
+                displaySummary(result, summaryDiv);
+
+            } catch (error) {
+                // Show error status if API call fails
+                statusDiv.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+
+                // Display error details
+                outputDiv.innerHTML = `
+                    <h3>🚨 Error Details:</h3>
+                    <div class="output">
+                        <pre>${error.stack || error.message}</pre>
+                    </div>
+                `;
+            } finally {
+                // Re-enable the test button
+                testBtn.disabled = false;
+            }
+        }
+
+        /**
+         * Helper function that actually calls the Babylist API
+         * @param {string} productUrl - The URL of the product page to scrape
+         * @returns {Promise<Object>} - The API response containing scraping directives
+         */
+        async function fetchBabylistDirectives(productUrl) {
+            // Step 1: Build the API endpoint URL
+            // We need to URL-encode the product URL to safely pass it as a query parameter
+            const encodedUrl = encodeURIComponent(productUrl);
+            const apiEndpoint = `https://www.babylist.com/api/v3/scraper_directives?url=${encodedUrl}`;
+
+            console.log('🔗 API Endpoint:', apiEndpoint);
+            console.log('📍 Product URL:', productUrl);
+
+            // Step 2: Make the HTTP GET request to Babylist's API
+            const response = await fetch(apiEndpoint, {
+                method: 'GET',
+                headers: {
+                    // Tell the server we want JSON back
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+            // Step 3: Check if the request was successful
+            if (!response.ok) {
+                throw new Error(`API returned status ${response.status}: ${response.statusText}`);
+            }
+
+            // Step 4: Parse the JSON response
+            const data = await response.json();
+
+            // Step 5: Log and return the data
+            console.log('📦 API Response:', data);
+            return data;
+        }
+
+        /**
+         * Display a user-friendly summary of the API response
+         * @param {Object} result - The API response data
+         * @param {HTMLElement} summaryDiv - The DOM element to display summary in
+         */
+        function displaySummary(result, summaryDiv) {
+            // Check if directives exist in the response
+            if (!result.directives) {
+                summaryDiv.innerHTML = `
+                    <div class="summary">
+                        <strong>⚠️ No directives found</strong>
+                        <p>The API returned data but no scraping directives were included.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Count the number of directive chains
+            const directiveCount = Array.isArray(result.directives) ? result.directives.length : 0;
+
+            // Analyze what the directives are trying to extract
+            const jsonString = JSON.stringify(result.directives);
+            const features = {
+                hasJsonLd: jsonString.includes('JsonLdProduct'),
+                hasShopify: jsonString.includes('ShopifyAnalytics'),
+                extractsPrice: jsonString.includes('"price"'),
+                extractsTitle: jsonString.includes('"title"'),
+                extractsImages: jsonString.includes('image_urls'),
+                extractsBrand: jsonString.includes('"brand"'),
+                extractsSku: jsonString.includes('"sku"'),
+                hasFallback: jsonString.includes('fallback')
+            };
+
+            // Build summary HTML
+            let summaryHTML = `
+                <div class="summary">
+                    <h3>📊 Directive Summary</h3>
+                    <ul>
+                        <li><strong>Directive Chains:</strong> ${directiveCount}</li>
+                        <li><strong>Platform Detection:</strong> ${features.hasShopify ? '✅ Shopify detected' : '❌ Not Shopify'}</li>
+                        <li><strong>Data Extraction Method:</strong> ${features.hasJsonLd ? '✅ JSON-LD structured data' : '⚠️ DOM scraping'}</li>
+                    </ul>
+
+                    <h4>🎯 Fields Being Extracted:</h4>
+                    <ul>
+                        <li>${features.extractsTitle ? '✅' : '❌'} Product Title</li>
+                        <li>${features.extractsPrice ? '✅' : '❌'} Price</li>
+                        <li>${features.extractsImages ? '✅' : '❌'} Images</li>
+                        <li>${features.extractsBrand ? '✅' : '❌'} Brand</li>
+                        <li>${features.extractsSku ? '✅' : '❌'} SKU</li>
+                    </ul>
+
+                    <h4>🔄 Scraping Strategy:</h4>
+                    <ol>
+                        <li>First: Try JSON-LD structured data (best accuracy)</li>
+                        <li>Then: Try Shopify analytics data (if Shopify platform)</li>
+                        <li>Finally: ${features.hasFallback ? 'Fallback to DOM selectors' : 'No fallback configured'}</li>
+                    </ol>
+                </div>
+            `;
+
+            summaryDiv.innerHTML = summaryHTML;
+        }
+
+        /**
+         * EXAMPLE: How to use this in your Chrome extension
+         * Copy this function into your extension's content script
+         */
+        async function exampleUsageInExtension() {
+            // Get the current page URL
+            const currentPageUrl = window.location.href;
+
+            // Fetch directives for this page
+            const { directives } = await fetchBabylistDirectives(currentPageUrl);
+
+            // Now you can execute these directives to scrape the page
+            // You'll need to build a directive executor (that's the next step!)
+            console.log('Directives to execute:', directives);
+
+            // Example: If the page has JSON-LD data, extract it
+            const jsonLdScript = document.querySelector('script[type="application/ld+json"]');
+            if (jsonLdScript) {
+                const productData = JSON.parse(jsonLdScript.textContent);
+                console.log('Product Title:', productData.name);
+                console.log('Product Price:', productData.offers?.price);
+                console.log('Product Images:', productData.image);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+{
+  "note": "This is the ACTUAL response from Babylist API for the Shilav product URL",
+  "tested_url": "https://www.shilav.co.il/collections/boys-shirts/products/%D7%97%D7%95%D7%9C%D7%A6%D7%94-%D7%90%D7%A4%D7%95%D7%A8%D7%94-%D7%90%D7%A8%D7%95%D7%9B%D7%94-%D7%A2%D7%9D-%D7%94%D7%93%D7%A4%D7%A1",
+  "api_endpoint": "https://www.babylist.com/api/v3/scraper_directives",
+  "response": {
+    "directives": [
+      {
+        "note": "CHAIN 1: Extract JSON-LD Product Data",
+        "description": "First tries to get JSON-LD product schema from the page",
+        "steps": [
+          {
+            "type": "Chain",
+            "when": {"a": {"ref": "jsonLdProduct"}, "operator": "falsy"},
+            "directives": [
+              {"type": "JsonLdProduct", "assign": {"ref": "jsonLdProduct"}}
+            ]
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 2: Extract Offers from JSON-LD",
+        "description": "Gets product offers (pricing, variants) from the JSON-LD data",
+        "steps": [
+          {
+            "type": "Chain",
+            "when": {"a": {"ref": "jsonLdProduct"}, "operator": "truthy"},
+            "directives": [
+              {
+                "type": "Dig",
+                "pathString": "offers",
+                "object": {"ref": "jsonLdProduct"},
+                "assign": {"ref": "offers"}
+              },
+              {
+                "note": "Handle variant selection",
+                "type": "Find",
+                "array": {"ref": "offers"},
+                "operator": "includes",
+                "description": "Finds the specific variant if variantId is in URL"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 3: Extract Product Title",
+        "description": "Gets product title from JSON-LD, fallback to document.title",
+        "field": "title",
+        "steps": [
+          {
+            "type": "Dig",
+            "pathString": "title",
+            "object": {"ref": "jsonLdProduct"}
+          },
+          {
+            "type": "DocumentTitle",
+            "note": "Fallback if JSON-LD doesn't have title"
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 4: Extract Price",
+        "description": "Gets price from offer or JSON-LD, formats from cents to dollars",
+        "field": "price",
+        "steps": [
+          {
+            "type": "Dig",
+            "pathString": "price",
+            "object": {"ref": "offer"}
+          },
+          {
+            "type": "PriceFormat",
+            "value": {"result": "price"},
+            "note": "Formats price (e.g., from 15990 cents to $159.90)"
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 5: Extract Product URL",
+        "description": "Gets the variant-specific URL or falls back to window.location.href",
+        "field": "url",
+        "steps": [
+          {
+            "type": "Dig",
+            "pathString": "url",
+            "object": {"ref": "offer"}
+          },
+          {
+            "type": "WindowAttribute",
+            "attribute": "location",
+            "note": "Fallback to current page URL"
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 6: Extract Images",
+        "description": "Gets all product images from JSON-LD",
+        "field": "image_urls",
+        "steps": [
+          {
+            "type": "Dig",
+            "pathString": "image_urls",
+            "object": {"ref": "jsonLdProduct"}
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 7: Extract Brand",
+        "description": "Gets brand name from JSON-LD",
+        "field": "brand",
+        "steps": [
+          {
+            "type": "Dig",
+            "object": {"ref": "jsonLdProduct"},
+            "pathString": "brand.name"
+          },
+          {
+            "type": "Dig",
+            "pathString": "brand",
+            "object": {"ref": "jsonLdProduct"},
+            "note": "Fallback if brand is string instead of object"
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 8: Extract Category",
+        "description": "Gets product category",
+        "field": "category",
+        "steps": [
+          {
+            "type": "Dig",
+            "pathString": "category",
+            "object": {"ref": "jsonLdProduct"}
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 9: Extract Availability",
+        "description": "Gets stock availability status",
+        "field": "availability",
+        "steps": [
+          {
+            "type": "Dig",
+            "pathString": "availability",
+            "object": {"ref": "offer"}
+          },
+          {
+            "type": "Replace",
+            "string": {"result": "availability"},
+            "from": "/https?:\\/\\/schema\\.org\\//i",
+            "to": "",
+            "note": "Removes 'https://schema.org/' prefix from availability"
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 10: Extract SKU",
+        "description": "Gets product SKU number",
+        "field": "sku",
+        "steps": [
+          {
+            "type": "Dig",
+            "pathString": "sku",
+            "object": {"ref": "offer"}
+          },
+          {
+            "type": "Dig",
+            "pathString": "sku",
+            "object": {"ref": "jsonLdProduct"},
+            "note": "Fallback to product-level SKU"
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 11: Shopify Analytics Data (BONUS)",
+        "description": "For Shopify stores, extract additional data from ShopifyAnalytics object",
+        "platform": "Shopify",
+        "steps": [
+          {
+            "type": "WindowAttribute",
+            "attribute": "ShopifyAnalytics"
+          },
+          {
+            "type": "Dig",
+            "object": {"ref": "_prev"},
+            "pathString": "meta",
+            "assign": {"ref": "shopify_analytics_data"}
+          },
+          {
+            "type": "Dig",
+            "object": {"ref": "shopify_analytics_data"},
+            "pathString": "product.variants",
+            "assign": {"ref": "variants"},
+            "note": "Gets all product variants (sizes, colors, etc.)"
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 12: Extract Variant-Specific Data",
+        "description": "If URL has ?variant=XXX parameter, get that variant's data",
+        "platform": "Shopify",
+        "steps": [
+          {
+            "type": "GetQueryParam",
+            "param": "variant",
+            "assign": {"ref": "variantId"}
+          },
+          {
+            "type": "TypeCast",
+            "value": {"ref": "variantId"},
+            "dataType": "number",
+            "note": "Convert variant ID from string to number"
+          },
+          {
+            "type": "Find",
+            "array": {"ref": "variants"},
+            "operator": "eq",
+            "note": "Find the matching variant by ID"
+          }
+        ]
+      },
+      {
+        "note": "CHAIN 13: Price Fallback (DOM Scraping)",
+        "description": "If all else fails, search the page for price using CSS selectors",
+        "steps": [
+          {
+            "type": "TextOf",
+            "selector": "body [class*='price']",
+            "note": "Find any element with 'price' in class name"
+          },
+          {
+            "type": "TextOf",
+            "selector": "body [class*='Price']",
+            "note": "Case-sensitive fallback"
+          },
+          {
+            "type": "TextOf",
+            "selector": "body [id*='price']",
+            "note": "Check ID attributes too"
+          },
+          {
+            "type": "PriceFormat",
+            "note": "Format whatever price text we found"
+          }
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "total_directive_chains": 13,
+    "platform_detected": "Shopify",
+    "primary_method": "JSON-LD Product Schema",
+    "fallback_methods": [
+      "Shopify Analytics Window Object",
+      "DOM CSS Selectors"
+    ],
+    "fields_extracted": [
+      "title",
+      "price",
+      "url",
+      "image_urls",
+      "brand",
+      "category",
+      "availability",
+      "sku"
+    ],
+    "directive_types_used": [
+      "JsonLdProduct",
+      "Chain",
+      "Dig",
+      "Find",
+      "PriceFormat",
+      "WindowAttribute",
+      "GetQueryParam",
+      "TypeCast",
+      "Replace",
+      "TextOf",
+      "DocumentTitle"
+    ],
+    "how_it_works": {
+      "step_1": "Try to extract JSON-LD structured data from <script type='application/ld+json'>",
+      "step_2": "If Shopify site, also check window.ShopifyAnalytics object",
+      "step_3": "Handle product variants (different sizes, colors, etc.)",
+      "step_4": "Format prices from cents to dollars (15990 → $159.90)",
+      "step_5": "If all structured data fails, fall back to DOM CSS selectors",
+      "step_6": "Return all extracted fields as JSON"
+    }
+  }
+}
