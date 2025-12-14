@@ -532,6 +532,7 @@ export default function Checklist() {
             return (
               <div
                 key={category.id}
+                data-tutorial={category.id === 'strollers' ? 'checklist-category' : undefined}
                 className={`bg-white rounded-[24px] border border-[#e7e0ec] overflow-hidden transition-all duration-300 ${isExpanded ? 'shadow-[0_8px_30px_rgba(0,0,0,0.06)] ring-1 ring-[#eaddff]' : 'hover:shadow-md'}`}
               >
                 {/* Category Header */}
