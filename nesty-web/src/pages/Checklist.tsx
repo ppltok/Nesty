@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { ChevronDown, Check, Plus, Trash2, ClipboardList, Sparkles, Heart, AlertCircle, Feather, Save } from 'lucide-react'
+import { ChevronDown, Check, Plus, Trash2, ClipboardList, Sparkles, Heart, AlertCircle, Feather, Save, RotateCcw, X } from 'lucide-react'
 import AddItemModal from '../components/AddItemModal'
 import { CATEGORIES } from '../data/categories'
 import { supabase } from '../lib/supabase'
@@ -13,6 +13,10 @@ export default function Checklist() {
   const [expandedCategory, setExpandedCategory] = useState<string | null>('strollers')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [showDeletedSection, setShowDeletedSection] = useState(false)
+  const [showAddCustomItem, setShowAddCustomItem] = useState(false)
+  const [customItemName, setCustomItemName] = useState('')
+  const [customItemCategory, setCustomItemCategory] = useState('')
 
   // Checklist preferences from database
   const [preferences, setPreferences] = useState<ChecklistPreference[]>([])
@@ -200,6 +204,27 @@ export default function Checklist() {
     await upsertPreference(categoryId, itemName, { is_hidden: true })
   }
 
+  // Restore a hidden suggestion
+  const restoreSuggestion = async (categoryId: string, itemName: string) => {
+    await upsertPreference(categoryId, itemName, { is_hidden: false })
+  }
+
+  // Add a custom item to a category
+  const addCustomItem = async () => {
+    if (!customItemName.trim() || !customItemCategory) return
+
+    await upsertPreference(customItemCategory, customItemName.trim(), {
+      is_checked: false,
+      is_hidden: false,
+      priority: 'essential',
+      quantity: 1,
+    })
+
+    setCustomItemName('')
+    setCustomItemCategory('')
+    setShowAddCustomItem(false)
+  }
+
   // Toggle check on a suggestion
   const toggleSuggestionCheck = async (categoryId: string, itemName: string) => {
     const pref = getPreference(categoryId, itemName)
@@ -216,6 +241,41 @@ export default function Checklist() {
   const isSuggestionHidden = (categoryId: string, itemName: string): boolean => {
     return getPreference(categoryId, itemName)?.is_hidden ?? false
   }
+
+  // Get all deleted (hidden) items across all categories
+  const getDeletedItems = () => {
+    const deleted: { categoryId: string; categoryName: string; itemName: string }[] = []
+
+    CATEGORIES.forEach(category => {
+      category.suggestedItems.forEach(item => {
+        if (isSuggestionHidden(category.id, item)) {
+          deleted.push({
+            categoryId: category.id,
+            categoryName: category.name,
+            itemName: item,
+          })
+        }
+      })
+    })
+
+    // Also include custom items that are hidden
+    preferences
+      .filter(p => p.is_hidden && !CATEGORIES.some(c => c.suggestedItems.includes(p.item_name)))
+      .forEach(p => {
+        const category = CATEGORIES.find(c => c.id === p.category_id)
+        if (category) {
+          deleted.push({
+            categoryId: p.category_id,
+            categoryName: category.name,
+            itemName: p.item_name,
+          })
+        }
+      })
+
+    return deleted
+  }
+
+  const deletedItems = getDeletedItems()
 
   // Get/set quantity for a suggestion
   const getQuantity = (categoryId: string, itemName: string): number => {
@@ -291,22 +351,36 @@ export default function Checklist() {
       item => !isSuggestionHidden(categoryId, item)
     )
 
-    const checkedCount = visibleSuggestions.filter(itemName =>
+    // Include custom items
+    const customItems = preferences
+      .filter(p => p.category_id === categoryId && !p.is_hidden && !category.suggestedItems.includes(p.item_name))
+      .map(p => p.item_name)
+
+    const allVisibleItems = [...visibleSuggestions, ...customItems]
+
+    const checkedCount = allVisibleItems.filter(itemName =>
       isSuggestionChecked(categoryId, itemName)
     ).length
 
     return {
       checked: checkedCount,
-      total: visibleSuggestions.length
+      total: allVisibleItems.length
     }
   }
 
-  // Calculate all items for metrics
-  const allItems = CATEGORIES.flatMap(cat =>
-    cat.suggestedItems
-      .filter(item => !isSuggestionHidden(cat.id, item))
-      .map(item => ({ categoryId: cat.id, name: item }))
-  )
+  // Calculate all items for metrics (including custom items)
+  const allItems = [
+    // Suggested items
+    ...CATEGORIES.flatMap(cat =>
+      cat.suggestedItems
+        .filter(item => !isSuggestionHidden(cat.id, item))
+        .map(item => ({ categoryId: cat.id, name: item }))
+    ),
+    // Custom items
+    ...preferences
+      .filter(p => !p.is_hidden && !CATEGORIES.some(c => c.id === p.category_id && c.suggestedItems.includes(p.item_name)))
+      .map(p => ({ categoryId: p.category_id, name: p.item_name }))
+  ]
 
   const totalItems = allItems.length
   const checkedItems = allItems.filter(i => isSuggestionChecked(i.categoryId, i.name)).length
@@ -446,7 +520,14 @@ export default function Checklist() {
             const isExpanded = expandedCategory === category.id
             const progress = getCategoryProgress(category.id)
             const progressPercent = progress.total > 0 ? (progress.checked / progress.total) * 100 : 0
-            const visibleItems = category.suggestedItems.filter(item => !isSuggestionHidden(category.id, item))
+            // Get suggested items that aren't hidden
+            const visibleSuggestedItems = category.suggestedItems.filter(item => !isSuggestionHidden(category.id, item))
+            // Get custom items for this category (not in suggested items and not hidden)
+            const customItems = preferences
+              .filter(p => p.category_id === category.id && !p.is_hidden && !category.suggestedItems.includes(p.item_name))
+              .map(p => p.item_name)
+            // Combine both
+            const visibleItems = [...visibleSuggestedItems, ...customItems]
 
             return (
               <div
@@ -730,6 +811,126 @@ export default function Checklist() {
             )
           })}
         </div>
+
+        {/* Add Custom Item Section */}
+        <div className="mt-8">
+          {!showAddCustomItem ? (
+            <button
+              onClick={() => setShowAddCustomItem(true)}
+              className="w-full flex items-center justify-center gap-3 p-4 bg-white rounded-[20px] border-2 border-dashed border-[#e7e0ec] hover:border-[#6750a4] hover:bg-[#f3edff]/30 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#f3edff] flex items-center justify-center text-[#6750a4] group-hover:scale-110 transition-transform">
+                <Plus className="w-5 h-5" />
+              </div>
+              <span className="text-[#49454f] font-medium group-hover:text-[#6750a4]">הוסף פריט מותאם אישית לצ'קליסט</span>
+            </button>
+          ) : (
+            <div className="bg-white rounded-[24px] border border-[#e7e0ec] p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-[#1d192b]">הוסף פריט חדש</h3>
+                <button
+                  onClick={() => {
+                    setShowAddCustomItem(false)
+                    setCustomItemName('')
+                    setCustomItemCategory('')
+                  }}
+                  className="p-2 rounded-full hover:bg-[#f5f5f5] text-[#49454f]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#49454f] mb-2">קטגוריה</label>
+                  <select
+                    value={customItemCategory}
+                    onChange={(e) => setCustomItemCategory(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-[#e7e0ec] bg-white text-[#1d192b] focus:outline-none focus:ring-2 focus:ring-[#6750a4] focus:border-transparent"
+                  >
+                    <option value="">בחר קטגוריה...</option>
+                    {CATEGORIES.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#49454f] mb-2">שם הפריט</label>
+                  <input
+                    type="text"
+                    value={customItemName}
+                    onChange={(e) => setCustomItemName(e.target.value)}
+                    placeholder="לדוגמה: שמיכת תינוק מיוחדת"
+                    className="w-full p-3 rounded-xl border border-[#e7e0ec] bg-white text-[#1d192b] placeholder:text-[#49454f]/40 focus:outline-none focus:ring-2 focus:ring-[#6750a4] focus:border-transparent"
+                  />
+                </div>
+
+                <button
+                  onClick={addCustomItem}
+                  disabled={!customItemName.trim() || !customItemCategory}
+                  className="w-full flex items-center justify-center gap-2 bg-[#6750a4] hover:bg-[#503e85] disabled:bg-[#e7e0ec] disabled:text-[#49454f] text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md disabled:shadow-none"
+                >
+                  <Plus className="w-5 h-5" />
+                  הוסף לצ'קליסט
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Deleted Items Section */}
+        {deletedItems.length > 0 && (
+          <div className="mt-8">
+            <button
+              onClick={() => setShowDeletedSection(!showDeletedSection)}
+              className="w-full flex items-center justify-between p-4 bg-[#fff8f8] rounded-[20px] border border-[#ffebee] hover:bg-[#ffebee]/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#ffebee] flex items-center justify-center text-[#b3261e]">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-[#1d192b]">פריטים שהוסרו</p>
+                  <p className="text-sm text-[#49454f]">{deletedItems.length} פריטים • לחץ לשחזור</p>
+                </div>
+              </div>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform ${showDeletedSection ? 'rotate-180' : ''}`}>
+                <ChevronDown className="w-5 h-5 text-[#49454f]" />
+              </div>
+            </button>
+
+            {showDeletedSection && (
+              <div className="mt-3 bg-white rounded-[20px] border border-[#e7e0ec] overflow-hidden">
+                <div className="divide-y divide-[#e7e0ec]">
+                  {deletedItems.map((item, index) => (
+                    <div
+                      key={`${item.categoryId}-${item.itemName}-${index}`}
+                      className="flex items-center justify-between p-4 hover:bg-[#f3edff]/20 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#f5f5f5] flex items-center justify-center text-[#49454f]">
+                          <Trash2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-[#1d192b]">{item.itemName}</p>
+                          <p className="text-xs text-[#49454f]">{item.categoryName}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => restoreSuggestion(item.categoryId, item.itemName)}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#f3edff] hover:bg-[#eaddff] text-[#6750a4] rounded-full font-medium text-sm transition-colors"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        שחזר
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
