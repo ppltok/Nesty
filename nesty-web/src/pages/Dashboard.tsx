@@ -538,6 +538,7 @@ export default function Dashboard() {
 
               <div className="flex flex-wrap gap-3 mt-8">
                 <button
+                  data-tutorial="add-item-button"
                   onClick={handleOpenAddModal}
                   className="flex items-center gap-2 bg-[#d0bcff] text-[#381e72] px-6 py-3 rounded-full font-bold hover:bg-[#e8def8] transition-all shadow-sm active:scale-95"
                 >
@@ -566,7 +567,7 @@ export default function Dashboard() {
           </div>
 
           {/* Stats Cards */}
-          <div className="flex flex-col sm:flex-row gap-4 xl:w-auto">
+          <div data-tutorial="dashboard-stats" className="flex flex-col sm:flex-row gap-4 xl:w-auto">
             <div className="bg-[#f3edff] rounded-[32px] p-6 flex flex-col justify-between min-w-[240px] border border-[#eaddff] relative overflow-hidden">
               <div>
                 <div className="flex items-center gap-2 mb-2">

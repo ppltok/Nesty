@@ -143,15 +143,32 @@ export default function Settings() {
 
     setIsLoading(true)
     try {
-      // Delete user data (cascade will handle related data)
-      const { error: deleteError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', profile?.id)
+      // Get current session for authorization
+      const { data: { session } } = await supabase.auth.getSession()
 
-      if (deleteError) throw deleteError
+      if (!session) {
+        throw new Error('No active session')
+      }
 
-      // Sign out
+      // Call the delete-account Edge Function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        }
+      )
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to delete account')
+      }
+
+      // Sign out locally
       await supabase.auth.signOut()
 
       // Redirect to home

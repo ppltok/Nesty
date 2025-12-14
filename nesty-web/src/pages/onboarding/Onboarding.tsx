@@ -4,8 +4,9 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { generateSlug } from '../../lib/utils'
 import { ArrowRight, ArrowLeft, Calendar, Sparkles, Baby, Mail } from 'lucide-react'
+import OnboardingCelebration from '../../components/OnboardingCelebration'
 
-type Step = 1 | 2 | 3 | 4 | 5
+type Step = 1 | 2 | 3 | 4 | 5 | 'celebration'
 
 interface OnboardingData {
   firstName: string
@@ -112,8 +113,8 @@ export default function Onboarding() {
       // Refresh profile data
       await refreshProfile()
 
-      // Navigate to dashboard
-      navigate('/dashboard')
+      // Show celebration screen
+      setStep('celebration')
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'שגיאה לא צפויה. נסו שוב.'
       setError(errorMessage)
@@ -126,6 +127,21 @@ export default function Onboarding() {
   const canProceed = () => {
     if (step === 1) return data.firstName.trim().length > 0
     return true
+  }
+
+  // Handle celebration complete
+  const handleCelebrationComplete = () => {
+    navigate('/dashboard')
+  }
+
+  // Show celebration screen
+  if (step === 'celebration') {
+    return (
+      <OnboardingCelebration
+        userName={data.firstName || 'משתמש'}
+        onComplete={handleCelebrationComplete}
+      />
+    )
   }
 
   return (
