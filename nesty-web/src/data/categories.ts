@@ -1,0 +1,173 @@
+import {
+  Car,
+  Home,
+  ShieldAlert,
+  UtensilsCrossed,
+  Baby,
+  Droplets,
+  Shirt,
+  BedDouble,
+  Gamepad2,
+} from 'lucide-react'
+import StrollerIcon from '../components/icons/StrollerIcon'
+
+export interface Category {
+  id: string
+  name: string
+  icon: React.ComponentType<{ className?: string }>
+  color: string
+  suggestedItems: string[]
+}
+
+export const CATEGORIES: Category[] = [
+  {
+    id: 'strollers',
+    name: 'עגלות וטיולים',
+    icon: StrollerIcon,
+    color: 'from-[#86608e] to-[#6d4e74]',
+    suggestedItems: [
+      'עגלה לתינוק מגיל לידה',
+      'עגלות תאומים/אחים',
+      'טיולונים',
+      'מנשא לתינוק',
+      'תיקים',
+      'אביזרים לעגלות וטיולונים',
+      'צעצועים לעגלה',
+      'טרמפיסט לעגלה',
+    ],
+  },
+  {
+    id: 'car_safety',
+    name: 'בטיחות ברכב',
+    icon: Car,
+    color: 'from-[#7a5582] to-[#624469]',
+    suggestedItems: [
+      'כיסאות בטיחות',
+      'כיסאות בטיחות מסתובבים',
+      'סלקלים בטיחותיים ואיכותיים',
+      'בסיסים לרכב',
+      'בוסטרים לרכב',
+      'מוצרים משלימים לרכב',
+    ],
+  },
+  {
+    id: 'furniture',
+    name: 'ריהוט',
+    icon: Home,
+    color: 'from-[#a891ad] to-[#917a96]',
+    suggestedItems: [
+      'חדרי תינוק',
+      'מיטות תינוק',
+      'מזרן לתינוק',
+      'שידות אחסנה',
+      'ארונות',
+      'עריסה לתינוק',
+      'לול ולולי קמפינג',
+      'אביזרים לעיצוב חדר ילדים',
+    ],
+  },
+  {
+    id: 'safety',
+    name: 'מוצרי בטיחות',
+    icon: ShieldAlert,
+    color: 'from-[#86608e] to-[#6d4e74]',
+    suggestedItems: ['Nanit', 'מוניטור ואינטרקום', 'שערים ואביזרי בטיחות'],
+  },
+  {
+    id: 'feeding',
+    name: 'האכלה',
+    icon: UtensilsCrossed,
+    color: 'from-[#b9a4bd] to-[#a891ad]',
+    suggestedItems: [
+      'מוצצים ואביזריהם',
+      'בקבוקים',
+      'פטמות לבקבוקים',
+      'מברשות בקבוקים',
+      'מייבש בקבוקים',
+      'סטריליזטורים',
+      'מחמם בקבוקים',
+      'תרמוסים',
+      'מחלק מנות',
+      'חיתולי בד לתינוקות',
+      'כיסאות אוכל לתינוק',
+      'סינרים לתינוק',
+      'בוסטר האכלה',
+    ],
+  },
+  {
+    id: 'nursing',
+    name: 'הנקה',
+    icon: Baby,
+    color: 'from-[#a891ad] to-[#917a96]',
+    suggestedItems: [
+      'משאבות הנקה ואביזריהן',
+      'כריות הנקה',
+      'סינרי הנקה',
+      'רפידות ומגיני פטמות',
+      'כורסאות הנקה',
+    ],
+  },
+  {
+    id: 'bath',
+    name: 'אמבט וטיפול בתינוק',
+    icon: Droplets,
+    color: 'from-[#c9c2cb] to-[#b5adb8]',
+    suggestedItems: [
+      'אמבטיות ומעמדים',
+      'מושבי אמבטיה',
+      'מגבות לתינוק',
+      'מברשות וסט מניקור',
+      'תכשירי טיפול בתינוק',
+      'צעצועים לאמבטיה',
+      'אביזרי אמבטיה נוספים',
+      'טבעות אמבטיה',
+    ],
+  },
+  {
+    id: 'clothing',
+    name: 'ביגוד ראשוני',
+    icon: Shirt,
+    color: 'from-[#86608e] to-[#6d4e74]',
+    suggestedItems: [
+      'בגדי גוף לתינוק',
+      'מכנסיים ורגליות לתינוק',
+      'אוברולים לתינוקות',
+      'סטים לתינוקות',
+      'כובע לתינוק',
+      'כפפות לתינוק',
+      'גרביים לתינוקות',
+    ],
+  },
+  {
+    id: 'bedding',
+    name: 'מצעים ואקססוריז',
+    icon: BedDouble,
+    color: 'from-[#a891ad] to-[#917a96]',
+    suggestedItems: [
+      'סדינים',
+      'שמיכות לתינוק',
+      'סט מצעים',
+      'משטחי החתלה',
+      'נחשושים',
+      'מגן ראש לתינוק',
+      'כריות לתינוק',
+    ],
+  },
+  {
+    id: 'toys',
+    name: 'צעצועים',
+    icon: Gamepad2,
+    color: 'from-[#c9c2cb] to-[#b5adb8]',
+    suggestedItems: [
+      'מובייל לתינוק',
+      'טרמפולינות',
+      'נדנדות',
+      'אוניברסיטה לתינוק',
+      'שמיכות פעילות',
+      'משטחי פעילות לתינוקות',
+      'נשכנים ורעשנים',
+      'שמיכי לתינוק',
+      'בובות בד',
+    ],
+  },
+]

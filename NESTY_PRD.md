@@ -1040,7 +1040,7 @@ Buttons: "חזור", "סיום", "דלג"
 
 On completion:
 1. Update profile with `onboarding_completed: true`
-2. Create registry with auto-generated slug
+2. Create registry with auto-generated slug: `{first_name}-registry-{timestamp}`
 3. Show AddressPopup with confetti
 4. Navigate to /dashboard
 
@@ -1060,6 +1060,23 @@ On completion:
 //
 // Buttons: "שמור כתובת", "אוסיף אחר כך"
 ```
+
+### 10.6 Address Data Flow
+
+```
+AddressPopup → saves to → registries table
+
+Fields mapping:
+- עיר         → registries.address_city
+- רחוב + מספר → registries.address_street
+- דירה        → registries.address_apt
+- מיקוד       → registries.address_postal
+- הסתר כתובת  → registries.address_is_private (default: true)
+```
+
+**Privacy behavior:**
+- If `address_is_private = true`: Gift givers see "צור קשר עם {name} לקבלת כתובת"
+- If `address_is_private = false`: Gift givers see full address with copy button
 
 ---
 
@@ -1130,6 +1147,8 @@ const CATEGORIES = [
   {
     id: "strollers",
     name: "עגלות וטיולים",
+    icon: Car,
+    color: "from-[#86608e] to-[#6d4e74]",
     suggestedItems: [
       "עגלה לתינוק מגיל לידה",
       "עגלות תאומים/אחים",
@@ -1141,7 +1160,144 @@ const CATEGORIES = [
       "טרמפיסט לעגלה"
     ]
   },
-  // ... all 10 categories with their suggested items
+  {
+    id: "car_safety",
+    name: "בטיחות ברכב",
+    icon: ShieldCheck,
+    color: "from-[#7a5582] to-[#624469]",
+    suggestedItems: [
+      "כיסאות בטיחות",
+      "כיסאות בטיחות מסתובבים",
+      "סלקלים בטיחותיים ואיכותיים",
+      "בסיסים לרכב",
+      "בוסטרים לרכב",
+      "מוצרים משלימים לרכב"
+    ]
+  },
+  {
+    id: "furniture",
+    name: "ריהוט",
+    icon: Home,
+    color: "from-[#a891ad] to-[#917a96]",
+    suggestedItems: [
+      "חדרי תינוק",
+      "מיטות תינוק",
+      "מזרן לתינוק",
+      "שידות אחסנה",
+      "ארונות",
+      "עריסה לתינוק",
+      "לול ולולי קמפינג",
+      "אביזרים לעיצוב חדר ילדים"
+    ]
+  },
+  {
+    id: "safety",
+    name: "מוצרי בטיחות",
+    icon: ShieldAlert,
+    color: "from-[#86608e] to-[#6d4e74]",
+    suggestedItems: [
+      "Nanit",
+      "מוניטור ואינטרקום",
+      "שערים ואביזרי בטיחות"
+    ]
+  },
+  {
+    id: "feeding",
+    name: "האכלה",
+    icon: UtensilsCrossed,
+    color: "from-[#b9a4bd] to-[#a891ad]",
+    suggestedItems: [
+      "מוצצים ואביזריהם",
+      "בקבוקים",
+      "פטמות לבקבוקים",
+      "מברשות בקבוקים",
+      "מייבש בקבוקים",
+      "סטריליזטורים",
+      "מחמם בקבוקים",
+      "תרמוסים",
+      "מחלק מנות",
+      "חיתולי בד לתינוקות",
+      "כיסאות אוכל לתינוק",
+      "סינרים לתינוק",
+      "בוסטר האכלה"
+    ]
+  },
+  {
+    id: "nursing",
+    name: "הנקה",
+    icon: Baby,
+    color: "from-[#a891ad] to-[#917a96]",
+    suggestedItems: [
+      "משאבות הנקה ואביזריהן",
+      "כריות הנקה",
+      "סינרי הנקה",
+      "רפידות ומגיני פטמות",
+      "כורסאות הנקה"
+    ]
+  },
+  {
+    id: "bath",
+    name: "אמבט וטיפול בתינוק",
+    icon: Bath,
+    color: "from-[#c9c2cb] to-[#b5adb8]",
+    suggestedItems: [
+      "אמבטיות ומעמדים",
+      "מושבי אמבטיה",
+      "מגבות לתינוק",
+      "מברשות וסט מניקור",
+      "תכשירי טיפול בתינוק",
+      "צעצועים לאמבטיה",
+      "אביזרי אמבטיה נוספים",
+      "טבעות אמבטיה"
+    ]
+  },
+  {
+    id: "clothing",
+    name: "ביגוד ראשוני",
+    icon: Shirt,
+    color: "from-[#86608e] to-[#6d4e74]",
+    suggestedItems: [
+      "בגדי גוף לתינוק",
+      "מכנסיים ורגליות לתינוק",
+      "אוברולים לתינוקות",
+      "סטים לתינוקות",
+      "כובע לתינוק",
+      "כפפות לתינוק",
+      "גרביים לתינוקות"
+    ]
+  },
+  {
+    id: "bedding",
+    name: "מצעים ואקססוריז",
+    icon: Bed,
+    color: "from-[#a891ad] to-[#917a96]",
+    suggestedItems: [
+      "סדינים",
+      "שמיכות לתינוק",
+      "סט מצעים",
+      "משטחי החתלה",
+      "נחשושים",
+      "מגן ראש לתינוק",
+      "כריות לתינוק"
+    ]
+  },
+  {
+    id: "toys",
+    name: "צעצועים",
+    icon: Gamepad2,
+    color: "from-[#c9c2cb] to-[#b5adb8]",
+    suggestedItems: [
+      "מובייל לתינוק",
+      "טרמפולינות",
+      "נדנדות",
+      "אוניברסיטה לתינוק",
+      "שמיכות פעילות",
+      "משטחי פעילות לתינוקות",
+      "נשכנים ורעשנים",
+      "שמיכי לתינוק",
+      "בובות בד"
+    ]
+  }
 ]
 ```
 
@@ -1238,51 +1394,94 @@ Slug examples: `maya-registry-abc123`, `{first_name}-registry-{timestamp}`
 
 ## 15. Purchase Flow & Notifications
 
-### 15.1 Purchase Modal
+### 15.1 Purchase Flow Overview (Babylist-Style)
 
-When gift giver clicks "קנה מתנה זו":
+The purchase flow is trust-based with a reservation system to prevent double-gifting.
+
+**Flow:**
+1. Gift giver clicks "שריין מתנה זו" (Reserve This Gift)
+2. Item becomes "reserved" for 48 hours
+3. Gift giver is redirected to store
+4. After purchase, they return and click "קניתי" (I've Purchased)
+5. Confirmation email sent, reservation extended until confirmed
+
+### 15.2 Step 1: Reserve Gift Modal
 
 ```typescript
 // src/components/PurchaseModal.tsx
-// Step 1: Redirect Info
-// - "בדרך ל-{store_name}..."
-// - "אחרי הקנייה, חזרו לכאן ולחצו 'קניתי'"
-// - Address link (if public)
-// - "המשך לחנות" button (opens URL in new tab)
+// First screen - "Record Your Purchase"
+
+// Title: "מי נותן את המתנה?"
+// Fields:
+// - שם מלא (buyer_name) - required
+// - אימייל (buyer_email) - required
+// - הערה ידידותית (gift_message) - optional, placeholder: "מזל טוב!"
+// - Toggle: "שמרו את זה בהפתעה" (is_surprise) - hides from owner until confirmed
 //
-// Step 2: Record Purchase
-// - שם מלא (buyer_name)
-// - אימייל (buyer_email)
-// - Toggle: "שמרו את זה בהפתעה" (is_surprise)
-// - "אישור רכישה" button
-//
-// Step 3: Confirmation
-// - "תודה! 🎉"
-// - Purchase details
+// Button: "המשך" → goes to Step 2
 ```
 
-### 15.2 Email Notifications
+### 15.3 Step 2: Redirect to Store
+
+```typescript
+// Second screen - "You're headed to {store_name}"
+
+// Title: "בדרך ל-{store_name}"
+// Subtitle: "אחרי הקנייה, חזרו ל-Nesty ולחצו 'קניתי את זה'"
+//
+// Show shipping address (if address_is_private = false):
+// "כתובת למשלוח:"
+// "{address_street}, {address_city}"
+// Button: "העתק כתובת"
+//
+// If address is private:
+// "הכתובת מוסתרת - צרו קשר עם {owner_name}"
+//
+// Buttons:
+// - "המשך לחנות" (primary) → opens original_url in new tab, creates purchase record with status='pending'
+// - "קניתי כבר" → marks as purchased immediately
+```
+
+### 15.4 Step 3: Confirmation
+
+```typescript
+// After returning from store
+
+// Title: "תודה רבה! 🎉"
+// Subtitle: "{owner_name} יקבל/תקבל הודעה על המתנה שלך"
+//
+// Purchase summary:
+// - Item image + name
+// - Your name
+// - Note (if provided)
+//
+// Button: "סיום"
+```
+
+### 15.5 Item States
+
+| State | Display | Action Available |
+|-------|---------|------------------|
+| available | Normal card | "שריין מתנה זו" |
+| reserved | "שוריין" badge, subtle gray | Disabled (shows "שוריין ע"י {name}") |
+| purchased | "נרכש ✓" badge, grayed out | None |
+| private | Hidden from public | - |
+
+### 15.6 Reservation Timeout
+
+- Reservation expires after **48 hours** if not confirmed
+- At 24 hours: Send reminder email to gift giver
+- After expiry: Item becomes available again, purchase record marked as 'expired'
+
+### 15.7 Email Notifications
 
 | Email | Trigger | Recipient | Delay |
 |-------|---------|-----------|-------|
 | Welcome | Sign up | User | Immediate |
-| Gift Reserved | Purchase recorded | Registry owner | Immediate |
-| Purchase Confirmation | After recording | Gift giver | 3 hours |
-| Gift Confirmed | Giver confirms email | Registry owner | Immediate |
-
-### 15.3 Purchase Confirmation Email
-
-Sent 3 hours after recording:
-
-```
-Subject: "נא לאשר את הרכישה שלך מרשימת {owner_name}"
-
-Body:
-- Product image + name + price
-- "כן, קניתי את זה" button → confirms
-- "לא, לא קניתי" button → cancels
-- Expires in 7 days
-```
+| Gift Reserved | Purchase recorded | Registry owner (unless is_surprise) | Immediate |
+| Reminder | 24h after reservation | Gift giver | 24 hours |
+| Gift Confirmed | Giver clicks "קניתי" | Registry owner | Immediate |
+| Reservation Expired | 48h no confirmation | Gift giver | 48 hours |
 
 ---
 
@@ -1326,22 +1525,25 @@ if (password && password !== confirmPassword) {
 
 ## 17. Smart Price Comparison Engine
 
-### 17.1 Overview
+> **⚠️ DEFERRED TO PHASE 2**
+>
+> This feature requires web scraping infrastructure, product matching algorithms, and potentially
+> legal considerations with stores. The database schema includes the `price_alerts` table for
+> future implementation.
+
+### 17.1 Future Vision
 
 When an item is added, the system searches for the same product at lower prices elsewhere.
 
-### 17.2 Flow
+### 17.2 Future Flow
 
 1. User adds item with name and price
-2. Background job searches for same item name across stores
+2. Background job searches for same item name across Israeli stores
 3. If cheaper found, create `price_alert` record
-4. Show alert in dashboard with:
-   - Original price vs. found price
-   - Savings amount and percentage
-   - Link to cheaper option
+4. Show alert in dashboard with savings info
 5. User can dismiss or update item URL
 
-### 17.3 Price Alert UI
+### 17.3 Future Price Alert UI
 
 ```
 Card in Dashboard:
@@ -1351,50 +1553,34 @@ Card in Dashboard:
 Buttons: "עבור לחלופה", "התעלם"
 ```
 
-### 17.4 Implementation (Edge Function)
+### 17.4 Technical Requirements (Phase 2)
 
-```typescript
-// Supabase Edge Function: check-prices
-// Runs periodically or on item insert
-// Uses web scraping or store APIs to find matches
-// Creates price_alerts for matches
-```
+- Web scraping infrastructure for Israeli baby stores
+- Product name matching algorithm (Hebrew/English)
+- Price monitoring cron jobs
+- Store partnership considerations
 
 ---
 
 ## 18. Group Gifting (Chip-In)
 
-### 18.1 Overview
+> **⚠️ DEFERRED TO POST-MVP**
+>
+> This feature requires payment processing integration which is out of scope for MVP.
+> The database schema includes placeholder tables (`contributions`) for future implementation.
 
-For expensive items, multiple people can contribute partial amounts.
+### 18.1 Future Vision
 
-### 18.2 Enable Chip-In
+For expensive items (e.g., 4,000₪ stroller), multiple people can contribute partial amounts.
 
-In AddItemModal, add toggle: "אפשר השתתפות" (enable_chip_in)
+### 18.2 Post-MVP Implementation Options
 
-### 18.3 Public View for Chip-In Items
+1. **Pledge System:** Track commitments only, owner collects via Bit/PayBox manually
+2. **Payment Integration:** Integrate with Israeli payment providers (Bit, PayBox, PayPal)
 
-```
-Progress bar: "נאספו ₪{collected} מתוך ₪{total}"
-Button: "השתתף בסכום"
-```
+### 18.3 MVP Alternative
 
-### 18.4 Contribution Form
-
-```
-Modal:
-- שם מלא
-- אימייל
-- סכום להשתתפות (amount)
-- הודעה (optional)
-Button: "שלח השתתפות"
-```
-
-### 18.5 Tracking
-
-- Total collected = SUM of confirmed contributions
-- When total >= item price, item marked as purchased
-- Owner sees list of contributors
+For now, gift givers who want to split a gift should coordinate externally and one person reserves the item.
 
 ---
 

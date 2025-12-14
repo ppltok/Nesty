@@ -271,11 +271,10 @@ CREATE TABLE profiles (
 
 **Script 3: Create Registries Table**
 ```sql
--- Registries table
+-- Registries table (partner_id removed for MVP)
 CREATE TABLE registries (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   owner_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
-  partner_id UUID REFERENCES profiles(id),
   slug TEXT UNIQUE NOT NULL,
   title TEXT,
   address_city TEXT,

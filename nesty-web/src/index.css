@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    direction: rtl;
+  }
+
+  body {
+    font-family: 'Assistant', 'Heebo', sans-serif;
+    background-color: #faf8fb;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c9c2cb;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a891ad;
+}
+
+/* RTL specific utilities */
+.flip-x {
+  transform: scaleX(-1);
+}

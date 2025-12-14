@@ -56,7 +56,6 @@
 │─────────────────────────────│
 │ id (UUID) PK                │
 │ owner_id (UUID) FK ─────────┼──→ profiles.id
-│ partner_id (UUID) FK        │──→ profiles.id (optional)
 │ slug (unique)               │
 │ address_city                │
 │ address_street              │
@@ -115,11 +114,12 @@
 |--------|-------|--------------|-------------|
 | auth.users | profiles | 1:1 | Every Supabase user has one profile |
 | profiles | registries | 1:1 | Every user owns one registry |
-| profiles | registries.partner_id | 1:1 (optional) | A user can be a partner on another's registry |
 | registries | items | 1:N | A registry contains many items |
 | items | purchases | 1:N | An item can have multiple purchase records |
-| items | contributions | 1:N | An item can have multiple chip-in contributions |
-| items | price_alerts | 1:N | An item can have multiple price alerts |
+| items | contributions | 1:N | An item can have multiple chip-in contributions (Phase 2) |
+| items | price_alerts | 1:N | An item can have multiple price alerts (Phase 2) |
+
+> **MVP Note:** Partner support removed. Contributions and Price Alerts tables kept for future phases.
 
 ---
 
@@ -313,12 +313,13 @@
 **IMPORTANT:** Create tables in this exact order to avoid foreign key errors.
 
 ```
-1. profiles          ← References auth.users (Supabase managed)
-2. registries        ← References profiles
-3. items             ← References registries
-4. purchases         ← References items
-5. contributions     ← References items
-6. price_alerts      ← References items
+1. profiles               ← References auth.users (Supabase managed)
+2. registries             ← References profiles
+3. checklist_preferences  ← References profiles (user checklist settings)
+4. items                  ← References registries
+5. purchases              ← References items
+6. contributions          ← References items
+7. price_alerts           ← References items
 ```
 
 ---
@@ -389,8 +390,8 @@ CREATE TABLE registries (
   -- Owner (required)
   owner_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
 
-  -- Partner (optional - for co-managing)
-  partner_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+  -- NOTE: partner_id removed from MVP - single owner per registry
+  -- Partner support will be added in Phase 2
 
   -- Public URL slug (unique, used in /registry/{slug})
   slug TEXT UNIQUE NOT NULL,
@@ -421,7 +422,72 @@ COMMENT ON COLUMN registries.slug IS 'URL-safe unique identifier for public shar
 COMMENT ON COLUMN registries.address_is_private IS 'If true, gift givers must contact owner for address';
 ```
 
-### 4.4 Items Table
+### 4.4 Checklist Preferences Table
+
+```sql
+-- ============================================
+-- CHECKLIST PREFERENCES TABLE
+-- ============================================
+-- Stores user preferences for suggested checklist items
+-- Tracks what items users need, quantity, priority, and notes
+
+CREATE TABLE checklist_preferences (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+  -- Parent user (required)
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+
+  -- ============================================
+  -- Category (Hebrew checklist categories)
+  -- ============================================
+  category_id TEXT NOT NULL CHECK (category_id IN (
+    'nursery',     -- חדר תינוק ושינה
+    'travel',      -- טיולים ונסיעות
+    'clothing',    -- ביגוד ראשוני
+    'bath',        -- אמבטיה והיגיינה
+    'feeding'      -- הנקה והאכלה
+  )),
+
+  -- ============================================
+  -- Item identification
+  -- ============================================
+  item_name TEXT NOT NULL,
+
+  -- ============================================
+  -- User preferences
+  -- ============================================
+  quantity INTEGER DEFAULT 1,
+  is_checked BOOLEAN DEFAULT false,  -- User marked as "have it" or "done"
+  is_hidden BOOLEAN DEFAULT false,   -- User doesn't need this item
+
+  -- ============================================
+  -- NEW: Notes and Priority
+  -- ============================================
+  notes TEXT DEFAULT '',             -- User notes (e.g., "להזמין מאמאזון", "שיהיה צבע צהוב")
+  priority TEXT DEFAULT 'essential' CHECK (priority IN (
+    'essential',    -- חובה - Must have item
+    'nice_to_have'  -- פינוק - Nice to have but not critical
+  )),
+
+  -- ============================================
+  -- Unique constraint: one preference per item per user
+  -- ============================================
+  UNIQUE(user_id, category_id, item_name),
+
+  -- Timestamps
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Comments
+COMMENT ON TABLE checklist_preferences IS 'User preferences for suggested checklist items';
+COMMENT ON COLUMN checklist_preferences.is_checked IS 'True if user has this item or marked as done';
+COMMENT ON COLUMN checklist_preferences.is_hidden IS 'True if user does not need this item';
+COMMENT ON COLUMN checklist_preferences.notes IS 'User notes about the item (color, size, where to buy, etc.)';
+COMMENT ON COLUMN checklist_preferences.priority IS 'essential = must have, nice_to_have = optional luxury';
+```
+
+### 4.5 Items Table
 
 ```sql
 -- ============================================
@@ -654,6 +720,7 @@ COMMENT ON COLUMN price_alerts.savings_percent IS 'Auto-calculated: percentage s
 -- Enable RLS (required for security)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE registries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE checklist_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contributions ENABLE ROW LEVEL SECURITY;
@@ -695,14 +762,7 @@ CREATE POLICY "Owners can manage their registry"
   ON registries FOR ALL
   USING (auth.uid() = owner_id);
 
--- Partners can view and update
-CREATE POLICY "Partners can view registry"
-  ON registries FOR SELECT
-  USING (auth.uid() = partner_id);
-
-CREATE POLICY "Partners can update registry"
-  ON registries FOR UPDATE
-  USING (auth.uid() = partner_id);
+-- NOTE: Partner policies removed from MVP
 
 -- Anyone can view registries (for public view)
 CREATE POLICY "Anyone can view registries"
@@ -710,7 +770,25 @@ CREATE POLICY "Anyone can view registries"
   USING (true);
 ```
 
-### 5.4 Items Policies
+### 5.4 Checklist Preferences Policies
+
+```sql
+-- ============================================
+-- CHECKLIST PREFERENCES RLS
+-- ============================================
+
+-- Users have full access to their own preferences
+CREATE POLICY "Users can manage own checklist preferences"
+  ON checklist_preferences FOR ALL
+  USING (auth.uid() = user_id);
+
+-- Users can insert their own preferences
+CREATE POLICY "Users can insert own checklist preferences"
+  ON checklist_preferences FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+```
+
+### 5.5 Items Policies
 
 ```sql
 -- ============================================
@@ -726,14 +804,7 @@ CREATE POLICY "Owners can manage items"
     )
   );
 
--- Partners can manage items
-CREATE POLICY "Partners can manage items"
-  ON items FOR ALL
-  USING (
-    registry_id IN (
-      SELECT id FROM registries WHERE partner_id = auth.uid()
-    )
-  );
+-- NOTE: Partner policy removed from MVP
 
 -- Public can view non-private items
 CREATE POLICY "Public can view non-private items"
@@ -765,16 +836,18 @@ CREATE POLICY "Owners can view purchases"
     item_id IN (
       SELECT i.id FROM items i
       JOIN registries r ON i.registry_id = r.id
-      WHERE r.owner_id = auth.uid() OR r.partner_id = auth.uid()
+      WHERE r.owner_id = auth.uid()
     )
   );
 ```
 
 ### 5.6 Contributions Policies
 
+> **Note:** Contributions table kept for future Chip-In feature (Phase 2)
+
 ```sql
 -- ============================================
--- CONTRIBUTIONS RLS
+-- CONTRIBUTIONS RLS (Phase 2 - Chip-In)
 -- ============================================
 
 -- Anyone can contribute
@@ -794,16 +867,18 @@ CREATE POLICY "Owners can view contributions"
     item_id IN (
       SELECT i.id FROM items i
       JOIN registries r ON i.registry_id = r.id
-      WHERE r.owner_id = auth.uid() OR r.partner_id = auth.uid()
+      WHERE r.owner_id = auth.uid()
     )
   );
 ```
 
 ### 5.7 Price Alerts Policies
 
+> **Note:** Price alerts table kept for future Smart Engine feature (Phase 2)
+
 ```sql
 -- ============================================
--- PRICE ALERTS RLS
+-- PRICE ALERTS RLS (Phase 2 - Smart Engine)
 -- ============================================
 
 -- Registry owners can view and manage
@@ -813,7 +888,7 @@ CREATE POLICY "Owners can manage price alerts"
     item_id IN (
       SELECT i.id FROM items i
       JOIN registries r ON i.registry_id = r.id
-      WHERE r.owner_id = auth.uid() OR r.partner_id = auth.uid()
+      WHERE r.owner_id = auth.uid()
     )
   );
 ```
@@ -968,7 +1043,12 @@ CREATE INDEX idx_profiles_email ON profiles(email);
 -- Registries
 CREATE INDEX idx_registries_slug ON registries(slug);
 CREATE INDEX idx_registries_owner ON registries(owner_id);
-CREATE INDEX idx_registries_partner ON registries(partner_id);
+-- NOTE: idx_registries_partner removed from MVP
+
+-- Checklist Preferences
+CREATE INDEX idx_checklist_prefs_user ON checklist_preferences(user_id);
+CREATE INDEX idx_checklist_prefs_category ON checklist_preferences(category_id);
+CREATE INDEX idx_checklist_prefs_priority ON checklist_preferences(priority);
 
 -- Items
 CREATE INDEX idx_items_registry ON items(registry_id);
@@ -1142,6 +1222,52 @@ const { data: alerts } = await supabase
   .order('created_at', { ascending: false })
 ```
 
+### 8.9 Get/Upsert Checklist Preferences
+
+```typescript
+// Get all user's checklist preferences
+const { data: preferences } = await supabase
+  .from('checklist_preferences')
+  .select('*')
+  .eq('user_id', userId)
+
+// Upsert a preference (insert or update)
+const { data, error } = await supabase
+  .from('checklist_preferences')
+  .upsert({
+    user_id: userId,
+    category_id: categoryId,
+    item_name: itemName,
+    quantity: quantity,
+    is_checked: isChecked,
+    is_hidden: isHidden,
+    notes: notes,
+    priority: priority, // 'essential' or 'nice_to_have'
+  }, {
+    onConflict: 'user_id,category_id,item_name'
+  })
+  .select()
+  .single()
+```
+
+### 8.10 Calculate Nesting Score (Essential Items Progress)
+
+```typescript
+// Get essential items completion for "Nesting Score"
+const { data: preferences } = await supabase
+  .from('checklist_preferences')
+  .select('is_checked, priority')
+  .eq('user_id', userId)
+  .eq('priority', 'essential')
+  .eq('is_hidden', false)
+
+const essentialTotal = preferences.length
+const essentialChecked = preferences.filter(p => p.is_checked).length
+const nestingScore = essentialTotal > 0
+  ? Math.round((essentialChecked / essentialTotal) * 100)
+  : 0
+```
+
 ---
 
 ## Quick Reference: What Goes Where
@@ -1152,7 +1278,10 @@ const { data: alerts } = await supabase
 | Complete onboarding | profiles | onboarding_completed, due_date, feeling |
 | Create registry | registries | owner_id, slug |
 | Set address | registries | address_city, address_street, address_is_private |
-| Add item | items | registry_id, name, category, price |
+| Checklist: mark item | checklist_preferences | user_id, category_id, item_name, is_checked |
+| Checklist: set priority | checklist_preferences | priority ('essential' / 'nice_to_have') |
+| Checklist: add notes | checklist_preferences | notes |
+| Add item to registry | items | registry_id, name, category, price |
 | Mark most wanted | items | is_most_wanted = true |
 | Hide item | items | is_private = true |
 | Gift giver purchases | purchases | item_id, buyer_name, buyer_email |
@@ -1163,6 +1292,7 @@ const { data: alerts } = await supabase
 ---
 
 <p align="center">
-  <strong>🪺 Nesty Database Schema v1.0</strong><br>
-  Complete reference for Supabase implementation
+  <strong>🪺 Nesty Database Schema v1.1</strong><br>
+  Complete reference for Supabase implementation<br>
+  <em>v1.1: Added checklist_preferences table with notes & priority columns</em>
 </p>
