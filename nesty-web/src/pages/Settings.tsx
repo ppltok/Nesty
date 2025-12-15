@@ -15,7 +15,7 @@ import {
 import { supabase } from '../lib/supabase'
 
 export default function Settings() {
-  const { profile, registry, refreshProfile } = useAuth()
+  const { registry, refreshProfile } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)

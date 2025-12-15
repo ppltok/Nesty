@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import {
   Share2,
@@ -20,19 +20,29 @@ import {
   LayoutGrid,
   List,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import AddressModal from '../components/AddressModal'
 import AddItemModal from '../components/AddItemModal'
 import ShareModal from '../components/ShareModal'
+import OnboardingTutorial from '../components/OnboardingTutorial'
 import { CATEGORIES } from '../data/categories'
 import { supabase } from '../lib/supabase'
 import type { Item, ItemCategory } from '../types'
 
+const TUTORIAL_COMPLETED_KEY = 'nesty_tutorial_completed'
+const ADDRESS_SKIPPED_KEY = 'nesty_address_skipped'
+
 export default function Dashboard() {
   const { profile, registry, refreshProfile } = useAuth()
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
+  const [addressModalClosed, setAddressModalClosed] = useState(false)
+  const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [items, setItems] = useState<Item[]>([])
   const [isLoadingItems, setIsLoadingItems] = useState(true)
@@ -73,15 +83,86 @@ export default function Dashboard() {
     }
   }, [registry, fetchItems])
 
-  // Show address modal if registry exists but has no address
+  // Show address modal if registry exists but has no address (and user hasn't skipped)
   useEffect(() => {
     if (registry && !registry.address_city && !registry.address_street) {
-      setShowAddressModal(true)
+      // Check if user has already skipped the address modal
+      const addressSkipped = localStorage.getItem(ADDRESS_SKIPPED_KEY)
+      if (!addressSkipped) {
+        setShowAddressModal(true)
+      } else {
+        // User skipped before, mark as closed so tutorial can proceed
+        setAddressModalClosed(true)
+      }
+    } else if (registry) {
+      // If registry has address, mark as closed so tutorial can show
+      setAddressModalClosed(true)
     }
   }, [registry])
 
+  // Handle highlight parameter for scrolling to specific item
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight')
+    if (highlightId && items.length > 0 && !isLoadingItems) {
+      setHighlightedItemId(highlightId)
+      // Clear the search param after reading it
+      setSearchParams({}, { replace: true })
+
+      // Scroll to the item after a short delay
+      setTimeout(() => {
+        const itemElement = itemRefs.current[highlightId]
+        if (itemElement) {
+          itemElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
+
+      // Remove highlight after 3 seconds
+      setTimeout(() => {
+        setHighlightedItemId(null)
+      }, 3000)
+    }
+  }, [searchParams, items, isLoadingItems, setSearchParams])
+
+  // Check if we should show tutorial after address modal closes
+  // Only show tutorial once - when user just completed onboarding (came from onboarding flow)
+  useEffect(() => {
+    // Only show tutorial if:
+    // 1. Address modal has been closed (or wasn't needed)
+    // 2. Tutorial hasn't been completed before
+    // 3. User just completed onboarding (indicated by coming from celebration/onboarding)
+    if (addressModalClosed && !showAddressModal) {
+      const tutorialCompleted = localStorage.getItem(TUTORIAL_COMPLETED_KEY)
+      const fromOnboarding = location.state?.fromOnboarding === true
+
+      if (!tutorialCompleted && fromOnboarding) {
+        // Small delay to ensure page is rendered
+        const timer = setTimeout(() => {
+          setShowTutorial(true)
+        }, 500)
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [addressModalClosed, showAddressModal, location.state])
+
   const handleAddressSave = () => {
     refreshProfile()
+  }
+
+  const handleAddressModalClose = () => {
+    // Save that user skipped the address modal
+    localStorage.setItem(ADDRESS_SKIPPED_KEY, 'true')
+    setShowAddressModal(false)
+    setAddressModalClosed(true)
+  }
+
+  const handleTutorialComplete = () => {
+    localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
+    setShowTutorial(false)
+  }
+
+  const handleTutorialSkip = () => {
+    localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
+    setShowTutorial(false)
   }
 
   const handleItemSave = () => {
@@ -238,11 +319,13 @@ export default function Dashboard() {
     const category = CATEGORIES.find((c) => c.id === item.category)
     const isPurchased = item.quantity_received >= item.quantity
     const CategoryIcon = category?.icon
+    const isHighlighted = highlightedItemId === item.id
 
     if (viewMode === 'list') {
       return (
         <div
-          className={`bg-white rounded-[20px] border border-[#e7e0ec] overflow-hidden group hover:border-[#d0bcff] transition-all duration-300 flex ${isPurchased ? 'opacity-70' : ''}`}
+          ref={(el) => { itemRefs.current[item.id] = el }}
+          className={`bg-white rounded-[20px] border overflow-hidden group transition-all duration-300 flex ${isPurchased ? 'opacity-70' : ''} ${isHighlighted ? 'border-[#6750a4] ring-4 ring-[#6750a4]/30 shadow-lg' : 'border-[#e7e0ec] hover:border-[#d0bcff]'}`}
         >
           {/* Image */}
           <div className="w-32 sm:w-48 aspect-square flex-shrink-0 bg-[#f5f5f5] relative overflow-hidden">
@@ -336,7 +419,8 @@ export default function Dashboard() {
     // Grid View
     return (
       <div
-        className={`bg-white rounded-[24px] border border-[#e7e0ec] overflow-hidden group hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:border-[#d0bcff] transition-all duration-300 ${isPurchased ? 'opacity-80' : ''}`}
+        ref={(el) => { itemRefs.current[item.id] = el }}
+        className={`bg-white rounded-[24px] border overflow-hidden group transition-all duration-300 ${isPurchased ? 'opacity-80' : ''} ${isHighlighted ? 'border-[#6750a4] ring-4 ring-[#6750a4]/30 shadow-lg' : 'border-[#e7e0ec] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:border-[#d0bcff]'}`}
       >
         {/* Image Area */}
         <div className="aspect-square bg-[#f5f5f5] relative overflow-hidden">
@@ -488,9 +572,17 @@ export default function Dashboard() {
       {registry && (
         <AddressModal
           isOpen={showAddressModal}
-          onClose={() => setShowAddressModal(false)}
+          onClose={handleAddressModalClose}
           registryId={registry.id}
           onSave={handleAddressSave}
+        />
+      )}
+
+      {/* Onboarding Tutorial */}
+      {showTutorial && (
+        <OnboardingTutorial
+          onComplete={handleTutorialComplete}
+          onSkip={handleTutorialSkip}
         />
       )}
 
