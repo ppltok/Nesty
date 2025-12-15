@@ -33,7 +33,7 @@ const TUTORIAL_COMPLETED_KEY = 'nesty_tutorial_completed'
 const ADDRESS_SKIPPED_KEY = 'nesty_address_skipped'
 
 export default function Dashboard() {
-  const { profile, registry, refreshProfile } = useAuth()
+  const { profile, registry, refreshProfile, isLoading: authLoading } = useAuth()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [showAddressModal, setShowAddressModal] = useState(false)
@@ -55,6 +55,11 @@ export default function Dashboard() {
 
   // View Mode State
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
+  // Quantity selector modal state
+  const [quantityModalItem, setQuantityModalItem] = useState<Item | null>(null)
+  const [selectedQuantity, setSelectedQuantity] = useState(1)
+  const [isEditingPurchased, setIsEditingPurchased] = useState(false)
 
   // Fetch items for the registry
   const fetchItems = useCallback(async () => {
@@ -84,17 +89,30 @@ export default function Dashboard() {
   }, [registry, fetchItems])
 
   // Show address modal if registry exists but has no address (and user hasn't skipped)
+  // Using a ref to prevent double-execution in StrictMode
+  const addressModalChecked = useRef(false)
   useEffect(() => {
-    if (registry && !registry.address_city && !registry.address_street) {
+    // Guard against double execution
+    if (addressModalChecked.current) return
+    if (!registry) return
+
+    addressModalChecked.current = true
+
+    if (!registry.address_city && !registry.address_street) {
       // Check if user has already skipped the address modal
-      const addressSkipped = localStorage.getItem(ADDRESS_SKIPPED_KEY)
-      if (!addressSkipped) {
-        setShowAddressModal(true)
-      } else {
-        // User skipped before, mark as closed so tutorial can proceed
+      try {
+        const addressSkipped = localStorage.getItem(ADDRESS_SKIPPED_KEY)
+        if (!addressSkipped) {
+          setShowAddressModal(true)
+        } else {
+          // User skipped before, mark as closed so tutorial can proceed
+          setAddressModalClosed(true)
+        }
+      } catch {
+        // localStorage error - treat as skipped
         setAddressModalClosed(true)
       }
-    } else if (registry) {
+    } else {
       // If registry has address, mark as closed so tutorial can show
       setAddressModalClosed(true)
     }
@@ -125,12 +143,19 @@ export default function Dashboard() {
 
   // Check if we should show tutorial after address modal closes
   // Only show tutorial once - when user just completed onboarding (came from onboarding flow)
+  const tutorialChecked = useRef(false)
   useEffect(() => {
+    // Guard against double execution and ensure we only check once
+    if (tutorialChecked.current) return
+    if (!addressModalClosed || showAddressModal) return
+
+    tutorialChecked.current = true
+
     // Only show tutorial if:
-    // 1. Address modal has been closed (or wasn't needed)
+    // 1. Address modal has been closed (or wasn't needed) - checked above
     // 2. Tutorial hasn't been completed before
     // 3. User just completed onboarding (indicated by coming from celebration/onboarding)
-    if (addressModalClosed && !showAddressModal) {
+    try {
       const tutorialCompleted = localStorage.getItem(TUTORIAL_COMPLETED_KEY)
       const fromOnboarding = location.state?.fromOnboarding === true
 
@@ -141,6 +166,8 @@ export default function Dashboard() {
         }, 500)
         return () => clearTimeout(timer)
       }
+    } catch {
+      // localStorage error - skip tutorial
     }
   }, [addressModalClosed, showAddressModal, location.state])
 
@@ -150,18 +177,30 @@ export default function Dashboard() {
 
   const handleAddressModalClose = () => {
     // Save that user skipped the address modal
-    localStorage.setItem(ADDRESS_SKIPPED_KEY, 'true')
+    try {
+      localStorage.setItem(ADDRESS_SKIPPED_KEY, 'true')
+    } catch {
+      // localStorage error - continue anyway
+    }
     setShowAddressModal(false)
     setAddressModalClosed(true)
   }
 
   const handleTutorialComplete = () => {
-    localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
+    try {
+      localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
+    } catch {
+      // localStorage error - continue anyway
+    }
     setShowTutorial(false)
   }
 
   const handleTutorialSkip = () => {
-    localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
+    try {
+      localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
+    } catch {
+      // localStorage error - continue anyway
+    }
     setShowTutorial(false)
   }
 
@@ -188,13 +227,24 @@ export default function Dashboard() {
     const itemToDelete = items.find((i) => i.id === itemId)
     if (!itemToDelete) return
 
-    const { count: purchaseCount } = await supabase
-      .from('purchases')
-      .select('*', { count: 'exact', head: true })
-      .eq('item_id', itemId)
+    let purchaseCount = 0
+    try {
+      const { count, error } = await supabase
+        .from('purchases')
+        .select('*', { count: 'exact', head: true })
+        .eq('item_id', itemId)
+
+      if (error) {
+        console.error('Error checking purchase count:', error)
+      } else {
+        purchaseCount = count || 0
+      }
+    } catch (err) {
+      console.error('Error checking purchase count:', err)
+    }
 
     let confirmMessage = 'האם למחוק את הפריט?'
-    if (purchaseCount && purchaseCount > 0) {
+    if (purchaseCount > 0) {
       confirmMessage = `לפריט זה יש ${purchaseCount} רכישות רשומות.\nמחיקת הפריט תמחק גם את כל הרכישות.\n\nהאם להמשיך?`
     } else if (itemToDelete.quantity_received > 0) {
       confirmMessage = `הפריט סומן כנרכש (${itemToDelete.quantity_received} יחידות).\n\nהאם למחוק?`
@@ -219,9 +269,59 @@ export default function Dashboard() {
     }
   }
 
-  const handleMarkPurchased = async (itemId: string, currentReceived: number, quantity: number) => {
-    const newReceived = currentReceived >= quantity ? 0 : quantity
+  // Handle click on "mark as purchased" button
+  const handleMarkPurchasedClick = (item: Item) => {
+    const isPurchased = item.quantity_received >= item.quantity
+
+    if (isPurchased) {
+      // Toggling OFF - directly call the update function
+      updateItemQuantityReceived(item.id, item.quantity_received, item.quantity, 0)
+    } else if (item.quantity > 1) {
+      // Multi-quantity item - show modal to select quantity
+      setSelectedQuantity(item.quantity - item.quantity_received) // Default to remaining
+      setIsEditingPurchased(false)
+      setQuantityModalItem(item)
+    } else {
+      // Single quantity - directly mark as purchased
+      updateItemQuantityReceived(item.id, item.quantity_received, item.quantity, 1)
+    }
+  }
+
+  // Handle click on edit purchased quantity
+  const handleEditPurchasedClick = (item: Item) => {
+    setSelectedQuantity(item.quantity_received)
+    setIsEditingPurchased(true)
+    setQuantityModalItem(item)
+  }
+
+  // Actually update the quantity_received in database
+  const updateItemQuantityReceived = async (itemId: string, currentReceived: number, quantity: number, newReceivedOverride?: number) => {
     try {
+      let newReceived: number
+
+      if (newReceivedOverride !== undefined) {
+        if (newReceivedOverride === 0 && currentReceived >= quantity) {
+          // Toggling OFF (unpurchasing) - need to preserve guest purchases
+          const { data: purchases, error: purchaseError } = await supabase
+            .from('purchases')
+            .select('quantity_purchased')
+            .eq('item_id', itemId)
+            .eq('status', 'confirmed')
+
+          if (purchaseError) {
+            console.error('Error fetching purchases:', purchaseError)
+            newReceived = 0
+          } else {
+            newReceived = purchases?.reduce((sum, p) => sum + (p.quantity_purchased || 1), 0) || 0
+          }
+        } else {
+          // Use the override value (adding to current)
+          newReceived = Math.min(currentReceived + newReceivedOverride, quantity)
+        }
+      } else {
+        newReceived = quantity
+      }
+
       const { error } = await supabase
         .from('items')
         .update({ quantity_received: newReceived })
@@ -239,6 +339,39 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Error updating item:', err)
     }
+  }
+
+  // Handle quantity modal confirmation
+  const handleQuantityModalConfirm = async () => {
+    if (!quantityModalItem) return
+
+    if (isEditingPurchased) {
+      // Edit mode - set to exact value
+      const { error } = await supabase
+        .from('items')
+        .update({ quantity_received: selectedQuantity })
+        .eq('id', quantityModalItem.id)
+
+      if (error) {
+        console.error('Update error:', error)
+        alert(`שגיאה בעדכון הפריט: ${error.message}`)
+        return
+      }
+
+      setItems((prev) =>
+        prev.map((item) => (item.id === quantityModalItem.id ? { ...item, quantity_received: selectedQuantity } : item))
+      )
+    } else {
+      // Add mode - add to current
+      updateItemQuantityReceived(
+        quantityModalItem.id,
+        quantityModalItem.quantity_received,
+        quantityModalItem.quantity,
+        selectedQuantity
+      )
+    }
+    setQuantityModalItem(null)
+    setIsEditingPurchased(false)
   }
 
   // Filtered and sorted items
@@ -386,14 +519,29 @@ export default function Dashboard() {
                       style={{ width: `${(item.quantity_received / item.quantity) * 100}%` }}
                     />
                   </div>
+                  {item.quantity > 1 && (
+                    <span className="text-[#49454f] whitespace-nowrap">
+                      {isPurchased ? `נרכשו ${item.quantity}` : `נותרו ${item.quantity - item.quantity_received}`}
+                    </span>
+                  )}
                 </div>
                 <div className="flex gap-2 mt-2">
                   <button
-                    onClick={() => handleMarkPurchased(item.id, item.quantity_received, item.quantity)}
+                    onClick={() => handleMarkPurchasedClick(item)}
                     className={`p-2 rounded-lg text-xs font-bold transition-colors ${isPurchased ? 'bg-green-100 text-green-700' : 'bg-[#1d192b] text-white'}`}
                   >
                     {isPurchased ? 'בטל רכישה' : 'סמן כנרכש'}
                   </button>
+                  {/* Edit purchased quantity button - only show for multi-quantity items with some purchased */}
+                  {item.quantity > 1 && item.quantity_received > 0 && !isPurchased && (
+                    <button
+                      onClick={() => handleEditPurchasedClick(item)}
+                      className="p-2 rounded-lg text-xs font-medium bg-[#f3edff] text-[#6750a4] hover:bg-[#e8deff] transition-colors"
+                      title="ערוך כמות שנרכשה"
+                    >
+                      {item.quantity_received}/{item.quantity}
+                    </button>
+                  )}
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleOpenEditModal(item)}
@@ -517,26 +665,38 @@ export default function Dashboard() {
 
           {/* Actions */}
           <div className="flex flex-col gap-3">
-            <button
-              className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 ${
-                isPurchased
-                  ? 'border border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
-                  : 'bg-[#1d192b] text-white hover:bg-[#322f3d]'
-              }`}
-              onClick={() => handleMarkPurchased(item.id, item.quantity_received, item.quantity)}
-            >
-              {isPurchased ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  סמן כלא נרכש
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="w-4 h-4" />
-                  סמן כנרכש
-                </>
+            <div className="flex gap-2">
+              <button
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 ${
+                  isPurchased
+                    ? 'border border-green-200 text-green-700 bg-green-50 hover:bg-green-100'
+                    : 'bg-[#1d192b] text-white hover:bg-[#322f3d]'
+                }`}
+                onClick={() => handleMarkPurchasedClick(item)}
+              >
+                {isPurchased ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    סמן כלא נרכש
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4" />
+                    סמן כנרכש
+                  </>
+                )}
+              </button>
+              {/* Edit purchased quantity button - only show for multi-quantity items with some purchased */}
+              {item.quantity > 1 && item.quantity_received > 0 && !isPurchased && (
+                <button
+                  onClick={() => handleEditPurchasedClick(item)}
+                  className="px-3 py-2.5 rounded-xl text-sm font-medium bg-[#f3edff] text-[#6750a4] hover:bg-[#e8deff] transition-colors"
+                  title="ערוך כמות שנרכשה"
+                >
+                  {item.quantity_received}/{item.quantity}
+                </button>
               )}
-            </button>
+            </div>
 
             <div className="flex items-center gap-2">
               {item.original_url && (
@@ -561,6 +721,18 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show loading if auth is still loading or registry hasn't loaded yet
+  if (authLoading || !registry) {
+    return (
+      <div className="min-h-screen bg-[#fffbff] flex items-center justify-center" dir="rtl">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-[#6750a4] border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-[#49454f] font-medium">טוען את הרשימה...</p>
         </div>
       </div>
     )
@@ -605,6 +777,75 @@ export default function Dashboard() {
           registrySlug={registry.slug}
           ownerName={profile?.first_name || 'משתמש'}
         />
+      )}
+
+      {/* Quantity Selector Modal */}
+      {quantityModalItem && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setQuantityModalItem(null); setIsEditingPurchased(false); }}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-[#1d192b] mb-2 text-center">
+              {isEditingPurchased ? 'עריכת כמות שנרכשה' : 'כמה נרכשו?'}
+            </h3>
+            <p className="text-[#49454f] text-sm mb-6 text-center">
+              {quantityModalItem.name}
+              <span className="block text-xs mt-1">
+                (סה״כ נדרש: {quantityModalItem.quantity})
+              </span>
+            </p>
+
+            {/* Quantity selector */}
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <button
+                onClick={() => setSelectedQuantity(Math.max(0, selectedQuantity - 1))}
+                className="w-12 h-12 rounded-full bg-[#f3edff] text-[#6750a4] text-2xl font-bold hover:bg-[#e8deff] transition-colors"
+              >
+                -
+              </button>
+              <span className="text-3xl font-bold text-[#1d192b] w-16 text-center">{selectedQuantity}</span>
+              <button
+                onClick={() => setSelectedQuantity(Math.min(
+                  isEditingPurchased ? quantityModalItem.quantity : quantityModalItem.quantity - quantityModalItem.quantity_received,
+                  selectedQuantity + 1
+                ))}
+                className="w-12 h-12 rounded-full bg-[#f3edff] text-[#6750a4] text-2xl font-bold hover:bg-[#e8deff] transition-colors"
+              >
+                +
+              </button>
+            </div>
+
+            {/* All button */}
+            <div className="flex justify-center mb-6">
+              <button
+                onClick={() => setSelectedQuantity(
+                  isEditingPurchased ? quantityModalItem.quantity : quantityModalItem.quantity - quantityModalItem.quantity_received
+                )}
+                className={`px-6 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  selectedQuantity === (isEditingPurchased ? quantityModalItem.quantity : quantityModalItem.quantity - quantityModalItem.quantity_received)
+                    ? 'bg-[#6750a4] text-white'
+                    : 'bg-[#f3edff] text-[#6750a4] hover:bg-[#e8deff]'
+                }`}
+              >
+                הכל ({isEditingPurchased ? quantityModalItem.quantity : quantityModalItem.quantity - quantityModalItem.quantity_received})
+              </button>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setQuantityModalItem(null); setIsEditingPurchased(false); }}
+                className="flex-1 py-3 rounded-xl border border-[#e7e0ec] text-[#49454f] font-medium hover:bg-gray-50 transition-colors"
+              >
+                ביטול
+              </button>
+              <button
+                onClick={handleQuantityModalConfirm}
+                className="flex-1 py-3 rounded-xl bg-[#6750a4] text-white font-bold hover:bg-[#7c6aaf] transition-colors"
+              >
+                אישור
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Main Content */}

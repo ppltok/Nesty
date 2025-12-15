@@ -118,7 +118,7 @@ export default function PublicRegistry() {
       setRegistry(registryData as RegistryWithOwner)
 
       // Fetch public items
-      const { data: itemsData } = await supabase
+      const { data: itemsData, error: itemsError } = await supabase
         .from('items')
         .select('*')
         .eq('registry_id', registryData.id)
@@ -126,11 +126,18 @@ export default function PublicRegistry() {
         .order('is_most_wanted', { ascending: false })
         .order('created_at', { ascending: false })
 
+      if (itemsError) {
+        console.error('Error fetching items:', itemsError)
+      }
       setItems(itemsData || [])
       setIsLoading(false)
     }
 
-    fetchRegistry()
+    fetchRegistry().catch(err => {
+      console.error('Error in fetchRegistry:', err)
+      setError('שגיאה בטעינת הרשימה')
+      setIsLoading(false)
+    })
   }, [slug])
 
   if (isLoading) {
@@ -203,19 +210,26 @@ export default function PublicRegistry() {
     setIsPurchaseModalOpen(true)
   }
 
-  const handlePurchaseSuccess = () => {
+  const handlePurchaseSuccess = async () => {
     // Refresh items to get updated quantities
     if (registry) {
-      supabase
-        .from('items')
-        .select('*')
-        .eq('registry_id', registry.id)
-        .eq('is_private', false)
-        .order('is_most_wanted', { ascending: false })
-        .order('created_at', { ascending: false })
-        .then(({ data }) => {
-          if (data) setItems(data)
-        })
+      try {
+        const { data, error } = await supabase
+          .from('items')
+          .select('*')
+          .eq('registry_id', registry.id)
+          .eq('is_private', false)
+          .order('is_most_wanted', { ascending: false })
+          .order('created_at', { ascending: false })
+
+        if (error) {
+          console.error('Error refreshing items:', error)
+          return
+        }
+        if (data) setItems(data)
+      } catch (err) {
+        console.error('Error refreshing items:', err)
+      }
     }
   }
 
@@ -515,7 +529,7 @@ export default function PublicRegistry() {
           </div>
           <h3 className="font-bold text-2xl text-[#1d192b] mb-3">רוצים גם רשימה כזו?</h3>
           <p className="text-[#49454f] mb-8 max-w-sm mx-auto text-lg">
-            פתחו רשימת מתנות חכמה, מעוצבת וחינמית לגמרי עם Nesty.
+            פתחו רשימת מתנות חכמה, מעוצבת וחינמית עם Nesty.
           </p>
           <Link
             to="/"

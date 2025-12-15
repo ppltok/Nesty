@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -24,13 +23,8 @@ import Example from './pages/Example'
 try {
   initializeStorageVersion()
 } catch (e) {
-  // If initialization fails, try to clear everything
+  // If initialization fails, log but don't clear - Supabase auth might get wiped
   console.error('Failed to initialize storage:', e)
-  try {
-    localStorage.clear()
-  } catch {
-    // localStorage might be disabled
-  }
 }
 
 function LoadingScreen() {
@@ -47,14 +41,8 @@ function LoadingScreen() {
 function AppRoutes() {
   const { isLoading, profile } = useAuth()
 
-  // Re-initialize storage on mount (for safety)
-  useEffect(() => {
-    try {
-      initializeStorageVersion()
-    } catch (e) {
-      console.error('Failed to re-initialize storage:', e)
-    }
-  }, [])
+  // Storage is already initialized at module load time
+  // No need to re-initialize here as it can cause race conditions
 
   if (isLoading) {
     return <LoadingScreen />

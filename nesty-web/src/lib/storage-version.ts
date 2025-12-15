@@ -14,14 +14,22 @@ const STORAGE_VERSION = 2  // Bumped to force clear on existing users
 const STORAGE_VERSION_KEY = 'nesty-storage-version'
 
 // All known Nesty localStorage keys (that should be cleared on version update)
-// NOTE: nesty_tutorial_completed is intentionally NOT included here
-// because we want to preserve the tutorial completion status across versions
+// User preference keys (tutorial, address skipped) are included for validation
+// but are simple string values that rarely cause issues
 const NESTY_KEYS = [
   'nesty-checked-suggestions',
   'nesty-hidden-suggestions',
   'nesty-suggestion-quantities',
   'nesty-revealed-surprises',
   'nesty-storage-version',
+  'nesty_tutorial_completed',
+  'nesty_address_skipped',
+]
+
+// Keys that should NOT be cleared during version migration (user preferences)
+const PRESERVED_KEYS = [
+  'nesty_tutorial_completed',
+  'nesty_address_skipped',
 ]
 
 /**
@@ -84,6 +92,12 @@ function validateAllStorageData(): boolean {
     try {
       const value = localStorage.getItem(key)
       if (value !== null) {
+        // Simple string keys (user preferences) - just check they're valid strings
+        if (PRESERVED_KEYS.includes(key)) {
+          // These are simple string values like 'true', no JSON parsing needed
+          continue
+        }
+
         const parsed = JSON.parse(value)
         // Additional validation based on key type
         if (key === 'nesty-checked-suggestions' ||
@@ -110,17 +124,20 @@ function validateAllStorageData(): boolean {
 }
 
 /**
- * Clear all Nesty-related localStorage data
+ * Clear all Nesty-related localStorage data (except preserved user preferences)
  */
 export function clearAllNestyData(): void {
   NESTY_KEYS.forEach(key => {
+    // Skip preserved keys (user preferences)
+    if (PRESERVED_KEYS.includes(key)) return
+
     try {
       localStorage.removeItem(key)
     } catch {
       // Ignore removal errors
     }
   })
-  console.log('Cleared all Nesty localStorage data')
+  console.log('Cleared Nesty localStorage data (preserved user preferences)')
 }
 
 /**
@@ -176,17 +193,22 @@ export function safeSetItem(key: string, value: unknown): boolean {
 }
 
 /**
- * Emergency reset - clears everything and reloads
+ * Emergency reset - clears Nesty data and reloads
  * Call this from error boundaries or when app is in broken state
+ * NOTE: This does NOT clear Supabase auth session to prevent logout loops
  */
 export function emergencyReset(): void {
   try {
     clearAllNestyData()
     localStorage.setItem(STORAGE_VERSION_KEY, String(STORAGE_VERSION))
   } catch {
-    // If even this fails, try clearing all localStorage
+    // If even this fails, clear ONLY Nesty keys, not Supabase auth
     try {
-      localStorage.clear()
+      NESTY_KEYS.forEach(key => {
+        if (!PRESERVED_KEYS.includes(key)) {
+          localStorage.removeItem(key)
+        }
+      })
     } catch {
       // Nothing more we can do
     }

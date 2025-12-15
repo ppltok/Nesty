@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase'
 import type { ChecklistPreference, PriorityLevel } from '../types'
 
 export default function Checklist() {
-  const { user, registry } = useAuth()
+  const { user, registry, isLoading: authLoading } = useAuth()
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [prefilledCategory, setPrefilledCategory] = useState<string | undefined>()
   const [expandedCategory, setExpandedCategory] = useState<string | null>('strollers')
@@ -391,7 +391,8 @@ export default function Checklist() {
   const checkedEssential = essentialItems.filter(i => isSuggestionChecked(i.categoryId, i.name)).length
   const nestingScore = essentialItems.length > 0 ? Math.round((checkedEssential / essentialItems.length) * 100) : 0
 
-  if (isLoading) {
+  // Show loading if auth or checklist is still loading
+  if (authLoading || isLoading || !registry) {
     return (
       <div className="min-h-screen bg-[#fffbff] flex items-center justify-center">
         <div className="text-center">
