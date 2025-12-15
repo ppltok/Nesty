@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
@@ -8,6 +8,7 @@ export default function AuthCallback() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const hasHandled = useRef(false)
+  const [status, setStatus] = useState('מאמת את ההתחברות...')
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -38,24 +39,50 @@ export default function AuthCallback() {
         return
       }
 
-      // If there's a hash with access_token, Supabase should have processed it
-      // Wait a moment for Supabase to process the hash
+      // If there's a hash with access_token, Supabase needs to process it
+      // The hash contains the OAuth tokens that Supabase client will extract
       if (window.location.hash.includes('access_token')) {
-        console.log('AuthCallback: Found access_token in hash, waiting for Supabase to process...')
-        await new Promise(resolve => setTimeout(resolve, 500))
+        console.log('AuthCallback: Found access_token in hash, letting Supabase process...')
+        setStatus('מעבד את הטוקן...')
+
+        // Give Supabase time to process the hash and establish the session
+        // The onAuthStateChange listener in AuthContext will handle this
+        await new Promise(resolve => setTimeout(resolve, 1000))
       }
 
-      const { data: { session }, error } = await supabase.auth.getSession()
-      console.log('AuthCallback: getSession result:', { hasSession: !!session, error })
+      // Try to get session with retries (OAuth can be slow to establish)
+      let session = null
+      let attempts = 0
+      const maxAttempts = 5
 
-      if (error) {
-        console.error('Auth callback error:', error)
-        navigate('/auth/signin', { replace: true })
-        return
+      while (!session && attempts < maxAttempts) {
+        attempts++
+        console.log(`AuthCallback: Attempt ${attempts} to get session`)
+        setStatus(`מתחבר... (${attempts}/${maxAttempts})`)
+
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error('Auth callback error:', error)
+          if (attempts === maxAttempts) {
+            navigate('/auth/signin', { replace: true })
+            return
+          }
+        }
+
+        session = data.session
+
+        if (!session && attempts < maxAttempts) {
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 500))
+        }
       }
+
+      console.log('AuthCallback: getSession result:', { hasSession: !!session, attempts })
 
       if (session) {
         console.log('AuthCallback: Session found, checking profile for user', session.user.id)
+        setStatus('בודק פרופיל...')
 
         // Check if user has completed onboarding
         // Use maybeSingle() instead of single() to handle case where profile doesn't exist yet
@@ -86,13 +113,15 @@ export default function AuthCallback() {
 
         if (profile?.onboarding_completed) {
           console.log('AuthCallback: Navigating to dashboard')
+          setStatus('מעבר ללוח הבקרה...')
           navigate('/dashboard', { replace: true })
         } else {
           console.log('AuthCallback: Navigating to onboarding')
+          setStatus('מעבר להרשמה...')
           navigate('/onboarding', { replace: true })
         }
       } else {
-        console.log('AuthCallback: No session, navigating to signin')
+        console.log('AuthCallback: No session after retries, navigating to signin')
         navigate('/auth/signin', { replace: true })
       }
     }
@@ -101,10 +130,10 @@ export default function AuthCallback() {
   }, [navigate, searchParams])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background" dir="rtl">
       <div className="text-center">
         <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-muted-foreground">מאמת את ההתחברות...</p>
+        <p className="text-muted-foreground">{status}</p>
       </div>
     </div>
   )

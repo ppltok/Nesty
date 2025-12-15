@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Gift, Check, ExternalLink, Heart, EyeOff, Store } from 'lucide-react'
+import { X, Gift, Check, ExternalLink, Heart, EyeOff, Store, MapPin, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
 import { supabase } from '../lib/supabase'
@@ -34,6 +34,15 @@ interface PurchaseModalProps {
     name: string
     email: string
   }
+  addressInfo?: {
+    isPrivate: boolean
+    city: string
+    street: string
+    apt: string
+    postal: string
+    phone: string
+    ownerName: string
+  }
 }
 
 interface PurchaseFormData {
@@ -53,8 +62,10 @@ export default function PurchaseModal({
   item,
   onSuccess,
   ownerInfo,
+  addressInfo,
 }: PurchaseModalProps) {
   const [step, setStep] = useState<'info' | 'form' | 'success'>('info')
+  const [showAddress, setShowAddress] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<PurchaseFormData>({
@@ -120,6 +131,7 @@ export default function PurchaseModal({
 
   const handleClose = () => {
     setStep('info')
+    setShowAddress(false)
     setFormData({
       buyerName: '',
       buyerEmail: '',
@@ -356,6 +368,75 @@ export default function PurchaseModal({
                 </div>
               </div>
             </div>
+
+            {/* Address Section */}
+            {addressInfo && (
+              <div className="mb-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAddress(!showAddress)}
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-[#f3edff] hover:bg-[#eaddff] transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">
+                      צריכים את הכתובת למשלוח?
+                    </span>
+                  </div>
+                  {showAddress ? (
+                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </button>
+
+                {showAddress && (
+                  <div className="mt-3 p-4 rounded-xl border border-border bg-white">
+                    {addressInfo.isPrivate || !addressInfo.city ? (
+                      // Address is private or not set
+                      <div className="text-center">
+                        <div className="w-12 h-12 bg-accent-pink/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <MessageCircle className="w-6 h-6 text-accent-pink" />
+                        </div>
+                        <p className="text-sm text-foreground font-medium mb-1">
+                          הכתובת מוסתרת 🤫
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {addressInfo.ownerName ? (
+                            <>תודה על התמיכה! {addressInfo.ownerName} בחר/ה להסתיר את הכתובת - פנו אליהם בפרטי לקבל את פרטי המשלוח 💜</>
+                          ) : (
+                            <>תודה על התמיכה! ההורים בחרו להסתיר את הכתובת - פנו אליהם בפרטי לקבל את פרטי המשלוח 💜</>
+                          )}
+                        </p>
+                      </div>
+                    ) : (
+                      // Address is visible
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                          <div className="text-sm text-foreground">
+                            <p className="font-medium">כתובת למשלוח:</p>
+                            <p>
+                              {addressInfo.street}
+                              {addressInfo.apt && `, דירה ${addressInfo.apt}`}
+                            </p>
+                            <p>
+                              {addressInfo.city}
+                              {addressInfo.postal && ` ${addressInfo.postal}`}
+                            </p>
+                            {addressInfo.phone && (
+                              <p className="mt-1 text-muted-foreground">
+                                טלפון: {addressInfo.phone}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Actions */}
             <div className="space-y-3">

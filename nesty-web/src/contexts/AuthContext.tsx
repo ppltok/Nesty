@@ -113,6 +113,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let isMounted = true
     let timeoutId: ReturnType<typeof setTimeout> | null = null
+    let hasProcessedInitialSession = false
+
+    // Check if we're on the OAuth callback page
+    const isOAuthCallback = window.location.pathname.includes('/auth/callback') ||
+      window.location.hash.includes('access_token')
+
+    // Longer timeout for OAuth callback to allow session processing
+    const timeoutDuration = isOAuthCallback ? 10000 : 5000
 
     // Safety timeout - if auth takes too long, stop loading anyway
     // This prevents infinite loading on stale/corrupted auth state
@@ -121,14 +129,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('Auth timeout - forcing loading to complete')
         setIsLoading(false)
       }
-    }, 5000) // 5 second timeout
+    }, timeoutDuration)
 
-    // Set up auth state listener first (before getting session)
-    // This ensures we catch the SIGNED_IN event from OAuth callback
+    // Set up auth state listener FIRST
+    // This is the primary way to detect OAuth sessions
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return
-        console.log('Auth event:', event)
+        console.log('Auth event:', event, 'hasSession:', !!session)
 
         // Clear timeout since we got a response
         if (timeoutId) {
@@ -155,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Handle sign in events (including OAuth callback)
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          hasProcessedInitialSession = true
           setSession(session)
           setUser(session?.user ?? null)
 
@@ -184,9 +193,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     )
 
-    // Get initial session with error handling
-    supabase.auth.getSession()
-      .then(async ({ data: { session }, error }) => {
+    // Get initial session
+    // On OAuth callback, Supabase will automatically detect and process the hash
+    // The onAuthStateChange above will fire with SIGNED_IN event
+    const initializeSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+
         if (!isMounted) return
 
         // Clear timeout since we got a response
@@ -199,7 +212,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('Error getting session:', error)
           // On error, clear potentially corrupted auth state
           // This fixes the "clearing localStorage fixes it" issue
-          if (error.message?.includes('refresh_token') || error.message?.includes('invalid')) {
+          if (error.message?.includes('refresh_token') ||
+              error.message?.includes('invalid') ||
+              error.message?.includes('expired')) {
             console.warn('Clearing corrupted auth state')
             await supabase.auth.signOut()
           }
@@ -207,21 +222,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        // Only set state if no session event has fired yet
-        if (!currentUserId.current && session?.user) {
-          setSession(session)
-          setUser(session.user)
-          currentUserId.current = session.user.id
-          await fetchUserData(session.user.id)
+        // Only set state if onAuthStateChange hasn't already handled it
+        // This prevents race conditions between the two
+        if (!hasProcessedInitialSession && !currentUserId.current) {
+          if (session?.user) {
+            setSession(session)
+            setUser(session.user)
+            currentUserId.current = session.user.id
+            await fetchUserData(session.user.id)
+          }
+          setIsLoading(false)
         }
-
-        setIsLoading(false)
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!isMounted) return
         console.error('Failed to get session:', err)
         setIsLoading(false)
-      })
+      }
+    }
+
+    initializeSession()
 
     return () => {
       isMounted = false
