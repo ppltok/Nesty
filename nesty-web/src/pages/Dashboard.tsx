@@ -26,7 +26,7 @@ import AddItemModal from '../components/AddItemModal'
 import ShareModal from '../components/ShareModal'
 import OnboardingTutorial from '../components/OnboardingTutorial'
 import { CATEGORIES } from '../data/categories'
-import { supabase, isAuthError, forceSignOut } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 import type { Item, ItemCategory } from '../types'
 
 // Helper to get user-specific localStorage keys
@@ -74,23 +74,11 @@ export default function Dashboard() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        // Check if this is an auth error - if so, force logout
-        if (isAuthError(error)) {
-          console.error('Auth error detected in fetchItems, forcing logout:', error)
-          await forceSignOut()
-          return
-        }
         throw error
       }
       setItems(data || [])
     } catch (err) {
       console.error('Error fetching items:', err)
-      // Also check caught errors for auth issues
-      if (isAuthError(err)) {
-        console.error('Auth error caught in fetchItems, forcing logout')
-        await forceSignOut()
-        return
-      }
     } finally {
       setIsLoadingItems(false)
     }
