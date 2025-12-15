@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { asset } from '../../lib/assets'
 import { Sparkles } from 'lucide-react'
@@ -7,6 +8,24 @@ import { Sparkles } from 'lucide-react'
 export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const navigate = useNavigate()
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, authLoading, navigate])
+
+  // Show loading while checking auth status
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#fffbff]">
+        <div className="animate-spin w-10 h-10 border-4 border-[#6750a4] border-t-transparent rounded-full" />
+      </div>
+    )
+  }
 
   const handleGoogleSignUp = async () => {
     setIsLoading(true)
