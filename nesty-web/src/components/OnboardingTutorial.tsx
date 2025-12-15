@@ -7,11 +7,15 @@ interface TutorialStep {
   title: string
   description: string
   targetSelector?: string
+  navItemId?: string // ID of the nav item to highlight (e.g., 'dashboard', 'checklist', 'gifts', 'settings')
   route: string
   position: 'top' | 'bottom' | 'left' | 'right' | 'center'
   icon?: React.ComponentType<{ className?: string }>
   highlightNav?: boolean
 }
+
+// Check if we're on mobile
+const isMobile = () => window.innerWidth < 1024
 
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
@@ -26,7 +30,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'dashboard',
     title: 'לוח הבקרה',
     description: 'זה המקום הראשי שלכם! כאן תראו את כל הפריטים ברשימה, סטטיסטיקות, ותוכלו להוסיף פריטים חדשים.',
-    targetSelector: '[data-tutorial="dashboard-stats"]',
+    navItemId: 'dashboard',
     route: '/dashboard',
     position: 'bottom',
     icon: LayoutDashboard,
@@ -44,6 +48,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'checklist',
     title: 'צ\'קליסט מומלץ',
     description: 'לא יודעים מה צריך? הצ\'קליסט שלנו מכיל את כל הפריטים המומלצים לתינוק, מסודרים לפי קטגוריות.',
+    navItemId: 'checklist',
     route: '/checklist',
     position: 'center',
     icon: ClipboardList,
@@ -61,6 +66,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'gifts',
     title: 'מתנות שהתקבלו',
     description: 'כאן תראו את כל המתנות שנרכשו עבורכם. תוכלו לראות מי קנה מה ולשלוח תודות.',
+    navItemId: 'gifts',
     route: '/gifts',
     position: 'center',
     icon: Gift,
@@ -70,6 +76,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'settings',
     title: 'הגדרות',
     description: 'כאן תוכלו לעדכן כתובת למשלוח, להגדיר פרטיות הרשימה, ולנהל את החשבון.',
+    navItemId: 'settings',
     route: '/settings',
     position: 'center',
     icon: Settings,
@@ -107,8 +114,17 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
 
   // Find and highlight the target element
   const updateTargetPosition = useCallback(() => {
-    if (step.targetSelector) {
-      const element = document.querySelector(step.targetSelector)
+    let selector = step.targetSelector
+
+    // If highlightNav is true and navItemId is specified, build the selector for the nav item
+    if (step.highlightNav && step.navItemId) {
+      // Use mobile or desktop nav selector based on screen size
+      const suffix = isMobile() ? '-mobile' : ''
+      selector = `[data-tutorial="nav-${step.navItemId}${suffix}"]`
+    }
+
+    if (selector) {
+      const element = document.querySelector(selector)
       if (element) {
         setTargetRect(element.getBoundingClientRect())
       } else {
@@ -117,7 +133,7 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
     } else {
       setTargetRect(null)
     }
-  }, [step.targetSelector])
+  }, [step.targetSelector, step.highlightNav, step.navItemId])
 
   useEffect(() => {
     // Wait for page to render
@@ -149,18 +165,32 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
 
   // Calculate tooltip position
   const getTooltipStyle = (): React.CSSProperties => {
-    if (step.position === 'center' || !targetRect) {
+    const mobile = isMobile()
+    const padding = 16
+    const tooltipWidth = mobile ? Math.min(340, window.innerWidth - 32) : 360
+    const tooltipHeight = 200
+
+    // For mobile with nav items at bottom, always position tooltip above the nav
+    if (mobile && step.highlightNav && targetRect) {
       return {
         position: 'fixed',
-        top: '50%',
+        bottom: `${window.innerHeight - targetRect.top + padding}px`,
         left: '50%',
-        transform: 'translate(-50%, -50%)',
+        transform: 'translateX(-50%)',
+        maxWidth: `calc(100vw - ${padding * 2}px)`,
       }
     }
 
-    const padding = 20
-    const tooltipWidth = 360
-    const tooltipHeight = 200
+    if (step.position === 'center' || !targetRect) {
+      // On mobile, position slightly higher to avoid bottom nav overlap
+      return {
+        position: 'fixed',
+        top: mobile ? '40%' : '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
+      }
+    }
 
     switch (step.position) {
       case 'bottom':
@@ -168,24 +198,28 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
           position: 'fixed',
           top: `${targetRect.bottom + padding}px`,
           left: `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
+          maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
         }
       case 'top':
         return {
           position: 'fixed',
-          top: `${targetRect.top - tooltipHeight - padding}px`,
+          top: `${Math.max(padding, targetRect.top - tooltipHeight - padding)}px`,
           left: `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
+          maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
         }
       case 'left':
         return {
           position: 'fixed',
           top: `${targetRect.top + targetRect.height / 2 - tooltipHeight / 2}px`,
-          left: `${targetRect.left - tooltipWidth - padding}px`,
+          left: mobile ? padding : `${targetRect.left - tooltipWidth - padding}px`,
+          maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
         }
       case 'right':
         return {
           position: 'fixed',
           top: `${targetRect.top + targetRect.height / 2 - tooltipHeight / 2}px`,
-          left: `${targetRect.right + padding}px`,
+          left: mobile ? padding : `${targetRect.right + padding}px`,
+          maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
         }
       default:
         return {}
@@ -243,7 +277,7 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
 
       {/* Tooltip card */}
       <div
-        className="bg-white rounded-[24px] shadow-2xl p-6 w-[360px] max-w-[calc(100vw-32px)]"
+        className="bg-white rounded-[24px] shadow-2xl p-5 sm:p-6 w-full sm:w-[360px] max-w-[calc(100vw-32px)]"
         style={getTooltipStyle()}
       >
         {/* Skip button */}

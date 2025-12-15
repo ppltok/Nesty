@@ -384,7 +384,6 @@ export default function Checklist() {
 
   const totalItems = allItems.length
   const checkedItems = allItems.filter(i => isSuggestionChecked(i.categoryId, i.name)).length
-  const completionPercent = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0
 
   // Mom's Metric: Weighted towards "Essential" items
   const essentialItems = allItems.filter(i => getPriority(i.categoryId, i.name) === 'essential')
@@ -467,50 +466,26 @@ export default function Checklist() {
             </div>
           </div>
 
-          {/* Metrics Container */}
-          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-
-            {/* Mom's Metric (Nesting Score) */}
-            <div className="bg-gradient-to-br from-[#ffd8e4] to-[#fff0f5] rounded-[24px] p-5 flex-1 md:w-64 border border-[#ffd8e4] shadow-sm relative overflow-hidden group">
-              <div className="absolute -right-6 -top-6 bg-white/40 w-24 h-24 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-white/60 p-1.5 rounded-lg text-[#b3261e]">
-                      <Heart className="w-4 h-4 fill-current" />
-                    </div>
-                    <span className="text-xs font-bold text-[#b3261e] uppercase tracking-wide">מדד הקינון</span>
-                  </div>
-                  <span className="text-3xl font-bold text-[#1d192b]">{nestingScore}%</span>
-                </div>
-                <div className="w-full bg-white/50 h-2 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#b3261e] rounded-full transition-all duration-1000" style={{ width: `${nestingScore}%` }} />
-                </div>
-                <p className="text-xs text-[#1d192b]/70 mt-2 font-medium">
-                  {nestingScore > 80 ? "את מוכנה לגמרי!" : nestingScore > 40 ? "אנחנו בכיוון הנכון" : "בואי נתחיל להתארגן"}
-                </p>
-              </div>
-            </div>
-
-            {/* General Progress */}
-            <div className="bg-[#f3edff] rounded-[24px] p-5 flex-1 md:w-64 border border-[#eaddff] shadow-sm relative overflow-hidden">
+          {/* Nesting Score Metric */}
+          <div className="bg-gradient-to-br from-[#ffd8e4] to-[#fff0f5] rounded-[24px] p-5 w-full md:w-72 border border-[#ffd8e4] shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 bg-white/40 w-24 h-24 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
+            <div className="relative z-10">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
-                  <div className="bg-white/60 p-1.5 rounded-lg text-[#6750a4]">
-                    <Check className="w-4 h-4" strokeWidth={3} />
+                  <div className="bg-white/60 p-1.5 rounded-lg text-[#b3261e]">
+                    <Heart className="w-4 h-4 fill-current" />
                   </div>
-                  <span className="text-xs font-bold text-[#6750a4] uppercase tracking-wide">הושלם</span>
+                  <span className="text-xs font-bold text-[#b3261e] uppercase tracking-wide">מדד הקינון</span>
                 </div>
-                <span className="text-3xl font-bold text-[#1d192b]">{completionPercent}%</span>
+                <span className="text-3xl font-bold text-[#1d192b]">{nestingScore}%</span>
               </div>
               <div className="w-full bg-white/50 h-2 rounded-full overflow-hidden">
-                <div className="h-full bg-[#6750a4] rounded-full transition-all duration-1000" style={{ width: `${completionPercent}%` }} />
+                <div className="h-full bg-[#b3261e] rounded-full transition-all duration-1000" style={{ width: `${nestingScore}%` }} />
               </div>
               <p className="text-xs text-[#1d192b]/70 mt-2 font-medium">
                 {checkedItems} מתוך {totalItems} פריטים
               </p>
             </div>
-
           </div>
         </div>
 

@@ -101,6 +101,7 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
               <Link
                 key={item.id}
                 to={item.path}
+                data-tutorial={`nav-${item.id}-mobile`}
                 className={`
                   flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-2xl transition-all duration-200 min-w-[72px]
                   ${active
@@ -237,6 +238,7 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
               <Link
                 key={item.id}
                 to={item.path}
+                data-tutorial={`nav-${item.id}`}
                 className={`
                   flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200 group
                   ${active
@@ -272,6 +274,7 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
         <div className="p-3 border-t border-[#e7e0ec] space-y-1 flex-shrink-0 bg-[#fdfcff]">
           <Link
             to="/settings"
+            data-tutorial="nav-settings"
             className={`
               flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200
               ${isActive('/settings')
