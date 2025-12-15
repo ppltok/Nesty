@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { supabase, forceSignOut } from '../../lib/supabase'
+import { supabase } from '../../lib/supabase'
 
 const ADMIN_EMAIL = 'tom@ppltok.com'
 
@@ -50,8 +50,7 @@ export default function AuthCallback() {
 
       if (error) {
         console.error('Auth callback error:', error)
-        // Clear corrupted state on auth errors
-        await forceSignOut()
+        navigate('/auth/signin', { replace: true })
         return
       }
 
