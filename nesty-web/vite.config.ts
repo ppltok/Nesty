@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Base path for GitHub Pages deployment (https://ppltok.github.io/Nesty/)
+  base: '/Nesty/',
   plugins: [react()],
   build: {
     // Include content hash in filenames for cache busting
