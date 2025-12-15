@@ -41,7 +41,7 @@ export default function Home() {
                 to="/dashboard"
                 className="px-6 py-2.5 rounded-full bg-[#6750a4] text-white font-medium hover:bg-[#5a4690] transition-colors shadow-[0_4px_12px_rgba(103,80,164,0.25)]"
               >
-                לדשבורד שלי
+                לקן שלי
               </Link>
             ) : (
               <>
@@ -94,7 +94,7 @@ export default function Home() {
                     to="/dashboard"
                     className="block w-full text-center px-6 py-3 rounded-full bg-[#6750a4] text-white font-medium"
                   >
-                    לדשבורד שלי
+                    לקן שלי
                   </Link>
                 ) : (
                   <>
@@ -160,7 +160,7 @@ export default function Home() {
                     className="px-10 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg flex gap-3 items-center justify-center shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300"
                   >
                     <Sparkles className="w-5 h-5" />
-                    <span>{isAuthenticated ? "לרשימה שלי" : "מתחילים להתארגן"}</span>
+                    <span>{isAuthenticated ? "לקן שלי" : "מתחילים להתארגן"}</span>
                   </Link>
                   <a
                     href="#how-it-works"
@@ -538,7 +538,7 @@ export default function Home() {
               className="inline-flex items-center gap-3 px-10 py-4 rounded-[28px] bg-white text-[#6750a4] font-medium text-lg shadow-[0_8px_24px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 transition-all duration-300"
             >
               <Sparkles className="w-5 h-5" />
-              <span>{isAuthenticated ? "לרשימה שלי" : "יצירת הרשימה הראשונה שלי"}</span>
+              <span>{isAuthenticated ? "לקן שלי" : "יצירת הרשימה הראשונה שלי"}</span>
             </Link>
           </div>
         </section>
@@ -574,7 +574,7 @@ export default function Home() {
                 </li>
                 <li>
                   <Link to={isAuthenticated ? "/dashboard" : "/auth/signin"} className="text-[#49454f] hover:text-[#6750a4] transition-colors">
-                    {isAuthenticated ? "לרשימה שלי" : "כניסה"}
+                    {isAuthenticated ? "לקן שלי" : "כניסה"}
                   </Link>
                 </li>
               </ul>
