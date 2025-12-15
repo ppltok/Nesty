@@ -16,8 +16,10 @@
           var decoded = l.search.slice(1).split('&').map(function(s) {
             return s.replace(/~and~/g, '&')
           }).join('?');
+          // Ensure we keep the base path and add the decoded route
+          var basePath = l.pathname.endsWith('/') ? l.pathname : l.pathname + '/';
           window.history.replaceState(null, null,
-            l.pathname.slice(0, -1) + decoded + l.hash
+            basePath.slice(0, -1) + '/' + decoded + l.hash
           );
         }
       }(window.location))
