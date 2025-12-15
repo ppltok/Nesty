@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>Nesty</title>
+  <script>
+    // Single Page App redirect for GitHub Pages
+    // This script takes the current URL and converts the path and query string
+    // into just a query string, and then redirects the browser to the new URL
+    // with only a query string and hash fragment.
+    var pathSegmentsToKeep = 1; // Keep /Nesty/ as base
+
+    var l = window.location;
+    l.replace(
+      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+      l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+      l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+      (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+      l.hash
+    );
+  </script>
+</head>
+<body>
+  <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: system-ui, sans-serif;">
+    <div style="text-align: center;">
+      <div style="width: 48px; height: 48px; border: 4px solid #6750a4; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+      <p style="color: #49454f;">Loading...</p>
+    </div>
+  </div>
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</body>
+</html>
