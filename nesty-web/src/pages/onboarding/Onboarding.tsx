@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { generateSlug } from '../../lib/utils'
+import { asset } from '../../lib/assets'
 import { ArrowRight, ArrowLeft, Calendar, Sparkles, Baby, Mail } from 'lucide-react'
 import OnboardingCelebration from '../../components/OnboardingCelebration'
 
@@ -179,7 +180,7 @@ export default function Onboarding() {
       <div className="w-full max-w-lg">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center mb-6">
-          <img src="/Nesty_logo.png" alt="Nesty" className="h-16 w-auto" />
+          <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-16 w-auto" />
         </Link>
 
         {/* Progress dots */}

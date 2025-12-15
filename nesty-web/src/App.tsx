@@ -98,7 +98,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <AuthProvider>
           <div dir="rtl" className="font-sans min-h-screen bg-background">
             <AppRoutes />

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Heart } from 'lucide-react'
+import { asset } from '../lib/assets'
 
 export default function Footer() {
   return (
@@ -9,7 +10,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 sm:col-span-2 md:col-span-2">
             <Link to="/" className="flex items-center mb-4">
-              <img src="/logo.png" alt="Nesty" className="h-24 sm:h-28 w-auto" />
+              <img src={asset('logo.png')} alt="Nesty" className="h-24 sm:h-28 w-auto" />
             </Link>
             <p className="text-sm sm:text-base text-muted-foreground max-w-sm">
               לבנות את הקן שלכם, חכם יותר. הרשימה שמאפשרת לכם לאסוף מוצרים מכל מקום ולשתף עם מי שאוהבים.

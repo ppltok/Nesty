@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { asset } from '../../lib/assets'
 import { Sparkles } from 'lucide-react'
 
 export default function SignUp() {
@@ -14,7 +15,7 @@ export default function SignUp() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}auth/callback`,
       },
     })
 
@@ -35,7 +36,7 @@ export default function SignUp() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center mb-8">
-          <img src="/Nesty_logo.png" alt="Nesty" className="h-20 w-auto" />
+          <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-20 w-auto" />
         </Link>
 
         {/* Card */}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { asset } from '../lib/assets'
 import {
   Menu, X, Heart, Sparkles, ArrowLeft,
   ClipboardList, Star, Send, TrendingDown,
@@ -17,7 +18,7 @@ export default function Home() {
       <header className="sticky top-0 z-50 bg-[#fffbff]/80 backdrop-blur-xl border-b border-[#e7e0ec] px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <img src="/Nesty_logo.png" alt="Nesty" className="h-16 w-auto" />
+            <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-16 w-auto" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -132,7 +133,7 @@ export default function Home() {
               <div className="text-center lg:text-right">
                 <div className="flex justify-center lg:justify-center mb-8">
                   <img
-                    src="/Circle_logo.png"
+                    src={asset('Circle_logo.png')}
                     alt="Nesty"
                     className="w-20 h-20 rounded-full shadow-lg"
                   />
@@ -177,7 +178,7 @@ export default function Home() {
                   {/* Main image container with fancy styling */}
                   <div className="bg-[#f3edff] p-4 rounded-[48px] rounded-tl-[16px] shadow-[0_20px_60px_-15px_rgba(103,80,164,0.2)]">
                     <img
-                      src="/Landing_Page_photo.png"
+                      src={asset('Landing_Page_photo.png')}
                       alt="אמא עם תינוק"
                       className="w-full h-auto rounded-[36px] rounded-tl-[12px]"
                     />
@@ -310,7 +311,7 @@ export default function Home() {
                 <div className="bg-white rounded-[40px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] p-8 max-w-md mx-auto border border-[#e7e0ec]">
                   <div className="flex items-start gap-4 mb-6">
                     <img
-                      src="/anex IQ Image.webp"
+                      src={asset('anex IQ Image.webp')}
                       alt="עגלת Anex IQ"
                       className="w-20 h-20 rounded-[20px] object-cover flex-shrink-0"
                     />
@@ -374,7 +375,7 @@ export default function Home() {
                 <div className="bg-[#f3edff] rounded-[40px] rounded-br-[12px] p-8 max-w-md mx-auto">
                   {/* Nanit image */}
                   <img
-                    src="/Nanit.png"
+                    src={asset('Nanit.png')}
                     alt="Nanit"
                     className="w-40 h-40 rounded-[32px] object-cover mx-auto mb-6 shadow-lg"
                   />
@@ -550,7 +551,7 @@ export default function Home() {
             {/* Brand */}
             <div className="col-span-2">
               <Link to="/" className="flex items-center mb-4">
-                <img src="/logo.png" alt="Nesty" className="h-12 w-auto" />
+                <img src={asset('logo.png')} alt="Nesty" className="h-12 w-auto" />
               </Link>
               <p className="text-[#49454f] max-w-sm">
                 לבנות את הקן שלכם, חכם יותר. הרשימה שמאפשרת לכם לאסוף מוצרים מכל מקום ולשתף עם מי שאוהבים.
