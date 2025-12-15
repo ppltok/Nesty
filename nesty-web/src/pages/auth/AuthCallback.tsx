@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { supabase, forceSignOut } from '../../lib/supabase'
 
 const ADMIN_EMAIL = 'tom@ppltok.com'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const hasHandled = useRef(false)
 
   useEffect(() => {
@@ -15,12 +16,42 @@ export default function AuthCallback() {
       hasHandled.current = true
 
       console.log('AuthCallback: Starting callback handling')
+      console.log('AuthCallback: Current URL:', window.location.href)
+      console.log('AuthCallback: Hash:', window.location.hash)
+
+      // Check for error in URL params (OAuth errors come this way)
+      const errorCode = searchParams.get('error')
+      const errorDescription = searchParams.get('error_description')
+
+      // Also check hash for errors (some OAuth providers put errors in hash)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const hashError = hashParams.get('error')
+
+      if (errorCode || hashError) {
+        console.error('OAuth error:', errorCode || hashError, errorDescription || hashParams.get('error_description'))
+        // Clear any corrupted auth state
+        const keysToRemove = Object.keys(localStorage).filter(key =>
+          key.startsWith('sb-') || key.includes('supabase')
+        )
+        keysToRemove.forEach(key => localStorage.removeItem(key))
+        navigate('/auth/signin', { replace: true })
+        return
+      }
+
+      // If there's a hash with access_token, Supabase should have processed it
+      // Wait a moment for Supabase to process the hash
+      if (window.location.hash.includes('access_token')) {
+        console.log('AuthCallback: Found access_token in hash, waiting for Supabase to process...')
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
 
       const { data: { session }, error } = await supabase.auth.getSession()
+      console.log('AuthCallback: getSession result:', { hasSession: !!session, error })
 
       if (error) {
         console.error('Auth callback error:', error)
-        navigate('/auth/signin', { replace: true })
+        // Clear corrupted state on auth errors
+        await forceSignOut()
         return
       }
 
@@ -68,7 +99,7 @@ export default function AuthCallback() {
     }
 
     handleCallback()
-  }, [navigate])
+  }, [navigate, searchParams])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
