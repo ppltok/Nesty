@@ -565,6 +565,15 @@ export default function PublicRegistry() {
           name: `${owner.first_name} ${owner.last_name}`,
           email: owner.email
         } : undefined}
+        addressInfo={registry ? {
+          isPrivate: registry.address_is_private ?? true,
+          city: registry.address_city || '',
+          street: registry.address_street || '',
+          apt: registry.address_apt || '',
+          postal: registry.address_postal || '',
+          phone: registry.address_phone || '',
+          ownerName: owner.first_name || ''
+        } : undefined}
       />
 
       {/* Footer */}
