@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import { supabase, isAuthError, forceSignOut } from '../lib/supabase'
 import type { Profile, Registry } from '../types'
 
 interface AuthContextType {
@@ -39,11 +39,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('Error fetching profile:', error)
+        // Check for auth errors and force logout
+        if (isAuthError(error)) {
+          console.error('Auth error in fetchProfile, forcing logout')
+          await forceSignOut()
+          return null
+        }
         return null
       }
       return data
     } catch (err) {
       console.error('Error fetching profile:', err)
+      if (isAuthError(err)) {
+        console.error('Auth error caught in fetchProfile, forcing logout')
+        await forceSignOut()
+      }
       return null
     }
   }, [])
@@ -58,11 +68,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('Error fetching registry:', error)
+        // Check for auth errors and force logout
+        if (isAuthError(error)) {
+          console.error('Auth error in fetchRegistry, forcing logout')
+          await forceSignOut()
+          return null
+        }
         return null
       }
       return data
     } catch (err) {
       console.error('Error fetching registry:', err)
+      if (isAuthError(err)) {
+        console.error('Auth error caught in fetchRegistry, forcing logout')
+        await forceSignOut()
+      }
       return null
     }
   }, [])
@@ -86,10 +106,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRegistry(registryData)
     } catch (err) {
       console.error('fetchUserData: Error fetching user data:', err)
-      // Check if this is an abort/timeout error - might indicate corrupted auth state
+      // Check if this is an auth error or abort/timeout error
+      if (isAuthError(err)) {
+        console.error('Auth error in fetchUserData, forcing logout')
+        await forceSignOut()
+        return
+      }
       if (err instanceof Error && err.name === 'AbortError') {
         console.warn('Request timed out - auth state may be corrupted. Clearing session.')
-        await supabase.auth.signOut()
+        await forceSignOut()
+        return
       }
     } finally {
       fetchingRef.current = false
@@ -174,6 +200,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error) {
         console.error('Error getting session:', error)
+        // If there's an auth error getting the session, clear corrupted state
+        if (isAuthError(error)) {
+          console.error('Auth error getting session, clearing corrupted state')
+          // Clear localStorage but don't redirect - just reset to logged out state
+          const keysToRemove = Object.keys(localStorage).filter(key =>
+            key.startsWith('sb-') || key.includes('supabase')
+          )
+          keysToRemove.forEach(key => localStorage.removeItem(key))
+        }
         setIsLoading(false)
         return
       }

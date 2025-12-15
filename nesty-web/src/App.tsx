@@ -44,7 +44,14 @@ function AppRoutes() {
   // Storage is already initialized at module load time
   // No need to re-initialize here as it can cause race conditions
 
-  if (isLoading) {
+  // Don't block public routes with auth loading - let them render immediately
+  // This ensures guests can view public registries without waiting for auth
+  const isPublicRoute = window.location.pathname === '/' ||
+    window.location.pathname.startsWith('/registry/') ||
+    window.location.pathname.startsWith('/auth/') ||
+    window.location.pathname === '/example'
+
+  if (isLoading && !isPublicRoute) {
     return <LoadingScreen />
   }
 
