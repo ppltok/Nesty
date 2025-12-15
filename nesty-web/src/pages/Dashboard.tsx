@@ -147,10 +147,20 @@ export default function Dashboard() {
   // Check if we should show tutorial after address modal closes
   // Only show tutorial once - when user just completed onboarding (came from onboarding flow)
   const tutorialChecked = useRef(false)
+  const fromOnboardingRef = useRef(location.state?.fromOnboarding === true)
+
+  // Capture fromOnboarding state on mount (before it gets cleared by re-renders)
+  useEffect(() => {
+    if (location.state?.fromOnboarding === true) {
+      fromOnboardingRef.current = true
+    }
+  }, [location.state])
+
   useEffect(() => {
     // Guard against double execution and ensure we only check once
     if (tutorialChecked.current) return
     if (!addressModalClosed || showAddressModal) return
+    if (!user) return
 
     tutorialChecked.current = true
 
@@ -159,8 +169,8 @@ export default function Dashboard() {
     // 2. Tutorial hasn't been completed before
     // 3. User just completed onboarding (indicated by coming from celebration/onboarding)
     try {
-      const tutorialCompleted = user ? localStorage.getItem(getTutorialKey(user.id)) : null
-      const fromOnboarding = location.state?.fromOnboarding === true
+      const tutorialCompleted = localStorage.getItem(getTutorialKey(user.id))
+      const fromOnboarding = fromOnboardingRef.current
 
       if (!tutorialCompleted && fromOnboarding) {
         // Small delay to ensure page is rendered
@@ -172,7 +182,7 @@ export default function Dashboard() {
     } catch {
       // localStorage error - skip tutorial
     }
-  }, [addressModalClosed, showAddressModal, location.state, user])
+  }, [addressModalClosed, showAddressModal, user])
 
   const handleAddressSave = () => {
     refreshProfile()
