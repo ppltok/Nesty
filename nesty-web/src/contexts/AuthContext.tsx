@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
@@ -24,79 +24,144 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchProfile = async (userId: string): Promise<Profile | null> => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle()
+  // Track current user ID to avoid redundant fetches
+  const currentUserId = useRef<string | null>(null)
+  // Track if a fetch is in progress to prevent race conditions
+  const fetchingRef = useRef(false)
 
-    if (error) {
-      console.error('Error fetching profile:', error)
+  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (error) {
+        console.error('Error fetching profile:', error)
+        return null
+      }
+      return data
+    } catch (err) {
+      console.error('Error fetching profile:', err)
       return null
     }
-    return data
-  }
+  }, [])
 
-  const fetchRegistry = async (userId: string): Promise<Registry | null> => {
-    const { data, error } = await supabase
-      .from('registries')
-      .select('*')
-      .eq('owner_id', userId)
-      .maybeSingle()
+  const fetchRegistry = useCallback(async (userId: string): Promise<Registry | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('registries')
+        .select('*')
+        .eq('owner_id', userId)
+        .maybeSingle()
 
-    if (error) {
-      console.error('Error fetching registry:', error)
+      if (error) {
+        console.error('Error fetching registry:', error)
+        return null
+      }
+      return data
+    } catch (err) {
+      console.error('Error fetching registry:', err)
       return null
     }
-    return data
-  }
+  }, [])
 
-  const refreshProfile = async () => {
-    if (user) {
-      const profileData = await fetchProfile(user.id)
+  const fetchUserData = useCallback(async (userId: string) => {
+    // Prevent concurrent fetches for the same user
+    if (fetchingRef.current) {
+      console.log('fetchUserData: Already fetching, skipping')
+      return
+    }
+    fetchingRef.current = true
+    console.log('fetchUserData: Fetching data for user', userId)
+
+    try {
+      const [profileData, registryData] = await Promise.all([
+        fetchProfile(userId),
+        fetchRegistry(userId)
+      ])
+      console.log('fetchUserData: Got profile:', !!profileData, 'registry:', !!registryData)
       setProfile(profileData)
-      const registryData = await fetchRegistry(user.id)
       setRegistry(registryData)
+    } catch (err) {
+      console.error('fetchUserData: Error fetching user data:', err)
+      // Check if this is an abort/timeout error - might indicate corrupted auth state
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.warn('Request timed out - auth state may be corrupted. Clearing session.')
+        await supabase.auth.signOut()
+      }
+    } finally {
+      fetchingRef.current = false
     }
-  }
+  }, [fetchProfile, fetchRegistry])
 
-  const signOut = async () => {
+  const refreshProfile = useCallback(async () => {
+    // Use the ref to get current user ID to avoid stale closure issues
+    const userId = currentUserId.current
+    if (userId) {
+      // Reset the fetching ref to allow refresh even if a fetch was in progress
+      fetchingRef.current = false
+      await fetchUserData(userId)
+    }
+  }, [fetchUserData])
+
+  const signOut = useCallback(async () => {
+    currentUserId.current = null
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
     setRegistry(null)
     setSession(null)
-  }
+  }, [])
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-
-      if (session?.user) {
-        const profileData = await fetchProfile(session.user.id)
-        setProfile(profileData)
-        const registryData = await fetchRegistry(session.user.id)
-        setRegistry(registryData)
-      }
-
-      setIsLoading(false)
-    })
-
-    // Listen for auth changes
+    // Set up auth state listener first (before getting session)
+    // This ensures we catch the SIGNED_IN event from OAuth callback
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        console.log('Auth event:', event)
+
+        // Only process significant auth events, not token refreshes
+        if (event === 'TOKEN_REFRESHED') {
+          setSession(session)
+          return
+        }
+
+        // Handle sign out event
+        if (event === 'SIGNED_OUT') {
+          currentUserId.current = null
+          setSession(null)
+          setUser(null)
+          setProfile(null)
+          setRegistry(null)
+          setIsLoading(false)
+          return
+        }
+
+        // Handle sign in events (including OAuth callback)
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          setSession(session)
+          setUser(session?.user ?? null)
+
+          if (session?.user) {
+            currentUserId.current = session.user.id
+            await fetchUserData(session.user.id)
+          }
+
+          setIsLoading(false)
+          return
+        }
+
+        // For other events, update state
         setSession(session)
         setUser(session?.user ?? null)
 
-        if (session?.user) {
-          const profileData = await fetchProfile(session.user.id)
-          setProfile(profileData)
-          const registryData = await fetchRegistry(session.user.id)
-          setRegistry(registryData)
-        } else {
+        if (session?.user && currentUserId.current !== session.user.id) {
+          currentUserId.current = session.user.id
+          await fetchUserData(session.user.id)
+        } else if (!session?.user) {
+          currentUserId.current = null
           setProfile(null)
           setRegistry(null)
         }
@@ -105,8 +170,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     )
 
-    return () => subscription.unsubscribe()
-  }, [])
+    // Get initial session
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error getting session:', error)
+        setIsLoading(false)
+        return
+      }
+
+      // Only set state if no session event has fired yet
+      if (!currentUserId.current && session?.user) {
+        setSession(session)
+        setUser(session.user)
+        currentUserId.current = session.user.id
+        await fetchUserData(session.user.id)
+      }
+
+      setIsLoading(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [fetchUserData])
 
   return (
     <AuthContext.Provider value={{

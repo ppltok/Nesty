@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
@@ -13,9 +12,17 @@ window.onerror = (message, source, lineno, colno, error) => {
     String(message).includes('JSON') ||
     String(message).includes('parse')
   ) {
-    console.warn('Detected storage-related error, clearing localStorage')
+    console.warn('Detected storage-related error, clearing Nesty data (preserving auth)')
     try {
-      localStorage.clear()
+      // Only clear Nesty keys, not Supabase auth session
+      const nestyKeys = [
+        'nesty-checked-suggestions',
+        'nesty-hidden-suggestions',
+        'nesty-suggestion-quantities',
+        'nesty-revealed-surprises',
+        'nesty-storage-version',
+      ]
+      nestyKeys.forEach(key => localStorage.removeItem(key))
       window.location.reload()
     } catch {
       // Can't do anything
@@ -28,8 +35,6 @@ window.onunhandledrejection = (event) => {
   console.error('Unhandled promise rejection:', event.reason)
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// NOTE: StrictMode removed to prevent double-execution issues with Supabase auth
+// In production, Vite doesn't use StrictMode anyway, so this matches prod behavior
+createRoot(document.getElementById('root')!).render(<App />)

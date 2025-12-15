@@ -137,13 +137,21 @@ export default function Onboarding() {
   const handleCelebrationComplete = async () => {
     // Now mark onboarding as complete
     if (user) {
-      await supabase
-        .from('profiles')
-        .update({ onboarding_completed: true })
-        .eq('id', user.id)
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ onboarding_completed: true })
+          .eq('id', user.id)
 
-      // Refresh profile to update context
-      await refreshProfile()
+        if (error) {
+          console.error('Error marking onboarding complete:', error)
+        }
+
+        // Refresh profile to update context
+        await refreshProfile()
+      } catch (err) {
+        console.error('Error in handleCelebrationComplete:', err)
+      }
     }
 
     // Pass state to indicate user just completed onboarding (for tutorial)
