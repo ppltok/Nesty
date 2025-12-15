@@ -111,11 +111,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    let isMounted = true
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+    // Safety timeout - if auth takes too long, stop loading anyway
+    // This prevents infinite loading on stale/corrupted auth state
+    timeoutId = setTimeout(() => {
+      if (isMounted && isLoading) {
+        console.warn('Auth timeout - forcing loading to complete')
+        setIsLoading(false)
+      }
+    }, 5000) // 5 second timeout
+
     // Set up auth state listener first (before getting session)
     // This ensures we catch the SIGNED_IN event from OAuth callback
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return
         console.log('Auth event:', event)
+
+        // Clear timeout since we got a response
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+          timeoutId = null
+        }
 
         // Only process significant auth events, not token refreshes
         if (event === 'TOKEN_REFRESHED') {
@@ -165,26 +184,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     )
 
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      if (error) {
-        console.error('Error getting session:', error)
+    // Get initial session with error handling
+    supabase.auth.getSession()
+      .then(async ({ data: { session }, error }) => {
+        if (!isMounted) return
+
+        // Clear timeout since we got a response
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+          timeoutId = null
+        }
+
+        if (error) {
+          console.error('Error getting session:', error)
+          // On error, clear potentially corrupted auth state
+          // This fixes the "clearing localStorage fixes it" issue
+          if (error.message?.includes('refresh_token') || error.message?.includes('invalid')) {
+            console.warn('Clearing corrupted auth state')
+            await supabase.auth.signOut()
+          }
+          setIsLoading(false)
+          return
+        }
+
+        // Only set state if no session event has fired yet
+        if (!currentUserId.current && session?.user) {
+          setSession(session)
+          setUser(session.user)
+          currentUserId.current = session.user.id
+          await fetchUserData(session.user.id)
+        }
+
         setIsLoading(false)
-        return
-      }
-
-      // Only set state if no session event has fired yet
-      if (!currentUserId.current && session?.user) {
-        setSession(session)
-        setUser(session.user)
-        currentUserId.current = session.user.id
-        await fetchUserData(session.user.id)
-      }
-
-      setIsLoading(false)
-    })
+      })
+      .catch((err) => {
+        if (!isMounted) return
+        console.error('Failed to get session:', err)
+        setIsLoading(false)
+      })
 
     return () => {
+      isMounted = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
       subscription.unsubscribe()
     }
   }, [fetchUserData])

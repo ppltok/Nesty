@@ -100,45 +100,92 @@ export default function PublicRegistry() {
       setIsLoading(true)
       setError(null)
 
-      // Fetch registry with owner profile
-      const { data: registryData, error: registryError } = await supabase
-        .from('registries')
-        .select(`
-          *,
-          profiles!owner_id (first_name, last_name, due_date, email)
-        `)
-        .eq('slug', slug)
-        .single()
+      try {
+        // First, try to fetch registry with owner profile (works for authenticated users)
+        const { data: registryData, error: registryError } = await supabase
+          .from('registries')
+          .select(`
+            *,
+            profiles!owner_id (first_name, last_name, due_date, email)
+          `)
+          .eq('slug', slug)
+          .single()
 
-      if (registryError || !registryData) {
-        setError('הרשימה לא נמצאה')
+        if (registryError) {
+          console.error('Error fetching registry with profile:', registryError)
+
+          // If the join to profiles failed (RLS issue for unauthenticated users),
+          // try fetching just the registry without the profile join
+          const { data: registryOnly, error: registryOnlyError } = await supabase
+            .from('registries')
+            .select('*')
+            .eq('slug', slug)
+            .single()
+
+          if (registryOnlyError || !registryOnly) {
+            console.error('Error fetching registry:', registryOnlyError)
+            setError('הרשימה לא נמצאה')
+            setIsLoading(false)
+            return
+          }
+
+          // We have the registry but no profile data - use fallback values
+          // This allows unauthenticated users to view the registry
+          const registryWithFallbackProfile = {
+            ...registryOnly,
+            profiles: {
+              first_name: registryOnly.title || 'הורים',
+              last_name: '',
+              due_date: null,
+              email: ''
+            }
+          } as RegistryWithOwner
+
+          setRegistry(registryWithFallbackProfile)
+        } else if (!registryData) {
+          setError('הרשימה לא נמצאה')
+          setIsLoading(false)
+          return
+        } else {
+          setRegistry(registryData as RegistryWithOwner)
+        }
+
+        // Get registry ID for items query
+        const registryId = registryData?.id || (await supabase
+          .from('registries')
+          .select('id')
+          .eq('slug', slug)
+          .single()
+        ).data?.id
+
+        if (!registryId) {
+          setError('הרשימה לא נמצאה')
+          setIsLoading(false)
+          return
+        }
+
+        // Fetch public items
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('items')
+          .select('*')
+          .eq('registry_id', registryId)
+          .eq('is_private', false)
+          .order('is_most_wanted', { ascending: false })
+          .order('created_at', { ascending: false })
+
+        if (itemsError) {
+          console.error('Error fetching items:', itemsError)
+        }
+        setItems(itemsData || [])
+      } catch (err) {
+        console.error('Error in fetchRegistry:', err)
+        setError('שגיאה בטעינת הרשימה')
+      } finally {
         setIsLoading(false)
-        return
       }
-
-      setRegistry(registryData as RegistryWithOwner)
-
-      // Fetch public items
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('items')
-        .select('*')
-        .eq('registry_id', registryData.id)
-        .eq('is_private', false)
-        .order('is_most_wanted', { ascending: false })
-        .order('created_at', { ascending: false })
-
-      if (itemsError) {
-        console.error('Error fetching items:', itemsError)
-      }
-      setItems(itemsData || [])
-      setIsLoading(false)
     }
 
-    fetchRegistry().catch(err => {
-      console.error('Error in fetchRegistry:', err)
-      setError('שגיאה בטעינת הרשימה')
-      setIsLoading(false)
-    })
+    fetchRegistry()
   }, [slug])
 
   if (isLoading) {

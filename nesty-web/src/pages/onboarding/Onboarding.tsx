@@ -148,14 +148,22 @@ export default function Onboarding() {
           console.error('Error marking onboarding complete:', error)
         }
 
-        // Refresh profile to update context
-        await refreshProfile()
+        // Navigate FIRST with the state, then refresh profile
+        // This ensures the navigation state is preserved before any re-renders
+        navigate('/dashboard', { state: { fromOnboarding: true } })
+
+        // Refresh profile after navigation to update context
+        // Using setTimeout to ensure navigation completes first
+        setTimeout(() => {
+          refreshProfile()
+        }, 100)
+        return
       } catch (err) {
         console.error('Error in handleCelebrationComplete:', err)
       }
     }
 
-    // Pass state to indicate user just completed onboarding (for tutorial)
+    // Fallback navigation if something went wrong
     navigate('/dashboard', { state: { fromOnboarding: true } })
   }
 
