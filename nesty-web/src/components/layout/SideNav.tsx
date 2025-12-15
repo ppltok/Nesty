@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { asset } from '../../lib/assets'
 import {
   Menu,
   X,
@@ -158,7 +159,7 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 pb-4 border-b border-[#e7e0ec]">
           <div className="flex items-center gap-3">
-            <img src="/Nesty_logo.png" alt="Nesty" className="h-8 w-auto" />
+            <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-8 w-auto" />
           </div>
           <button
             onClick={() => setIsMobileOpen(false)}
@@ -217,11 +218,11 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
         <div className="h-20 flex items-center justify-center border-b border-[#e7e0ec] flex-shrink-0">
           {isExpanded ? (
             <Link to="/" className="flex items-center justify-center w-full px-4">
-              <img src="/Nesty_logo.png" alt="Nesty" className="h-12 w-auto" />
+              <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-12 w-auto" />
             </Link>
           ) : (
             <Link to="/" className="flex items-center justify-center w-full">
-              <img src="/favicon.png" alt="Nesty" className="w-11 h-11 object-contain" />
+              <img src={asset('favicon.png')} alt="Nesty" className="w-11 h-11 object-contain" />
             </Link>
           )}
         </div>

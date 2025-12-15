@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { asset } from '../lib/assets'
 import {
   Calendar,
   Gift,
@@ -239,7 +240,7 @@ export default function PublicRegistry() {
       <header className="bg-white/80 backdrop-blur-md border-b border-[#e7e0ec] sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/Nesty_logo.png" alt="Nesty" className="h-10 w-auto" />
+            <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-10 w-auto" />
           </Link>
           <Link
             to="/"
