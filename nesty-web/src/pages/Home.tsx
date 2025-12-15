@@ -183,14 +183,25 @@ export default function Home() {
                     />
                   </div>
 
-                  {/* Floating badge */}
+                  {/* Floating badge - Families */}
                   <div className="absolute -bottom-4 -right-4 bg-white px-5 py-3 rounded-[20px] shadow-lg border border-[#e7e0ec] flex items-center gap-3">
                     <div className="w-10 h-10 bg-[#ffd8e4] rounded-full flex items-center justify-center">
                       <Heart className="w-5 h-5 text-[#31111d] fill-[#31111d]" />
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-[#1d192b]">+5,000</p>
+                      <p className="text-sm font-bold text-[#1d192b]">+2,000</p>
                       <p className="text-xs text-[#49454f]">משפחות מרוצות</p>
+                    </div>
+                  </div>
+
+                  {/* Floating badge - Gifts */}
+                  <div className="absolute -top-4 -left-4 bg-white px-5 py-3 rounded-[20px] shadow-lg border border-[#e7e0ec] flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[#f3edff] rounded-full flex items-center justify-center">
+                      <Gift className="w-5 h-5 text-[#6750a4]" />
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-[#1d192b]">+5,000</p>
+                      <p className="text-xs text-[#49454f]">מתנות נרכשו</p>
                     </div>
                   </div>
                 </div>

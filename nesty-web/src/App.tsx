@@ -1,13 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import DashboardLayout from './components/layout/DashboardLayout'
 import ErrorBoundary from './components/ErrorBoundary'
-import OnboardingTutorial from './components/OnboardingTutorial'
 import { initializeStorageVersion } from './lib/storage-version'
-
-const TUTORIAL_COMPLETED_KEY = 'nesty_tutorial_completed'
 
 // Pages
 import Home from './pages/Home'
@@ -48,8 +45,7 @@ function LoadingScreen() {
 }
 
 function AppRoutes() {
-  const { isLoading, profile, user } = useAuth()
-  const [showTutorial, setShowTutorial] = useState(false)
+  const { isLoading, profile } = useAuth()
 
   // Re-initialize storage on mount (for safety)
   useEffect(() => {
@@ -60,43 +56,12 @@ function AppRoutes() {
     }
   }, [])
 
-  // Check if we need to show tutorial (for new users after onboarding)
-  useEffect(() => {
-    if (user && profile?.onboarding_completed) {
-      const tutorialCompleted = localStorage.getItem(TUTORIAL_COMPLETED_KEY)
-      if (!tutorialCompleted) {
-        // Small delay to let the dashboard render first
-        const timer = setTimeout(() => {
-          setShowTutorial(true)
-        }, 1000)
-        return () => clearTimeout(timer)
-      }
-    }
-  }, [user, profile?.onboarding_completed])
-
-  const handleTutorialComplete = () => {
-    localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
-    setShowTutorial(false)
-  }
-
-  const handleTutorialSkip = () => {
-    localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
-    setShowTutorial(false)
-  }
-
   if (isLoading) {
     return <LoadingScreen />
   }
 
   return (
-    <>
-      {showTutorial && (
-        <OnboardingTutorial
-          onComplete={handleTutorialComplete}
-          onSkip={handleTutorialSkip}
-        />
-      )}
-      <Routes>
+    <Routes>
       {/* Public routes */}
       <Route path="/" element={<Home />} />
       <Route path="/example" element={<Example />} />
@@ -139,7 +104,6 @@ function AppRoutes() {
       {/* 404 - Redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-    </>
   )
 }
 

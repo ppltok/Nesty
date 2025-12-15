@@ -39,11 +39,15 @@ export default function Onboarding() {
   })
 
   const handleNext = () => {
-    if (step < 5) setStep((s) => (s + 1) as Step)
+    if (typeof step === 'number' && step < 5) {
+      setStep((step + 1) as Step)
+    }
   }
 
   const handleBack = () => {
-    if (step > 1) setStep((s) => (s - 1) as Step)
+    if (typeof step === 'number' && step > 1) {
+      setStep((step - 1) as Step)
+    }
   }
 
   const handleSkip = () => {
@@ -65,13 +69,15 @@ export default function Onboarding() {
 
     try {
       // Build profile object - use upsert to handle case where profile wasn't created by trigger
+      // NOTE: We set onboarding_completed to FALSE here initially
+      // It will be set to TRUE after the celebration screen
       const profileData: Record<string, unknown> = {
         id: user.id,
         email: user.email || '',
         first_name: data.firstName || user.email?.split('@')[0] || 'משתמש',
         last_name: data.lastName || null,
         due_date: data.dueDate || null,
-        onboarding_completed: true,
+        onboarding_completed: false, // Keep false until celebration is done
         marketing_emails: data.marketingEmails,
       }
 
@@ -110,10 +116,8 @@ export default function Onboarding() {
         throw new Error(`שגיאה ביצירת הרשימה: ${registryError.message}`)
       }
 
-      // Refresh profile data
-      await refreshProfile()
-
-      // Show celebration screen
+      // Don't refresh profile yet - it would trigger redirect
+      // Show celebration screen first
       setStep('celebration')
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'שגיאה לא צפויה. נסו שוב.'
@@ -130,8 +134,20 @@ export default function Onboarding() {
   }
 
   // Handle celebration complete
-  const handleCelebrationComplete = () => {
-    navigate('/dashboard')
+  const handleCelebrationComplete = async () => {
+    // Now mark onboarding as complete
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({ onboarding_completed: true })
+        .eq('id', user.id)
+
+      // Refresh profile to update context
+      await refreshProfile()
+    }
+
+    // Pass state to indicate user just completed onboarding (for tutorial)
+    navigate('/dashboard', { state: { fromOnboarding: true } })
   }
 
   // Show celebration screen

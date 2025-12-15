@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { Gift, Check, Heart, CheckCircle, MessageCircle, Sparkles, PackageOpen, Eye, LayoutGrid, List, Filter, X, AlertTriangle } from 'lucide-react'
+import { Gift, Check, Heart, CheckCircle, MessageCircle, Sparkles, PackageOpen, Eye, LayoutGrid, List, Filter, X, AlertTriangle, ExternalLink } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { safeGetItem, safeSetItem } from '../lib/storage-version'
@@ -559,6 +559,15 @@ function PurchaseCard({
                 {isReceived ? 'בטל קבלה' : 'קיבלתי! 🙌'}
               </button>
 
+              {/* See Item Button */}
+              <Link
+                to={`/dashboard?highlight=${purchase.item_id}`}
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#f3edff] text-[#6750a4] hover:bg-[#eaddff] transition-colors"
+                title="צפה בפריט"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </Link>
+
               {purchase.buyer_phone && !hasThanked && (
                 <button
                   onClick={() => onSendThankYou(purchase)}
@@ -686,6 +695,15 @@ function PurchaseListItem({
             >
               {isReceived ? '✓ התקבל' : 'קיבלתי'}
             </button>
+
+            {/* See Item Button */}
+            <Link
+              to={`/dashboard?highlight=${purchase.item_id}`}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#f3edff] text-[#6750a4] hover:bg-[#eaddff] transition-colors"
+              title="צפה בפריט"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </Link>
 
             {purchase.buyer_phone && !hasThanked && (
               <button

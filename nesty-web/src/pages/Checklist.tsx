@@ -538,38 +538,36 @@ export default function Checklist() {
                 {/* Category Header */}
                 <button
                   onClick={() => toggleCategory(category.id)}
-                  className="w-full flex items-center justify-between p-5 hover:bg-[#f3edff]/30 transition-colors group"
+                  className="w-full flex items-center gap-4 p-5 hover:bg-[#f3edff]/30 transition-colors group"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-[16px] flex items-center justify-center relative transition-transform group-hover:scale-105 ${isExpanded ? 'bg-[#eaddff] text-[#21005d]' : 'bg-[#f5f5f5] text-gray-500'}`}>
-                      <CategoryIcon className="w-6 h-6" />
-                      {progress.checked === progress.total && progress.total > 0 && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#00c875] rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                    </div>
+                  <div className={`w-12 h-12 rounded-[16px] flex-shrink-0 flex items-center justify-center relative transition-transform group-hover:scale-105 ${isExpanded ? 'bg-[#eaddff] text-[#21005d]' : 'bg-[#f5f5f5] text-gray-500'}`}>
+                    <CategoryIcon className="w-6 h-6" />
+                    {progress.checked === progress.total && progress.total > 0 && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#00c875] rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                  </div>
 
-                    <div className="text-right">
-                      <p className={`font-bold text-lg ${isExpanded ? 'text-[#1d192b]' : 'text-[#49454f]'}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className={`font-bold text-lg text-right ${isExpanded ? 'text-[#1d192b]' : 'text-[#49454f]'}`}>
                         {category.name}
                       </p>
+                      <span className="text-xs text-[#49454f] font-medium whitespace-nowrap mr-2">
+                        {progress.checked}/{progress.total}
+                      </span>
+                    </div>
 
-                      <div className="flex items-center gap-3 mt-1">
-                        <div className="w-24 h-1.5 bg-[#f3edff] rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${progressPercent === 100 ? 'bg-[#00c875]' : 'bg-[#6750a4]'}`}
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-[#49454f] font-medium">
-                          {progress.checked}/{progress.total}
-                        </span>
-                      </div>
+                    <div className="w-full h-1.5 bg-[#f3edff] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${progressPercent === 100 ? 'bg-[#00c875]' : 'bg-[#6750a4]'}`}
+                        style={{ width: `${progressPercent}%` }}
+                      />
                     </div>
                   </div>
 
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isExpanded ? 'bg-[#f3edff] rotate-180 text-[#6750a4]' : 'bg-transparent text-[#49454f]'}`}>
+                  <div className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center transition-all ${isExpanded ? 'bg-[#f3edff] rotate-180 text-[#6750a4]' : 'bg-transparent text-[#49454f]'}`}>
                     <ChevronDown className="w-5 h-5" />
                   </div>
                 </button>

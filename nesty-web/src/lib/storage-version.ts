@@ -13,7 +13,9 @@ const STORAGE_VERSION = 2  // Bumped to force clear on existing users
 
 const STORAGE_VERSION_KEY = 'nesty-storage-version'
 
-// All known Nesty localStorage keys
+// All known Nesty localStorage keys (that should be cleared on version update)
+// NOTE: nesty_tutorial_completed is intentionally NOT included here
+// because we want to preserve the tutorial completion status across versions
 const NESTY_KEYS = [
   'nesty-checked-suggestions',
   'nesty-hidden-suggestions',
