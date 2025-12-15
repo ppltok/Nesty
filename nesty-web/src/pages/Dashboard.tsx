@@ -29,11 +29,12 @@ import { CATEGORIES } from '../data/categories'
 import { supabase } from '../lib/supabase'
 import type { Item, ItemCategory } from '../types'
 
-const TUTORIAL_COMPLETED_KEY = 'nesty_tutorial_completed'
-const ADDRESS_SKIPPED_KEY = 'nesty_address_skipped'
+// Helper to get user-specific localStorage keys
+const getTutorialKey = (userId: string) => `nesty_tutorial_completed_${userId}`
+const getAddressSkippedKey = (userId: string) => `nesty_address_skipped_${userId}`
 
 export default function Dashboard() {
-  const { profile, registry, refreshProfile, isLoading: authLoading } = useAuth()
+  const { profile, registry, refreshProfile, isLoading: authLoading, user } = useAuth()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [showAddressModal, setShowAddressModal] = useState(false)
@@ -101,7 +102,7 @@ export default function Dashboard() {
     if (!registry.address_city && !registry.address_street) {
       // Check if user has already skipped the address modal
       try {
-        const addressSkipped = localStorage.getItem(ADDRESS_SKIPPED_KEY)
+        const addressSkipped = user ? localStorage.getItem(getAddressSkippedKey(user.id)) : null
         if (!addressSkipped) {
           setShowAddressModal(true)
         } else {
@@ -116,7 +117,7 @@ export default function Dashboard() {
       // If registry has address, mark as closed so tutorial can show
       setAddressModalClosed(true)
     }
-  }, [registry])
+  }, [registry, user])
 
   // Handle highlight parameter for scrolling to specific item
   useEffect(() => {
@@ -156,7 +157,7 @@ export default function Dashboard() {
     // 2. Tutorial hasn't been completed before
     // 3. User just completed onboarding (indicated by coming from celebration/onboarding)
     try {
-      const tutorialCompleted = localStorage.getItem(TUTORIAL_COMPLETED_KEY)
+      const tutorialCompleted = user ? localStorage.getItem(getTutorialKey(user.id)) : null
       const fromOnboarding = location.state?.fromOnboarding === true
 
       if (!tutorialCompleted && fromOnboarding) {
@@ -169,7 +170,7 @@ export default function Dashboard() {
     } catch {
       // localStorage error - skip tutorial
     }
-  }, [addressModalClosed, showAddressModal, location.state])
+  }, [addressModalClosed, showAddressModal, location.state, user])
 
   const handleAddressSave = () => {
     refreshProfile()
@@ -178,7 +179,7 @@ export default function Dashboard() {
   const handleAddressModalClose = () => {
     // Save that user skipped the address modal
     try {
-      localStorage.setItem(ADDRESS_SKIPPED_KEY, 'true')
+      if (user) localStorage.setItem(getAddressSkippedKey(user.id), 'true')
     } catch {
       // localStorage error - continue anyway
     }
@@ -188,7 +189,7 @@ export default function Dashboard() {
 
   const handleTutorialComplete = () => {
     try {
-      localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
+      if (user) localStorage.setItem(getTutorialKey(user.id), 'true')
     } catch {
       // localStorage error - continue anyway
     }
@@ -197,7 +198,7 @@ export default function Dashboard() {
 
   const handleTutorialSkip = () => {
     try {
-      localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
+      if (user) localStorage.setItem(getTutorialKey(user.id), 'true')
     } catch {
       // localStorage error - continue anyway
     }

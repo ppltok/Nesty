@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
@@ -6,24 +6,36 @@ const ADMIN_EMAIL = 'tom@ppltok.com'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
+  const hasHandled = useRef(false)
 
   useEffect(() => {
     const handleCallback = async () => {
+      // Prevent double execution (React StrictMode, etc.)
+      if (hasHandled.current) return
+      hasHandled.current = true
+
+      console.log('AuthCallback: Starting callback handling')
+
       const { data: { session }, error } = await supabase.auth.getSession()
 
       if (error) {
         console.error('Auth callback error:', error)
-        navigate('/auth/signin')
+        navigate('/auth/signin', { replace: true })
         return
       }
 
       if (session) {
+        console.log('AuthCallback: Session found, checking profile for user', session.user.id)
+
         // Check if user has completed onboarding
-        const { data: profile } = await supabase
+        // Use maybeSingle() instead of single() to handle case where profile doesn't exist yet
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('onboarding_completed, first_name, last_name')
           .eq('id', session.user.id)
-          .single()
+          .maybeSingle()
+
+        console.log('AuthCallback: Profile result:', { profile, profileError })
 
         // If profile doesn't have onboarding_completed, this is a new user
         // Send admin notification
@@ -43,12 +55,15 @@ export default function AuthCallback() {
         }
 
         if (profile?.onboarding_completed) {
-          navigate('/dashboard')
+          console.log('AuthCallback: Navigating to dashboard')
+          navigate('/dashboard', { replace: true })
         } else {
-          navigate('/onboarding')
+          console.log('AuthCallback: Navigating to onboarding')
+          navigate('/onboarding', { replace: true })
         }
       } else {
-        navigate('/auth/signin')
+        console.log('AuthCallback: No session, navigating to signin')
+        navigate('/auth/signin', { replace: true })
       }
     }
 
