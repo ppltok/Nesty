@@ -31,30 +31,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     try {
-      const { data, error } = await supabase
+      console.log('fetchProfile: Querying profiles table for user:', userId)
+
+      // Create timeout promise (5 seconds)
+      const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) => {
+        setTimeout(() => {
+          console.error('fetchProfile: Query timeout after 5 seconds')
+          resolve({ data: null, error: new Error('Query timeout') })
+        }, 5000)
+      })
+
+      // Race between query and timeout
+      const queryPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle()
 
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise])
+
       if (error) {
-        console.error('Error fetching profile:', error)
+        console.error('fetchProfile: Error fetching profile:', error)
         return null
       }
+      console.log('fetchProfile: Query successful, data:', data)
       return data
     } catch (err) {
-      console.error('Error fetching profile:', err)
+      console.error('fetchProfile: Exception during fetch:', err)
       return null
     }
   }, [])
 
   const fetchRegistry = useCallback(async (userId: string): Promise<Registry | null> => {
     try {
-      const { data, error } = await supabase
+      // Create timeout promise (5 seconds)
+      const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) => {
+        setTimeout(() => {
+          console.error('fetchRegistry: Query timeout after 5 seconds')
+          resolve({ data: null, error: new Error('Query timeout') })
+        }, 5000)
+      })
+
+      // Race between query and timeout
+      const queryPromise = supabase
         .from('registries')
         .select('*')
         .eq('owner_id', userId)
         .maybeSingle()
+
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise])
 
       if (error) {
         console.error('Error fetching registry:', error)
@@ -77,16 +102,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('fetchUserData: Fetching data for user', userId)
 
     try {
-      const [profileData, registryData] = await Promise.all([
-        fetchProfile(userId),
-        fetchRegistry(userId)
-      ])
+      console.log('fetchUserData: Starting profile fetch...')
+      const profileData = await fetchProfile(userId)
+      console.log('fetchUserData: Profile fetch complete:', !!profileData)
+
+      console.log('fetchUserData: Starting registry fetch...')
+      const registryData = await fetchRegistry(userId)
+      console.log('fetchUserData: Registry fetch complete:', !!registryData)
+
       console.log('fetchUserData: Got profile:', !!profileData, 'registry:', !!registryData)
       setProfile(profileData)
       setRegistry(registryData)
     } catch (err) {
       console.error('fetchUserData: Error fetching user data:', err)
     } finally {
+      console.log('fetchUserData: Cleaning up, setting fetchingRef to false')
       fetchingRef.current = false
     }
   }, [fetchProfile, fetchRegistry])
@@ -161,8 +191,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        // Handle sign in events (including OAuth callback)
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        // Handle sign in events
+        // IMPORTANT: Only fetch data on INITIAL_SESSION, not SIGNED_IN
+        // SIGNED_IN fires during OAuth before Supabase client is fully ready
+        // INITIAL_SESSION fires after everything is initialized
+        if (event === 'SIGNED_IN') {
+          setSession(session)
+          setUser(session?.user ?? null)
+          if (session?.user) {
+            currentUserId.current = session.user.id
+          }
+          // Don't fetch data yet - wait for INITIAL_SESSION
+          setIsLoading(false)
+          return
+        }
+
+        if (event === 'INITIAL_SESSION') {
           hasProcessedInitialSession = true
           setSession(session)
           setUser(session?.user ?? null)
