@@ -1,0 +1,35 @@
+{
+   "action": {
+      "default_icon": {
+         "128": "assets/icon-128.png",
+         "16": "assets/icon-16.png",
+         "48": "assets/icon-48.png"
+      },
+      "default_title": "Add to Nesty (Local Dev)"
+   },
+   "background": {
+      "service_worker": "serviceWorker.js",
+      "type": "module"
+   },
+   "description": "Add items to your Nesty registry from any store (Local Development)",
+   "homepage_url": "http://localhost:5173",
+   "host_permissions": [ "*://*.babylist.com/*", "http://localhost/*" ],
+   "icons": {
+      "128": "assets/icon-128.png",
+      "16": "assets/icon-16.png",
+      "48": "assets/icon-48.png"
+   },
+   "manifest_version": 3,
+   "name": "Add to Nesty (Local Dev)",
+   "permissions": [ "cookies", "activeTab", "scripting" ],
+   "version": "3.1.11",
+   "web_accessible_resources": [ {
+      "matches": [ "http://*/*", "https://*/*" ],
+      "resources": [ "assets/*.woff", "assets/*.woff2", "assets/babylistScraper.js", "clientSide.js", "api-interceptor.js" ]
+   } ],
+   "content_scripts": [ {
+      "matches": [ "http://*/*", "https://*/*" ],
+      "js": [ "api-interceptor.js" ],
+      "run_at": "document_start"
+   } ]
+}

@@ -144,6 +144,68 @@ export default function Dashboard() {
     }
   }, [searchParams, items, isLoadingItems, setSearchParams])
 
+  // Handle product data from extension
+  const extensionProductChecked = useRef(false)
+  const [extensionProductData, setExtensionProductData] = useState<any>(null)
+
+  useEffect(() => {
+    // Guard against double execution
+    if (extensionProductChecked.current) return
+
+    const addProduct = searchParams.get('addProduct')
+    if (addProduct === 'true') {
+      extensionProductChecked.current = true
+
+      try {
+        const storedData = localStorage.getItem('nesty_extension_product')
+        if (storedData) {
+          const extensionData = JSON.parse(storedData)
+          console.log('📦 Extension product data found:', extensionData)
+
+          // Map the extension data to the format expected by AddItemModal
+          const mappedData = {
+            name: extensionData.productData.name || '',
+            price: extensionData.productData.price || '',
+            category: extensionData.productData.category || '',
+            brand: extensionData.productData.brand || '',
+            storeName: extractStoreName(extensionData.sourceUrl),
+            originalUrl: extensionData.sourceUrl || '',
+            priceCurrency: extensionData.productData.priceCurrency || '₪',
+            imageUrls: extensionData.productData.imageUrls || []
+          }
+
+          setExtensionProductData(mappedData)
+
+          // Clear the URL parameter
+          setSearchParams({}, { replace: true })
+
+          // Clear localStorage
+          localStorage.removeItem('nesty_extension_product')
+
+          // Open the add item modal after a short delay
+          setTimeout(() => {
+            setShowAddItemModal(true)
+          }, 500)
+        }
+      } catch (error) {
+        console.error('❌ Failed to load extension product data:', error)
+      }
+    }
+  }, [searchParams, setSearchParams])
+
+  // Helper function to extract store name from URL
+  const extractStoreName = (url: string): string => {
+    try {
+      const urlObj = new URL(url)
+      const hostname = urlObj.hostname.replace('www.', '')
+      // Remove TLD and capitalize
+      const storeName = hostname.split('.')[0]
+      return storeName.charAt(0).toUpperCase() + storeName.slice(1)
+    } catch {
+      return ''
+    }
+  }
+
   // Check if we should show tutorial after address modal closes
   // Only show tutorial once - when user just completed onboarding (came from onboarding flow)
   const tutorialChecked = useRef(false)
@@ -234,6 +296,7 @@ export default function Dashboard() {
   const handleCloseItemModal = () => {
     setShowAddItemModal(false)
     setEditingItem(null)
+    setExtensionProductData(null) // Clear extension data when modal closes
   }
 
   const handleDeleteItem = async (itemId: string) => {
@@ -779,6 +842,7 @@ export default function Dashboard() {
           registryId={registry.id}
           onSave={handleItemSave}
           editItem={editingItem || undefined}
+          prefilledData={extensionProductData || undefined}
         />
       )}
 
