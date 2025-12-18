@@ -98,17 +98,22 @@ export default function AuthCallback() {
         // Send admin notification
         if (!profile?.onboarding_completed) {
           // Send admin notification for new signup (don't await, let it run in background)
-          supabase.functions.invoke('send-email', {
-            body: {
-              type: 'admin_new_user',
-              to: ADMIN_EMAIL,
-              data: {
-                userEmail: session.user.email,
-                userName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
-                signupDate: new Date().toLocaleDateString('he-IL'),
+          // Silently fail if edge function doesn't exist - don't block login
+          try {
+            supabase.functions.invoke('send-email', {
+              body: {
+                type: 'admin_new_user',
+                to: ADMIN_EMAIL,
+                data: {
+                  userEmail: session.user.email,
+                  userName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
+                  signupDate: new Date().toLocaleDateString('he-IL'),
+                },
               },
-            },
-          }).catch((err) => console.error('Failed to send admin notification:', err))
+            }).catch((err) => console.warn('Failed to send admin notification (non-critical):', err))
+          } catch (err) {
+            console.warn('Edge function not available (non-critical):', err)
+          }
         }
 
         if (profile?.onboarding_completed) {

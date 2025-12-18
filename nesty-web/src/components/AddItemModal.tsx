@@ -12,6 +12,10 @@ interface AddItemModalProps {
   prefilledData?: {
     name?: string
     category?: string
+    price?: string
+    brand?: string
+    storeName?: string
+    originalUrl?: string
   }
   editItem?: Item
 }
@@ -91,6 +95,10 @@ export default function AddItemModal({
           ...prev,
           name: prefilledData.name || '',
           category: prefilledData.category || '',
+          price: prefilledData.price || '',
+          storeName: prefilledData.storeName || '',
+          originalUrl: prefilledData.originalUrl || '',
+          notes: prefilledData.brand ? `מותג: ${prefilledData.brand}` : '',
         }))
       }
     }
