@@ -391,7 +391,7 @@ export default function Checklist() {
   const nestingScore = essentialItems.length > 0 ? Math.round((checkedEssential / essentialItems.length) * 100) : 0
 
   // Show loading if auth or checklist is still loading
-  if (authLoading || isLoading || !registry) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-[#fffbff] flex items-center justify-center">
         <div className="text-center">
@@ -455,13 +455,15 @@ export default function Checklist() {
                   הדרך הרגועה להכין את הקן.
                 </p>
                 {/* Global Add Button */}
-                <button
-                  onClick={handleGlobalAdd}
-                  className="flex items-center gap-2 bg-[#6750a4] hover:bg-[#503e85] text-white px-5 py-2 rounded-full font-medium transition-all shadow-md active:scale-95"
-                >
-                  <Plus className="w-4 h-4" />
-                  הוסף פריט
-                </button>
+                {registry && (
+                  <button
+                    onClick={handleGlobalAdd}
+                    className="flex items-center gap-2 bg-[#6750a4] hover:bg-[#503e85] text-white px-5 py-2 rounded-full font-medium transition-all shadow-md active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" />
+                    הוסף פריט
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -662,13 +664,15 @@ export default function Checklist() {
                                 {/* Actions */}
                                 <td className="px-6 py-4 align-middle">
                                   <div className="flex items-center justify-center gap-2">
-                                    <button
-                                      onClick={() => handleAddFromSuggestion(category.id)}
-                                      className="p-2 rounded-xl bg-[#6750a4] text-white hover:bg-[#503e85] shadow-sm transition-all hover:scale-105"
-                                      title="הוסף לרשימה שלי"
-                                    >
-                                      <Plus className="w-4 h-4" />
-                                    </button>
+                                    {registry && (
+                                      <button
+                                        onClick={() => handleAddFromSuggestion(category.id)}
+                                        className="p-2 rounded-xl bg-[#6750a4] text-white hover:bg-[#503e85] shadow-sm transition-all hover:scale-105"
+                                        title="הוסף לרשימה שלי"
+                                      >
+                                        <Plus className="w-4 h-4" />
+                                      </button>
+                                    )}
                                     <button
                                       onClick={() => hideSuggestion(category.id, item)}
                                       className="p-2 rounded-xl text-[#49454f] hover:bg-[#ffebee] hover:text-[#b3261e] transition-colors"
@@ -758,9 +762,11 @@ export default function Checklist() {
                               </div>
                               <div className="flex gap-2">
                                 {/* Primary CTA on Mobile */}
-                                <button onClick={() => handleAddFromSuggestion(category.id)} className="p-2 bg-[#6750a4] text-white rounded-full shadow-sm active:scale-95 transition-transform">
-                                  <Plus className="w-4 h-4" />
-                                </button>
+                                {registry && (
+                                  <button onClick={() => handleAddFromSuggestion(category.id)} className="p-2 bg-[#6750a4] text-white rounded-full shadow-sm active:scale-95 transition-transform">
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                )}
                                 <button onClick={() => hideSuggestion(category.id, item)} className="p-2 text-[#49454f] hover:text-[#b3261e] hover:bg-[#ffebee] rounded-full">
                                   <Trash2 className="w-4 h-4" />
                                 </button>
