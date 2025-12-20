@@ -1,0 +1,18 @@
+{
+  "name": "Nesty - לבנות את הקן שלכם",
+  "short_name": "Nesty",
+  "description": "הרשימה היחידה שמאפשרת לכם לאסוף מוצרים מכל חנות בעולם, לשתף עם המשפחה והחברים, ולקבל התראות על מחירים טובים יותר.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6750a4",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/Circle_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
