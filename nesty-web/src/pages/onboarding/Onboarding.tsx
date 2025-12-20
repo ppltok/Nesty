@@ -148,6 +148,13 @@ export default function Onboarding() {
           console.error('Error marking onboarding complete:', error)
         }
 
+        // Set sessionStorage flag BEFORE navigation as backup for the tutorial trigger
+        try {
+          sessionStorage.setItem('nesty_from_onboarding', 'true')
+        } catch {
+          // Ignore sessionStorage errors
+        }
+
         // Navigate FIRST with the state, then refresh profile
         // This ensures the navigation state is preserved before any re-renders
         navigate('/dashboard', { state: { fromOnboarding: true } })
@@ -161,6 +168,13 @@ export default function Onboarding() {
       } catch (err) {
         console.error('Error in handleCelebrationComplete:', err)
       }
+    }
+
+    // Set sessionStorage flag BEFORE navigation as backup for the tutorial trigger
+    try {
+      sessionStorage.setItem('nesty_from_onboarding', 'true')
+    } catch {
+      // Ignore sessionStorage errors
     }
 
     // Fallback navigation if something went wrong

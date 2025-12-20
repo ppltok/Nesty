@@ -25,7 +25,7 @@ export default function ShareModal({ isOpen, onClose, registrySlug, ownerName }:
   }
 
   const handleWhatsAppShare = () => {
-    const text = `היי! הכנתי רשימת מתנות לתינוק 🎁\nתוכלו לראות מה אני צריך/ה ולבחור מתנה:\n${registryUrl}`
+    const text = `היי! הכנתי רשימת מתנות לתינוק 🎁\nתוכלו לראות מה אני צריכה ולבחור מתנה:\n${registryUrl}`
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`
     window.open(whatsappUrl, '_blank')
   }
