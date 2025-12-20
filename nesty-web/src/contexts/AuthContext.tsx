@@ -202,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             currentUserId.current = session.user.id
           }
           // Don't fetch data yet - wait for INITIAL_SESSION
-          setIsLoading(false)
+          // Keep isLoading true until profile is fetched
           return
         }
 
