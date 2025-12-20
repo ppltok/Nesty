@@ -20,28 +20,25 @@ import {
   LayoutGrid,
   List,
 } from 'lucide-react'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import AddressModal from '../components/AddressModal'
 import AddItemModal from '../components/AddItemModal'
 import ShareModal from '../components/ShareModal'
-import OnboardingTutorial from '../components/OnboardingTutorial'
+import { useDashboardLayout } from '../components/layout/DashboardLayout'
 import { CATEGORIES } from '../data/categories'
 import { supabase } from '../lib/supabase'
 import type { Item, ItemCategory } from '../types'
 
 // Helper to get user-specific localStorage keys
-const getTutorialKey = (userId: string) => `nesty_tutorial_completed_${userId}`
 const getAddressSkippedKey = (userId: string) => `nesty_address_skipped_${userId}`
 
 export default function Dashboard() {
   const { profile, registry, refreshProfile, isLoading: authLoading, user } = useAuth()
-  const location = useLocation()
+  const { tutorialActive, tutorialCheckComplete } = useDashboardLayout()
   const [searchParams, setSearchParams] = useSearchParams()
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
-  const [showTutorial, setShowTutorial] = useState(false)
-  const [addressModalClosed, setAddressModalClosed] = useState(false)
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [editingItem, setEditingItem] = useState<Item | null>(null)
@@ -92,9 +89,13 @@ export default function Dashboard() {
   }, [registry, fetchItems])
 
   // Show address modal if registry exists but has no address (and user hasn't skipped)
-  // Using a ref to prevent double-execution in StrictMode
+  // Wait until tutorial check is complete AND tutorial is not active before showing
   const addressModalChecked = useRef(false)
   useEffect(() => {
+    // Wait for tutorial check to complete first
+    if (!tutorialCheckComplete) return
+    // Don't show address modal while tutorial is active
+    if (tutorialActive) return
     // Guard against double execution
     if (addressModalChecked.current) return
     if (!registry) return
@@ -107,19 +108,12 @@ export default function Dashboard() {
         const addressSkipped = user ? localStorage.getItem(getAddressSkippedKey(user.id)) : null
         if (!addressSkipped) {
           setShowAddressModal(true)
-        } else {
-          // User skipped before, mark as closed so tutorial can proceed
-          setAddressModalClosed(true)
         }
       } catch {
-        // localStorage error - treat as skipped
-        setAddressModalClosed(true)
+        // localStorage error - skip showing modal
       }
-    } else {
-      // If registry has address, mark as closed so tutorial can show
-      setAddressModalClosed(true)
     }
-  }, [registry, user])
+  }, [registry, user, tutorialActive, tutorialCheckComplete])
 
   // Handle highlight parameter for scrolling to specific item
   useEffect(() => {
@@ -206,46 +200,6 @@ export default function Dashboard() {
     }
   }
 
-  // Check if we should show tutorial after address modal closes
-  // Only show tutorial once - when user just completed onboarding (came from onboarding flow)
-  const tutorialChecked = useRef(false)
-  const fromOnboardingRef = useRef(location.state?.fromOnboarding === true)
-
-  // Capture fromOnboarding state on mount (before it gets cleared by re-renders)
-  useEffect(() => {
-    if (location.state?.fromOnboarding === true) {
-      fromOnboardingRef.current = true
-    }
-  }, [location.state])
-
-  useEffect(() => {
-    // Guard against double execution and ensure we only check once
-    if (tutorialChecked.current) return
-    if (!addressModalClosed || showAddressModal) return
-    if (!user) return
-
-    tutorialChecked.current = true
-
-    // Only show tutorial if:
-    // 1. Address modal has been closed (or wasn't needed) - checked above
-    // 2. Tutorial hasn't been completed before
-    // 3. User just completed onboarding (indicated by coming from celebration/onboarding)
-    try {
-      const tutorialCompleted = localStorage.getItem(getTutorialKey(user.id))
-      const fromOnboarding = fromOnboardingRef.current
-
-      if (!tutorialCompleted && fromOnboarding) {
-        // Small delay to ensure page is rendered
-        const timer = setTimeout(() => {
-          setShowTutorial(true)
-        }, 500)
-        return () => clearTimeout(timer)
-      }
-    } catch {
-      // localStorage error - skip tutorial
-    }
-  }, [addressModalClosed, showAddressModal, user])
-
   const handleAddressSave = () => {
     refreshProfile()
   }
@@ -258,25 +212,6 @@ export default function Dashboard() {
       // localStorage error - continue anyway
     }
     setShowAddressModal(false)
-    setAddressModalClosed(true)
-  }
-
-  const handleTutorialComplete = () => {
-    try {
-      if (user) localStorage.setItem(getTutorialKey(user.id), 'true')
-    } catch {
-      // localStorage error - continue anyway
-    }
-    setShowTutorial(false)
-  }
-
-  const handleTutorialSkip = () => {
-    try {
-      if (user) localStorage.setItem(getTutorialKey(user.id), 'true')
-    } catch {
-      // localStorage error - continue anyway
-    }
-    setShowTutorial(false)
   }
 
   const handleItemSave = () => {
@@ -826,14 +761,6 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Onboarding Tutorial */}
-      {showTutorial && (
-        <OnboardingTutorial
-          onComplete={handleTutorialComplete}
-          onSkip={handleTutorialSkip}
-        />
-      )}
-
       {/* Add/Edit Item Modal */}
       {registry && (
         <AddItemModal
@@ -1132,7 +1059,7 @@ export default function Dashboard() {
               <Link to="/checklist">
                 <button className="flex items-center gap-2 bg-white border-2 border-[#e7e0ec] text-[#1d192b] px-8 py-3 rounded-full font-bold hover:border-[#6750a4] hover:text-[#6750a4] transition-all active:scale-95">
                   <ClipboardList className="w-5 h-5" />
-                  בחר מהצ'קליסט
+                  בחרי מהצ'קליסט
                 </button>
               </Link>
             </div>

@@ -403,7 +403,7 @@ export default function PurchaseModal({
                         </p>
                         <p className="text-xs text-muted-foreground leading-relaxed">
                           {addressInfo.ownerName ? (
-                            <>תודה על התמיכה! {addressInfo.ownerName} בחר/ה להסתיר את הכתובת - פנו אליהם בפרטי לקבל את פרטי המשלוח 💜</>
+                            <>תודה על התמיכה! {addressInfo.ownerName} בחרה להסתיר את הכתובת - פנו אליה בפרטי לקבל את פרטי המשלוח 💜</>
                           ) : (
                             <>תודה על התמיכה! ההורים בחרו להסתיר את הכתובת - פנו אליהם בפרטי לקבל את פרטי המשלוח 💜</>
                           )}

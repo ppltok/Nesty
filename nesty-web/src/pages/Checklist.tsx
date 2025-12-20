@@ -829,7 +829,7 @@ export default function Checklist() {
                     onChange={(e) => setCustomItemCategory(e.target.value)}
                     className="w-full p-3 rounded-xl border border-[#e7e0ec] bg-white text-[#1d192b] focus:outline-none focus:ring-2 focus:ring-[#6750a4] focus:border-transparent"
                   >
-                    <option value="">בחר קטגוריה...</option>
+                    <option value="">בחרי קטגוריה...</option>
                     {CATEGORIES.map(cat => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}

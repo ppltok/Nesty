@@ -11,14 +11,21 @@ import {
   Trash2,
   Save,
   AlertTriangle,
+  User,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function Settings() {
-  const { registry, refreshProfile } = useAuth()
+  const { registry, profile, refreshProfile } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Profile name form
+  const [nameForm, setNameForm] = useState({
+    firstName: '',
+    lastName: '',
+  })
 
   // Address form
   const [addressForm, setAddressForm] = useState({
@@ -31,6 +38,7 @@ export default function Settings() {
 
   // Visibility
   const [isPublic, setIsPublic] = useState(true)
+  const [addressIsPrivate, setAddressIsPrivate] = useState(false)
 
   // Welcome message
   const [welcomeMessage, setWelcomeMessage] = useState('')
@@ -39,7 +47,17 @@ export default function Settings() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
 
-  // Load current data
+  // Load current profile data
+  useEffect(() => {
+    if (profile) {
+      setNameForm({
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
+      })
+    }
+  }, [profile])
+
+  // Load current registry data
   useEffect(() => {
     if (registry) {
       setAddressForm({
@@ -50,6 +68,7 @@ export default function Settings() {
         phone: registry.address_phone || '',
       })
       setIsPublic(registry.is_public ?? true)
+      setAddressIsPrivate(registry.address_is_private ?? false)
       setWelcomeMessage(registry.welcome_message || '')
     }
   }, [registry])
@@ -63,6 +82,34 @@ export default function Settings() {
   const showError = (message: string) => {
     setError(message)
     setSuccessMessage(null)
+  }
+
+  // Save profile name
+  const handleSaveName = async () => {
+    if (!profile) return
+    if (!nameForm.firstName.trim()) {
+      showError('נא להזין שם פרטי')
+      return
+    }
+    setIsLoading(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: nameForm.firstName.trim(),
+          last_name: nameForm.lastName.trim(),
+        })
+        .eq('id', profile.id)
+
+      if (error) throw error
+      await refreshProfile()
+      showSuccess('השם נשמר בהצלחה')
+    } catch (err) {
+      console.error('Error saving name:', err)
+      showError('שגיאה בשמירת השם')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   // Save address
@@ -212,6 +259,34 @@ export default function Settings() {
         )}
 
         <div className="space-y-6">
+          {/* Profile Name Section */}
+          <div className="bg-white rounded-2xl border border-border p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <User className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold text-foreground">פרטים אישיים</h2>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="שם פרטי"
+                value={nameForm.firstName}
+                onChange={(e) => setNameForm({ ...nameForm, firstName: e.target.value })}
+                placeholder="ישראל"
+              />
+              <Input
+                label="שם משפחה"
+                value={nameForm.lastName}
+                onChange={(e) => setNameForm({ ...nameForm, lastName: e.target.value })}
+                placeholder="ישראלי"
+              />
+            </div>
+
+            <Button onClick={handleSaveName} isLoading={isLoading} className="mt-4">
+              <Save className="w-4 h-4 ml-2" />
+              שמור שם
+            </Button>
+          </div>
+
           {/* Address Section */}
           <div className="bg-white rounded-2xl border border-border p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -259,6 +334,54 @@ export default function Settings() {
                 <Save className="w-4 h-4 ml-2" />
                 שמור כתובת
               </Button>
+
+              {/* Hide Address Toggle */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-foreground">הסתר כתובת מאורחים</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {addressIsPrivate
+                        ? 'הכתובת מוסתרת - רק אתם יכולים לראות אותה'
+                        : 'הכתובת גלויה לכל מי שרוכש מתנה'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!registry) return
+                      const newValue = !addressIsPrivate
+                      setAddressIsPrivate(newValue)
+                      setIsLoading(true)
+                      try {
+                        const { error } = await supabase
+                          .from('registries')
+                          .update({ address_is_private: newValue })
+                          .eq('id', registry.id)
+                        if (error) throw error
+                        await refreshProfile()
+                        showSuccess(newValue ? 'הכתובת מוסתרת' : 'הכתובת גלויה')
+                      } catch (err) {
+                        console.error('Error saving address privacy:', err)
+                        setAddressIsPrivate(!newValue) // Revert on error
+                        showError('שגיאה בשמירת ההגדרות')
+                      } finally {
+                        setIsLoading(false)
+                      }
+                    }}
+                    className={`
+                      relative w-14 h-8 rounded-full transition-colors
+                      ${addressIsPrivate ? 'bg-primary' : 'bg-muted'}
+                    `}
+                  >
+                    <div
+                      className={`
+                        absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform
+                        ${addressIsPrivate ? 'right-1' : 'left-1'}
+                      `}
+                    />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
