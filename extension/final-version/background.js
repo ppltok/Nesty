@@ -3,6 +3,8 @@
  * Listens for clicks on the extension icon and handles session fetching
  */
 
+import { config } from './config.js';
+
 chrome.action.onClicked.addListener(async (tab) => {
   console.log('🎯 Nesty Extension - Icon clicked!');
   console.log('📍 Current tab URL:', tab.url);
@@ -75,21 +77,21 @@ async function getSupabaseSession() {
     console.error('❌ Error reading chrome.storage:', error);
   }
 
-  // If no valid session in storage, try to get it from localhost:5173
-  console.log('🔍 Querying localhost:5173 for session...');
+  // If no valid session in storage, try to get it from the web app
+  console.log(`🔍 Querying ${config.WEB_URL} for session...`);
 
   try {
-    // Query for localhost:5173 tabs
-    const tabs = await chrome.tabs.query({ url: 'http://localhost:5173/*' });
+    // Query for web app tabs
+    const tabs = await chrome.tabs.query({ url: `${config.WEB_URL}/*` });
 
     if (tabs.length > 0) {
-      console.log('✅ Found localhost:5173 tab, getting session...');
+      console.log(`✅ Found ${config.WEB_URL} tab, getting session...`);
 
-      // Execute script in localhost:5173 to get session
+      // Execute script in web app context to get session
       const results = await chrome.scripting.executeScript({
         target: { tabId: tabs[0].id },
         func: () => {
-          // This runs in the context of localhost:5173
+          // This runs in the context of the web app
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('sb-') && key.includes('-auth-token')) {
@@ -105,7 +107,7 @@ async function getSupabaseSession() {
 
       if (results && results[0] && results[0].result) {
         const session = results[0].result;
-        console.log('✅ Got session from localhost:5173');
+        console.log(`✅ Got session from ${config.WEB_URL}`);
 
         // Save to chrome.storage for future use
         await chrome.storage.local.set({ nesty_session: session });
@@ -113,10 +115,10 @@ async function getSupabaseSession() {
         return session;
       }
     } else {
-      console.log('⚠️ No localhost:5173 tab found');
+      console.log(`⚠️ No ${config.WEB_URL} tab found`);
     }
   } catch (error) {
-    console.error('❌ Error querying localhost:5173:', error);
+    console.error(`❌ Error querying ${config.WEB_URL}:`, error);
   }
 
   console.log('❌ No valid session found');
