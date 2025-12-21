@@ -522,25 +522,41 @@ if (window.nestyExtensionLoaded) {
     });
 
     // Submit handler
-    document.getElementById('nesty-submit').addEventListener('click', async () => {
+    const submitButton = document.getElementById('nesty-submit');
+    console.log('🔘 Submit button found:', submitButton ? 'Yes' : 'No');
+
+    if (!submitButton) {
+      console.error('❌ Submit button not found!');
+      return;
+    }
+
+    submitButton.addEventListener('click', async () => {
+      console.log('🖱️ Submit button clicked!');
+
       const submitBtn = document.getElementById('nesty-submit');
       submitBtn.disabled = true;
       submitBtn.textContent = 'מוסיף...';
       submitBtn.style.opacity = '0.7';
 
       const formData = {
+        registry_id: userRegistry.id,
         name: document.getElementById('nesty-title').value,
         price: parseFloat(document.getElementById('nesty-price').value) || 0,
-        quantity: quantity,
-        category: document.getElementById('nesty-category').value || 'general',
-        notes: document.getElementById('nesty-notes').value,
-        is_most_wanted: isMostWanted,
-        is_private: isPrivate,
-        open_to_secondhand: isSecondhand,
-        image_url: imageUrl,
+        image_url: imageUrl || null,
         original_url: window.location.href,
         store_name: window.location.hostname,
-        registry_id: userRegistry.id
+        category: document.getElementById('nesty-category').value || 'strollers',
+        quantity: quantity,
+        quantity_received: 0,
+        is_most_wanted: isMostWanted,
+        is_private: isPrivate,
+        notes: document.getElementById('nesty-notes').value || null,
+        cheaper_alternative_url: null,
+        cheaper_alternative_price: null,
+        cheaper_alternative_store: null,
+        price_alert_sent: false,
+        enable_chip_in: false,
+        chip_in_goal: null
       };
 
       console.log('📤 Submitting item:', formData);
