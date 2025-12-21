@@ -21,7 +21,8 @@
 - Click the extension icon in your toolbar
 - **Expected Console Output:**
   ```
-  🚀 Nesty Extension - Loading...
+  🚀 Nesty Extension - Starting...
+  ✅ First load, continuing...
   📍 Current URL: https://www.shilav.co.il/...
   💅 Injecting styles...
   🔑 Getting Supabase session...
@@ -44,6 +45,10 @@
 ✅ Got session message: Session exists
 📦 Session data: ✅ Found
 ✅ User authenticated: your@email.com
+📥 Fetching user registry...
+✅ Registry found: [Your Registry Title]
+🔍 Extracting product data...
+✅ Product data extracted, showing form
 ```
 
 **If you're NOT logged in:**
@@ -55,25 +60,30 @@
 📦 Session data: ❌ Not found
 ❌ User not authenticated
 ```
-- Should show login prompt modal
+- Should show Hebrew login prompt modal with lock icon (🔒)
 
 ### Step 3: Expected Behavior
 
 **If Logged In:**
-1. Extension fetches your registry
+1. Extension fetches your registry from Supabase
 2. Extracts product data (name, price 59.90, image)
-3. Shows form with:
-   - Product image
-   - Title: "מכנסיים ארוכים"
-   - Price: 59.90
-   - Category dropdown
-   - Quantity selector
-   - Toggles
-   - Notes field
+3. Shows Hebrew form with:
+   - Product image (160x160, left side)
+   - שם המוצר (Product name): "מכנסיים ארוכים"
+   - מחיר (Price): 59.90
+   - כמות (Quantity): 1 with +/- buttons
+   - קטגוריה (Category): 10 Hebrew categories dropdown
+   - Three toggles: הכי רציתי (Most wanted), פרטי (Private), פתוח למשומש (Open to secondhand)
+   - הערות (Notes): Text area for notes
+   - הוסף לרשימה (Add to registry) button
 
 **If Not Logged In:**
-1. Shows modal with "נדרשת התחברות" (Login required)
-2. Button to open login page
+1. Shows Hebrew modal with:
+   - Lock icon (🔒)
+   - Header: "נדרשת התחברות" (Login required)
+   - Message: "כדי להוסיף מוצרים לרשימה שלך, עליך להתחבר ל-Nesty"
+   - "התחבר ל-Nesty" button (opens localhost:5173 in new tab)
+   - "סגור" button (closes modal)
 
 ## Troubleshooting
 
@@ -88,20 +98,28 @@
 
 ### Problem: Session not found but you're logged in
 - Make sure you're logged in at http://localhost:5173 (not 127.0.0.1)
-- Check localStorage in DevTools → Application → Local Storage
+- Check localStorage in DevTools → Application → Local Storage → http://localhost:5173
 - Look for keys containing "sb-" and "-auth-token"
+- Try logging out and logging back in to Nesty
 
 ### Problem: Form doesn't submit
 - Check console for API errors
-- Verify Supabase credentials in config
+- Verify Supabase credentials in content.js (NESTY_CONFIG)
 - Make sure you have a registry created in Nesty
+- Check that the items table exists in Supabase
+- Verify you have the correct permissions in Supabase RLS policies
 
 ## Success Criteria
 
 ✅ Extension loads without errors
-✅ Detects login status correctly
-✅ Shows appropriate UI (login prompt or product form)
+✅ Detects login status correctly (checks Supabase session in localStorage)
+✅ Shows appropriate UI:
+   - If logged in: Hebrew product form with all fields
+   - If not logged in: Hebrew login prompt modal
 ✅ Extracts correct product data (59.90 ILS, not 159.90)
-✅ Displays product image
-✅ Form submits to Supabase successfully
-✅ Item appears in Nesty dashboard
+✅ Displays product image (160x160)
+✅ All form controls work (quantity buttons, toggles, inputs)
+✅ Form submits to Supabase items table successfully
+✅ Item appears in Nesty dashboard with all details
+✅ Success feedback shown: "נוסף! ✓" (Added!)
+✅ Modal closes automatically after successful submission
