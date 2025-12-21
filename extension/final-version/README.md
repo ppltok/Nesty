@@ -6,13 +6,14 @@ This extension combines **working product extraction** with **full Nesty authent
 
 ## Features
 
-✅ **Authentication** - Checks if user is logged in to Nesty (localhost:5173)
+✅ **Authentication** - Automatically checks if user is logged in to Nesty (localhost:5173)
+✅ **Login Prompt** - Shows Hebrew login modal if user is not authenticated
 ✅ **Accurate Product Detection** - Extracts data from Product and ProductGroup JSON-LD schemas
-✅ **Complete Form UI** - Full Hebrew interface matching the Nesty design
-✅ **Registry Integration** - Fetches user's registry from Supabase
+✅ **Complete Form UI** - Full Hebrew interface with RTL support
+✅ **Registry Integration** - Fetches user's registry from Supabase automatically
 ✅ **Category Selection** - 10 Hebrew categories for proper organization
-✅ **Preferences** - Most wanted, Private, Open to secondhand toggles
-✅ **Direct Save** - Adds items directly to your Nesty registry database
+✅ **Preferences** - Most wanted (הכי רציתי), Private (פרטי), Open to secondhand (פתוח למשומש) toggles
+✅ **Direct Save** - Adds items directly to your Nesty registry database via Supabase API
 
 ## Installation
 
@@ -27,20 +28,32 @@ This extension combines **working product extraction** with **full Nesty authent
 ### Prerequisites
 - You must be logged in to Nesty at http://localhost:5173
 - You must have created a registry in your Nesty account
+- **Keep the Nesty tab (localhost:5173) open** while using the extension
 
 ### Steps
-1. **Log in to Nesty** at http://localhost:5173 (if not already logged in)
-2. **Navigate to any product page** (e.g., https://www.shilav.co.il/collections/easy-to-wear/products/מכנסיים-ארוכים-49)
+1. **Log in to Nesty** at http://localhost:5173 (keep this tab open)
+2. **Open a new tab** and navigate to any product page (e.g., https://www.shilav.co.il/collections/easy-to-wear/products/מכנסיים-ארוכים-49)
 3. **Click the extension icon** in your browser toolbar
-4. **Fill in the form:**
+4. The extension will:
+   - Detect your session from the open Nesty tab
+   - Extract product data from the current page
+   - Show the Hebrew product form
+5. **Fill in the form:**
    - Product name (pre-filled)
    - Price (pre-filled)
-   - Category (required)
-   - Quantity (default: 1)
-   - Preferences (optional)
+   - Category (select from dropdown)
+   - Quantity (use +/- buttons)
+   - Preferences (toggle switches)
    - Notes (optional)
-5. **Click "הוסף לרשימה"** (Add to Registry)
-6. Item is saved to your Nesty registry!
+6. **Click "הוסף לרשימה"** (Add to Registry)
+7. Item is saved to your Nesty registry!
+
+### How Authentication Works
+The extension uses a smart session detection system:
+1. **First time:** Reads your Supabase session from the open localhost:5173 tab
+2. **Caches it:** Saves the session to chrome.storage for faster access
+3. **Reuses it:** On subsequent uses, reads from cache (no need to query the tab again)
+4. **Auto-refreshes:** If session expires, fetches a new one from localhost:5173
 
 ## Configuration
 
