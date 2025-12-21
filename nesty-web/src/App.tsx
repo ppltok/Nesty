@@ -46,17 +46,12 @@ function AppRoutes() {
 
   // Don't block public routes with auth loading - let them render immediately
   // This ensures guests can view public registries without waiting for auth
-  // Account for base URL prefix (e.g., /Nesty/ on GitHub Pages)
-  const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '') // Remove trailing slash
   const pathname = window.location.pathname
-  const pathWithoutBase = pathname.startsWith(baseUrl)
-    ? pathname.slice(baseUrl.length) || '/'
-    : pathname
 
-  const isPublicRoute = pathWithoutBase === '/' ||
-    pathWithoutBase.startsWith('/registry/') ||
-    pathWithoutBase.startsWith('/auth/') ||
-    pathWithoutBase === '/example'
+  const isPublicRoute = pathname === '/' ||
+    pathname.startsWith('/registry/') ||
+    pathname.startsWith('/auth/') ||
+    pathname === '/example'
 
   if (isLoading && !isPublicRoute) {
     return <LoadingScreen />

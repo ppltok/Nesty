@@ -89,9 +89,8 @@ const mockApiPlugin = () => ({
 
 // https://vite.dev/config/
 export default defineConfig({
-  // Base path for GitHub Pages deployment (https://ppltok.github.io/Nesty/)
-  // Use '/' for local dev, '/Nesty/' for production
-  base: process.env.NODE_ENV === 'production' ? '/Nesty/' : '/',
+  // Base path - always '/' since we're using custom domain (nestyil.com)
+  base: '/',
   plugins: [react(), mockApiPlugin()],
   server: {
     // Allow CORS for extension

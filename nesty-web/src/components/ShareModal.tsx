@@ -12,7 +12,7 @@ interface ShareModalProps {
 export default function ShareModal({ isOpen, onClose, registrySlug, ownerName }: ShareModalProps) {
   const [copied, setCopied] = useState(false)
 
-  const registryUrl = `${window.location.origin}${import.meta.env.BASE_URL}registry/${registrySlug}`
+  const registryUrl = `${window.location.origin}/registry/${registrySlug}`
 
   const handleCopyLink = async () => {
     try {
