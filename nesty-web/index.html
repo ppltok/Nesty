@@ -22,12 +22,8 @@
           var decoded = l.search.slice(1).split('&').map(function(s) {
             return s.replace(/~and~/g, '&')
           }).join('?');
-          // Remove leading slash from decoded since we'll add it
-          if (decoded.charAt(0) === '/') decoded = decoded.slice(1);
-          // Ensure we keep the base path and add the decoded route
-          var basePath = l.pathname.endsWith('/') ? l.pathname : l.pathname + '/';
           window.history.replaceState(null, null,
-            basePath + decoded + l.hash
+            '/' + decoded + l.hash
           );
         }
       }(window.location))
