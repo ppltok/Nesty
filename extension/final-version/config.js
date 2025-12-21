@@ -3,7 +3,7 @@
  * Switch between local development and production
  */
 
-const ENV = 'development' // Change to 'production' for deployed version
+const ENV = 'production' // Change to 'production' for deployed version
 
 const CONFIG = {
   development: {
@@ -12,7 +12,7 @@ const CONFIG = {
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvcHNyamZkYW92bHlpYml2aWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MTgxMjMsImV4cCI6MjA4MTE5NDEyM30.x4yVBmmbKyGKylOepJwOHessCfIjVxzRvSNbyJ4VyJw',
   },
   production: {
-    WEB_URL: 'https://nesty.app', // Update with your production URL
+    WEB_URL: 'https://ppltok.github.io/Nesty',
     SUPABASE_URL: 'https://wopsrjfdaovlyibivijl.supabase.co',
     SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvcHNyamZkYW92bHlpYml2aWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MTgxMjMsImV4cCI6MjA4MTE5NDEyM30.x4yVBmmbKyGKylOepJwOHessCfIjVxzRvSNbyJ4VyJw',
   }

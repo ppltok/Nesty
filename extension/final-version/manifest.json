@@ -13,10 +13,12 @@
     "http://*/*",
     "https://*/*",
     "http://localhost:5173/*",
+    "https://ppltok.github.io/*",
     "https://*.supabase.co/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "action": {
     "default_title": "Extract Product Data"
