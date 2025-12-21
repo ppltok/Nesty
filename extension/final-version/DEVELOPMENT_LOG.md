@@ -441,6 +441,149 @@ if (window.nestyExtensionLoaded) {
 
 ---
 
+## 2024-12-21: Item Submission Fix
+
+### Milestone: Working Item Submission to Database
+
+**Goal:** Fix 400 Bad Request error when submitting items to Supabase.
+
+### Problems & Solutions
+
+#### Problem: 400 Bad Request on Item Submission
+**Symptom:** When clicking "הוסף לרשימה" (Add to Registry), got 400 error:
+```
+POST https://wopsrjfdaovlyibivijl.supabase.co/rest/v1/items 400 (Bad Request)
+❌ Error adding item: Error: Failed to add item to registry
+```
+
+**Root Cause:**
+Data structure mismatch between what we were sending and what the database schema expects.
+
+**Issues Found:**
+1. ❌ Sending `open_to_secondhand` field that doesn't exist in database
+2. ❌ Missing `quantity_received` field (required, not nullable)
+3. ❌ Missing other fields that might not have database defaults
+
+**Investigation:**
+Compared submitted data with Item interface in `nesty-web/src/types/index.ts`:
+
+```typescript
+// Database schema (Item interface)
+export interface Item {
+  id: string
+  registry_id: string
+  name: string
+  price: number
+  image_url: string | null
+  original_url: string | null
+  store_name: string
+  category: ItemCategory
+  quantity: number
+  quantity_received: number  // ❌ We were missing this!
+  is_most_wanted: boolean
+  is_private: boolean
+  notes: string | null
+  cheaper_alternative_url: string | null
+  cheaper_alternative_price: number | null
+  cheaper_alternative_store: string | null
+  price_alert_sent: boolean
+  enable_chip_in: boolean
+  chip_in_goal: number | null
+  created_at: string
+  updated_at: string
+}
+```
+
+**What we were sending (WRONG):**
+```javascript
+{
+  name: 'בקבוק נטורל ריספונס',
+  price: 90.9,
+  quantity: 1,
+  category: 'general',
+  notes: '',
+  is_most_wanted: false,
+  is_private: false,
+  open_to_secondhand: false,  // ❌ Field doesn't exist!
+  image_url: imageUrl,
+  original_url: window.location.href,
+  store_name: window.location.hostname,
+  registry_id: userRegistry.id
+  // ❌ Missing quantity_received and other fields
+}
+```
+
+**Solution:**
+Updated formData to match exact database schema:
+
+```javascript
+const formData = {
+  registry_id: userRegistry.id,
+  name: document.getElementById('nesty-title').value,
+  price: parseFloat(document.getElementById('nesty-price').value) || 0,
+  image_url: imageUrl || null,
+  original_url: window.location.href,
+  store_name: window.location.hostname,
+  category: document.getElementById('nesty-category').value || 'strollers',
+  quantity: quantity,
+  quantity_received: 0,  // ✅ Added required field
+  is_most_wanted: isMostWanted,
+  is_private: isPrivate,
+  notes: document.getElementById('nesty-notes').value || null,
+  // ✅ Added all remaining fields with appropriate defaults
+  cheaper_alternative_url: null,
+  cheaper_alternative_price: null,
+  cheaper_alternative_store: null,
+  price_alert_sent: false,
+  enable_chip_in: false,
+  chip_in_goal: null
+};
+```
+
+**Why This Works:**
+- All required fields are now present
+- Field names match database columns exactly
+- Data types match (string, number, boolean, null)
+- No extra fields that don't exist in schema
+- Nullable fields properly set to null (not empty string)
+
+**Lesson Learned:**
+- Always check the database schema/TypeScript interface FIRST before creating API payloads
+- Supabase 400 errors usually mean schema mismatch
+- Use TypeScript interfaces as source of truth for data structure
+- Test with actual database insertion early in development
+- Don't assume field names - verify against backend code
+
+**Debugging Addition:**
+Added console logs to verify button attachment and clicks:
+```javascript
+const submitButton = document.getElementById('nesty-submit');
+console.log('🔘 Submit button found:', submitButton ? 'Yes' : 'No');
+
+submitButton.addEventListener('click', async () => {
+  console.log('🖱️ Submit button clicked!');
+  // ... rest of handler
+});
+```
+
+**Files Modified:**
+- `content.js` - Updated formData structure and added debugging logs
+
+**Testing Results:**
+- ✅ Item submitted successfully to Supabase
+- ✅ Item appears in dashboard with all correct data
+- ✅ Image, price, name, category all correct
+- ✅ Toggles (most wanted, private) work
+- ✅ Success message displays: "נוסף! ✓"
+- ✅ Modal closes after 1.5 seconds
+
+---
+
+### Commits
+- `[pending]` - Fix item submission data structure and add debugging
+
+---
+
 ## Change Log
 
 ### Version 1.0.0 (2024-12-21)
@@ -449,8 +592,9 @@ if (window.nestyExtensionLoaded) {
 - ✅ Full authentication integration
 - ✅ Session caching with chrome.storage
 - ✅ Registry fetching from Supabase
-- ✅ Item submission to database
+- ✅ Item submission to database (FIXED)
 - ✅ Error handling and user feedback
+- ✅ Debugging logs for troubleshooting
 
 ---
 
