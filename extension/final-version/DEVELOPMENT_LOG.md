@@ -584,6 +584,235 @@ submitButton.addEventListener('click', async () => {
 
 ---
 
+## Next Steps: Production Deployment
+
+### Goal: Switch from localhost to live production site
+
+**Status:** Ready for production deployment
+**Prerequisites:** All features tested and working on localhost
+
+### Required Changes
+
+#### 1. Update Environment Configuration
+
+**File:** `extension/final-version/config.js`
+
+**Change:**
+```javascript
+// BEFORE (development)
+const ENV = 'development'
+
+// AFTER (production)
+const ENV = 'production'
+```
+
+**Update Production URL:**
+```javascript
+production: {
+  WEB_URL: 'https://your-actual-nesty-domain.com',  // ⚠️ UPDATE THIS
+  SUPABASE_URL: 'https://wopsrjfdaovlyibivijl.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+}
+```
+
+**Important:** Make sure the production WEB_URL matches your deployed Nesty web app.
+
+---
+
+#### 2. Update Background Script Session Detection
+
+**File:** `extension/final-version/background.js`
+
+**Current:** Queries for `http://localhost:5173/*`
+```javascript
+const tabs = await chrome.tabs.query({ url: 'http://localhost:5173/*' });
+```
+
+**Change to:** Query for production URL
+```javascript
+const tabs = await chrome.tabs.query({ url: 'https://your-actual-nesty-domain.com/*' });
+```
+
+**OR Better:** Use config variable
+```javascript
+// Import config at top of background.js
+import { config } from './config.js';
+
+// In getSupabaseSession function:
+const tabs = await chrome.tabs.query({ url: `${config.WEB_URL}/*` });
+```
+
+---
+
+#### 3. Update Manifest Permissions
+
+**File:** `extension/final-version/manifest.json`
+
+**Current host_permissions:**
+```json
+"host_permissions": [
+  "http://*/*",
+  "https://*/*",
+  "http://localhost:5173/*",
+  "https://*.supabase.co/*"
+],
+```
+
+**Update to include production domain:**
+```json
+"host_permissions": [
+  "http://*/*",
+  "https://*/*",
+  "http://localhost:5173/*",
+  "https://your-actual-nesty-domain.com/*",
+  "https://*.supabase.co/*"
+],
+```
+
+---
+
+#### 4. Testing Checklist for Production
+
+**Before Deployment:**
+- [ ] Update ENV to 'production' in config.js
+- [ ] Update WEB_URL to production domain
+- [ ] Update background.js tab query URL
+- [ ] Update manifest.json host_permissions
+- [ ] Reload extension in browser
+
+**Test Scenarios:**
+1. **Authentication:**
+   - [ ] Log in to production Nesty site
+   - [ ] Keep production tab open
+   - [ ] Click extension on any product page
+   - [ ] Should detect session from production tab
+   - [ ] Should show product form (not login prompt)
+
+2. **Session Detection:**
+   - [ ] Verify console shows: "✅ Found localhost:5173 tab" becomes "✅ Found [production-url] tab"
+   - [ ] Session should cache in chrome.storage
+   - [ ] Second click should use cached session (faster)
+
+3. **Item Submission:**
+   - [ ] Add item from e-commerce site
+   - [ ] Verify item appears in production dashboard
+   - [ ] Check all fields (name, price, image, category)
+   - [ ] Verify toggles (most wanted, private) saved correctly
+
+4. **Error Handling:**
+   - [ ] Log out from production → Should show login prompt
+   - [ ] Close all production tabs → Should show "no tab found" or cached session
+   - [ ] Test with no registry → Should show error modal
+
+**Edge Cases:**
+- [ ] Test with production site in different tab positions
+- [ ] Test with multiple production tabs open
+- [ ] Test with both localhost AND production open (should prefer production in production mode)
+
+---
+
+#### 5. Deployment Steps
+
+**Step-by-Step:**
+
+1. **Make Config Changes:**
+   ```bash
+   # Edit config.js
+   const ENV = 'production'
+
+   # Edit background.js
+   # Update tab query URL to production
+   ```
+
+2. **Reload Extension:**
+   - Go to `chrome://extensions/`
+   - Find "Nesty - Product Scraper"
+   - Click refresh ⟳
+
+3. **Initial Test:**
+   - Log in to production Nesty site
+   - Keep that tab open
+   - Go to any product page
+   - Click extension icon
+   - Verify session detection works
+
+4. **Full Test:**
+   - Add 3-5 items from different sites
+   - Verify all appear in production dashboard
+   - Test toggles and categories
+   - Verify images load correctly
+
+5. **Monitor:**
+   - Check browser console for errors
+   - Check background service worker console (`chrome://extensions/` → Service Worker)
+   - Verify no CORS errors
+   - Check Supabase for successful insertions
+
+---
+
+#### 6. Known Considerations
+
+**CORS Issues:**
+- If production site has strict CORS, may need to update backend
+- Extension should work because it uses chrome.scripting.executeScript (bypasses CORS)
+
+**Session Storage:**
+- Production Supabase session stored in localStorage at production domain
+- Make sure production site uses same Supabase project
+- Session key format should be same: `sb-{project-ref}-auth-token`
+
+**Cache Invalidation:**
+- May need to clear chrome.storage.local when switching environments
+- Run in console: `chrome.storage.local.clear()`
+
+**URL Differences:**
+- localhost uses `http://`
+- Production should use `https://`
+- Update both in config and background.js
+
+---
+
+#### 7. Rollback Plan
+
+**If Production Doesn't Work:**
+
+1. **Revert config.js:**
+   ```javascript
+   const ENV = 'development'
+   ```
+
+2. **Reload extension**
+
+3. **Debug Issues:**
+   - Check console logs
+   - Verify production URL is correct
+   - Check Supabase credentials
+   - Verify RLS policies allow inserts
+
+---
+
+#### 8. Post-Deployment
+
+**After Successful Production Test:**
+
+1. **Update Documentation:**
+   - Update README.md with production usage
+   - Update TESTING.md with production test cases
+   - Document any production-specific quirks
+
+2. **Commit Changes:**
+   ```bash
+   git add config.js background.js manifest.json
+   git commit -m "feat: Switch to production environment"
+   ```
+
+3. **Update This Log:**
+   - Mark production deployment as complete
+   - Document any issues encountered
+   - Add production-specific lessons learned
+
+---
+
 ## Change Log
 
 ### Version 1.0.0 (2024-12-21)
