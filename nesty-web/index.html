@@ -22,8 +22,9 @@
           var decoded = l.search.slice(1).split('&').map(function(s) {
             return s.replace(/~and~/g, '&')
           }).join('?');
+          // decoded already starts with '/', so don't add another
           window.history.replaceState(null, null,
-            '/' + decoded + l.hash
+            decoded + l.hash
           );
         }
       }(window.location))
