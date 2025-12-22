@@ -3,21 +3,23 @@
  * Checks user authentication, fetches registry, and shows product form
  */
 
-console.log('🚀 Nesty Extension - Starting...');
+// Wrap everything in IIFE to avoid variable conflicts on re-injection
+(function() {
+  console.log('🚀 Nesty Extension - Starting...');
 
-// Prevent double execution
-if (window.nestyExtensionLoaded) {
-  console.log('⚠️ Extension already loaded, exiting');
-} else {
-  window.nestyExtensionLoaded = true;
-  console.log('✅ First load, continuing...');
+  // Remove any existing Nesty UI elements (modals, overlays, styles)
+  const existingOverlays = document.querySelectorAll('.nesty-overlay');
+  existingOverlays.forEach(overlay => overlay.remove());
 
-  // Configuration
-  const NESTY_CONFIG = {
-    WEB_URL: 'http://localhost:5173',
-    SUPABASE_URL: 'https://wopsrjfdaovlyibivijl.supabase.co',
-    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvcHNyamZkYW92bHlpYml2aWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MTgxMjMsImV4cCI6MjA4MTE5NDEyM30.x4yVBmmbKyGKylOepJwOHessCfIjVxzRvSNbyJ4VyJw'
-  };
+  const existingStyles = document.querySelector('#nesty-styles');
+  if (existingStyles) {
+    existingStyles.remove();
+  }
+
+  console.log('✅ Cleaned up existing elements, starting fresh...');
+
+  // Load configuration dynamically from config.js
+  let NESTY_CONFIG = null;
 
   // Categories (Hebrew)
   const CATEGORIES = [
@@ -39,6 +41,26 @@ if (window.nestyExtensionLoaded) {
 
   // Main execution
   (async function() {
+    // Load configuration first
+    try {
+      const configUrl = chrome.runtime.getURL('config.js');
+      const { config } = await import(configUrl);
+      NESTY_CONFIG = {
+        WEB_URL: config.WEB_URL,
+        SUPABASE_URL: config.SUPABASE_URL,
+        SUPABASE_ANON_KEY: config.SUPABASE_ANON_KEY
+      };
+      console.log('✅ Config loaded:', NESTY_CONFIG.WEB_URL);
+    } catch (error) {
+      console.error('❌ Failed to load config, using defaults:', error);
+      // Fallback to hardcoded values if config fails to load
+      NESTY_CONFIG = {
+        WEB_URL: 'http://localhost:5173',
+        SUPABASE_URL: 'https://wopsrjfdaovlyibivijl.supabase.co',
+        SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvcHNyamZkYW92bHlpYml2aWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MTgxMjMsImV4cCI6MjA4MTE5NDEyM30.x4yVBmmbKyGKylOepJwOHessCfIjVxzRvSNbyJ4VyJw'
+      };
+    }
+
     console.log('📍 Current URL:', window.location.href);
 
     // Inject CSS
@@ -604,4 +626,4 @@ if (window.nestyExtensionLoaded) {
       }
     });
   }
-}
+})(); // End of IIFE - allows re-injection without variable conflicts
