@@ -64,10 +64,10 @@ Use the content from `STORE_LISTING.md`:
 
 **Permissions Tab:**
 Copy justifications from `STORE_LISTING.md` section 7:
-- Host permissions: Explain product extraction
+- Host permissions: Explain authentication and product extraction
 - Storage: Explain session caching
-- Tabs: Explain authentication detection
 - Scripting: Explain content injection
+- ActiveTab: Explain product page access
 
 ### 6. Submit for Review
 1. Review all information
@@ -76,14 +76,39 @@ Copy justifications from `STORE_LISTING.md` section 7:
 
 ## 📝 Important Notes
 
+### ⚠️ CRITICAL: Prepare manifest.json for Chrome Store
+
+**Before creating the ZIP file for Chrome Store, you MUST remove localhost from host_permissions:**
+
+1. Open `extension/final-version/manifest.json`
+2. Remove `"http://localhost:5173/*"` from the `host_permissions` array
+3. Keep only production URLs:
+   ```json
+   "host_permissions": [
+     "https://nestyil.com/*"
+   ]
+   ```
+4. Create the ZIP file for Chrome Store
+5. After upload, restore localhost for development:
+   ```json
+   "host_permissions": [
+     "http://localhost:5173/*",
+     "https://nestyil.com/*"
+   ]
+   ```
+
+**Why?** Users don't need localhost access and it triggers an unnecessary permission warning during installation. Keep localhost only in your development version.
+
 ### Before Submitting - Checklist
-- [ ] Privacy policy hosted at `https://ppltok.github.io/Nesty/privacy-policy.html`
+- [ ] **REMOVED localhost from manifest.json host_permissions** ⚠️ CRITICAL
+- [ ] Privacy policy hosted at `https://nestyil.com/privacy-policy.html`
 - [ ] All screenshots created (1280x800)
 - [ ] Store description ready (English + Hebrew)
 - [ ] Permission justifications prepared
 - [ ] Support email/URL set up
 - [ ] Developer account verified ($5 paid)
 - [ ] Tested extension locally one final time
+- [ ] Config.js ENV set to 'production'
 
 ### Key Points for Approval
 ✅ **Be transparent** about all permissions
@@ -150,11 +175,14 @@ Once approved:
 ## 📊 Maintenance
 
 For future updates:
-1. Update version number in `manifest.json`
-2. Test all changes locally
-3. Create new zip file
-4. Upload to Chrome Web Store Developer Dashboard
-5. Submit for review (updates also require review)
+1. **REMOVE localhost from manifest.json** (see critical section above)
+2. Update version number in `manifest.json` (e.g., 1.0.0 → 1.0.1)
+3. Ensure config.js ENV is set to 'production'
+4. Test all changes locally
+5. Create new zip file (without localhost permission)
+6. Upload to Chrome Web Store Developer Dashboard
+7. Submit for review (updates also require review)
+8. **RESTORE localhost to manifest.json** for continued development
 
 ---
 
