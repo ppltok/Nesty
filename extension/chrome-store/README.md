@@ -64,10 +64,10 @@ Use the content from `STORE_LISTING.md`:
 
 **Permissions Tab:**
 Copy justifications from `STORE_LISTING.md` section 7:
-- Host permissions: Explain product extraction
+- Host permissions: Explain authentication and product extraction
 - Storage: Explain session caching
-- Tabs: Explain authentication detection
 - Scripting: Explain content injection
+- ActiveTab: Explain product page access
 
 ### 6. Submit for Review
 1. Review all information
