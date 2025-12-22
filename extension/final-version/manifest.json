@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Add to Nesty Button",
-  "version": "1.1.0",
-  "description": "Add products from any e-commerce site to your Nesty baby registry with one click",
+  "version": "1.2.0",
+  "description": "Add products from any e-commerce site to your Nesty baby registry. Extract products from current page or paste any product URL.",
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
