@@ -12,12 +12,8 @@ if (window.nestyExtensionLoaded) {
   window.nestyExtensionLoaded = true;
   console.log('✅ First load, continuing...');
 
-  // Configuration
-  const NESTY_CONFIG = {
-    WEB_URL: 'http://localhost:5173',
-    SUPABASE_URL: 'https://wopsrjfdaovlyibivijl.supabase.co',
-    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvcHNyamZkYW92bHlpYml2aWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MTgxMjMsImV4cCI6MjA4MTE5NDEyM30.x4yVBmmbKyGKylOepJwOHessCfIjVxzRvSNbyJ4VyJw'
-  };
+  // Load configuration dynamically from config.js
+  let NESTY_CONFIG = null;
 
   // Categories (Hebrew)
   const CATEGORIES = [
@@ -39,6 +35,26 @@ if (window.nestyExtensionLoaded) {
 
   // Main execution
   (async function() {
+    // Load configuration first
+    try {
+      const configUrl = chrome.runtime.getURL('config.js');
+      const { config } = await import(configUrl);
+      NESTY_CONFIG = {
+        WEB_URL: config.WEB_URL,
+        SUPABASE_URL: config.SUPABASE_URL,
+        SUPABASE_ANON_KEY: config.SUPABASE_ANON_KEY
+      };
+      console.log('✅ Config loaded:', NESTY_CONFIG.WEB_URL);
+    } catch (error) {
+      console.error('❌ Failed to load config, using defaults:', error);
+      // Fallback to hardcoded values if config fails to load
+      NESTY_CONFIG = {
+        WEB_URL: 'http://localhost:5173',
+        SUPABASE_URL: 'https://wopsrjfdaovlyibivijl.supabase.co',
+        SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvcHNyamZkYW92bHlpYml2aWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MTgxMjMsImV4cCI6MjA4MTE5NDEyM30.x4yVBmmbKyGKylOepJwOHessCfIjVxzRvSNbyJ4VyJw'
+      };
+    }
+
     console.log('📍 Current URL:', window.location.href);
 
     // Inject CSS
