@@ -5,12 +5,20 @@
 
 console.log('🚀 Nesty Extension - Starting...');
 
-// Prevent double execution
-if (window.nestyExtensionLoaded) {
-  console.log('⚠️ Extension already loaded, exiting');
-} else {
-  window.nestyExtensionLoaded = true;
-  console.log('✅ First load, continuing...');
+// Prevent double execution (with smarter check for different URLs)
+const currentUrl = window.location.href;
+const lastLoadTime = window.nestyExtensionLastLoad || 0;
+const lastLoadUrl = window.nestyExtensionLastUrl || '';
+const timeSinceLastLoad = Date.now() - lastLoadTime;
+
+// Allow re-injection if:
+// 1. Never loaded before, OR
+// 2. Different URL (user navigated to new product), OR
+// 3. Same URL but more than 2 seconds ago (page was reloaded)
+if (currentUrl !== lastLoadUrl || timeSinceLastLoad > 2000) {
+  window.nestyExtensionLastLoad = Date.now();
+  window.nestyExtensionLastUrl = currentUrl;
+  console.log('✅ First load or new URL, continuing...');
 
   // Load configuration dynamically from config.js
   let NESTY_CONFIG = null;
@@ -620,4 +628,6 @@ if (window.nestyExtensionLoaded) {
       }
     });
   }
+} else {
+  console.log('⚠️ Extension recently loaded on this URL, preventing double injection');
 }
