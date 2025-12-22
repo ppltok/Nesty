@@ -16,8 +16,7 @@
   ],
   "host_permissions": [
     "http://localhost:5173/*",
-    "https://nestyil.com/*",
-    "https://*.supabase.co/*"
+    "https://nestyil.com/*"
   ],
   "background": {
     "service_worker": "background.js",

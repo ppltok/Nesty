@@ -85,8 +85,7 @@ Copy justifications from `STORE_LISTING.md` section 7:
 3. Keep only production URLs:
    ```json
    "host_permissions": [
-     "https://nestyil.com/*",
-     "https://*.supabase.co/*"
+     "https://nestyil.com/*"
    ]
    ```
 4. Create the ZIP file for Chrome Store
@@ -94,8 +93,7 @@ Copy justifications from `STORE_LISTING.md` section 7:
    ```json
    "host_permissions": [
      "http://localhost:5173/*",
-     "https://nestyil.com/*",
-     "https://*.supabase.co/*"
+     "https://nestyil.com/*"
    ]
    ```
 
