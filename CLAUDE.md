@@ -361,13 +361,19 @@ See `NESTY_DATABASE_SCHEMA.md` for complete schema and policies.
 - [ ] Test authentication on production URL
 - [ ] Verify all routes work with base path
 
-### Chrome Extension
+### Chrome Extension (Chrome Store Upload)
+- [ ] **CRITICAL: Remove localhost from manifest.json host_permissions** (users don't need it, causes warnings)
 - [ ] Set `ENV = 'production'` in config.js
-- [ ] Verify `WEB_URL` matches production site
+- [ ] Verify `WEB_URL` matches production site (https://nestyil.com)
 - [ ] Test session detection from production tab
 - [ ] Test product extraction and submission
-- [ ] Create new zip if manifest changed
 - [ ] Update version number for new releases
+- [ ] Create new zip for Chrome Store (without localhost)
+- [ ] **After upload: Restore localhost to manifest.json** for continued development
+
+**Note:** Keep two versions of manifest.json:
+- **Development:** includes `http://localhost:5173/*` for debugging
+- **Chrome Store:** excludes localhost to avoid permission warnings for users
 
 ---
 
