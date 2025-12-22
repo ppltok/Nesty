@@ -3,18 +3,20 @@
  * Checks user authentication, fetches registry, and shows product form
  */
 
-console.log('🚀 Nesty Extension - Starting...');
+// Wrap everything in IIFE to avoid variable conflicts on re-injection
+(function() {
+  console.log('🚀 Nesty Extension - Starting...');
 
-// Remove any existing Nesty UI elements (modals, overlays, styles)
-const existingOverlays = document.querySelectorAll('.nesty-overlay');
-existingOverlays.forEach(overlay => overlay.remove());
+  // Remove any existing Nesty UI elements (modals, overlays, styles)
+  const existingOverlays = document.querySelectorAll('.nesty-overlay');
+  existingOverlays.forEach(overlay => overlay.remove());
 
-const existingStyles = document.querySelector('#nesty-styles');
-if (existingStyles) {
-  existingStyles.remove();
-}
+  const existingStyles = document.querySelector('#nesty-styles');
+  if (existingStyles) {
+    existingStyles.remove();
+  }
 
-console.log('✅ Cleaned up existing elements, starting fresh...');
+  console.log('✅ Cleaned up existing elements, starting fresh...');
 
   // Load configuration dynamically from config.js
   let NESTY_CONFIG = null;
@@ -624,3 +626,4 @@ console.log('✅ Cleaned up existing elements, starting fresh...');
       }
     });
   }
+})(); // End of IIFE - allows re-injection without variable conflicts
