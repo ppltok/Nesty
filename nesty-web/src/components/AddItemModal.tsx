@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
-import { X, Plus, Link as LinkIcon, Star, Eye, EyeOff, Package, Palette, Pencil } from 'lucide-react'
+import { X, Plus, Link as LinkIcon, Star, Eye, EyeOff, Package, Palette, Pencil, Link2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { CATEGORIES } from '../data/categories'
 import type { Item } from '../types'
+import { extractProductFromUrl } from '../lib/productExtraction'
+import { useAuth } from '../contexts/AuthContext'
 
 interface AddItemModalProps {
   isOpen: boolean
@@ -61,6 +63,16 @@ export default function AddItemModal({
     isPrivate: false,
   })
 
+  // URL extraction state
+  const { session } = useAuth()
+  const [activeTab, setActiveTab] = useState<'manual' | 'paste'>('manual')
+  const [extractionStatus, setExtractionStatus] = useState<{
+    state: 'idle' | 'loading' | 'success' | 'error'
+    message: string | null
+  }>({ state: 'idle', message: null })
+  const [urlInput, setUrlInput] = useState('')
+  const [isExtractedData, setIsExtractedData] = useState(false)
+
   const isEditMode = !!editItem
 
   const extractColorFromNotes = (notes: string | null): { color: string; cleanNotes: string } => {
@@ -103,6 +115,65 @@ export default function AddItemModal({
       }
     }
   }, [isOpen, prefilledData, editItem])
+
+  const handleExtractUrl = async () => {
+    // Validate URL format
+    try {
+      new URL(urlInput)
+    } catch {
+      setExtractionStatus({
+        state: 'error',
+        message: 'כתובת URL לא תקינה. ודא שהכתובת מתחילה ב-https://'
+      })
+      return
+    }
+
+    // Check authentication
+    if (!session?.access_token) {
+      setExtractionStatus({
+        state: 'error',
+        message: 'נדרשת התחברות לשימוש בתכונה זו'
+      })
+      return
+    }
+
+    setExtractionStatus({ state: 'loading', message: null })
+
+    try {
+      const productData = await extractProductFromUrl(urlInput, session.access_token)
+
+      // Populate form with extracted data
+      setFormData({
+        ...formData,
+        name: productData.name,
+        price: productData.price,
+        originalUrl: urlInput,
+        storeName: new URL(urlInput).hostname,
+        notes: productData.brand ? `מותג: ${productData.brand}` : formData.notes
+      })
+
+      setIsExtractedData(true)
+      setExtractionStatus({
+        state: 'success',
+        message: '✓ המוצר חולץ בהצלחה'
+      })
+
+      // Auto-switch to manual tab after 1 second
+      setTimeout(() => {
+        setActiveTab('manual')
+        setExtractionStatus({ state: 'idle', message: null })
+      }, 1000)
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'שגיאה בחילוץ המוצר'
+      setExtractionStatus({
+        state: 'error',
+        message: errorMessage.includes('לא נמצא מידע')
+          ? errorMessage
+          : 'שגיאה בחילוץ המוצר. נסה שוב או מלא ידנית'
+      })
+    }
+  }
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
@@ -181,6 +252,10 @@ export default function AddItemModal({
       isPrivate: false,
     })
     setError(null)
+    setActiveTab('manual')
+    setExtractionStatus({ state: 'idle', message: null })
+    setUrlInput('')
+    setIsExtractedData(false)
     onClose()
   }
 
@@ -199,16 +274,29 @@ export default function AddItemModal({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[#e7e0ec]">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isEditMode ? 'bg-[#eaddff] text-[#6750a4]' : 'bg-[#d0bcff] text-[#381e72]'}`}>
-              {isEditMode ? <Pencil className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-[#1d192b]">
-                {isEditMode ? 'עריכת פריט' : 'הוספת פריט חדש'}
-              </h2>
-              <p className="text-xs text-[#49454f]">
-                {isEditMode ? 'ערכו את הפרטים' : 'מלאו את הפרטים'}
-              </p>
+            {/* Tab Navigation */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab('manual')}
+                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                  activeTab === 'manual'
+                    ? 'bg-[#6750a4] text-white'
+                    : 'bg-[#f3edff] text-[#6750a4] opacity-70 hover:opacity-100'
+                }`}
+              >
+                מילוי ידני
+              </button>
+              <button
+                onClick={() => setActiveTab('paste')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                  activeTab === 'paste'
+                    ? 'bg-[#6750a4] text-white'
+                    : 'bg-[#f3edff] text-[#6750a4] opacity-70 hover:opacity-100'
+                }`}
+              >
+                <Link2 className="w-4 h-4" />
+                הדבקת קישור
+              </button>
             </div>
           </div>
           <button
@@ -227,7 +315,51 @@ export default function AddItemModal({
             </div>
           )}
 
-          {/* Form Grid - 2 columns for compact layout */}
+          {/* Paste Tab Content */}
+          {activeTab === 'paste' && (
+            <div className="py-8 px-4 flex flex-col items-center max-w-md mx-auto">
+              <Link2 className="w-12 h-12 text-[#6750a4] mb-4" />
+              <h3 className="text-lg font-bold text-[#1d192b] mb-2">הדבק קישור למוצר</h3>
+              <p className="text-sm text-[#49454f] text-center mb-6">
+                הדבק כתובת URL של מוצר מכל אתר מסחר אלקטרוני
+              </p>
+
+              <input
+                type="url"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                placeholder="https://example.com/product"
+                dir="ltr"
+                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all mb-4"
+              />
+
+              <button
+                onClick={handleExtractUrl}
+                disabled={!urlInput.trim() || extractionStatus.state === 'loading'}
+                className="w-full px-6 py-3 rounded-full bg-[#6750a4] text-white font-bold text-sm hover:bg-[#503e85] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {extractionStatus.state === 'loading' ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    מחלץ...
+                  </>
+                ) : (
+                  'חלץ מוצר'
+                )}
+              </button>
+
+              {extractionStatus.message && (
+                <div className={`mt-4 text-center text-sm font-medium ${
+                  extractionStatus.state === 'error' ? 'text-[#b3261e]' : 'text-green-600'
+                }`}>
+                  {extractionStatus.message}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Manual Tab Content */}
+          {activeTab === 'manual' && (
           <div className="grid grid-cols-2 gap-4">
             {/* Name - Full width */}
             <div className="col-span-2">
@@ -334,11 +466,19 @@ export default function AddItemModal({
               <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1.5">
                 <LinkIcon className="w-3 h-3 inline ml-1" />
                 קישור למוצר
+                {isExtractedData && (
+                  <span className="text-xs text-[#6750a4] mr-2 font-normal">
+                    (חולץ אוטומטית)
+                  </span>
+                )}
               </label>
               <input
                 type="text"
                 value={formData.originalUrl}
-                onChange={(e) => setFormData({ ...formData, originalUrl: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, originalUrl: e.target.value })
+                  setIsExtractedData(false) // Clear indicator on manual edit
+                }}
                 placeholder="https://..."
                 className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
               />
@@ -403,6 +543,7 @@ export default function AddItemModal({
               </div>
             </button>
           </div>
+          )}
         </div>
 
         {/* Footer */}
