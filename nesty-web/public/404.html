@@ -6,12 +6,19 @@
   <script>
     // Single Page App redirect for GitHub Pages with custom domain (nestyil.com)
     // Redirects 404s to index.html with the path encoded in query string
+    // IMPORTANT: Hash fragments must be encoded into the query string because
+    // location.replace() can lose hash fragments in some browsers
     var l = window.location;
+    var hash = l.hash || '';
+
+    // Encode the hash into the query string (as __hash__=...) to preserve OAuth tokens
+    var hashParam = hash ? '&__hash__=' + encodeURIComponent(hash) : '';
+
     l.replace(
       l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
       '/?/' + l.pathname.slice(1).replace(/&/g, '~and~') +
       (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-      l.hash
+      hashParam
     );
   </script>
 </head>

@@ -19,12 +19,23 @@
     <script>
       (function(l) {
         if (l.search[1] === '/' ) {
-          var decoded = l.search.slice(1).split('&').map(function(s) {
-            return s.replace(/~and~/g, '&')
-          }).join('?');
+          var parts = l.search.slice(1).split('&');
+          var hash = '';
+          var pathParts = [];
+
+          // Extract __hash__ param and separate from path
+          parts.forEach(function(s) {
+            if (s.indexOf('__hash__=') === 0) {
+              hash = decodeURIComponent(s.slice(9));
+            } else {
+              pathParts.push(s.replace(/~and~/g, '&'));
+            }
+          });
+
+          var decoded = pathParts.join('?');
           // decoded already starts with '/', so don't add another
           window.history.replaceState(null, null,
-            decoded + l.hash
+            decoded + hash
           );
         }
       }(window.location))
