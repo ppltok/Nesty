@@ -423,7 +423,7 @@
     modal.style.display = 'flex';
     modal.style.flexDirection = 'column';
 
-    const imageUrl = product ? (product.imageUrls[0] || '') : '';
+    let imageUrl = product ? (product.imageUrls[0] || '') : '';
 
     // Form state
     let currentMode = mode; // 'current' or 'paste'
