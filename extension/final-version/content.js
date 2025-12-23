@@ -357,6 +357,31 @@
   }
 
   /**
+   * Validate if extracted product data is complete enough to use
+   * @param {Object} productData - Extracted product data
+   * @returns {boolean} - True if data is usable
+   */
+  function isValidProductData(productData) {
+    if (!productData) return false;
+
+    // Must have at least a name
+    if (!productData.name || productData.name.trim() === '') {
+      return false;
+    }
+
+    // Should have price OR image (at minimum one piece of useful data besides name)
+    const hasPrice = productData.price && productData.price !== '';
+    const hasImage = productData.imageUrls && productData.imageUrls.length > 0;
+
+    if (!hasPrice && !hasImage) {
+      console.log('⚠️ Incomplete extraction - missing both price and image');
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Extract product data from a Document object (current page OR parsed HTML)
    * @param {Document} doc - Document object to extract from
    * @returns {Promise<Object|null>} - Product data or null if not found
@@ -388,14 +413,30 @@
         });
         const result = extractFromProduct(data);
         console.log('✅ Extraction result:', result);
-        return result;
+
+        // Validate result before returning
+        if (isValidProductData(result)) {
+          console.log('✅ Valid product data, using JSON-LD extraction');
+          return result;
+        } else {
+          console.log('⚠️ JSON-LD data incomplete, will try fallback methods');
+          // Continue to next script or fallback
+        }
       }
 
       if (data['@type'] === 'ProductGroup') {
         console.log('✅ Found ProductGroup type, extracting...');
         const result = extractFromProductGroup(data);
         console.log('✅ Extraction result:', result);
-        return result;
+
+        // Validate result before returning
+        if (isValidProductData(result)) {
+          console.log('✅ Valid product data, using JSON-LD extraction');
+          return result;
+        } else {
+          console.log('⚠️ JSON-LD data incomplete, will try fallback methods');
+          // Continue to next script or fallback
+        }
       }
 
       if (data['@graph']) {
@@ -409,7 +450,15 @@
             ? extractFromProduct(product)
             : extractFromProductGroup(product);
           console.log('✅ Extraction result:', result);
-          return result;
+
+          // Validate result before returning
+          if (isValidProductData(result)) {
+            console.log('✅ Valid product data from @graph');
+            return result;
+          } else {
+            console.log('⚠️ @graph data incomplete, will try fallback methods');
+            // Continue to fallback
+          }
         }
       }
     }
