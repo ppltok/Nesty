@@ -25,6 +25,8 @@ import AddressModal from '../components/AddressModal'
 import AddItemModal from '../components/AddItemModal'
 import ShareModal from '../components/ShareModal'
 import ExtensionBanner from '../components/ExtensionBanner'
+import ExtensionGuideModal from '../components/ExtensionGuideModal'
+import { useExtensionDetection } from '../hooks/useExtensionDetection'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
 import { CATEGORIES } from '../data/categories'
 import { supabase } from '../lib/supabase'
@@ -36,10 +38,12 @@ const getAddressSkippedKey = (userId: string) => `nesty_address_skipped_${userId
 export default function Dashboard() {
   const { profile, registry, refreshProfile, isLoading: authLoading, user } = useAuth()
   const { tutorialActive, tutorialCheckComplete } = useDashboardLayout()
+  const { isInstalled: extensionInstalled } = useExtensionDetection()
   const [searchParams, setSearchParams] = useSearchParams()
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
+  const [showExtensionGuideModal, setShowExtensionGuideModal] = useState(false)
   const [highlightedItemId, setHighlightedItemId] = useState<string | null>(null)
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const [editingItem, setEditingItem] = useState<Item | null>(null)
@@ -221,7 +225,18 @@ export default function Dashboard() {
 
   const handleOpenAddModal = () => {
     setEditingItem(null)
-    setShowAddItemModal(true)
+
+    // Check if extension is installed and if user hasn't dismissed the guide
+    const hasExtension = extensionInstalled
+    const guideDismissed = localStorage.getItem('nesty_extension_guide_dismissed') === 'true'
+
+    if (!hasExtension && !guideDismissed) {
+      // Show guide modal if extension not installed and user hasn't dismissed it
+      setShowExtensionGuideModal(true)
+    } else {
+      // Otherwise, open the add item modal normally
+      setShowAddItemModal(true)
+    }
   }
 
   const handleOpenEditModal = (item: Item) => {
@@ -783,6 +798,12 @@ export default function Dashboard() {
           ownerName={profile?.first_name || 'משתמש'}
         />
       )}
+
+      {/* Extension Guide Modal */}
+      <ExtensionGuideModal
+        isOpen={showExtensionGuideModal}
+        onClose={() => setShowExtensionGuideModal(false)}
+      />
 
       {/* Quantity Selector Modal */}
       {quantityModalItem && (
