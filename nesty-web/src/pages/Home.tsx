@@ -585,19 +585,19 @@ export default function Home() {
               <h4 className="font-bold text-[#1d192b] mb-4">מידע</h4>
               <ul className="space-y-3">
                 <li>
-                  <a href="#" className="text-[#49454f] hover:text-[#6750a4] transition-colors">
+                  <Link to="/terms" className="text-[#49454f] hover:text-[#6750a4] transition-colors">
                     תנאי שימוש
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-[#49454f] hover:text-[#6750a4] transition-colors">
+                  <Link to="/privacy" className="text-[#49454f] hover:text-[#6750a4] transition-colors">
                     מדיניות פרטיות
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-[#49454f] hover:text-[#6750a4] transition-colors">
+                  <Link to="/contact" className="text-[#49454f] hover:text-[#6750a4] transition-colors">
                     צור קשר
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>

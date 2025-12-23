@@ -52,7 +52,7 @@ export default function Dashboard() {
   const [sortBy, setSortBy] = useState<'date' | 'price' | 'category'>('date')
 
   // View Mode State
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
 
   // Quantity selector modal state
   const [quantityModalItem, setQuantityModalItem] = useState<Item | null>(null)

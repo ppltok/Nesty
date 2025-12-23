@@ -251,7 +251,7 @@ const handleExtractUrl = async () => {
           מחלץ...
         </>
       ) : (
-        'חלץ מוצר'
+        'הוספה מהירה מלינק'
       )}
     </button>
 

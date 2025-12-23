@@ -553,7 +553,7 @@
 
             <button id="nesty-extract-btn"
                     style="width: 100%; padding: 12px 32px; background: #6d28d9; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-              חלץ מוצר
+              הוספה מהירה מלינק
             </button>
 
             <div id="nesty-extraction-status" style="margin-top: 16px; text-align: center; color: #6b7280; font-size: 13px; min-height: 20px;"></div>
@@ -728,7 +728,7 @@
         statusDiv.style.color = '#ef4444';
       } finally {
         extractBtn.disabled = false;
-        extractBtn.textContent = 'חלץ מוצר';
+        extractBtn.textContent = 'הוספה מהירה מלינק';
       }
     });
 
