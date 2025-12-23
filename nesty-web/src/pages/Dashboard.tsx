@@ -24,6 +24,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import AddressModal from '../components/AddressModal'
 import AddItemModal from '../components/AddItemModal'
 import ShareModal from '../components/ShareModal'
+import ExtensionBanner from '../components/ExtensionBanner'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
 import { CATEGORIES } from '../data/categories'
 import { supabase } from '../lib/supabase'
@@ -854,6 +855,9 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Extension Banner */}
+        <ExtensionBanner />
+
         {/* Welcome & Stats Section */}
         <div className="flex flex-col xl:flex-row gap-8 mb-12">
           {/* Welcome Card */}
