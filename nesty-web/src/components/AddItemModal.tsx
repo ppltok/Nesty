@@ -38,6 +38,7 @@ interface ItemFormData {
   notes: string
   isMostWanted: boolean
   isPrivate: boolean
+  imageUrl: string
 }
 
 export default function AddItemModal({
@@ -61,6 +62,7 @@ export default function AddItemModal({
     notes: '',
     isMostWanted: false,
     isPrivate: false,
+    imageUrl: '',
   })
 
   // URL extraction state
@@ -101,6 +103,7 @@ export default function AddItemModal({
           notes: cleanNotes,
           isMostWanted: editItem.is_most_wanted,
           isPrivate: editItem.is_private,
+          imageUrl: editItem.image_url || '',
         })
       } else if (prefilledData) {
         setFormData((prev) => ({
@@ -149,7 +152,8 @@ export default function AddItemModal({
         price: productData.price,
         originalUrl: urlInput,
         storeName: new URL(urlInput).hostname,
-        notes: productData.brand ? `מותג: ${productData.brand}` : formData.notes
+        notes: productData.brand ? `מותג: ${productData.brand}` : formData.notes,
+        imageUrl: productData.imageUrls[0] || ''
       })
 
       setIsExtractedData(true)
@@ -211,6 +215,7 @@ export default function AddItemModal({
         notes: combinedNotes || null,
         is_most_wanted: formData.isMostWanted,
         is_private: formData.isPrivate,
+        image_url: formData.imageUrl || null,
       }
 
       if (isEditMode && editItem) {
@@ -250,6 +255,7 @@ export default function AddItemModal({
       notes: '',
       isMostWanted: false,
       isPrivate: false,
+      imageUrl: '',
     })
     setError(null)
     setActiveTab('manual')
