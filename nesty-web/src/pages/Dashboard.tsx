@@ -796,6 +796,9 @@ export default function Dashboard() {
           onClose={() => setShowShareModal(false)}
           registrySlug={registry.slug}
           ownerName={profile?.first_name || 'משתמש'}
+          registryId={registry.id}
+          userId={user?.id}
+          itemsCount={items.length}
         />
       )}
 
