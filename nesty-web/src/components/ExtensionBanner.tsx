@@ -30,13 +30,14 @@ export default function ExtensionBanner() {
   return (
     <div className="bg-gradient-to-br from-[#6750a4] to-[#381e72] rounded-[24px] p-6 mb-6 relative overflow-hidden shadow-lg">
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
       {/* Close button */}
       <button
         onClick={handleDismiss}
-        className="absolute top-4 right-4 z-20 text-white/70 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+        className="absolute top-4 right-4 z-20 text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 cursor-pointer"
         aria-label="סגור"
+        type="button"
       >
         <X className="w-5 h-5" />
       </button>
