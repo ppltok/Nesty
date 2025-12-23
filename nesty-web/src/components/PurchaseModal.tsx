@@ -4,6 +4,7 @@ import { Button } from './ui/Button'
 import { Input } from './ui/Input'
 import { supabase } from '../lib/supabase'
 import type { Item } from '../types'
+import { trackGiftPurchased } from '../utils/tracking'
 
 // Common stores in Israel for baby products
 const STORE_OPTIONS = [
@@ -30,6 +31,7 @@ interface PurchaseModalProps {
   onClose: () => void
   item: Item | null
   onSuccess: () => void
+  registryId?: string
   ownerInfo?: {
     name: string
     email: string
@@ -61,6 +63,7 @@ export default function PurchaseModal({
   onClose,
   item,
   onSuccess,
+  registryId,
   ownerInfo,
   addressInfo,
 }: PurchaseModalProps) {
@@ -261,6 +264,21 @@ export default function PurchaseModal({
         storeName: storeName,
         giftMessage: formData.giftMessage.trim() || null,
       })
+
+      // Track the gift purchase
+      if (registryId) {
+        trackGiftPurchased({
+          registry_id: registryId,
+          item_id: item.id,
+          item_name: item.name,
+          item_category: item.category || '',
+          item_price: item.price,
+          quantity: formData.quantity,
+          has_greeting: !!formData.giftMessage.trim(),
+          is_surprise: formData.isSurprise,
+          store_selected: storeName,
+        })
+      }
 
       setStep('success')
       onSuccess()

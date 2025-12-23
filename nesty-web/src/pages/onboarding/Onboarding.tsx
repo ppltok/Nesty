@@ -6,6 +6,7 @@ import { generateSlug } from '../../lib/utils'
 import { asset } from '../../lib/assets'
 import { ArrowRight, ArrowLeft, Calendar, Sparkles, Baby, Mail } from 'lucide-react'
 import OnboardingCelebration from '../../components/OnboardingCelebration'
+import { trackOnboardingStep, trackOnboardingCompleted, trackRegistryCreated } from '../../utils/tracking'
 
 type Step = 1 | 2 | 3 | 4 | 5 | 'celebration'
 
@@ -39,8 +40,25 @@ export default function Onboarding() {
     marketingEmails: false,
   })
 
+  const stepNames: Record<number, string> = {
+    1: 'name',
+    2: 'due_date',
+    3: 'feeling',
+    4: 'first_time_parent',
+    5: 'marketing_emails',
+  }
+
   const handleNext = () => {
     if (typeof step === 'number' && step < 5) {
+      // Track step completion
+      if (user) {
+        trackOnboardingStep({
+          user_id: user.id,
+          step,
+          step_name: stepNames[step],
+          completed: true,
+        })
+      }
       setStep((step + 1) as Step)
     }
   }
@@ -104,17 +122,32 @@ export default function Onboarding() {
 
       // Create registry
       const slug = generateSlug(data.firstName || 'user')
-      const { error: registryError } = await supabase
+      const { data: registryData, error: registryError } = await supabase
         .from('registries')
         .insert({
           owner_id: user.id,
           slug,
           title: `הרשימה של ${data.firstName}`,
         })
+        .select('id')
+        .single()
 
       if (registryError) {
         console.error('Registry creation error:', registryError)
         throw new Error(`שגיאה ביצירת הרשימה: ${registryError.message}`)
+      }
+
+      // Track registry creation and onboarding completion
+      if (registryData) {
+        trackRegistryCreated({
+          registry_id: registryData.id,
+          user_id: user.id,
+          source: 'organic',
+        })
+        trackOnboardingCompleted({
+          user_id: user.id,
+          registry_id: registryData.id,
+        })
       }
 
       // Don't refresh profile yet - it would trigger redirect
