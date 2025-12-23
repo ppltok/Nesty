@@ -29,13 +29,14 @@ export default function ExtensionGuideModal({ isOpen, onClose }: ExtensionGuideM
       <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg relative overflow-hidden">
         {/* Header with gradient */}
         <div className="bg-gradient-to-br from-[#6750a4] to-[#381e72] p-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
           {/* Close button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 left-4 text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 z-10"
+            className="absolute top-4 left-4 text-white/70 hover:text-white transition-colors p-3 rounded-full hover:bg-white/10 z-10 cursor-pointer"
             aria-label="סגור"
+            type="button"
           >
             <X className="w-5 h-5" />
           </button>
