@@ -286,9 +286,10 @@ Nesty/
 - **Privacy Policy:** `extension/chrome-store/privacy-policy.html`
 - **GitHub Repository:** https://github.com/ppltok/Nesty
 - **Production Site:** https://ppltok.github.io/Nesty
+- **Chrome Web Store:** https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll
 
 ---
 
 **Status:** 🟢 Active Development
-**Extension Status:** 🟡 Ready for Chrome Web Store Submission
+**Extension Status:** 🟢 Live on Chrome Web Store
 **Web App Status:** 🟢 Live in Production

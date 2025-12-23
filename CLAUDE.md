@@ -407,7 +407,7 @@ Documented in `project_status.md` with real-world comparison (59.90 ILS correct 
 - **Production Site:** https://ppltok.github.io/Nesty
 - **Repository:** https://github.com/ppltok/Nesty
 - **Supabase Project:** wopsrjfdaovlyibivijl.supabase.co
-- **Chrome Web Store:** (pending submission)
+- **Chrome Web Store:** https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll
 
 ---
 

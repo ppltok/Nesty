@@ -44,6 +44,12 @@ The app will run on `http://localhost:5173`
 - Notes for friends and family
 - Works with any e-commerce site that has structured data (JSON-LD, Shopify, etc.)
 
+## Links
+
+- **Chrome Web Store**: https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll
+- **Production Site**: https://ppltok.github.io/Nesty
+- **Repository**: https://github.com/ppltok/Nesty
+
 ## Project Structure
 
 ```
