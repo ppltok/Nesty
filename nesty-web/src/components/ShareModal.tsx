@@ -1,23 +1,39 @@
 import { useState } from 'react'
 import { X, Link2, Check, MessageCircle, Mail, QrCode, Copy, Share2 } from 'lucide-react'
 import { Button } from './ui/Button'
+import { trackRegistryShared } from '../utils/tracking'
 
 interface ShareModalProps {
   isOpen: boolean
   onClose: () => void
   registrySlug: string
   ownerName: string
+  registryId?: string
+  userId?: string
+  itemsCount?: number
 }
 
-export default function ShareModal({ isOpen, onClose, registrySlug, ownerName }: ShareModalProps) {
+export default function ShareModal({ isOpen, onClose, registrySlug, ownerName, registryId, userId, itemsCount = 0 }: ShareModalProps) {
   const [copied, setCopied] = useState(false)
 
   const registryUrl = `${window.location.origin}/registry/${registrySlug}`
+
+  const trackShare = (method: 'whatsapp' | 'email' | 'link_copied' | 'qr_code') => {
+    if (registryId && userId) {
+      trackRegistryShared({
+        registry_id: registryId,
+        user_id: userId,
+        share_method: method,
+        items_count: itemsCount,
+      })
+    }
+  }
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(registryUrl)
       setCopied(true)
+      trackShare('link_copied')
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       console.error('Failed to copy:', err)
@@ -25,12 +41,14 @@ export default function ShareModal({ isOpen, onClose, registrySlug, ownerName }:
   }
 
   const handleWhatsAppShare = () => {
+    trackShare('whatsapp')
     const text = `היי! הכנתי רשימת מתנות לתינוק 🎁\nתוכלו לראות מה אני צריכה ולבחור מתנה:\n${registryUrl}`
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`
     window.open(whatsappUrl, '_blank')
   }
 
   const handleEmailShare = () => {
+    trackShare('email')
     const subject = `רשימת המתנות של ${ownerName}`
     const body = `היי!\n\nהכנתי רשימת מתנות לתינוק ואשמח אם תעיפו מבט.\n\nלרשימה: ${registryUrl}\n\nתודה! ❤️`
     const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`

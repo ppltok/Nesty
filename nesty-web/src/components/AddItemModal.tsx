@@ -6,6 +6,7 @@ import type { Item } from '../types'
 import { extractProductFromUrl } from '../lib/productExtraction'
 import { useAuth } from '../contexts/AuthContext'
 import { useExtensionDetection } from '../hooks/useExtensionDetection'
+import { trackItemAdded, trackItemEdited } from '../utils/tracking'
 
 interface AddItemModalProps {
   isOpen: boolean
@@ -230,12 +231,39 @@ export default function AddItemModal({
           .eq('id', editItem.id)
 
         if (updateError) throw updateError
+
+        // Track item edit
+        trackItemEdited({
+          registry_id: registryId,
+          item_id: editItem.id,
+          item_name: formData.name.trim(),
+        })
       } else {
-        const { error: insertError } = await supabase
+        const { data: insertedItem, error: insertError } = await supabase
           .from('items')
           .insert({ ...itemData, registry_id: registryId })
+          .select('id')
+          .single()
 
         if (insertError) throw insertError
+
+        // Track item addition
+        if (insertedItem) {
+          // Determine source based on how item was added
+          const source = prefilledData?.originalUrl ? 'chrome_extension'
+            : isExtractedData ? 'paste'
+            : 'manual'
+
+          trackItemAdded({
+            registry_id: registryId,
+            item_id: insertedItem.id,
+            item_name: formData.name.trim(),
+            item_category: formData.category,
+            item_price: formData.price ? parseFloat(formData.price) : undefined,
+            source,
+            has_extension: extensionInstalled,
+          })
+        }
       }
 
       onSave()

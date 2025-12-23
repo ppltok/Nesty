@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { asset } from '../lib/assets'
@@ -23,6 +23,7 @@ import { getDaysUntilDueDate } from '../lib/utils'
 import PurchaseModal from '../components/PurchaseModal'
 import { remainingQuantity, isPurchased } from '../types'
 import { CATEGORIES } from '../data/categories'
+import { trackRegistryViewed } from '../utils/tracking'
 
 interface RegistryWithOwner extends Registry {
   profiles: Pick<Profile, 'first_name' | 'last_name' | 'due_date' | 'email'>
@@ -42,6 +43,7 @@ export default function PublicRegistry() {
   const [filterMostWanted, setFilterMostWanted] = useState(false)
   const [filterPriceRange, setFilterPriceRange] = useState<'all' | '0-200' | '200-500' | '500-1000' | '1000+'>('all')
   const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const hasTrackedView = useRef(false)
 
   const priceRangeOptions = [
     { value: 'all' as const, label: 'כל המחירים' },
@@ -174,6 +176,21 @@ export default function PublicRegistry() {
           console.error('Error fetching items:', itemsError)
         }
         setItems(itemsData || [])
+
+        // Track registry view (only once per session)
+        if (!hasTrackedView.current && registryId) {
+          hasTrackedView.current = true
+          // Generate a unique viewer ID for this session
+          const viewerId = sessionStorage.getItem('nesty_viewer_id') || `viewer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+          if (!sessionStorage.getItem('nesty_viewer_id')) {
+            sessionStorage.setItem('nesty_viewer_id', viewerId)
+          }
+          trackRegistryViewed({
+            registry_id: registryId,
+            viewer_id: viewerId,
+            items_count: itemsData?.length || 0,
+          })
+        }
       } catch (err) {
         console.error('Error in fetchRegistry:', err)
         setError('שגיאה בטעינת הרשימה')
@@ -529,6 +546,7 @@ export default function PublicRegistry() {
         }}
         item={selectedItem}
         onSuccess={handlePurchaseSuccess}
+        registryId={registry?.id}
         ownerInfo={registry ? {
           name: `${owner.first_name} ${owner.last_name}`,
           email: owner.email
