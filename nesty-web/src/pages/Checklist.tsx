@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { ChevronDown, Check, Plus, Trash2, ClipboardList, Sparkles, Heart, AlertCircle, Feather, Save, RotateCcw, X } from 'lucide-react'
+import { ChevronDown, Check, Plus, Trash2, ClipboardList, Sparkles, Heart, AlertCircle, Feather, Save, RotateCcw, X, Info, Lightbulb } from 'lucide-react'
 import AddItemModal from '../components/AddItemModal'
-import { CATEGORIES } from '../data/categories'
+import { CATEGORIES, ITEMS_DATA } from '../data/categories'
 import { supabase } from '../lib/supabase'
 import type { ChecklistPreference, PriorityLevel } from '../types'
 
@@ -24,6 +24,9 @@ export default function Checklist() {
   // Local notes state (not synced to DB until save)
   const [localNotes, setLocalNotes] = useState<Record<string, string>>({})
   const [hasUnsavedNotes, setHasUnsavedNotes] = useState(false)
+
+  // State for mobile info/tip popovers
+  const [activePopover, setActivePopover] = useState<{ item: string; type: 'info' | 'tip' } | null>(null)
 
   // Create a key for the notes map
   const getNotesKey = (categoryId: string, itemName: string) => `${categoryId}::${itemName}`
@@ -415,6 +418,52 @@ export default function Checklist() {
         />
       )}
 
+      {/* Mobile Info/Tip Popover Modal */}
+      {activePopover && ITEMS_DATA[activePopover.item] && (
+        <div
+          className="md:hidden fixed inset-0 z-50 flex items-end justify-center"
+          onClick={() => setActivePopover(null)}
+        >
+          <div className="absolute inset-0 bg-black/30" />
+          <div
+            className="relative w-full max-w-lg bg-white rounded-t-[24px] p-5 pb-8 shadow-2xl animate-in slide-in-from-bottom duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle bar */}
+            <div className="w-12 h-1.5 bg-[#e7e0ec] rounded-full mx-auto mb-4" />
+
+            <div className="flex items-start gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                activePopover.type === 'info' ? 'bg-[#e3f2fd] text-[#1976d2]' : 'bg-[#fff8e1] text-[#f9a825]'
+              }`}>
+                {activePopover.type === 'info' ? <Info className="w-5 h-5" /> : <Lightbulb className="w-5 h-5" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-bold mb-1 ${
+                  activePopover.type === 'info' ? 'text-[#1976d2]' : 'text-[#f9a825]'
+                }`}>
+                  {activePopover.type === 'info' ? 'מה זה?' : 'הטיפ שלנו'}
+                </p>
+                <p className="text-sm font-medium text-[#1d192b] mb-2">{activePopover.item}</p>
+                <p className="text-sm text-[#49454f] leading-relaxed">
+                  {activePopover.type === 'info'
+                    ? ITEMS_DATA[activePopover.item].description
+                    : ITEMS_DATA[activePopover.item].tip
+                  }
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setActivePopover(null)}
+              className="mt-5 w-full py-3 bg-[#f3edff] hover:bg-[#eaddff] text-[#6750a4] rounded-xl font-medium transition-colors"
+            >
+              סגור
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Unsaved Changes Banner */}
       {hasUnsavedNotes && (
         <div className="sticky top-0 z-40 bg-[#fff3cd] border-b border-[#ffc107] px-4 py-3">
@@ -618,11 +667,50 @@ export default function Checklist() {
                                   </button>
                                 </td>
 
-                                {/* Item Name */}
+                                {/* Item Name with Info & Tip */}
                                 <td className="px-6 py-4 align-middle">
-                                  <span className={`text-base font-medium transition-all ${isChecked ? 'text-[#49454f]/60 line-through decoration-[#6750a4]/30' : 'text-[#1d192b]'}`}>
-                                    {item}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-base font-medium transition-all ${isChecked ? 'text-[#49454f]/60 line-through decoration-[#6750a4]/30' : 'text-[#1d192b]'}`}>
+                                      {item}
+                                    </span>
+                                    {/* Info & Tip Icons */}
+                                    {ITEMS_DATA[item] && (
+                                      <div className="flex items-center gap-1">
+                                        {/* Info Icon with Tooltip */}
+                                        <div className="relative group/info">
+                                          <button className="p-1 rounded-full hover:bg-[#e3f2fd] text-[#1976d2] transition-colors">
+                                            <Info className="w-4 h-4" />
+                                          </button>
+                                          <div className="absolute z-[100] top-full right-0 mt-2 w-64 p-3 bg-white rounded-xl shadow-xl border border-[#e7e0ec] opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all duration-200">
+                                            <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-r border-t border-[#e7e0ec] transform rotate-[-45deg]"></div>
+                                            <div className="flex items-start gap-2">
+                                              <Info className="w-4 h-4 text-[#1976d2] flex-shrink-0 mt-0.5" />
+                                              <div>
+                                                <p className="text-xs font-bold text-[#1976d2] mb-1">מה זה?</p>
+                                                <p className="text-xs text-[#49454f] leading-relaxed">{ITEMS_DATA[item].description}</p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        {/* Tip Icon with Tooltip */}
+                                        <div className="relative group/tip">
+                                          <button className="p-1 rounded-full hover:bg-[#fff8e1] text-[#f9a825] transition-colors">
+                                            <Lightbulb className="w-4 h-4" />
+                                          </button>
+                                          <div className="absolute z-[100] top-full right-0 mt-2 w-72 p-3 bg-white rounded-xl shadow-xl border border-[#e7e0ec] opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all duration-200">
+                                            <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-r border-t border-[#e7e0ec] transform rotate-[-45deg]"></div>
+                                            <div className="flex items-start gap-2">
+                                              <Lightbulb className="w-4 h-4 text-[#f9a825] flex-shrink-0 mt-0.5" />
+                                              <div>
+                                                <p className="text-xs font-bold text-[#f9a825] mb-1">הטיפ שלנו</p>
+                                                <p className="text-xs text-[#49454f] leading-relaxed">{ITEMS_DATA[item].tip}</p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
                                 </td>
 
                                 {/* Notes Input */}
@@ -722,12 +810,37 @@ export default function Checklist() {
 
                               <div className="flex-1">
                                 <div className="flex justify-between items-start">
-                                  <span className={`text-base font-medium block ${isChecked ? 'line-through text-[#49454f]/60' : 'text-[#1d192b]'}`}>
-                                    {item}
-                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`text-base font-medium ${isChecked ? 'line-through text-[#49454f]/60' : 'text-[#1d192b]'}`}>
+                                      {item}
+                                    </span>
+                                    {/* Info & Tip Icons for Mobile (Click-based) */}
+                                    {ITEMS_DATA[item] && (
+                                      <div className="flex items-center gap-0.5">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            setActivePopover(activePopover?.item === item && activePopover?.type === 'info' ? null : { item, type: 'info' })
+                                          }}
+                                          className="p-1 rounded-full hover:bg-[#e3f2fd] text-[#1976d2] transition-colors"
+                                        >
+                                          <Info className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            setActivePopover(activePopover?.item === item && activePopover?.type === 'tip' ? null : { item, type: 'tip' })
+                                          }}
+                                          className="p-1 rounded-full hover:bg-[#fff8e1] text-[#f9a825] transition-colors"
+                                        >
+                                          <Lightbulb className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
                                   <button
                                     onClick={() => togglePriority(category.id, item)}
-                                    className={`px-2 py-1 rounded-full text-[10px] font-bold border transition-colors ${
+                                    className={`px-2 py-1 rounded-full text-[10px] font-bold border transition-colors flex-shrink-0 ${
                                       priority === 'essential'
                                         ? 'bg-[#1d192b] text-white border-[#1d192b]'
                                         : 'bg-white text-[#49454f] border-[#e7e0ec]'
