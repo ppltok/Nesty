@@ -35,7 +35,7 @@ export default function ExtensionBanner() {
       {/* Close button */}
       <button
         onClick={handleDismiss}
-        className="absolute top-4 left-4 text-white/70 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+        className="absolute top-4 right-4 z-20 text-white/70 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
         aria-label="סגור"
       >
         <X className="w-5 h-5" />
