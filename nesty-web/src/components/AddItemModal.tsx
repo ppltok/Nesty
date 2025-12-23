@@ -463,7 +463,6 @@ export default function AddItemModal({
                 className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all appearance-none cursor-pointer"
               >
                 <option value="">בחרו קטגוריה</option>
-                <option value="general">כללי</option>
                 {CATEGORIES.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
