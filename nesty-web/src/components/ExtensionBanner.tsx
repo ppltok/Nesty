@@ -42,7 +42,7 @@ export default function ExtensionBanner() {
         <X className="w-5 h-5" />
       </button>
 
-      <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+      <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 md:pl-[25px]">
         {/* Icon */}
         <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center flex-shrink-0">
           <Chrome className="w-7 h-7 text-[#d0bcff]" />
@@ -64,7 +64,7 @@ export default function ExtensionBanner() {
           href="https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 bg-white text-[#381e72] px-6 py-3 rounded-full font-bold hover:bg-[#eaddff] transition-all shadow-md active:scale-95 whitespace-nowrap"
+          className="flex items-center gap-2 bg-white text-[#381e72] px-6 py-3 rounded-full font-bold hover:bg-[#eaddff] transition-all shadow-md active:scale-95 whitespace-nowrap mr-[25px]"
         >
           <Chrome className="w-5 h-5" />
           התקן תוסף
