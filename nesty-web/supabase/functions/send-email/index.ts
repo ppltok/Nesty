@@ -8,9 +8,9 @@ const corsHeaders = {
 }
 
 interface EmailRequest {
-  type: 'purchase_notification' | 'thank_you' | 'admin_new_user'
-  to: string
-  data: {
+  type: 'purchase_notification' | 'thank_you' | 'admin_new_user' | 'contact'
+  to?: string
+  data?: {
     ownerName?: string
     ownerEmail?: string
     buyerName?: string
@@ -25,6 +25,11 @@ interface EmailRequest {
     userName?: string
     signupDate?: string
   }
+  // For contact form
+  name?: string
+  email?: string
+  subject?: string
+  message?: string
 }
 
 serve(async (req) => {
@@ -38,14 +43,60 @@ serve(async (req) => {
       throw new Error('RESEND_API_KEY is not set')
     }
 
-    const { type, to, data }: EmailRequest = await req.json()
+    const requestData: EmailRequest = await req.json()
+    const { type, to, data, name, email, subject: contactSubject, message } = requestData
 
-    let subject: string
+    let emailSubject: string
     let html: string
+    let recipient: string = to || ''
 
-    if (type === 'purchase_notification') {
+    if (type === 'contact') {
+      // Contact form submission - send to admin
+      recipient = 'tom@ppltok.com'
+      emailSubject = `📩 פנייה חדשה מאתר Nesty: ${contactSubject}`
+      html = `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="he">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; background-color: #faf8fb; margin: 0; padding: 20px;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="background: linear-gradient(to left, #86608e, #6d4e74); padding: 32px; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">📩 פנייה חדשה</h1>
+            </div>
+            <div style="padding: 32px;">
+              <p style="font-size: 18px; color: #1a1a1a; margin-bottom: 24px;">
+                התקבלה פנייה חדשה מטופס יצירת הקשר באתר:
+              </p>
+              <div style="background-color: #faf8fb; border-radius: 12px; padding: 20px; margin: 24px 0;">
+                <p style="margin: 0 0 12px 0; color: #1a1a1a;"><strong>שם:</strong> ${name}</p>
+                <p style="margin: 0 0 12px 0; color: #1a1a1a;"><strong>אימייל:</strong> <a href="mailto:${email}" style="color: #86608e;">${email}</a></p>
+                <p style="margin: 0; color: #1a1a1a;"><strong>נושא:</strong> ${contactSubject}</p>
+              </div>
+              <div style="background-color: #f4f4f4; border-radius: 12px; padding: 20px; margin: 24px 0;">
+                <p style="margin: 0 0 8px 0; color: #6b6b6b; font-size: 14px;">תוכן ההודעה:</p>
+                <p style="margin: 0; color: #1a1a1a; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+              </div>
+              <div style="text-align: center; margin-top: 32px;">
+                <a href="mailto:${email}?subject=Re: ${contactSubject}" style="display: inline-block; background: linear-gradient(to left, #86608e, #6d4e74); color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                  השב לפנייה
+                </a>
+              </div>
+            </div>
+            <div style="background-color: #faf8fb; padding: 24px; text-align: center; border-top: 1px solid #e8e4e9;">
+              <p style="margin: 0; color: #6b6b6b; font-size: 14px;">
+                נשלח מטופס יצירת הקשר ב-<a href="https://nestyil.com" style="color: #86608e; text-decoration: none;">Nesty</a>
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    } else if (type === 'purchase_notification') {
       // Email to registry owner when someone buys a gift
-      subject = `🎁 ${data.buyerName} רכש/ה מתנה מהרשימה שלך!`
+      emailSubject = `🎁 ${data!.buyerName} רכש/ה מתנה מהרשימה שלך!`
       html = `
         <!DOCTYPE html>
         <html dir="rtl" lang="he">
@@ -60,26 +111,26 @@ serve(async (req) => {
             </div>
             <div style="padding: 32px;">
               <p style="font-size: 18px; color: #1a1a1a; margin-bottom: 24px;">
-                היי ${data.ownerName},
+                היי ${data!.ownerName},
               </p>
               <p style="font-size: 16px; color: #6b6b6b; line-height: 1.6;">
-                <strong style="color: #86608e;">${data.buyerName}</strong> רכש/ה עבורך את הפריט:
+                <strong style="color: #86608e;">${data!.buyerName}</strong> רכש/ה עבורך את הפריט:
               </p>
               <div style="background-color: #faf8fb; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                <h3 style="margin: 0 0 8px 0; color: #1a1a1a;">${data.itemName}</h3>
-                ${data.itemPrice ? `<p style="margin: 0; color: #86608e; font-weight: bold;">₪${data.itemPrice}</p>` : ''}
-                ${data.storeName && data.storeName !== 'ידני' ? `<p style="margin: 8px 0 0 0; color: #6b6b6b; font-size: 14px;">נרכש ב: ${data.storeName}</p>` : ''}
+                <h3 style="margin: 0 0 8px 0; color: #1a1a1a;">${data!.itemName}</h3>
+                ${data!.itemPrice ? `<p style="margin: 0; color: #86608e; font-weight: bold;">₪${data!.itemPrice}</p>` : ''}
+                ${data!.storeName && data.storeName !== 'ידני' ? `<p style="margin: 8px 0 0 0; color: #6b6b6b; font-size: 14px;">נרכש ב: ${data!.storeName}</p>` : ''}
               </div>
-              ${data.giftMessage ? `
+              ${data!.giftMessage ? `
                 <div style="background-color: #f4acb7; background-color: rgba(244, 172, 183, 0.2); border-radius: 12px; padding: 20px; margin: 24px 0;">
-                  <p style="margin: 0 0 8px 0; color: #6b6b6b; font-size: 14px;">הודעה מ${data.buyerName}:</p>
-                  <p style="margin: 0; color: #1a1a1a; font-style: italic;">"${data.giftMessage}"</p>
+                  <p style="margin: 0 0 8px 0; color: #6b6b6b; font-size: 14px;">הודעה מ${data!.buyerName}:</p>
+                  <p style="margin: 0; color: #1a1a1a; font-style: italic;">"${data!.giftMessage}"</p>
                 </div>
               ` : ''}
               <p style="font-size: 14px; color: #6b6b6b; margin-top: 24px;">
                 פרטי הקונה ליצירת קשר:<br>
-                <strong>${data.buyerName}</strong><br>
-                ${data.buyerEmail}
+                <strong>${data!.buyerName}</strong><br>
+                ${data!.buyerEmail}
               </p>
               <div style="text-align: center; margin-top: 32px;">
                 <a href="https://nesty.co.il/gifts" style="display: inline-block; background: linear-gradient(to left, #86608e, #6d4e74); color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px;">
@@ -98,7 +149,7 @@ serve(async (req) => {
       `
     } else if (type === 'admin_new_user') {
       // Admin notification for new user signup
-      subject = `🆕 משתמש חדש נרשם ל-Nesty: ${data.userName || data.userEmail}`
+      emailSubject = `🆕 משתמש חדש נרשם ל-Nesty: ${data!.userName || data!.userEmail}`
       html = `
         <!DOCTYPE html>
         <html dir="rtl" lang="he">
@@ -120,9 +171,9 @@ serve(async (req) => {
               </p>
               <div style="background-color: #faf8fb; border-radius: 12px; padding: 20px; margin: 24px 0;">
                 <p style="margin: 0 0 8px 0; color: #6b6b6b; font-size: 14px;">פרטי המשתמש:</p>
-                ${data.userName ? `<p style="margin: 0 0 4px 0; color: #1a1a1a;"><strong>שם:</strong> ${data.userName}</p>` : ''}
-                <p style="margin: 0 0 4px 0; color: #1a1a1a;"><strong>אימייל:</strong> ${data.userEmail}</p>
-                <p style="margin: 0; color: #1a1a1a;"><strong>תאריך הרשמה:</strong> ${data.signupDate || new Date().toLocaleDateString('he-IL')}</p>
+                ${data!.userName ? `<p style="margin: 0 0 4px 0; color: #1a1a1a;"><strong>שם:</strong> ${data!.userName}</p>` : ''}
+                <p style="margin: 0 0 4px 0; color: #1a1a1a;"><strong>אימייל:</strong> ${data!.userEmail}</p>
+                <p style="margin: 0; color: #1a1a1a;"><strong>תאריך הרשמה:</strong> ${data!.signupDate || new Date().toLocaleDateString('he-IL')}</p>
               </div>
             </div>
             <div style="background-color: #faf8fb; padding: 24px; text-align: center; border-top: 1px solid #e8e4e9;">
@@ -136,7 +187,7 @@ serve(async (req) => {
       `
     } else if (type === 'thank_you') {
       // Thank you email to gift buyer
-      subject = `תודה על המתנה ל${data.ownerName}! 💝`
+      emailSubject = `תודה על המתנה ל${data!.ownerName}! 💝`
       html = `
         <!DOCTYPE html>
         <html dir="rtl" lang="he">
@@ -151,17 +202,17 @@ serve(async (req) => {
             </div>
             <div style="padding: 32px;">
               <p style="font-size: 18px; color: #1a1a1a; margin-bottom: 24px;">
-                היי ${data.buyerName},
+                היי ${data!.buyerName},
               </p>
               <p style="font-size: 16px; color: #6b6b6b; line-height: 1.6;">
-                תודה שרכשת מתנה ל${data.ownerName}!
+                תודה שרכשת מתנה ל${data!.ownerName}!
               </p>
               <div style="background-color: #faf8fb; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                <h3 style="margin: 0 0 8px 0; color: #1a1a1a;">${data.itemName}</h3>
-                ${data.itemPrice ? `<p style="margin: 0; color: #86608e; font-weight: bold;">₪${data.itemPrice}</p>` : ''}
+                <h3 style="margin: 0 0 8px 0; color: #1a1a1a;">${data!.itemName}</h3>
+                ${data!.itemPrice ? `<p style="margin: 0; color: #86608e; font-weight: bold;">₪${data!.itemPrice}</p>` : ''}
               </div>
               <p style="font-size: 16px; color: #6b6b6b; line-height: 1.6;">
-                עדכנו את ${data.ownerName} על המתנה שלך. המשפחה תיצור איתך קשר בנוגע למשלוח.
+                עדכנו את ${data!.ownerName} על המתנה שלך. המשפחה תיצור איתך קשר בנוגע למשלוח.
               </p>
               <p style="font-size: 14px; color: #6b6b6b; margin-top: 24px;">
                 מזל טוב! 🎉
@@ -180,7 +231,9 @@ serve(async (req) => {
       throw new Error('Invalid email type')
     }
 
-    // Send email via Resend API
+    // Send email via Resend API using verified domain
+    const fromEmail = 'Nesty <noreply@nestyil.com>'
+
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -188,9 +241,9 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Nesty <onboarding@resend.dev>',
-        to: [to],
-        subject,
+        from: fromEmail,
+        to: [recipient],
+        subject: emailSubject,
         html,
       }),
     })

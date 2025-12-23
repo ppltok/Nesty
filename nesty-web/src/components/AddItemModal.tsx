@@ -67,7 +67,8 @@ export default function AddItemModal({
 
   // URL extraction state
   const { session } = useAuth()
-  const [activeTab, setActiveTab] = useState<'manual' | 'paste'>('manual')
+  // Default to 'paste' for new items, 'manual' for editing existing items
+  const [activeTab, setActiveTab] = useState<'manual' | 'paste'>(editItem ? 'manual' : 'paste')
   const [extractionStatus, setExtractionStatus] = useState<{
     state: 'idle' | 'loading' | 'success' | 'error'
     message: string | null
@@ -91,6 +92,8 @@ export default function AddItemModal({
   useEffect(() => {
     if (isOpen) {
       if (editItem) {
+        // When editing, always show manual tab with existing data
+        setActiveTab('manual')
         const { color, cleanNotes } = extractColorFromNotes(editItem.notes)
         setFormData({
           name: editItem.name,
@@ -258,7 +261,7 @@ export default function AddItemModal({
       imageUrl: '',
     })
     setError(null)
-    setActiveTab('manual')
+    setActiveTab('paste')
     setExtractionStatus({ state: 'idle', message: null })
     setUrlInput('')
     setIsExtractedData(false)
@@ -280,30 +283,36 @@ export default function AddItemModal({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[#e7e0ec]">
           <div className="flex items-center gap-3">
-            {/* Tab Navigation */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTab('manual')}
-                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                  activeTab === 'manual'
-                    ? 'bg-[#6750a4] text-white'
-                    : 'bg-[#f3edff] text-[#6750a4] opacity-70 hover:opacity-100'
-                }`}
-              >
-                מילוי ידני
-              </button>
-              <button
-                onClick={() => setActiveTab('paste')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                  activeTab === 'paste'
-                    ? 'bg-[#6750a4] text-white'
-                    : 'bg-[#f3edff] text-[#6750a4] opacity-70 hover:opacity-100'
-                }`}
-              >
-                <Link2 className="w-4 h-4" />
-                הדבקת קישור
-              </button>
-            </div>
+            {/* Tab Navigation - hide tabs in edit mode */}
+            {!isEditMode && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab('paste')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                    activeTab === 'paste'
+                      ? 'bg-[#6750a4] text-white'
+                      : 'bg-[#f3edff] text-[#6750a4] opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <Link2 className="w-4 h-4" />
+                  הדבקת קישור
+                  <span className="bg-orange-100 text-orange-600 text-xs px-2 py-0.5 rounded-full">מומלץ</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('manual')}
+                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                    activeTab === 'manual'
+                      ? 'bg-[#6750a4] text-white'
+                      : 'bg-[#f3edff] text-[#6750a4] opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  מילוי ידני
+                </button>
+              </div>
+            )}
+            {isEditMode && (
+              <h2 className="text-lg font-bold text-[#1d192b]">עריכת פריט</h2>
+            )}
           </div>
           <button
             onClick={handleClose}
@@ -350,7 +359,7 @@ export default function AddItemModal({
                     מחלץ...
                   </>
                 ) : (
-                  'חלץ מוצר'
+                  'הוספה מהירה מלינק'
                 )}
               </button>
 
@@ -392,6 +401,7 @@ export default function AddItemModal({
                 className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all appearance-none cursor-pointer"
               >
                 <option value="">בחרו קטגוריה</option>
+                <option value="general">כללי</option>
                 {CATEGORIES.map((cat) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
@@ -562,7 +572,7 @@ export default function AddItemModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={isLoading}
+            disabled={isLoading || (activeTab === 'paste' && !urlInput.trim())}
             className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#6750a4] text-white font-bold text-sm hover:bg-[#503e85] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           >
             {isLoading ? (

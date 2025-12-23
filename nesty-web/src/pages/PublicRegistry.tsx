@@ -16,7 +16,7 @@ import {
   LayoutGrid,
   List,
   Banknote,
-  ChevronDown,
+  Filter,
 } from 'lucide-react'
 import type { Registry, Profile, Item, ItemCategory } from '../types'
 import { getDaysUntilDueDate } from '../lib/utils'
@@ -41,8 +41,7 @@ export default function PublicRegistry() {
   const [filterCategory, setFilterCategory] = useState<ItemCategory | ''>('')
   const [filterMostWanted, setFilterMostWanted] = useState(false)
   const [filterPriceRange, setFilterPriceRange] = useState<'all' | '0-200' | '200-500' | '500-1000' | '1000+'>('all')
-  const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
 
   const priceRangeOptions = [
     { value: 'all' as const, label: 'כל המחירים' },
@@ -51,8 +50,6 @@ export default function PublicRegistry() {
     { value: '500-1000' as const, label: '₪500-1000' },
     { value: '1000+' as const, label: '₪1000+' },
   ]
-
-  const selectedPriceLabel = priceRangeOptions.find(opt => opt.value === filterPriceRange)?.label || 'כל המחירים'
 
   // Filter and separate items into available and purchased
   const filteredItems = useMemo(() => {
@@ -355,9 +352,9 @@ export default function PublicRegistry() {
         ) : (
           <>
             {/* Filters and View Toggle */}
-            <div className="mb-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
               {/* View Mode Toggle */}
-              <div className="flex bg-white rounded-xl border border-[#e7e0ec] p-1 gap-1 w-fit mx-auto md:mx-0">
+              <div className="flex bg-white rounded-xl border border-[#e7e0ec] p-1 gap-1">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#f3edff] text-[#6750a4] shadow-sm' : 'text-[#49454f] hover:bg-[#f5f5f5]'}`}
@@ -372,97 +369,68 @@ export default function PublicRegistry() {
                 </button>
               </div>
 
-              {/* Category Filters */}
-              {availableCategories.length > 0 && (
-                <div className="flex flex-wrap items-center gap-3 justify-center">
+              {/* Filter Controls */}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Most Wanted Toggle */}
+                <button
+                  onClick={() => setFilterMostWanted(!filterMostWanted)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all hover:scale-105 active:scale-95 ${
+                    filterMostWanted
+                      ? 'bg-[#b3261e] text-white border-[#b3261e] shadow-md shadow-red-200'
+                      : 'bg-white text-[#49454f] border-[#e7e0ec] hover:border-[#b3261e] hover:text-[#b3261e]'
+                  }`}
+                >
+                  <Star className={`w-4 h-4 ${filterMostWanted ? 'fill-white' : ''}`} />
+                  הכי רוצה
+                </button>
+
+                {/* Category Filter Dropdown */}
+                {availableCategories.length > 0 && (
+                  <div className="relative group">
+                    <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#49454f] pointer-events-none group-hover:text-[#6750a4] transition-colors" />
+                    <select
+                      value={filterCategory}
+                      onChange={(e) => setFilterCategory(e.target.value as ItemCategory | '')}
+                      className="appearance-none bg-white border border-[#e7e0ec] rounded-xl pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 focus:border-[#6750a4] hover:border-[#d0bcff] transition-all cursor-pointer text-[#1d192b] font-medium min-w-[140px]"
+                    >
+                      <option value="">כל הקטגוריות ({items.length})</option>
+                      {availableCategories.map((c) => {
+                        const count = items.filter(item => item.category === c.id).length
+                        return (
+                          <option key={c.id} value={c.id}>
+                            {c.name} ({count})
+                          </option>
+                        )
+                      })}
+                    </select>
+                  </div>
+                )}
+
+                {/* Price Range Filter Dropdown */}
+                <div className="relative group">
+                  <Banknote className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#49454f] pointer-events-none group-hover:text-[#6750a4] transition-colors" />
+                  <select
+                    value={filterPriceRange}
+                    onChange={(e) => setFilterPriceRange(e.target.value as typeof filterPriceRange)}
+                    className="appearance-none bg-white border border-[#e7e0ec] rounded-xl pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 focus:border-[#6750a4] hover:border-[#d0bcff] transition-all cursor-pointer text-[#1d192b] font-medium min-w-[140px]"
+                  >
+                    {priceRangeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Clear Filters Button - show only when filters are active */}
+                {(filterCategory || filterMostWanted || filterPriceRange !== 'all') && (
                   <button
                     onClick={() => { setFilterCategory(''); setFilterMostWanted(false); setFilterPriceRange('all'); }}
-                    className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 ${
-                      filterCategory === '' && !filterMostWanted && filterPriceRange === 'all'
-                        ? 'bg-[#1d192b] text-white shadow-lg scale-105'
-                        : 'bg-white border border-[#e7e0ec] text-[#49454f] hover:bg-[#f3edff] hover:scale-105'
-                    }`}
+                    className="px-4 py-2.5 rounded-xl text-sm font-medium bg-[#f3edff] text-[#6750a4] hover:bg-[#e8deff] transition-all"
                   >
-                    הכל ({items.length})
+                    נקה סינון
                   </button>
-                  <button
-                    onClick={() => setFilterMostWanted(!filterMostWanted)}
-                    className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 ${
-                      filterMostWanted
-                        ? 'bg-[#b3261e] text-white shadow-lg scale-105 border border-[#b3261e]'
-                        : 'bg-white border border-[#e7e0ec] text-[#49454f] hover:border-[#b3261e] hover:text-[#b3261e]'
-                    }`}
-                  >
-                    <Star className={`w-4 h-4 ${filterMostWanted ? 'fill-current' : ''}`} />
-                    הכי רוצה
-                  </button>
-                  {availableCategories.map((category) => {
-                    const count = items.filter(item => item.category === category.id).length
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => setFilterCategory(category.id as ItemCategory)}
-                        className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 ${
-                          filterCategory === category.id
-                            ? 'bg-[#6750a4] text-white shadow-lg scale-105'
-                            : 'bg-white border border-[#e7e0ec] text-[#49454f] hover:bg-[#f3edff] hover:scale-105'
-                        }`}
-                      >
-                        {category.name} <span className="opacity-60 text-xs mr-1">({count})</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-
-              {/* Price Filter Dropdown */}
-              <div className="relative flex items-center gap-2 justify-center md:justify-start">
-                <div className="flex items-center gap-2 text-[#49454f]">
-                  <Banknote className="w-4 h-4" />
-                  <span className="text-sm font-medium">טווח מחיר:</span>
-                </div>
-                <div className="relative">
-                  <button
-                    onClick={() => setIsPriceDropdownOpen(!isPriceDropdownOpen)}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 min-w-[140px] justify-between ${
-                      filterPriceRange !== 'all'
-                        ? 'bg-[#33691e] text-white shadow-lg'
-                        : 'bg-white border border-[#e7e0ec] text-[#49454f] hover:bg-[#f3edff]'
-                    }`}
-                  >
-                    <span>{selectedPriceLabel}</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isPriceDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {isPriceDropdownOpen && (
-                    <>
-                      {/* Backdrop to close dropdown */}
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setIsPriceDropdownOpen(false)}
-                      />
-                      {/* Dropdown menu */}
-                      <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-xl border border-[#e7e0ec] overflow-hidden z-20 min-w-[160px]">
-                        {priceRangeOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() => {
-                              setFilterPriceRange(option.value)
-                              setIsPriceDropdownOpen(false)
-                            }}
-                            className={`w-full px-4 py-3 text-sm text-right transition-colors ${
-                              filterPriceRange === option.value
-                                ? 'bg-[#f1f8e9] text-[#33691e] font-bold'
-                                : 'text-[#49454f] hover:bg-[#f3edff]'
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
+                )}
               </div>
             </div>
 

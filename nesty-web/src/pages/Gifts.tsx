@@ -21,7 +21,7 @@ export default function Gifts() {
   const hasMarkedSeen = useRef(false)
 
   // View mode and filters
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [showSurpriseWarning, setShowSurpriseWarning] = useState<string | null>(null)
 

@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import DashboardLayout from './components/layout/DashboardLayout'
 import ErrorBoundary from './components/ErrorBoundary'
+import ScrollToTop from './components/ScrollToTop'
 import { initializeStorageVersion } from './lib/storage-version'
 
 // Pages
@@ -17,6 +18,9 @@ import PublicRegistry from './pages/PublicRegistry'
 import Gifts from './pages/Gifts'
 import Settings from './pages/Settings'
 import Example from './pages/Example'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
+import Contact from './pages/Contact'
 
 // Initialize localStorage versioning BEFORE React renders
 // This runs synchronously when the module is loaded
@@ -51,7 +55,10 @@ function AppRoutes() {
   const isPublicRoute = pathname === '/' ||
     pathname.startsWith('/registry/') ||
     pathname.startsWith('/auth/') ||
-    pathname === '/example'
+    pathname === '/example' ||
+    pathname === '/terms' ||
+    pathname === '/privacy' ||
+    pathname === '/contact'
 
   if (isLoading && !isPublicRoute) {
     return <LoadingScreen />
@@ -62,6 +69,9 @@ function AppRoutes() {
       {/* Public routes */}
       <Route path="/" element={<Home />} />
       <Route path="/example" element={<Example />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/contact" element={<Contact />} />
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
@@ -108,6 +118,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <ScrollToTop />
         <AuthProvider>
           <div dir="rtl" className="font-sans min-h-screen bg-background">
             <AppRoutes />
