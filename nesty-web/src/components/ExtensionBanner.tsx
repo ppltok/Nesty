@@ -60,7 +60,7 @@ export default function ExtensionBanner() {
 
         {/* CTA Button */}
         <a
-          href="https://chrome.google.com/webstore"
+          href="https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 bg-white text-[#381e72] px-6 py-3 rounded-full font-bold hover:bg-[#eaddff] transition-all shadow-md active:scale-95 whitespace-nowrap"
