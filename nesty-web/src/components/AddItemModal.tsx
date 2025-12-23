@@ -383,7 +383,7 @@ export default function AddItemModal({
                         עם התוסף תוכל להוסיף מוצרים ישירות מכל אתר קניות בלחיצה אחת, בלי להעתיק קישורים
                       </p>
                       <a
-                        href="https://chrome.google.com/webstore"
+                        href="https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[#6750a4] hover:text-[#503e85] transition-colors"
