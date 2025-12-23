@@ -44,8 +44,8 @@ export default function ExtensionGuideModal({ isOpen, onClose }: ExtensionGuideM
             <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Chrome className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">איך זה עובד?</h2>
-            <p className="text-[#eaddff] text-sm">הוסיפו מוצרים בקלות עם התוסף לכרום</p>
+            <h2 className="text-2xl font-bold text-white mb-2">יש דרך יותר קלה!</h2>
+            <p className="text-[#eaddff] text-sm">הוסיפו מוצרים ישירות מכל אתר קניות - פשוט ומהיר</p>
           </div>
         </div>
 
