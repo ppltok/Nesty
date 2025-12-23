@@ -43,6 +43,8 @@ export type ItemCategory =
   | 'clothing'
   | 'bedding'
   | 'toys'
+  | 'general'
+  | 'siblings'
 
 export interface Item {
   id: string
