@@ -285,7 +285,6 @@ export default function AddItemModal({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-[#e7e0ec]">
           <div className="flex items-center gap-3">
-<<<<<<< HEAD
             {/* Tab Navigation - hide tabs in edit mode */}
             {!isEditMode && (
               <div className="flex gap-2">
@@ -316,40 +315,14 @@ export default function AddItemModal({
             {isEditMode && (
               <h2 className="text-lg font-bold text-[#1d192b]">עריכת פריט</h2>
             )}
-=======
-            {/* Tab Navigation */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTab('manual')}
-                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                  activeTab === 'manual'
-                    ? 'bg-[#6750a4] text-white'
-                    : 'bg-[#f3edff] text-[#6750a4] opacity-70 hover:opacity-100'
-                }`}
-              >
-                מילוי ידני
-              </button>
-              <button
-                onClick={() => setActiveTab('paste')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                  activeTab === 'paste'
-                    ? 'bg-[#6750a4] text-white'
-                    : 'bg-[#f3edff] text-[#6750a4] opacity-70 hover:opacity-100'
-                }`}
-              >
-                <Link2 className="w-4 h-4" />
-                הדבקת קישור
-              </button>
-            </div>
 
             {/* Extension Status Badge */}
-            {extensionInstalled && (
+            {extensionInstalled && !isEditMode && (
               <div className="flex items-center gap-1.5 bg-[#e8f5e9] text-[#1b5e20] px-3 py-1.5 rounded-full text-xs font-semibold">
                 <Check className="w-3.5 h-3.5" />
                 תוסף פעיל
               </div>
             )}
->>>>>>> d5ff8ae48d2c128b2ae9596ab05ed76b1d85ea3b
           </div>
           <button
             onClick={handleClose}
