@@ -72,6 +72,12 @@ Added 10+ DOM selectors for price extraction:
    - Cause: Invalid JSON in structured data
    - Fix: Added 3-tier JSON recovery and fallback extraction
 
+4. **Fixed: Incomplete JSON-LD data extraction**
+   - Issue: Sites like darahome.com returned only name, missing price/image
+   - Cause: JSON-LD existed but was incomplete (missing offers/images)
+   - Fix: Added validation to check for critical fields before accepting result
+   - Impact: Ensures fallback methods are used when JSON-LD is incomplete
+
 ---
 
 ## 🔧 Technical Improvements
@@ -99,6 +105,7 @@ Added 10+ DOM selectors for price extraction:
 ### Tested On:
 - ✅ **shilav.co.il** - Standard Shopify (JSON-LD extraction)
 - ✅ **la-mer.co.il** - Shopify with broken JSON-LD (API fallback)
+- ✅ **darahome.com** - Incomplete JSON-LD (validation + fallback)
 - ✅ Various product pages with missing data
 - ✅ Authentication flows (logged in/out)
 - ✅ URL paste mode
