@@ -8,6 +8,7 @@ import {
   Shirt,
   BedDouble,
   Gamepad2,
+  Package,
 } from 'lucide-react'
 import StrollerIcon from '../components/icons/StrollerIcon'
 
@@ -169,5 +170,12 @@ export const CATEGORIES: Category[] = [
       'שמיכי לתינוק',
       'בובות בד',
     ],
+  },
+  {
+    id: 'general',
+    name: 'כללי',
+    icon: Package,
+    color: 'from-[#9e9e9e] to-[#757575]',
+    suggestedItems: [],
   },
 ]
