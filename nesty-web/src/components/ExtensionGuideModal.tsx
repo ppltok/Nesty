@@ -34,11 +34,11 @@ export default function ExtensionGuideModal({ isOpen, onClose }: ExtensionGuideM
           {/* Close button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 left-4 text-white/70 hover:text-white transition-colors p-3 rounded-full hover:bg-white/10 z-10 cursor-pointer"
+            className="absolute top-3 left-3 text-white/70 hover:text-white transition-colors p-3 rounded-full hover:bg-white/10 z-20 cursor-pointer"
             aria-label="סגור"
             type="button"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
 
           <div className="relative z-10 text-center">
