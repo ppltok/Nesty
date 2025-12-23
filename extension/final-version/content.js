@@ -7,6 +7,11 @@
 (function() {
   console.log('🚀 Nesty Extension - Starting...');
 
+  // Signal to website that extension is installed
+  document.documentElement.setAttribute('data-nesty-extension-installed', 'true');
+  document.documentElement.setAttribute('data-nesty-extension-version', '1.3.0');
+  console.log('✅ Extension detection markers set');
+
   // Remove any existing Nesty UI elements (modals, overlays, styles)
   const existingOverlays = document.querySelectorAll('.nesty-overlay');
   existingOverlays.forEach(overlay => overlay.remove());

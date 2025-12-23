@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { X, Plus, Link as LinkIcon, Star, Eye, EyeOff, Package, Palette, Pencil, Link2 } from 'lucide-react'
+import { X, Plus, Link as LinkIcon, Star, Eye, EyeOff, Package, Palette, Pencil, Link2, Chrome, Check } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { CATEGORIES } from '../data/categories'
 import type { Item } from '../types'
 import { extractProductFromUrl } from '../lib/productExtraction'
 import { useAuth } from '../contexts/AuthContext'
+import { useExtensionDetection } from '../hooks/useExtensionDetection'
 
 interface AddItemModalProps {
   isOpen: boolean
@@ -49,6 +50,7 @@ export default function AddItemModal({
   prefilledData,
   editItem,
 }: AddItemModalProps) {
+  const { isInstalled: extensionInstalled } = useExtensionDetection()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<ItemFormData>({
@@ -304,6 +306,14 @@ export default function AddItemModal({
                 הדבקת קישור
               </button>
             </div>
+
+            {/* Extension Status Badge */}
+            {extensionInstalled && (
+              <div className="flex items-center gap-1.5 bg-[#e8f5e9] text-[#1b5e20] px-3 py-1.5 rounded-full text-xs font-semibold">
+                <Check className="w-3.5 h-3.5" />
+                תוסף פעיל
+              </div>
+            )}
           </div>
           <button
             onClick={handleClose}
@@ -359,6 +369,30 @@ export default function AddItemModal({
                   extractionStatus.state === 'error' ? 'text-[#b3261e]' : 'text-green-600'
                 }`}>
                   {extractionStatus.message}
+                </div>
+              )}
+
+              {/* Extension Tip */}
+              {!extensionInstalled && (
+                <div className="mt-6 bg-[#f3edff] rounded-2xl p-4 border border-[#d0bcff]">
+                  <div className="flex items-start gap-3">
+                    <Chrome className="w-5 h-5 text-[#6750a4] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-[#381e72] mb-1">טיפ: התקן את התוסף לכרום</p>
+                      <p className="text-xs text-[#49454f] leading-relaxed">
+                        עם התוסף תוכל להוסיף מוצרים ישירות מכל אתר קניות בלחיצה אחת, בלי להעתיק קישורים
+                      </p>
+                      <a
+                        href="https://chrome.google.com/webstore"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[#6750a4] hover:text-[#503e85] transition-colors"
+                      >
+                        להתקנת התוסף
+                        <Link2 className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
