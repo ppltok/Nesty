@@ -353,7 +353,7 @@ export default function Home() {
                   <div className="mt-6 text-center">
                     <span className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-5 py-2.5 rounded-full font-bold">
                       <TrendingDown className="w-5 h-5" />
-                      חיסכון של ₪700 (17%)
+                      חיסכון של ₪599 (10%)
                     </span>
                   </div>
                 </div>

@@ -78,7 +78,7 @@ export default function SmartEngine() {
               <div className="mt-3 sm:mt-4 text-center">
                 <span className="inline-flex items-center gap-1.5 sm:gap-2 bg-success/10 text-success px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm">
                   <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />
-                  חיסכון של ₪700 (17%)
+                  חיסכון של ₪599 (10%)
                 </span>
               </div>
             </div>
