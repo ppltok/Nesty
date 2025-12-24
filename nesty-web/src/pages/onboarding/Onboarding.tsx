@@ -37,7 +37,7 @@ export default function Onboarding() {
     dueDate: '',
     feeling: null,
     isFirstTimeParent: null,
-    marketingEmails: false,
+    marketingEmails: true,
   })
 
   const stepNames: Record<number, string> = {
@@ -164,6 +164,7 @@ export default function Onboarding() {
 
   const canProceed = () => {
     if (step === 1) return data.firstName.trim().length > 0
+    if (step === 2) return data.dueDate.trim().length > 0
     return true
   }
 
@@ -190,7 +191,7 @@ export default function Onboarding() {
 
         // Navigate FIRST with the state, then refresh profile
         // This ensures the navigation state is preserved before any re-renders
-        navigate('/dashboard', { state: { fromOnboarding: true } })
+        navigate('/checklist', { state: { fromOnboarding: true } })
 
         // Refresh profile after navigation to update context
         // Using setTimeout to ensure navigation completes first
@@ -211,7 +212,7 @@ export default function Onboarding() {
     }
 
     // Fallback navigation if something went wrong
-    navigate('/dashboard', { state: { fromOnboarding: true } })
+    navigate('/checklist', { state: { fromOnboarding: true } })
   }
 
   // Show celebration screen
@@ -326,7 +327,8 @@ export default function Onboarding() {
                 </button>
                 <button
                   onClick={handleNext}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium hover:bg-[#7c5fbd] transition-all duration-300"
+                  disabled={!canProceed()}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium hover:bg-[#7c5fbd] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   המשך
                   <ArrowLeft className="w-5 h-5" />

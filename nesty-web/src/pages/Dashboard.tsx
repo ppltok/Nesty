@@ -20,7 +20,7 @@ import {
   LayoutGrid,
   List,
 } from 'lucide-react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import AddressModal from '../components/AddressModal'
 import AddItemModal from '../components/AddItemModal'
 import ShareModal from '../components/ShareModal'
@@ -40,6 +40,7 @@ export default function Dashboard() {
   const { tutorialActive, tutorialCheckComplete } = useDashboardLayout()
   const { isInstalled: extensionInstalled } = useExtensionDetection()
   const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [showAddressModal, setShowAddressModal] = useState(false)
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -63,6 +64,9 @@ export default function Dashboard() {
   const [quantityModalItem, setQuantityModalItem] = useState<Item | null>(null)
   const [selectedQuantity, setSelectedQuantity] = useState(1)
   const [isEditingPurchased, setIsEditingPurchased] = useState(false)
+
+  // Track if address modal is shown right after onboarding (to redirect to checklist on close)
+  const addressModalFromOnboarding = useRef(false)
 
   // Fetch items for the registry
   const fetchItems = useCallback(async () => {
@@ -112,6 +116,8 @@ export default function Dashboard() {
       try {
         const addressSkipped = user ? localStorage.getItem(getAddressSkippedKey(user.id)) : null
         if (!addressSkipped) {
+          // Mark that this address modal is shown right after onboarding/tutorial
+          addressModalFromOnboarding.current = true
           setShowAddressModal(true)
         }
       } catch {
@@ -207,6 +213,11 @@ export default function Dashboard() {
 
   const handleAddressSave = () => {
     refreshProfile()
+    // If this was shown right after onboarding, navigate to checklist
+    if (addressModalFromOnboarding.current) {
+      addressModalFromOnboarding.current = false
+      navigate('/checklist')
+    }
   }
 
   const handleAddressModalClose = () => {
@@ -217,6 +228,11 @@ export default function Dashboard() {
       // localStorage error - continue anyway
     }
     setShowAddressModal(false)
+    // If this was shown right after onboarding, navigate to checklist
+    if (addressModalFromOnboarding.current) {
+      addressModalFromOnboarding.current = false
+      navigate('/checklist')
+    }
   }
 
   const handleItemSave = () => {

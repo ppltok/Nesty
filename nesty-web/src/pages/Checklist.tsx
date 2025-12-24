@@ -497,11 +497,11 @@ export default function Checklist() {
             </div>
             <div>
               <h1 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight leading-tight">
-                צ'ק ליסט <span className="text-[#6750a4]">חכם</span>
+                מה <span className="text-[#6750a4]">באמת</span> צריך?
               </h1>
               <div className="flex flex-wrap items-center gap-4 mt-2">
                 <p className="text-[#49454f] text-lg font-medium">
-                  הדרך הרגועה להכין את הקן.
+                  התחילו כאן לגלות מה לקנות לתינוק.
                 </p>
                 {/* Global Add Button */}
                 {registry && (

@@ -21,15 +21,15 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'welcome',
     title: 'ברוכים הבאים ל-Nesty!',
-    description: 'בואו נכיר את האפליקציה בקצרה. נראה לכם את כל העמודים והכלים שיעזרו לכם לנהל את רשימת התינוק.',
-    route: '/dashboard',
+    description: 'בואו נכיר את האפליקציה בקצרה. נראה לך את כל העמודים והכלים שיעזרו לך לנהל את רשימת התינוק.',
+    route: '/checklist',
     position: 'center',
     icon: Home,
   },
   {
     id: 'dashboard',
     title: 'לוח הבקרה',
-    description: 'זה המקום הראשי שלכם! כאן תראו את כל הפריטים ברשימה, סטטיסטיקות, ותוכלו להוסיף פריטים חדשים.',
+    description: 'זאת הרשימה שלך!\n תוכלי להוסיף פריטים חדשים, לנהל את הרשימה הקיימת ולשתף עם חברים ומשפחה.',
     navItemId: 'dashboard',
     route: '/dashboard',
     position: 'bottom',
@@ -39,25 +39,25 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'add-item',
     title: 'הוספת פריטים',
-    description: 'לחצו על "הוסף פריט" כדי להוסיף מוצרים לרשימה. אפשר להוסיף ידנית או להדביק לינק מחנות.',
+    description: 'לחצי על "הוסף פריט" כדי להוסיף מוצרים לרשימה. אפשר להוסיף ידנית או להדביק לינק מחנות.',
     targetSelector: '[data-tutorial="add-item-button"]',
     route: '/dashboard',
     position: 'bottom',
   },
   {
     id: 'checklist',
-    title: 'צ\'קליסט מומלץ',
-    description: 'לא יודעים מה צריך? הצ\'קליסט שלנו מכיל את כל הפריטים המומלצים לתינוק, מסודרים לפי קטגוריות.',
+    title: 'מה את באמת צריכה?',
+    description: 'תתחילי מפה!\nכאן תגלי מה את באמת צריכה לקנות לתינוק. עברי על הרשימה המומלצת, סמני מה כבר יש לך, והחליטי מה חשוב לך.',
     navItemId: 'checklist',
     route: '/checklist',
-    position: 'center',
+    position: 'top',
     icon: ClipboardList,
     highlightNav: true,
   },
   {
     id: 'checklist-categories',
     title: 'קטגוריות וסימון',
-    description: 'סמנו פריטים שכבר יש לכם, הוסיפו הערות אישיות, והחליטו מה הכי חשוב לכם.',
+    description: 'ניתן להוסיף מוצרים או למחוק אם לא רלוונטי, הוסיפי הערות אישיות, והחליטי על כמות.',
     targetSelector: '[data-tutorial="checklist-category"]',
     route: '/checklist',
     position: 'top',
@@ -65,7 +65,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'gifts',
     title: 'מתנות שהתקבלו',
-    description: 'כאן תראו את כל המתנות שנרכשו עבורכם. תוכלו לראות מי קנה מה ולשלוח תודות.',
+    description: 'כאן תראי את כל המתנות שנרכשו עבורכם. תוכלי לראות מי קנה מה ולשלוח תודות.',
     navItemId: 'gifts',
     route: '/gifts',
     position: 'center',
@@ -75,8 +75,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'settings',
     title: 'הגדרות',
-    description: 'כאן תוכלו לעדכן כתובת למשלוח, להגדיר פרטיות הרשימה, ולנהל את החשבון.',
-    navItemId: 'settings',
+    description: 'כאן תוכלי לעדכן כתובת למשלוח, להגדיר פרטיות הרשימה, ולנהל את החשבון. במובייל - לחצי על "עוד" כדי להגיע להגדרות.',
+    navItemId: 'more', // On mobile, highlight the "more" button which contains settings
     route: '/settings',
     position: 'center',
     icon: Settings,
@@ -85,7 +85,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'complete',
     title: 'סיימתם! 🎉',
-    description: 'עכשיו אתם מוכנים להתחיל לבנות את הרשימה שלכם. בהצלחה!',
+    description: 'עכשיו את מוכנה להתחיל לבנות את הרשימה שלך. בהצלחה!',
     route: '/dashboard',
     position: 'center',
   },
@@ -174,7 +174,7 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
     if (mobile && step.highlightNav && targetRect) {
       return {
         position: 'fixed',
-        bottom: `${window.innerHeight - targetRect.top + padding}px`,
+        bottom: `${window.innerHeight - targetRect.top + padding + 8}px`,
         left: '50%',
         transform: 'translateX(-50%)',
         maxWidth: `calc(100vw - ${padding * 2}px)`,
@@ -197,14 +197,18 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
         return {
           position: 'fixed',
           top: `${targetRect.bottom + padding}px`,
-          left: `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
+          // On mobile, always center horizontally
+          left: mobile ? '50%' : `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
+          transform: mobile ? 'translateX(-50%)' : undefined,
           maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
         }
       case 'top':
         return {
           position: 'fixed',
           top: `${Math.max(padding, targetRect.top - tooltipHeight - padding)}px`,
-          left: `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
+          // On mobile, always center horizontally
+          left: mobile ? '50%' : `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
+          transform: mobile ? 'translateX(-50%)' : undefined,
           maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
         }
       case 'left':
@@ -298,7 +302,7 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
         {/* Content */}
         <div className="text-center mb-6">
           <h3 className="text-xl font-bold text-[#1d192b] mb-2">{step.title}</h3>
-          <p className="text-[#49454f] leading-relaxed">{step.description}</p>
+          <p className="text-[#49454f] leading-relaxed whitespace-pre-line">{step.description}</p>
         </div>
 
         {/* Progress dots */}
