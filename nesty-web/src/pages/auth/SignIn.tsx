@@ -70,10 +70,10 @@ export default function SignIn() {
 
           <div className="text-center mb-8">
             <h1 className="text-3xl font-medium text-[#1d192b] mb-3">
-              ברוכים השבים!
+              ברוכים הבאים!
             </h1>
             <p className="text-[#49454f] text-lg">
-              התחברו כדי להמשיך לבנות את הרשימה שלכם
+              התחברו עם חשבון Google כדי להתחיל
             </p>
           </div>
 

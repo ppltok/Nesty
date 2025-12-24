@@ -438,7 +438,7 @@ export default function Home() {
                     <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center">
                       <Gift className="w-6 h-6 text-[#31111d]" />
                     </div>
-                    <span className="text-lg text-[#1d192b]">כל אחד תורם כמה שנוח לו</span>
+                    <span className="text-lg text-[#1d192b]">כל אחד נותן כמה שנוח לו</span>
                   </li>
                   <li className="flex items-center gap-4 justify-center lg:justify-start">
                     <div className="w-12 h-12 bg-[#f3edff] rounded-[14px] flex items-center justify-center">

@@ -128,6 +128,7 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
           {/* More menu button for settings */}
           <button
             onClick={() => setIsMobileOpen(true)}
+            data-tutorial="nav-more-mobile"
             className="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-2xl text-[#49454f] hover:bg-[#f3edff] transition-all min-w-[72px]"
           >
             <Menu className="w-6 h-6" />
@@ -175,6 +176,7 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
           <Link
             to="/settings"
             onClick={() => setIsMobileOpen(false)}
+            data-tutorial="nav-settings-mobile"
             className={`
               flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-200
               ${isActive('/settings')
