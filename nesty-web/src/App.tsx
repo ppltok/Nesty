@@ -17,7 +17,6 @@ import Checklist from './pages/Checklist'
 import PublicRegistry from './pages/PublicRegistry'
 import Gifts from './pages/Gifts'
 import Settings from './pages/Settings'
-import Example from './pages/Example'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import Contact from './pages/Contact'
@@ -55,7 +54,6 @@ function AppRoutes() {
   const isPublicRoute = pathname === '/' ||
     pathname.startsWith('/registry/') ||
     pathname.startsWith('/auth/') ||
-    pathname === '/example' ||
     pathname === '/terms' ||
     pathname === '/privacy' ||
     pathname === '/contact'
@@ -68,7 +66,6 @@ function AppRoutes() {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<Home />} />
-      <Route path="/example" element={<Example />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/contact" element={<Contact />} />
