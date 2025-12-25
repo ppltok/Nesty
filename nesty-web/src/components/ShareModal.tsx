@@ -42,7 +42,7 @@ export default function ShareModal({ isOpen, onClose, registrySlug, ownerName, r
 
   const handleWhatsAppShare = () => {
     trackShare('whatsapp')
-    const text = `היי! הכנתי רשימת מתנות לתינוק 🎁\nתוכלו לראות מה אני צריכה ולבחור מתנה:\n${registryUrl}`
+    const text = `היי! הכנתי רשימת מתנות לגוזל הקטן שלנו ב-Nesty, עם כל המוצרים שאנחנו באמת רוצים וצריכים :)  \nתוכלו להיכנס, לראות את הרשימה ולבחור מתנה שמתאימה לכם: \n${registryUrl} \n תודה מראש ! אוהבים ומתרגשים המון! \n`
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`
     window.open(whatsappUrl, '_blank')
   }
@@ -50,7 +50,7 @@ export default function ShareModal({ isOpen, onClose, registrySlug, ownerName, r
   const handleEmailShare = () => {
     trackShare('email')
     const subject = `רשימת המתנות של ${ownerName}`
-    const body = `היי!\n\nהכנתי רשימת מתנות לתינוק ואשמח אם תעיפו מבט.\n\nלרשימה: ${registryUrl}\n\nתודה! ❤️`
+    const body = `היי! הכנתי רשימת מתנות לגוזל הקטן שלנו ב-Nesty, עם כל המוצרים שאנחנו באמת רוצים וצריכים :)  \nתוכלו להיכנס, לראות את הרשימה ולבחור מתנה שמתאימה לכם: \n${registryUrl} \n תודה מראש ! אוהבים ומתרגשים המון! \n`
     const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
     window.open(mailtoUrl)
   }

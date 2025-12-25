@@ -913,7 +913,7 @@ export default function Dashboard() {
                   <h1 className="text-3xl font-bold">היי, {profile?.first_name || 'משתמש'}!</h1>
                 </div>
                 <p className="text-[#eaddff] text-lg max-w-md font-medium leading-relaxed">
-                  הרשימה שלך מוכנה. זה הזמן לשתף אותה עם האנשים שאתם אוהבים ולהתחיל להתארגן ברוגע.
+                  הרשימה שלך מוכנה. זה הזמן לשתף אותה עם האנשים שאת אוהבת ולהתחיל להתארגן ברוגע.
                 </p>
               </div>
 
@@ -926,6 +926,12 @@ export default function Dashboard() {
                   <Plus className="w-5 h-5" />
                   הוסף פריט
                 </button>
+                <Link to="/checklist">
+                  <button className="flex items-center gap-2 bg-white/10 text-white px-6 py-3 rounded-full font-medium hover:bg-white/20 transition-all backdrop-blur-sm border border-white/20 active:scale-95">
+                    <ClipboardList className="w-5 h-5" />
+                    בחרי מהצ'קליסט
+                  </button>
+                </Link>
                 {registry && (
                   <>
                     <button
@@ -938,7 +944,7 @@ export default function Dashboard() {
                     <Link to={`/registry/${registry.slug}`}>
                       <button className="flex items-center gap-2 bg-white/10 text-white px-6 py-3 rounded-full font-medium hover:bg-white/20 transition-all backdrop-blur-sm border border-white/10 active:scale-95">
                         <Eye className="w-5 h-5" />
-                        תצוגה מקדימה
+                        צפה כאורח
                       </button>
                     </Link>
                   </>

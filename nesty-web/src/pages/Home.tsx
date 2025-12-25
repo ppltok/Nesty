@@ -284,26 +284,28 @@ export default function Home() {
                   הוסיפו מוצר לרשימה ואנחנו נחפש אותו בעשרות חנויות ברחבי ישראל. מצאנו מחיר טוב יותר? נשלח לכם התראה מיד!
                 </p>
 
-                <ul className="space-y-4">
-                  <li className="flex items-center gap-4 justify-center lg:justify-start">
-                    <div className="w-12 h-12 bg-[#f3edff] rounded-[14px] flex items-center justify-center">
-                      <Bell className="w-6 h-6 text-[#6750a4]" />
-                    </div>
-                    <span className="text-lg text-[#1d192b]">התראות מחיר בזמן אמת</span>
-                  </li>
-                  <li className="flex items-center gap-4 justify-center lg:justify-start">
-                    <div className="w-12 h-12 bg-[#d1fae5] rounded-[14px] flex items-center justify-center">
-                      <CheckCircle className="w-6 h-6 text-[#059669]" />
-                    </div>
-                    <span className="text-lg text-[#1d192b]">השוואת מחירים אוטומטית</span>
-                  </li>
-                  <li className="flex items-center gap-4 justify-center lg:justify-start">
-                    <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center">
-                      <TrendingDown className="w-6 h-6 text-[#31111d]" />
-                    </div>
-                    <span className="text-lg text-[#1d192b]">חיסכון ממוצע של 15-30%</span>
-                  </li>
-                </ul>
+                <div className="flex justify-center lg:justify-start">
+                  <ul className="space-y-4 text-right">
+                    <li className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#f3edff] rounded-[14px] flex items-center justify-center flex-shrink-0">
+                        <Bell className="w-6 h-6 text-[#6750a4]" />
+                      </div>
+                      <span className="text-lg text-[#1d192b]">התראות מחיר בזמן אמת</span>
+                    </li>
+                    <li className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#d1fae5] rounded-[14px] flex items-center justify-center flex-shrink-0">
+                        <CheckCircle className="w-6 h-6 text-[#059669]" />
+                      </div>
+                      <span className="text-lg text-[#1d192b]">השוואת מחירים אוטומטית</span>
+                    </li>
+                    <li className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center flex-shrink-0">
+                        <TrendingDown className="w-6 h-6 text-[#31111d]" />
+                      </div>
+                      <span className="text-lg text-[#1d192b]">חיסכון ממוצע של 15-30%</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
 
               {/* Visual Card */}
@@ -420,9 +422,12 @@ export default function Home() {
 
               {/* Content */}
               <div className="order-1 lg:order-2 text-center lg:text-right">
-                <div className="inline-flex items-center gap-2 bg-[#ffd8e4] text-[#31111d] px-4 py-2 rounded-full mb-6 font-medium">
-                  <Users className="w-5 h-5" />
-                  <span>Chip-In</span>
+                <div className="inline-flex items-center gap-2 mb-6">
+                  <div className="inline-flex items-center gap-2 bg-[#ffd8e4] text-[#31111d] px-4 py-2 rounded-full font-medium">
+                    <Users className="w-5 h-5" />
+                    <span>Chip-In</span>
+                  </div>
+                  <span className="bg-[#eaddff] text-[#21005d] px-2 py-1 rounded-full text-xs font-bold">בקרוב</span>
                 </div>
 
                 <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">
@@ -433,26 +438,28 @@ export default function Home() {
                   יש מוצרים שהם פשוט יקרים מדי לאדם אחד. עם Chip-In, כולם יכולים לתרום סכום קטן למתנה הגדולה.
                 </p>
 
-                <ul className="space-y-4">
-                  <li className="flex items-center gap-4 justify-center lg:justify-start">
-                    <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center">
-                      <Gift className="w-6 h-6 text-[#31111d]" />
-                    </div>
-                    <span className="text-lg text-[#1d192b]">כל אחד נותן כמה שנוח לו</span>
-                  </li>
-                  <li className="flex items-center gap-4 justify-center lg:justify-start">
-                    <div className="w-12 h-12 bg-[#f3edff] rounded-[14px] flex items-center justify-center">
-                      <Users className="w-6 h-6 text-[#6750a4]" />
-                    </div>
-                    <span className="text-lg text-[#1d192b]">הסבא והסבתא, הדודים, החברים - כולם משתתפים</span>
-                  </li>
-                  <li className="flex items-center gap-4 justify-center lg:justify-start">
-                    <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center">
-                      <Heart className="w-6 h-6 text-[#31111d]" />
-                    </div>
-                    <span className="text-lg text-[#1d192b]">אתם מקבלים את מה שבאמת רציתם</span>
-                  </li>
-                </ul>
+                <div className="flex justify-center lg:justify-start">
+                  <ul className="space-y-4 text-right">
+                    <li className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center flex-shrink-0">
+                        <Gift className="w-6 h-6 text-[#31111d]" />
+                      </div>
+                      <span className="text-lg text-[#1d192b]">כל אחד נותן כמה שנוח לו</span>
+                    </li>
+                    <li className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#f3edff] rounded-[14px] flex items-center justify-center flex-shrink-0">
+                        <Users className="w-6 h-6 text-[#6750a4]" />
+                      </div>
+                      <span className="text-lg text-[#1d192b]">הסבא והסבתא, הדודים, החברים - כולם משתתפים</span>
+                    </li>
+                    <li className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center flex-shrink-0">
+                        <Heart className="w-6 h-6 text-[#31111d]" />
+                      </div>
+                      <span className="text-lg text-[#1d192b]">אתם מקבלים את מה שבאמת רציתם</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
