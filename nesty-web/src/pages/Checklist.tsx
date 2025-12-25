@@ -501,7 +501,7 @@ export default function Checklist() {
               </h1>
               <div className="flex flex-wrap items-center gap-4 mt-2">
                 <p className="text-[#49454f] text-lg font-medium">
-                  התחילו כאן לגלות מה לקנות לתינוק.
+                  התחילי כאן לגלות מה לקנות לתינוק.
                 </p>
                 {/* Global Add Button */}
                 {registry && (
@@ -542,7 +542,7 @@ export default function Checklist() {
 
         {/* Categories Grid */}
         <div className="space-y-6">
-          {CATEGORIES.map((category) => {
+          {CATEGORIES.filter(cat => cat.suggestedItems.length > 0).map((category) => {
             const CategoryIcon = category.icon
             const isExpanded = expandedCategory === category.id
             const progress = getCategoryProgress(category.id)
