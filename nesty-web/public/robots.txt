@@ -1,4 +1,13 @@
 User-agent: *
 Allow: /
 
+# Disallow pages that shouldn't be indexed
+Disallow: /auth/
+Disallow: /onboarding
+Disallow: /dashboard
+Disallow: /checklist
+Disallow: /gifts
+Disallow: /settings
+Disallow: /example
+
 Sitemap: https://nestyil.com/sitemap.xml
