@@ -553,6 +553,17 @@
    * @returns {string} - Platform name
    */
   function detectPlatform(doc = document) {
+    // Check for Amazon
+    if (window.location.hostname.includes('amazon.com') ||
+        window.location.hostname.includes('amazon.co.uk') ||
+        window.location.hostname.includes('amazon.de') ||
+        window.location.hostname.includes('amazon.fr') ||
+        window.location.hostname.includes('amazon.it') ||
+        window.location.hostname.includes('amazon.es') ||
+        window.location.hostname.includes('amazon.ca')) {
+      return 'amazon';
+    }
+
     // Check for AliExpress
     if (window.location.hostname.includes('aliexpress.com')) {
       return 'aliexpress';
@@ -579,6 +590,157 @@
     }
 
     return 'unknown';
+  }
+
+  /**
+   * Extract product data from Amazon with USD to ILS conversion
+   * @param {Document} doc - Document object
+   * @returns {Promise<Object|null>} - Product data or null
+   */
+  async function extractFromAmazon(doc = document) {
+    console.log('🛍️ Attempting Amazon extraction...');
+
+    // USD to ILS exchange rate (updated December 2025)
+    const USD_TO_ILS = 3.19;
+
+    const productData = {
+      name: '',
+      price: '',
+      priceCurrency: 'ILS', // Always convert to ILS
+      brand: 'Amazon',
+      category: '',
+      imageUrls: []
+    };
+
+    // Extract title
+    const titleSelectors = [
+      '#productTitle',
+      '#title',
+      'h1.product-title',
+      'span#productTitle',
+      '[data-feature-name="title"] h1'
+    ];
+
+    for (const selector of titleSelectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        const title = element.textContent?.trim() || '';
+        if (title && title.length > 3) {
+          productData.name = title;
+          console.log(`   ✓ Found title: ${title.substring(0, 50)}...`);
+          break;
+        }
+      }
+    }
+
+    // Extract price (multiple formats and locations)
+    const priceSelectors = [
+      '.a-price .a-offscreen',           // Main price (hidden but accurate)
+      '#priceblock_ourprice',            // Our price
+      '#priceblock_dealprice',           // Deal price
+      '.a-price-whole',                  // Whole number part
+      '#corePrice_feature_div .a-price .a-offscreen', // Core price feature
+      '[data-a-color="price"] .a-offscreen',
+      '.priceToPay .a-offscreen',        // Price to pay
+      '#corePriceDisplay_desktop_feature_div .a-price .a-offscreen'
+    ];
+
+    let foundUsdPrice = null;
+
+    for (const selector of priceSelectors) {
+      const elements = doc.querySelectorAll(selector);
+      for (const element of elements) {
+        const priceText = element.textContent?.trim() || '';
+
+        // Extract USD price
+        const usdMatch = priceText.match(/\$\s*([\d,]+\.?\d*)/);
+        if (usdMatch && usdMatch[1]) {
+          const usdPrice = parseFloat(usdMatch[1].replace(',', ''));
+          if (usdPrice > 0) {
+            foundUsdPrice = usdPrice;
+            console.log(`   $ Found USD price: $${usdPrice}`);
+            break;
+          }
+        }
+      }
+      if (foundUsdPrice) break;
+    }
+
+    // Convert USD to ILS
+    if (foundUsdPrice) {
+      const ilsPrice = (foundUsdPrice * USD_TO_ILS).toFixed(2);
+      productData.price = ilsPrice;
+      productData.priceCurrency = 'ILS';
+      console.log(`   💱 Converted $${foundUsdPrice} USD → ₪${ilsPrice} ILS (rate: ${USD_TO_ILS})`);
+    }
+
+    // Extract images
+    const imageSelectors = [
+      '#landingImage',                    // Main product image
+      '#imgTagWrapperId img',             // Image wrapper
+      '#imageBlock img[data-old-hires]',  // High-res image
+      '#altImages img',                   // Alternative images
+      '.imgTagWrapper img',               // Wrapper images
+      '[data-a-dynamic-image] img'        // Dynamic images
+    ];
+
+    for (const selector of imageSelectors) {
+      const elements = doc.querySelectorAll(selector);
+      elements.forEach(element => {
+        const img = element;
+        const imageUrl = img.getAttribute('data-old-hires') ||
+                        img.getAttribute('data-a-hires') ||
+                        img.src ||
+                        '';
+
+        if (imageUrl && imageUrl.startsWith('http') &&
+            !imageUrl.includes('data:image') &&
+            !imageUrl.includes('spinner') &&
+            !imageUrl.includes('loading') &&
+            !productData.imageUrls.includes(imageUrl)) {
+          productData.imageUrls.push(imageUrl);
+        }
+      });
+    }
+
+    // Try to extract brand
+    const brandSelectors = [
+      '#bylineInfo',
+      '.a-size-base.po-brand',
+      '[data-feature-name="bylineInfo"]',
+      '#brand'
+    ];
+
+    for (const selector of brandSelectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        const brandText = element.textContent?.trim() || '';
+        const brandMatch = brandText.match(/(?:Brand:|Visit the|by)\s*(.+?)(?:\s+Store)?$/i);
+        if (brandMatch && brandMatch[1]) {
+          productData.brand = brandMatch[1].trim();
+          console.log(`   🏷️ Found brand: ${productData.brand}`);
+          break;
+        } else if (brandText && !brandText.includes('http')) {
+          productData.brand = brandText.replace(/^Visit the\s+/i, '').replace(/\s+Store$/i, '').trim();
+          console.log(`   🏷️ Found brand: ${productData.brand}`);
+          break;
+        }
+      }
+    }
+
+    console.log(`   📊 Amazon extraction summary:`);
+    console.log(`      Title: ${productData.name ? '✓' : '✗'}`);
+    console.log(`      Price: ${productData.price ? `₪${productData.price} ILS` : '✗'}`);
+    console.log(`      Images: ${productData.imageUrls.length}`);
+
+    // Validate minimum required data
+    if (productData.name && (productData.price || productData.imageUrls.length > 0)) {
+      console.log('✅ Amazon extraction successful');
+      return productData;
+    }
+
+    console.log('❌ Amazon extraction failed - insufficient data');
+    return null;
   }
 
   /**
@@ -1084,6 +1246,16 @@
     try {
       const platform = detectPlatform(doc);
       console.log(`🏪 Detected platform: ${platform}`);
+
+      // For Amazon, use specialized extractor with USD→ILS conversion
+      if (platform === 'amazon') {
+        console.log('🛍️ Using Amazon extractor...');
+        const amazonResult = await extractFromAmazon(doc);
+        if (amazonResult) {
+          console.log('✅ Extracted from Amazon');
+          return amazonResult;
+        }
+      }
 
       // For AliExpress, use specialized extractor
       if (platform === 'aliexpress') {
