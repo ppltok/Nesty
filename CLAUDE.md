@@ -152,6 +152,42 @@ if (data['@type'] === 'ProductGroup') {
 }
 ```
 
+**Supported Platforms:**
+
+The extension uses a **multi-method extraction strategy** that works across different e-commerce platforms:
+
+1. **JSON-LD (Primary Method)**
+   - Works on: Most e-commerce sites (Shopify, WooCommerce, Magento, etc.)
+   - Extracts: Product/ProductGroup schemas from `<script type="application/ld+json">`
+   - Reliability: 95%+ accuracy
+
+2. **AliExpress (Specialized Extractor)**
+   - Platform: AliExpress.com (all regions)
+   - Handles: Product pages, bundle deals, modals/overlays
+   - Methods (in order):
+     - `window.runParams.data` (primary data source)
+     - `window._d_c_.DCData` (images)
+     - `window.__INITIAL_STATE__` / `window.__APP_STATE__`
+     - DOM extraction (title, price, image selectors)
+     - Open Graph meta tags (fallback)
+   - Note: Works with dynamic modals where URL doesn't change
+
+3. **Shopify Fallback**
+   - Shopify JSON API (`/products/{handle}.json`)
+   - ShopifyAnalytics.meta.product
+   - DOM extraction with platform-specific selectors
+
+**Extraction Flow:**
+```
+1. Try JSON-LD structured data (all platforms)
+   ↓ If not found
+2. Detect platform (AliExpress, Shopify, WooCommerce, etc.)
+   ↓
+3. Use platform-specific extractor
+   ↓ If fails
+4. Generic fallback (meta tags + DOM)
+```
+
 **Authentication Strategy:**
 - Extension cannot access cross-origin localStorage directly
 - Background script uses `chrome.tabs.query()` to find Nesty tab
@@ -216,6 +252,116 @@ These are **development only** and replaced by Supabase in production.
 - **`nesty-web/src/lib/supabase.ts`** - Supabase client configuration
 - **`extension/final-version/content.js`** - Extension main logic (JSON-LD extraction, UI, Supabase)
 - **`extension/final-version/background.js`** - Extension background service worker
+- **`nesty-web/src/lib/productExtraction.ts`** - **SHARED** extraction logic for website's "Paste URL" feature
+
+---
+
+## CRITICAL: Keeping Extraction Logic Synced
+
+**Problem:** The extension and website both extract product data, but use separate code. When improvements are made to the extension, the website doesn't benefit automatically.
+
+**Solution:** Both now share the same core extraction logic in `nesty-web/src/lib/productExtraction.ts`.
+
+### Extraction Logic Locations
+
+1. **Website URL Extraction** (`nesty-web/src/lib/productExtraction.ts`)
+   - Used when user pastes a URL in "Add Item" modal
+   - Calls Supabase Edge Function to fetch HTML
+   - Uses `extractProductDataFromDocument(doc)` to extract data
+   - **THIS IS THE SOURCE OF TRUTH** ✅
+
+2. **Extension Extraction** (`extension/final-version/content.js`)
+   - Used when user clicks extension icon on a product page
+   - Has access to live page DOM
+   - Uses same extraction functions (ported from productExtraction.ts)
+
+### When Adding New Platform Support or Extraction Improvements
+
+**CRITICAL: Follow this order to keep both in sync:**
+
+1. ✅ **Add/Update extraction logic in `productExtraction.ts` FIRST**
+   - This is the TypeScript source of truth
+   - Add platform detection to `detectPlatform()`
+   - Add extraction function (e.g., `extractFromAliExpress()`)
+   - Update `extractProductDataFromDocument()` to call it
+
+2. ✅ **Port changes to `extension/final-version/content.js`**
+   - Convert TypeScript to JavaScript
+   - Keep function names and logic identical
+   - Extension may have additional methods (e.g., `window.runParams` for live JavaScript variables)
+   - But core DOM extraction should be identical
+
+3. ✅ **Test both paths**
+   - Test website: Paste URL in "Add Item" modal
+   - Test extension: Click extension icon on product page
+   - Verify both extract the same data
+
+### Example: AliExpress Support
+
+**In `productExtraction.ts` (lines 103-283):**
+```typescript
+function detectPlatform(doc: Document): string | null {
+  const hostname = new URL(doc.URL || 'about:blank').hostname
+  if (hostname.includes('aliexpress.com')) {
+    return 'aliexpress'
+  }
+  return null
+}
+
+function extractFromAliExpress(doc: Document): ExtractedProductData | null {
+  // Platform-specific DOM extraction
+  // Priority-based price selection (discount indicators = higher priority)
+  // Multiple title/image selectors
+}
+```
+
+**In `content.js` (lines 525-778):**
+```javascript
+function detectPlatform(doc = document) {
+  if (window.location.hostname.includes('aliexpress.com')) {
+    return 'aliexpress';
+  }
+  return null;
+}
+
+async function extractFromAliExpress(doc = document) {
+  // SAME logic as productExtraction.ts
+  // Plus additional methods:
+  // - window.runParams (live JavaScript variables)
+  // - window._d_c_ (AliExpress data container)
+}
+```
+
+### Key Differences Between Extension and Website
+
+**Extension advantages:**
+- Access to live JavaScript (`window.runParams`, `window._d_c_`, etc.)
+- Real-time page state
+- Can use multiple extraction attempts
+
+**Website limitations:**
+- Only receives static HTML from Edge Function
+- No JavaScript execution
+- Relies purely on DOM extraction
+
+**Therefore:**
+- DOM extraction logic MUST be identical in both
+- Extension can have additional JavaScript variable extraction
+- Website relies on DOM extraction working correctly
+
+### Checklist for New Platform Support
+
+When adding support for a new e-commerce platform:
+
+- [ ] Add platform detection to `productExtraction.ts` → `detectPlatform()`
+- [ ] Create extraction function in `productExtraction.ts` (e.g., `extractFromEbay()`)
+- [ ] Update `extractProductDataFromDocument()` to call it
+- [ ] Test website URL paste functionality
+- [ ] Port logic to `content.js` with same function structure
+- [ ] Add any extension-specific enhancements (JavaScript variables)
+- [ ] Test extension on live product pages
+- [ ] Document platform-specific patterns in this file
+- [ ] Update any extraction methodology docs in `Documents/`
 
 ---
 
