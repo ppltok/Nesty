@@ -257,8 +257,38 @@
   }
 
   /**
+   * Normalize image data to string URLs
+   * JSON-LD images can be: string, {url: string}, or arrays of either
+   * @param {*} imageData - Image data from JSON-LD
+   * @returns {Array} - Array of image URL strings
+   */
+  function normalizeImageUrls(imageData) {
+    if (!imageData) return [];
+
+    const urls = [];
+    const dataArray = Array.isArray(imageData) ? imageData : [imageData];
+
+    dataArray.forEach(item => {
+      if (typeof item === 'string') {
+        // Direct URL string
+        urls.push(item);
+      } else if (typeof item === 'object' && item !== null) {
+        // Image object with url property
+        if (item.url) {
+          urls.push(item.url);
+        } else if (item['@id']) {
+          // Sometimes uses @id instead of url
+          urls.push(item['@id']);
+        }
+      }
+    });
+
+    return urls;
+  }
+
+  /**
    * Filter and prioritize images (skip small thumbnails, prioritize high-res)
-   * @param {Array} imageUrls - Array of image URLs
+   * @param {Array} imageUrls - Array of image URLs (strings)
    * @returns {Array} - Filtered and sorted image URLs
    */
   function filterAndPrioritizeImages(imageUrls) {
@@ -266,7 +296,7 @@
 
     return imageUrls
       .filter(url => {
-        if (!url) return false;
+        if (!url || typeof url !== 'string') return false;
         // Skip very small images (likely thumbnails/icons)
         const hasSmallIndicator = url.match(/_(thumb|small|icon|avatar|mini|tiny|50x|100x)/i);
         return !hasSmallIndicator;
@@ -523,6 +553,11 @@
    * @returns {string} - Platform name
    */
   function detectPlatform(doc = document) {
+    // Check for AliExpress
+    if (window.location.hostname.includes('aliexpress.com')) {
+      return 'aliexpress';
+    }
+
     // Check for Shopify
     if (doc.querySelector('[data-shopify]') ||
         doc.querySelector('script[src*="shopify"]') ||
@@ -547,6 +582,500 @@
   }
 
   /**
+   * Extract product data from AliExpress (handles modals, dynamic content, JS variables)
+   * @param {Document} doc - Document object
+   * @returns {Promise<Object|null>} - Product data or null
+   */
+  async function extractFromAliExpress(doc = document) {
+    console.log('🛍️ Attempting AliExpress extraction...');
+
+    // Wait a bit for dynamic content to load
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    try {
+      let productData = {
+        name: '',
+        price: '',
+        priceCurrency: 'USD',
+        brand: 'AliExpress',
+        category: '',
+        imageUrls: []
+      };
+
+      // DEBUG: Show all available window variables
+      console.log('🔍 DEBUG: Available AliExpress window variables:');
+      if (window.runParams) console.log('  ✓ window.runParams exists');
+      if (window._d_c_) console.log('  ✓ window._d_c_ exists');
+      if (window.__INITIAL_STATE__) console.log('  ✓ window.__INITIAL_STATE__ exists');
+      if (window.pageData) console.log('  ✓ window.pageData exists');
+
+      // Method 1: Try window.runParams (common AliExpress variable)
+      if (window.runParams) {
+        console.log('📦 Found window.runParams, attempting extraction...');
+        console.log('📦 window.runParams structure:', window.runParams);
+
+        try {
+          if (window.runParams.data) {
+            const data = typeof window.runParams.data === 'string'
+              ? JSON.parse(window.runParams.data)
+              : window.runParams.data;
+
+            console.log('📦 Parsed data structure:', data);
+            console.log('📦 Available modules:', Object.keys(data));
+
+            // Try multiple price paths
+            const pricePaths = [
+              { path: 'priceModule.minActivityAmount.value', currency: 'priceModule.minActivityAmount.currency' },
+              { path: 'priceModule.minAmount.value', currency: 'priceModule.minAmount.currency' },
+              { path: 'priceModule.price', currency: 'priceModule.currency' },
+              { path: 'price', currency: 'currency' }
+            ];
+
+            for (let { path, currency } of pricePaths) {
+              const pathParts = path.split('.');
+              const currencyParts = currency.split('.');
+
+              let priceValue = data;
+              let currencyValue = data;
+
+              // Navigate the object path
+              for (let part of pathParts) {
+                priceValue = priceValue?.[part];
+              }
+              for (let part of currencyParts) {
+                currencyValue = currencyValue?.[part];
+              }
+
+              if (priceValue) {
+                productData.price = priceValue.toString();
+                productData.priceCurrency = currencyValue || 'USD';
+                console.log(`✅ Found price in window.runParams.data.${path}: ${priceValue} ${productData.priceCurrency}`);
+                break;
+              }
+            }
+
+            if (data.titleModule?.subject) {
+              productData.name = data.titleModule.subject;
+              console.log(`✅ Found title: ${productData.name}`);
+            }
+
+            if (data.imageModule?.imagePathList) {
+              productData.imageUrls = data.imageModule.imagePathList;
+              console.log(`✅ Found ${productData.imageUrls.length} images`);
+            }
+
+            if (productData.name && productData.price) {
+              console.log('✅ Successfully extracted from window.runParams');
+              return productData;
+            }
+          }
+        } catch (e) {
+          console.log('⚠️ window.runParams parsing failed:', e.message);
+          console.error(e);
+        }
+      }
+
+      // Method 2: Try window._d_c_ (AliExpress data container)
+      if (window._d_c_) {
+        console.log('📦 Found window._d_c_');
+        try {
+          if (window._d_c_.DCData?.imagePathList) {
+            productData.imageUrls = window._d_c_.DCData.imagePathList;
+            console.log(`✅ Found ${productData.imageUrls.length} images in _d_c_`);
+          }
+        } catch (e) {
+          console.log('⚠️ window._d_c_ parsing failed:', e.message);
+        }
+      }
+
+      // Method 3: Try window.__INITIAL_STATE__ or window.__APP_STATE__
+      const stateVars = ['__INITIAL_STATE__', '__APP_STATE__', 'pageData'];
+      for (let varName of stateVars) {
+        if (window[varName]) {
+          console.log(`📦 Found window.${varName}`);
+          try {
+            const state = window[varName];
+            // Try to find product data in nested structure
+            const searchForProduct = (obj, depth = 0) => {
+              if (depth > 5) return null;
+              if (!obj || typeof obj !== 'object') return null;
+
+              // Look for common product fields
+              if (obj.subject || obj.title || obj.productTitle) {
+                return obj;
+              }
+
+              // Search nested objects
+              for (let key in obj) {
+                if (key.toLowerCase().includes('product') ||
+                    key.toLowerCase().includes('item') ||
+                    key.toLowerCase().includes('detail')) {
+                  const result = searchForProduct(obj[key], depth + 1);
+                  if (result) return result;
+                }
+              }
+              return null;
+            };
+
+            const productInfo = searchForProduct(state);
+            if (productInfo) {
+              if (productInfo.subject || productInfo.title || productInfo.productTitle) {
+                productData.name = productInfo.subject || productInfo.title || productInfo.productTitle;
+              }
+              if (productInfo.price || productInfo.salePrice) {
+                productData.price = productInfo.price || productInfo.salePrice;
+              }
+              if (productData.name) {
+                console.log(`✅ Extracted product name from window.${varName}`);
+              }
+            }
+          } catch (e) {
+            console.log(`⚠️ window.${varName} parsing failed:`, e.message);
+          }
+        }
+      }
+
+      // Method 4: DOM extraction from modal/page
+      console.log('🔍 Trying DOM extraction...');
+
+      // First, try to find the active product modal/container (for bundle deals)
+      let productContainer = doc;
+      const modalSelectors = [
+        '[class*="modal"][class*="show"]',
+        '[class*="modal"][class*="active"]',
+        '[class*="modal"][class*="visible"]',
+        '[class*="overlay"][class*="show"]',
+        '[class*="dialog"][class*="open"]',
+        '[data-pl="product-container"]',
+        '[class*="product-detail"]',
+        '[class*="ProductDetail"]'
+      ];
+
+      for (let selector of modalSelectors) {
+        const modal = doc.querySelector(selector);
+        if (modal && modal.offsetParent !== null) { // Check if visible
+          productContainer = modal;
+          console.log(`✅ Found active product container: ${selector}`);
+          break;
+        }
+      }
+
+      // AliExpress product title selectors (works for modals and regular pages)
+      const titleSelectors = [
+        '.product-title-text',
+        '.product-name',
+        '[data-pl="product-title"]',
+        'h1[data-pl]',
+        '.pdp-product-title',
+        'h1.product-title',
+        '[class*="productTitle"]',
+        '[class*="ProductTitle"]'
+      ];
+
+      for (let selector of titleSelectors) {
+        const element = productContainer.querySelector(selector);
+        if (element && element.textContent.trim()) {
+          productData.name = element.textContent.trim();
+          console.log(`✅ Found title in ${selector}:`, productData.name);
+          break;
+        }
+      }
+
+      // AliExpress price selectors - comprehensive list
+      const priceSelectors = [
+        // Common selectors
+        '.product-price-value',
+        '[data-pl="product-price"]',
+        '.pdp-price',
+        '[class*="productPrice"]',
+        '[class*="ProductPrice"]',
+        '.price--current',
+        '[itemprop="price"]',
+        // New AliExpress-specific selectors
+        '[class*="Price--price"]',
+        '[class*="HalfPrice--price"]',
+        '[class*="uniform-banner-box-price"]',
+        '.price-current',
+        '.price-sale',
+        '[class*="snow-price"]',
+        '[data-spm-anchor-id*="price"]',
+        'span.price',
+        '.product-price',
+        // Check data attributes
+        '[data-price]',
+        '[data-product-price]',
+        // Bundle deals modal specific
+        '[class*="SnowPrice"]',
+        '[class*="price"] span',
+        'div[class*="price"] span',
+        // Look for any element with price-like class
+        '[class*="price-"]',
+        '[class*="-price"]',
+        // Generic price containers
+        '.price span',
+        '.price div',
+        'span[class*="amount"]'
+      ];
+
+      // Collect all found prices with their details
+      const foundPrices = [];
+
+      for (let selector of priceSelectors) {
+        const elements = productContainer.querySelectorAll(selector);
+        elements.forEach(element => {
+          // Try data attribute first
+          if (element.dataset.price) {
+            foundPrices.push({
+              price: element.dataset.price,
+              currency: 'USD',
+              priority: 10,
+              selector: selector,
+              source: 'data-price'
+            });
+            return;
+          }
+
+          // Extract from text
+          const priceText = element.textContent.trim();
+          if (!priceText) return;
+
+          console.log(`🔍 Checking price in ${selector}:`, priceText);
+
+          // Check if it's USD (higher priority)
+          const usdMatch = priceText.match(/(?:US\s*)?[\$]\s*([\d,]+\.?\d*)/i);
+          if (usdMatch && usdMatch[1]) {
+            foundPrices.push({
+              price: usdMatch[1].replace(',', ''),
+              currency: 'USD',
+              priority: 10,
+              selector: selector,
+              source: priceText
+            });
+            console.log(`   💵 Found USD price: $${usdMatch[1]}`);
+            return;
+          }
+
+          // Check if it's shekel (lower priority)
+          const ilsMatch = priceText.match(/₪\s*([\d,]+\.?\d*)/);
+          if (ilsMatch && ilsMatch[1]) {
+            // Check if this price has a discount indicator nearby (higher priority)
+            const hasDiscount = priceText.includes('%') || priceText.includes('off') || priceText.includes('הנחה');
+            const priority = hasDiscount ? 8 : 5; // Prioritize prices with discounts
+
+            foundPrices.push({
+              price: ilsMatch[1].replace(',', ''),
+              currency: 'ILS',
+              priority: priority,
+              selector: selector,
+              source: priceText
+            });
+            console.log(`   ₪ Found ILS price: ₪${ilsMatch[1]} ${hasDiscount ? '(with discount indicator)' : ''}`);
+            return;
+          }
+
+          // Generic number (lowest priority)
+          const numMatch = priceText.match(/^[\d,]+\.?\d*$/);
+          if (numMatch && numMatch[0].length > 0) {
+            foundPrices.push({
+              price: numMatch[0].replace(',', ''),
+              currency: 'USD',
+              priority: 3,
+              selector: selector,
+              source: priceText
+            });
+            console.log(`   🔢 Found number: ${numMatch[0]}`);
+          }
+        });
+      }
+
+      // Select best price from all candidates
+      if (foundPrices.length > 0) {
+        console.log(`📊 Found ${foundPrices.length} price candidates total`);
+
+        // Filter for reasonable product prices (not shipping, not bundles)
+        const reasonablePrices = foundPrices.filter(p => {
+          const price = parseFloat(p.price);
+          return price > 0.5 && price < 1000; // Reasonable product price range
+        });
+
+        if (reasonablePrices.length > 0) {
+          // Sort by priority (USD first), then by LOWEST price (product price usually lowest)
+          reasonablePrices.sort((a, b) => {
+            if (b.priority !== a.priority) return b.priority - a.priority;
+            // Among same priority, pick LOWEST price (product price, not total/shipping)
+            return parseFloat(a.price) - parseFloat(b.price);
+          });
+
+          const bestPrice = reasonablePrices[0];
+          productData.price = bestPrice.price;
+          productData.priceCurrency = bestPrice.currency;
+          console.log(`✅ Selected best price from ${reasonablePrices.length} candidates:`);
+          console.log(`   Price: ${bestPrice.price} ${bestPrice.currency}`);
+          console.log(`   Source: ${bestPrice.source}`);
+          console.log(`   All candidates:`, reasonablePrices.map(p => `${p.price} ${p.currency} (priority ${p.priority})`));
+        }
+      }
+
+      // Additional price extraction from page content
+      if (!productData.price) {
+        console.log('🔍 Trying aggressive price extraction from page content...');
+        // Look for price patterns in entire page
+        const bodyText = doc.body.innerText;
+
+        // Find ALL prices and choose the highest one (likely the product price)
+        const allPrices = [];
+
+        const pricePatterns = [
+          { pattern: /US\s*\$\s*([\d,]+\.?\d*)/gi, priority: 10, currency: 'USD' },
+          { pattern: /USD\s*([\d,]+\.?\d*)/gi, priority: 9, currency: 'USD' },
+          { pattern: /\$\s*([\d,]+\.?\d*)/g, priority: 8, currency: 'USD' },
+          { pattern: /Price:\s*([\d,]+\.?\d*)/gi, priority: 7, currency: 'USD' },
+          { pattern: /₪\s*([\d,]+\.?\d*)/g, priority: 5, currency: 'ILS' },
+          { pattern: /([\d,]+\.?\d*)\s*₪/g, priority: 4, currency: 'ILS' }
+        ];
+
+        for (let { pattern, priority, currency } of pricePatterns) {
+          let match;
+          while ((match = pattern.exec(bodyText)) !== null) {
+            const price = parseFloat(match[1].replace(',', ''));
+            if (price > 0 && price < 10000) { // Reasonable price range
+              allPrices.push({ price, priority, currency, text: match[0] });
+              console.log(`📊 Found price candidate: ${match[0]} = ${price} (priority: ${priority})`);
+            }
+          }
+        }
+
+        if (allPrices.length > 0) {
+          // Sort by priority (highest first), then by price (highest first)
+          allPrices.sort((a, b) => {
+            if (b.priority !== a.priority) return b.priority - a.priority;
+            return b.price - a.price;
+          });
+
+          const bestPrice = allPrices[0];
+          productData.price = bestPrice.price.toString();
+          productData.priceCurrency = bestPrice.currency;
+          console.log(`✅ Selected best price: ${bestPrice.text} = ${productData.price} ${productData.priceCurrency}`);
+          console.log(`   (Chose from ${allPrices.length} candidates, prioritized USD over other currencies)`);
+        }
+      }
+
+      // Extract currency from price element or page
+      const currencyElement = productContainer.querySelector('[data-currency]') ||
+                             productContainer.querySelector('[class*="currency"]');
+      if (currencyElement) {
+        productData.priceCurrency = currencyElement.dataset.currency ||
+                                    currencyElement.textContent.match(/[A-Z]{3}/)?.[0] ||
+                                    'USD';
+      }
+
+      // AliExpress image selectors (handles modals and carousels)
+      const imageSelectors = [
+        // Common image selectors
+        '.images-view-item img',
+        '.magnifier-image',
+        '[data-role="thumb"] img',
+        '.product-image img',
+        '.pdp-gallery img',
+        '[class*="productImage"] img',
+        '[class*="ProductImage"] img',
+        // New AliExpress-specific selectors
+        '[class*="ImageView"] img',
+        '[class*="magnifier"] img',
+        '[class*="gallery"] img',
+        '.slider-image img',
+        '[class*="slider"] img',
+        '[class*="product-img"] img',
+        'img[class*="main"]',
+        'img[class*="zoom"]',
+        // Try all images as fallback
+        'img[src*="alicdn.com"]'
+      ];
+
+      for (let selector of imageSelectors) {
+        console.log(`🔍 Trying image selector: ${selector}`);
+        const images = productContainer.querySelectorAll(selector);
+        console.log(`   Found ${images.length} images with this selector`);
+
+        if (images.length > 0) {
+          images.forEach(img => {
+            // Try multiple sources
+            let src = img.src || img.dataset.src || img.dataset.original || img.dataset.url;
+
+            // Also check for srcset
+            if (!src && img.srcset) {
+              const srcsetParts = img.srcset.split(',');
+              if (srcsetParts.length > 0) {
+                src = srcsetParts[0].trim().split(' ')[0];
+              }
+            }
+
+            console.log(`   Image src:`, src);
+
+            if (src && !src.includes('placeholder') && !src.includes('loading') && !src.includes('data:image')) {
+              // Get full-size image (remove dimension parameters)
+              let fullSrc = src;
+
+              // AliExpress specific: remove size parameters
+              if (src.includes('alicdn.com')) {
+                // Remove _xxxxx.jpg patterns and size parameters
+                fullSrc = src.split('_')[0];
+                // Ensure it ends with image extension
+                if (!fullSrc.match(/\.(jpg|jpeg|png|webp)$/i)) {
+                  fullSrc += '.jpg';
+                }
+              }
+
+              if (!productData.imageUrls.includes(fullSrc)) {
+                productData.imageUrls.push(fullSrc);
+                console.log(`   ✅ Added image:`, fullSrc);
+              }
+            }
+          });
+
+          if (productData.imageUrls.length > 0) {
+            console.log(`✅ Found ${productData.imageUrls.length} total images from ${selector}`);
+            break;
+          }
+        }
+      }
+
+      // Clean up and deduplicate images
+      productData.imageUrls = [...new Set(productData.imageUrls)].slice(0, 5);
+
+      // Method 5: Fallback to Open Graph meta tags
+      if (!productData.name) {
+        const ogTitle = doc.querySelector('meta[property="og:title"]')?.content;
+        if (ogTitle) {
+          productData.name = ogTitle;
+          console.log('✅ Found title in og:title');
+        }
+      }
+
+      if (productData.imageUrls.length === 0) {
+        const ogImage = doc.querySelector('meta[property="og:image"]')?.content;
+        if (ogImage) {
+          productData.imageUrls.push(ogImage);
+          console.log('✅ Found image in og:image');
+        }
+      }
+
+      // Validate extraction
+      if (productData.name && (productData.price || productData.imageUrls.length > 0)) {
+        console.log('✅ AliExpress extraction successful:', productData);
+        return productData;
+      }
+
+      console.log('❌ AliExpress extraction failed - insufficient data');
+      return null;
+
+    } catch (error) {
+      console.error('❌ AliExpress extraction error:', error);
+      return null;
+    }
+  }
+
+  /**
    * Fallback extraction for Shopify stores when JSON-LD fails
    * @param {Document} doc - Document object
    * @returns {Object|null} - Product data or null
@@ -555,6 +1084,16 @@
     try {
       const platform = detectPlatform(doc);
       console.log(`🏪 Detected platform: ${platform}`);
+
+      // For AliExpress, use specialized extractor
+      if (platform === 'aliexpress') {
+        console.log('🛍️ Using AliExpress extractor...');
+        const aliexpressResult = await extractFromAliExpress(doc);
+        if (aliexpressResult) {
+          console.log('✅ Extracted from AliExpress');
+          return aliexpressResult;
+        }
+      }
 
       // For Shopify, try the JSON API first (most reliable)
       if (platform === 'shopify' && doc === document) {
@@ -793,15 +1332,8 @@
       console.log('📦 Using single offer:', { price: offer?.price });
     }
 
-    // Extract images
-    const imageUrls = [];
-    if (data.image) {
-      if (Array.isArray(data.image)) {
-        imageUrls.push(...data.image);
-      } else {
-        imageUrls.push(data.image);
-      }
-    }
+    // Extract images (normalize to string URLs first)
+    const imageUrls = normalizeImageUrls(data.image);
 
     const result = {
       name: data.name || '',
@@ -821,15 +1353,12 @@
     const firstVariant = Array.isArray(variants) ? variants[0] : variants;
     const offer = firstVariant?.offers;
 
+    // Extract and normalize images from all variants
     const imageUrls = [];
     if (Array.isArray(variants)) {
       variants.forEach(variant => {
         if (variant.image) {
-          if (Array.isArray(variant.image)) {
-            imageUrls.push(...variant.image);
-          } else {
-            imageUrls.push(variant.image);
-          }
+          imageUrls.push(...normalizeImageUrls(variant.image));
         }
       });
     }
