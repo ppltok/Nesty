@@ -183,15 +183,15 @@
     modal.innerHTML = `
       <div style="padding: 32px;">
         <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
-        <h2 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0 0 12px 0;">נדרשת התחברות</h2>
-        <p style="font-size: 14px; color: #6b7280; margin: 0 0 24px 0;">
+        <h2 style="font-size: 24px; font-weight: 600; color: #1a1a1a; margin: 0 0 12px 0;">נדרשת התחברות</h2>
+        <p style="font-size: 14px; color: #6b6b6b; margin: 0 0 24px 0;">
           כדי להוסיף מוצרים לרשימה שלך, עליך להתחבר ל-Nesty
         </p>
         <div style="display: flex; gap: 12px; justify-content: center;">
-          <button id="nesty-login-btn" style="padding: 12px 24px; background: #6d28d9; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+          <button id="nesty-login-btn" style="padding: 12px 24px; background: #86608e; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
             התחבר ל-Nesty
           </button>
-          <button id="nesty-close-login" style="padding: 12px 24px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+          <button id="nesty-close-login" style="padding: 12px 24px; background: #e8e4e9; color: #1a1a1a; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
             סגור
           </button>
         </div>
@@ -232,11 +232,11 @@
     modal.innerHTML = `
       <div style="padding: 32px;">
         <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #1f2937; margin: 0 0 12px 0;">שגיאה</h2>
-        <p style="font-size: 14px; color: #6b7280; margin: 0 0 24px 0; white-space: pre-wrap;">
+        <h2 style="font-size: 20px; font-weight: 600; color: #1a1a1a; margin: 0 0 12px 0;">שגיאה</h2>
+        <p style="font-size: 14px; color: #6b6b6b; margin: 0 0 24px 0; white-space: pre-wrap;">
           ${message}
         </p>
-        <button id="nesty-close-error" style="padding: 12px 24px; background: #6d28d9; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+        <button id="nesty-close-error" style="padding: 12px 24px; background: #86608e; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
           סגור
         </button>
       </div>
@@ -1402,20 +1402,20 @@
     let isSecondhand = false;
 
     modal.innerHTML = `
-      <div class="nesty-modal-header" style="border-bottom: 1px solid #e5e7eb; padding: 16px 20px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+      <div class="nesty-modal-header" style="border-bottom: 1px solid #e8e4e9; padding: 16px 20px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, #faf8fb, #ffffff);">
         <!-- Tab interface -->
         <div style="display: flex; gap: 8px; align-items: center;">
           <button id="nesty-mode-current" class="nesty-mode-tab"
-                  style="padding: 8px 16px; background: ${currentMode === 'current' ? '#6d28d9' : '#f3f4f6'}; color: ${currentMode === 'current' ? 'white' : '#374151'}; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">
+                  style="padding: 8px 16px; background: ${currentMode === 'current' ? '#86608e' : '#e8e4e9'}; color: ${currentMode === 'current' ? 'white' : '#1a1a1a'}; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
             עמוד נוכחי
           </button>
           <button id="nesty-mode-paste" class="nesty-mode-tab"
-                  style="padding: 8px 16px; background: ${currentMode === 'paste' ? '#6d28d9' : '#f3f4f6'}; color: ${currentMode === 'paste' ? 'white' : '#374151'}; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">
+                  style="padding: 8px 16px; background: ${currentMode === 'paste' ? '#86608e' : '#e8e4e9'}; color: ${currentMode === 'paste' ? 'white' : '#1a1a1a'}; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
             הדבק קישור
           </button>
         </div>
 
-        <button class="nesty-close-btn" id="nesty-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; padding: 0;">×</button>
+        <button class="nesty-close-btn" id="nesty-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b6b6b; padding: 0;">×</button>
       </div>
 
       <div class="nesty-modal-body" style="padding: 20px; flex: 1; overflow-y: auto;">
@@ -1424,42 +1424,42 @@
           <!-- Left side - Image -->
           <div style="text-align: center;">
             <img src="${imageUrl}" alt="${product ? product.name : ''}"
-                 style="width: 160px; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 8px;"
-                 onerror="this.style.background='#f3f4f6'; this.alt='No Image'">
-            <div style="font-size: 11px; color: #6b7280;">תמונה שנבחרה</div>
+                 style="width: 160px; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid #e8e4e9; margin-bottom: 8px;"
+                 onerror="this.style.background='#e8e4e9'; this.alt='No Image'">
+            <div style="font-size: 11px; color: #6b6b6b;">תמונה שנבחרה</div>
           </div>
 
           <!-- Right side - Form -->
           <div style="display: flex; flex-direction: column; gap: 12px;">
             <!-- Title -->
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;">שם המוצר</label>
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">שם המוצר</label>
               <input type="text" id="nesty-title" value="${product ? product.name : ''}"
-                     style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                     style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px; font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
             </div>
 
             <!-- Price and Quantity -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
               <div>
-                <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;">מחיר</label>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">מחיר</label>
                 <input type="text" id="nesty-price" value="${product ? product.price : ''}"
-                       style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;">
+                       style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px;">
               </div>
               <div>
-                <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;">כמות</label>
-                <div style="display: flex; align-items: center; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; background: white;">
-                  <button id="qty-minus" style="padding: 8px 14px; background: #f9fafb; border: none; border-right: 1px solid #d1d5db; cursor: pointer; font-size: 16px; color: #374151;">−</button>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">כמות</label>
+                <div style="display: flex; align-items: center; border: 1px solid #e8e4e9; border-radius: 6px; overflow: hidden; background: white;">
+                  <button id="qty-minus" style="padding: 8px 14px; background: #faf8fb; border: none; border-right: 1px solid #e8e4e9; cursor: pointer; font-size: 16px; color: #1a1a1a;">−</button>
                   <div id="qty-display" style="flex: 1; text-align: center; font-weight: 600; font-size: 14px;">1</div>
-                  <button id="qty-plus" style="padding: 8px 14px; background: #f9fafb; border: none; border-left: 1px solid #d1d5db; cursor: pointer; font-size: 16px; color: #374151;">+</button>
+                  <button id="qty-plus" style="padding: 8px 14px; background: #faf8fb; border: none; border-left: 1px solid #e8e4e9; cursor: pointer; font-size: 16px; color: #1a1a1a;">+</button>
                 </div>
               </div>
             </div>
 
             <!-- Category -->
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;">קטגוריה</label>
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">קטגוריה</label>
               <select id="nesty-category"
-                      style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white;">
+                      style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px; background: white;">
                 <option value="">כללי</option>
                 ${CATEGORIES.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
               </select>
@@ -1467,28 +1467,28 @@
 
             <!-- Toggles -->
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-              <div id="toggle-wanted" style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                <div style="font-size: 11px; font-weight: 500; color: #374151;">הכי רציתי</div>
+              <div id="toggle-wanted" style="padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">הכי רציתי</div>
                 <div style="margin-top: 6px;">
-                  <div style="width: 40px; height: 20px; background: #e5e7eb; border-radius: 10px; margin: 0 auto; position: relative;">
+                  <div style="width: 40px; height: 20px; background: #e8e4e9; border-radius: 10px; margin: 0 auto; position: relative;">
                     <div id="toggle-wanted-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
                   </div>
                 </div>
               </div>
 
-              <div id="toggle-private" style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                <div style="font-size: 11px; font-weight: 500; color: #374151;">פרטי</div>
+              <div id="toggle-private" style="padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">פרטי</div>
                 <div style="margin-top: 6px;">
-                  <div style="width: 40px; height: 20px; background: #e5e7eb; border-radius: 10px; margin: 0 auto; position: relative;">
+                  <div style="width: 40px; height: 20px; background: #e8e4e9; border-radius: 10px; margin: 0 auto; position: relative;">
                     <div id="toggle-private-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
                   </div>
                 </div>
               </div>
 
-              <div id="toggle-secondhand" style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                <div style="font-size: 11px; font-weight: 500; color: #374151;">פתוח למשומש</div>
+              <div id="toggle-secondhand" style="padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">פתוח למשומש</div>
                 <div style="margin-top: 6px;">
-                  <div style="width: 40px; height: 20px; background: #e5e7eb; border-radius: 10px; margin: 0 auto; position: relative;">
+                  <div style="width: 40px; height: 20px; background: #e8e4e9; border-radius: 10px; margin: 0 auto; position: relative;">
                     <div id="toggle-secondhand-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
                   </div>
                 </div>
@@ -1497,9 +1497,9 @@
 
             <!-- Notes -->
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;">הערות</label>
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">הערות</label>
               <textarea id="nesty-notes" rows="2" placeholder="הערות למשפחה וחברים..."
-                        style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; resize: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"></textarea>
+                        style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 12px; resize: none; font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"></textarea>
             </div>
           </div>
         </div>
@@ -1509,28 +1509,28 @@
           <div style="width: 100%; max-width: 500px;">
             <div style="text-align: center; margin-bottom: 24px;">
               <div style="font-size: 48px; margin-bottom: 12px;">🔗</div>
-              <h3 style="font-size: 18px; font-weight: 600; color: #1f2937; margin: 0 0 8px 0;">הדבק קישור למוצר</h3>
-              <p style="font-size: 13px; color: #6b7280; margin: 0;">הדבק כתובת URL של מוצר מכל אתר מסחר אלקטרוני</p>
+              <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0 0 8px 0;">הדבק קישור למוצר</h3>
+              <p style="font-size: 13px; color: #6b6b6b; margin: 0;">הדבק כתובת URL של מוצר מכל אתר מסחר אלקטרוני</p>
             </div>
 
-            <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 8px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
               כתובת URL
             </label>
             <input type="url" id="nesty-url-input" placeholder="https://example.com/product"
-                   style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 14px; margin-bottom: 16px; direction: ltr; text-align: left;">
+                   style="width: 100%; padding: 12px; border: 2px solid #e8e4e9; border-radius: 8px; font-size: 14px; margin-bottom: 16px; direction: ltr; text-align: left;">
 
             <button id="nesty-extract-btn"
-                    style="width: 100%; padding: 12px 32px; background: #6d28d9; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    style="width: 100%; padding: 12px 32px; background: #86608e; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
               הוספה מהירה מלינק
             </button>
 
-            <div id="nesty-extraction-status" style="margin-top: 16px; text-align: center; color: #6b7280; font-size: 13px; min-height: 20px;"></div>
+            <div id="nesty-extraction-status" style="margin-top: 16px; text-align: center; color: #6b6b6b; font-size: 13px; min-height: 20px;"></div>
           </div>
         </div>
       </div>
 
-      <div class="nesty-modal-footer" style="padding: 14px 20px; border-top: 1px solid #e5e7eb; background: #f9fafb; display: flex; justify-content: flex-end; flex-shrink: 0;">
-        <button id="nesty-submit" style="padding: 10px 28px; background: #6d28d9; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
+      <div class="nesty-modal-footer" style="padding: 14px 20px; border-top: 1px solid #e8e4e9; background: #faf8fb; display: flex; justify-content: flex-end; flex-shrink: 0;">
+        <button id="nesty-submit" style="padding: 10px 28px; background: #86608e; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
           הוסף לרשימה
         </button>
       </div>
@@ -1576,7 +1576,7 @@
         toggleSwitch.style.left = '22px';
         toggleSwitch.style.background = '#ef4444';
       } else {
-        toggle.style.borderColor = '#e5e7eb';
+        toggle.style.borderColor = '#e8e4e9';
         toggle.style.background = 'white';
         toggleSwitch.style.left = '2px';
         toggleSwitch.style.background = 'white';
@@ -1588,12 +1588,12 @@
       const toggle = document.getElementById('toggle-private');
       const toggleSwitch = document.getElementById('toggle-private-switch');
       if (isPrivate) {
-        toggle.style.borderColor = '#8b5cf6';
+        toggle.style.borderColor = '#a891ad';
         toggle.style.background = '#f5f3ff';
         toggleSwitch.style.left = '22px';
-        toggleSwitch.style.background = '#8b5cf6';
+        toggleSwitch.style.background = '#a891ad';
       } else {
-        toggle.style.borderColor = '#e5e7eb';
+        toggle.style.borderColor = '#e8e4e9';
         toggle.style.background = 'white';
         toggleSwitch.style.left = '2px';
         toggleSwitch.style.background = 'white';
@@ -1605,12 +1605,12 @@
       const toggle = document.getElementById('toggle-secondhand');
       const toggleSwitch = document.getElementById('toggle-secondhand-switch');
       if (isSecondhand) {
-        toggle.style.borderColor = '#10b981';
+        toggle.style.borderColor = '#22c55e';
         toggle.style.background = '#f0fdf4';
         toggleSwitch.style.left = '22px';
-        toggleSwitch.style.background = '#10b981';
+        toggleSwitch.style.background = '#22c55e';
       } else {
-        toggle.style.borderColor = '#e5e7eb';
+        toggle.style.borderColor = '#e8e4e9';
         toggle.style.background = 'white';
         toggleSwitch.style.left = '2px';
         toggleSwitch.style.background = 'white';
@@ -1632,17 +1632,17 @@
       const pasteTab = document.getElementById('nesty-mode-paste');
 
       if (mode === 'current') {
-        currentTab.style.background = '#6d28d9';
+        currentTab.style.background = '#86608e';
         currentTab.style.color = 'white';
-        pasteTab.style.background = '#f3f4f6';
-        pasteTab.style.color = '#374151';
+        pasteTab.style.background = '#e8e4e9';
+        pasteTab.style.color = '#1a1a1a';
         document.getElementById('nesty-current-mode-content').style.display = 'grid';
         document.getElementById('nesty-paste-mode-content').style.display = 'none';
       } else {
-        pasteTab.style.background = '#6d28d9';
+        pasteTab.style.background = '#86608e';
         pasteTab.style.color = 'white';
-        currentTab.style.background = '#f3f4f6';
-        currentTab.style.color = '#374151';
+        currentTab.style.background = '#e8e4e9';
+        currentTab.style.color = '#1a1a1a';
         document.getElementById('nesty-current-mode-content').style.display = 'none';
         document.getElementById('nesty-paste-mode-content').style.display = 'flex';
       }
@@ -1671,13 +1671,13 @@
       extractBtn.disabled = true;
       extractBtn.textContent = 'מחלץ...';
       statusDiv.textContent = '🔄 שולח בקשה...';
-      statusDiv.style.color = '#6b7280';
+      statusDiv.style.color = '#6b6b6b';
 
       try {
         const productData = await extractProductFromUrl(url);
 
         statusDiv.textContent = '✅ מוצר חולץ בהצלחה!';
-        statusDiv.style.color = '#10b981';
+        statusDiv.style.color = '#22c55e';
 
         document.getElementById('nesty-title').value = productData.name || '';
         document.getElementById('nesty-price').value = productData.price || '';
@@ -1763,7 +1763,7 @@
         console.log('✅ Item added successfully:', result);
 
         submitBtn.textContent = 'נוסף! ✓';
-        submitBtn.style.background = '#10b981';
+        submitBtn.style.background = '#22c55e';
 
         setTimeout(() => {
           overlay.remove();
@@ -1777,7 +1777,7 @@
 
         setTimeout(() => {
           submitBtn.textContent = 'הוסף לרשימה';
-          submitBtn.style.background = '#6d28d9';
+          submitBtn.style.background = '#86608e';
           submitBtn.style.opacity = '1';
         }, 2000);
       }

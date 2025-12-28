@@ -1,4 +1,7 @@
-/* Nesty Extension Popup Styles */
+/* Nesty Extension Popup Styles - Matching Website Design */
+
+/* Import Assistant font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&display=swap');
 
 .nesty-overlay {
   position: fixed;
@@ -6,7 +9,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(26, 26, 26, 0.7);
   z-index: 9999998;
   display: flex;
   align-items: center;
@@ -20,16 +23,17 @@
 }
 
 .nesty-modal {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(134, 96, 142, 0.2);
   max-width: 600px;
   width: 90%;
   max-height: 90vh;
   overflow: hidden;
   z-index: 9999999;
   animation: slideIn 0.3s ease-out;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  direction: rtl;
 }
 
 @keyframes slideIn {
@@ -44,17 +48,18 @@
 }
 
 .nesty-modal-header {
-  padding: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e8e4e9;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: linear-gradient(to bottom, #faf8fb, #ffffff);
 }
 
 .nesty-modal-title {
   font-size: 20px;
   font-weight: 600;
-  color: #1f2937;
+  color: #1a1a1a;
   margin: 0;
 }
 
@@ -62,22 +67,41 @@
   background: none;
   border: none;
   font-size: 24px;
-  color: #6b7280;
+  color: #6b6b6b;
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  border-radius: 8px;
+  transition: all 0.2s;
 }
 
 .nesty-close-btn:hover {
-  background-color: #f3f4f6;
-  color: #1f2937;
+  background-color: #e8e4e9;
+  color: #86608e;
 }
 
 .nesty-modal-body {
   padding: 24px;
   max-height: calc(90vh - 160px);
   overflow-y: auto;
+  background: #ffffff;
+}
+
+/* Custom scrollbar to match website */
+.nesty-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.nesty-modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.nesty-modal-body::-webkit-scrollbar-thumb {
+  background: #c9c2cb;
+  border-radius: 4px;
+}
+
+.nesty-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a891ad;
 }
 
 .nesty-product-grid {
@@ -91,8 +115,8 @@
   width: 120px;
   height: 120px;
   object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  border: 2px solid #e8e4e9;
 }
 
 .nesty-product-details {
@@ -104,42 +128,42 @@
 .nesty-product-name {
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: #1a1a1a;
   margin: 0;
 }
 
 .nesty-product-brand {
   font-size: 14px;
-  color: #6b7280;
+  color: #6b6b6b;
 }
 
 .nesty-product-price {
   font-size: 24px;
   font-weight: 700;
-  color: #10b981;
+  color: #86608e;
   margin: 8px 0;
 }
 
 .nesty-product-category {
   font-size: 14px;
-  color: #6b7280;
-  background-color: #f3f4f6;
-  padding: 4px 12px;
-  border-radius: 12px;
+  color: #6b6b6b;
+  background-color: #e8e4e9;
+  padding: 6px 14px;
+  border-radius: 16px;
   display: inline-block;
   width: fit-content;
 }
 
 .nesty-json-section {
   margin-top: 24px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #e8e4e9;
   padding-top: 20px;
 }
 
 .nesty-json-label {
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: #1a1a1a;
   margin-bottom: 8px;
   display: block;
 }
@@ -150,66 +174,93 @@
   font-family: 'Courier New', monospace;
   font-size: 12px;
   padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border: 2px solid #e8e4e9;
+  border-radius: 8px;
   resize: vertical;
-  background-color: #f9fafb;
-  color: #1f2937;
+  background-color: #faf8fb;
+  color: #1a1a1a;
   box-sizing: border-box;
 }
 
 .nesty-json-textarea:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: #86608e;
   background-color: white;
 }
 
 .nesty-modal-footer {
   padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #e8e4e9;
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  background-color: #f9fafb;
+  background-color: #faf8fb;
 }
 
 .nesty-btn {
-  padding: 10px 20px;
+  padding: 11px 24px;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: 'Assistant', 'Heebo', sans-serif;
 }
 
 .nesty-btn-primary {
-  background-color: #6366f1;
+  background-color: #86608e;
   color: white;
 }
 
 .nesty-btn-primary:hover {
-  background-color: #4f46e5;
+  background-color: #6d4e74;
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(134, 96, 142, 0.3);
 }
 
 .nesty-btn-secondary {
-  background-color: #10b981;
+  background-color: #22c55e;
   color: white;
 }
 
 .nesty-btn-secondary:hover {
-  background-color: #059669;
+  background-color: #16a34a;
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
 .nesty-btn-tertiary {
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: #e8e4e9;
+  color: #1a1a1a;
 }
 
 .nesty-btn-tertiary:hover {
-  background-color: #e5e7eb;
+  background-color: #c9c2cb;
+}
+
+/* Mode tabs styling */
+.nesty-mode-tab {
+  font-family: 'Assistant', 'Heebo', sans-serif;
+}
+
+.nesty-mode-tab:hover {
+  opacity: 0.9;
+}
+
+/* Input fields */
+input[type="text"],
+input[type="url"],
+textarea,
+select {
+  font-family: 'Assistant', 'Heebo', sans-serif;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #86608e !important;
+  box-shadow: 0 0 0 3px rgba(134, 96, 142, 0.1);
 }
