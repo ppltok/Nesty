@@ -8,59 +8,9 @@ Add products from any online store to your Nesty baby registry with one click.
 
 ---
 
-## 2. DETAILED DESCRIPTION (English - for reviewers)
+## 2. DETAILED DESCRIPTION (Hebrew FIRST - for Israeli users)
 
-**IMPORTANT: Include this English version first for Chrome Web Store reviewers**
-
-```
-Nesty Product Scraper - Your Baby Registry Companion
-
-Nesty is a Chrome extension that works with the Nesty baby registry web application (https://ppltok.github.io/Nesty). This extension allows expecting parents to easily add products from any e-commerce website to their personal baby registry.
-
-HOW IT WORKS:
-1. Browse any online store (e.g., baby products, furniture, toys)
-2. Click the Nesty extension icon on a product page
-3. The extension automatically extracts product details (name, price, image, URL)
-4. Review and customize the product information
-5. Add it to your Nesty registry with one click
-
-KEY FEATURES:
-• Automatic product data extraction from e-commerce sites
-• Support for multiple store formats (Shopify, WooCommerce, and more)
-• Beautiful Hebrew interface with RTL support
-• Product categorization (strollers, car seats, clothing, etc.)
-• Mark items as "most wanted" or "private"
-• Add notes and quantity for each item
-• Secure integration with your Nesty account
-
-AUTHENTICATION REQUIRED:
-This extension requires you to be logged in to your Nesty account at https://ppltok.github.io/Nesty. The extension reads your authentication session to securely add items to your personal registry.
-
-PRIVACY & DATA:
-• We only collect product information you choose to add to your registry
-• Your authentication session is stored locally in Chrome
-• Product data is saved to your personal Nesty registry via Supabase
-• We do NOT track your browsing history
-• We do NOT collect data from pages where you don't use the extension
-• No data is shared with third parties
-
-PERMISSIONS EXPLANATION:
-• "Access your data for specific websites" - Required only for Nesty web app and Supabase API access
-• "Access the page when you click the extension" (activeTab) - Allows temporary access to extract product information only when you click the extension icon
-• "Storage" - Required to cache your authentication session for faster loading
-• "Tabs" - Required to detect if you're logged in to Nesty
-
-SUPPORT:
-For questions or issues, please visit our GitHub repository or contact us through the Nesty web application.
-
-This extension is free and open-source, built for the Israeli parenting community.
-```
-
----
-
-## 3. DETAILED DESCRIPTION (Hebrew - for Israeli users)
-
-**Add this Hebrew version below the English version**
+**Primary audience is Hebrew speakers, so this comes first**
 
 ```
 תוסף Nesty - בונה רשימת התינוק שלך
@@ -77,6 +27,7 @@ Nesty היא תוסף Chrome שעובד יחד עם אפליקציית רשימ�
 תכונות עיקריות:
 • חילוץ אוטומטי של מידע על מוצרים מאתרי מסחר
 • תמיכה בפורמטים מרובים של חנויות (Shopify, WooCommerce ועוד)
+• תמיכה מלאה ב-AliExpress וב-Amazon עם המרת מטבע אוטומטית לשקלים
 • ממשק יפהפה בעברית עם תמיכה RTL
 • סיווג מוצרים לקטגוריות (עגלות, כיסאות בטיחות, ביגוד וכו')
 • סימון פריטים כ"הכי רציתי" או "פרטי"
@@ -104,6 +55,55 @@ Nesty היא תוסף Chrome שעובד יחד עם אפליקציית רשימ�
 לשאלות או בעיות, אנא בקרו במאגר GitHub שלנו או צרו קשר דרך אפליקציית Nesty.
 
 התוסף הזה חינמי וקוד פתוח, נבנה עבור קהילת ההורים הישראלית.
+
+---
+
+## 3. DETAILED DESCRIPTION (English - for international users & reviewers)
+
+**English version below Hebrew for Chrome Web Store reviewers and international users**
+
+Nesty Product Scraper - Your Baby Registry Companion
+
+Nesty is a Chrome extension that works with the Nesty baby registry web application (https://ppltok.github.io/Nesty). This extension allows expecting parents to easily add products from any e-commerce website to their personal baby registry.
+
+HOW IT WORKS:
+1. Browse any online store (e.g., baby products, furniture, toys)
+2. Click the Nesty extension icon on a product page
+3. The extension automatically extracts product details (name, price, image, URL)
+4. Review and customize the product information
+5. Add it to your Nesty registry with one click
+
+KEY FEATURES:
+• Automatic product data extraction from e-commerce sites
+• Support for multiple store formats (Shopify, WooCommerce, and more)
+• Full support for AliExpress and Amazon with automatic currency conversion to ILS
+• Beautiful Hebrew interface with RTL support
+• Product categorization (strollers, car seats, clothing, etc.)
+• Mark items as "most wanted" or "private"
+• Add notes and quantity for each item
+• Secure integration with your Nesty account
+
+AUTHENTICATION REQUIRED:
+This extension requires you to be logged in to your Nesty account at https://ppltok.github.io/Nesty. The extension reads your authentication session to securely add items to your personal registry.
+
+PRIVACY & DATA:
+• We only collect product information you choose to add to your registry
+• Your authentication session is stored locally in Chrome
+• Product data is saved to your personal Nesty registry via Supabase
+• We do NOT track your browsing history
+• We do NOT collect data from pages where you don't use the extension
+• No data is shared with third parties
+
+PERMISSIONS EXPLANATION:
+• "Access your data for specific websites" - Required only for Nesty web app and Supabase API access
+• "Access the page when you click the extension" (activeTab) - Allows temporary access to extract product information only when you click the extension icon
+• "Storage" - Required to cache your authentication session for faster loading
+• "Tabs" - Required to detect if you're logged in to Nesty
+
+SUPPORT:
+For questions or issues, please visit our GitHub repository or contact us through the Nesty web application.
+
+This extension is free and open-source, built for the Israeli parenting community.
 ```
 
 ---
