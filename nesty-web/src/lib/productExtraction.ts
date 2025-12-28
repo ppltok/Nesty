@@ -3,10 +3,12 @@
  *
  * Extracts product data from e-commerce URLs using multiple extraction methods:
  * - AliExpress: Platform-specific DOM extraction with priority-based price selection
+ * - Amazon: Platform-specific DOM extraction with USD to ILS currency conversion
  * - All other sites: JSON-LD structured data extraction
  *
  * Originally ported from the Chrome extension's content.js
  * AliExpress support synced with extension (priority-based selection for bundle deals)
+ * Amazon support synced with extension (USD to ILS conversion at rate 3.19)
  */
 
 // TypeScript Interfaces
@@ -146,6 +148,17 @@ function detectPlatform(url?: string, doc?: Document): string | null {
 
   if (hostname.includes('aliexpress.com')) {
     return 'aliexpress'
+  }
+
+  // Check for Amazon (all major domains)
+  if (hostname.includes('amazon.com') ||
+      hostname.includes('amazon.co.uk') ||
+      hostname.includes('amazon.de') ||
+      hostname.includes('amazon.fr') ||
+      hostname.includes('amazon.it') ||
+      hostname.includes('amazon.es') ||
+      hostname.includes('amazon.ca')) {
+    return 'amazon'
   }
 
   // Can add more platform detection here in the future
@@ -324,6 +337,156 @@ function extractFromAliExpress(doc: Document): ExtractedProductData | null {
 }
 
 /**
+ * Extract product data from Amazon pages
+ * Uses DOM extraction with USD to ILS currency conversion
+ */
+function extractFromAmazon(doc: Document): ExtractedProductData | null {
+  console.log('🛍️ Attempting Amazon extraction...')
+
+  // Exchange rate: 1 USD = 3.19 ILS (December 2025)
+  const USD_TO_ILS = 3.19
+
+  const productData: ExtractedProductData = {
+    name: '',
+    price: '',
+    priceCurrency: 'ILS', // Always convert to ILS
+    brand: 'Amazon',
+    category: '',
+    imageUrls: []
+  }
+
+  // Extract title from multiple selectors
+  const titleSelectors = [
+    '#productTitle',
+    '#title',
+    'h1.product-title',
+    'span#productTitle',
+    '[data-feature-name="title"] h1'
+  ]
+
+  for (const selector of titleSelectors) {
+    const element = doc.querySelector(selector)
+    if (element) {
+      const title = element.textContent?.trim() || ''
+      if (title && title.length > 3) {
+        productData.name = title
+        console.log(`   ✓ Found title: ${title.substring(0, 50)}...`)
+        break
+      }
+    }
+  }
+
+  // Extract USD price from multiple selectors
+  const priceSelectors = [
+    '.a-price .a-offscreen',           // Main price (hidden but accurate)
+    '#priceblock_ourprice',            // Our price
+    '#priceblock_dealprice',           // Deal price
+    '.a-price-whole',                  // Whole number part
+    '#corePrice_feature_div .a-price .a-offscreen', // Core price feature
+    '[data-a-color="price"] .a-offscreen',
+    '.priceToPay .a-offscreen',        // Price to pay
+    '#corePriceDisplay_desktop_feature_div .a-price .a-offscreen'
+  ]
+
+  let foundUsdPrice: number | null = null
+
+  for (const selector of priceSelectors) {
+    const elements = doc.querySelectorAll(selector)
+    for (const element of elements) {
+      const priceText = element.textContent?.trim() || ''
+
+      // Extract USD price
+      const usdMatch = priceText.match(/\$\s*([\d,]+\.?\d*)/)
+      if (usdMatch && usdMatch[1]) {
+        const usdPrice = parseFloat(usdMatch[1].replace(',', ''))
+        if (usdPrice > 0) {
+          foundUsdPrice = usdPrice
+          console.log(`   $ Found USD price: $${usdPrice}`)
+          break
+        }
+      }
+    }
+    if (foundUsdPrice) break
+  }
+
+  // Convert USD to ILS
+  if (foundUsdPrice) {
+    const ilsPrice = (foundUsdPrice * USD_TO_ILS).toFixed(2)
+    productData.price = ilsPrice
+    productData.priceCurrency = 'ILS'
+    console.log(`   💱 Converted $${foundUsdPrice} USD → ₪${ilsPrice} ILS (rate: ${USD_TO_ILS})`)
+  }
+
+  // Extract brand
+  const brandSelectors = [
+    '#bylineInfo',
+    '.a-size-base.po-brand',
+    '[data-feature-name="bylineInfo"]',
+    '#brand'
+  ]
+
+  for (const selector of brandSelectors) {
+    const element = doc.querySelector(selector)
+    if (element) {
+      const brandText = element.textContent?.trim() || ''
+      const brandMatch = brandText.match(/(?:Brand:|Visit the|by)\s*(.+?)(?:\s+Store)?$/i)
+      if (brandMatch && brandMatch[1]) {
+        productData.brand = brandMatch[1].trim()
+        console.log(`   🏷️ Found brand: ${productData.brand}`)
+        break
+      } else if (brandText && !brandText.includes('http')) {
+        productData.brand = brandText.replace(/^Visit the\s+/i, '').replace(/\s+Store$/i, '').trim()
+        console.log(`   🏷️ Found brand: ${productData.brand}`)
+        break
+      }
+    }
+  }
+
+  // Extract high-resolution images
+  const imageSelectors = [
+    '#landingImage',                    // Main product image
+    '#imgTagWrapperId img',             // Image wrapper
+    '#imageBlock img[data-old-hires]',  // High-res image
+    '#altImages img',                   // Alternative images
+    '.imgTagWrapper img',               // Wrapper images
+    '[data-a-dynamic-image] img'        // Dynamic images
+  ]
+
+  for (const selector of imageSelectors) {
+    const elements = doc.querySelectorAll(selector)
+    elements.forEach(element => {
+      const img = element as HTMLImageElement
+      const imageUrl = img.getAttribute('data-old-hires') ||
+                      img.getAttribute('data-a-hires') ||
+                      img.src ||
+                      ''
+
+      if (imageUrl && imageUrl.startsWith('http') &&
+          !imageUrl.includes('data:image') &&
+          !imageUrl.includes('spinner') &&
+          !imageUrl.includes('loading') &&
+          !productData.imageUrls.includes(imageUrl)) {
+        productData.imageUrls.push(imageUrl)
+      }
+    })
+  }
+
+  console.log(`   📊 Amazon extraction summary:`)
+  console.log(`      Title: ${productData.name ? '✓' : '✗'}`)
+  console.log(`      Price: ${productData.price ? `₪${productData.price} ILS` : '✗'}`)
+  console.log(`      Images: ${productData.imageUrls.length}`)
+
+  // Validate that we have minimum required data
+  if (productData.name && (productData.price || productData.imageUrls.length > 0)) {
+    console.log('✅ Amazon extraction successful')
+    return productData
+  }
+
+  console.log('❌ Amazon extraction failed - insufficient data')
+  return null
+}
+
+/**
  * Extract product data from a DOM document by finding JSON-LD structured data
  * or using platform-specific extraction methods
  * @param doc - The parsed HTML document
@@ -340,6 +503,15 @@ function extractProductDataFromDocument(doc: Document, url?: string): ExtractedP
       return aliexpressResult
     }
     console.log('⚠️ AliExpress extraction failed, falling back to JSON-LD')
+  }
+
+  if (platform === 'amazon') {
+    console.log('🏪 Detected platform: amazon')
+    const amazonResult = extractFromAmazon(doc)
+    if (amazonResult) {
+      return amazonResult
+    }
+    console.log('⚠️ Amazon extraction failed, falling back to JSON-LD')
   }
 
   // Fall back to JSON-LD extraction for all other sites
