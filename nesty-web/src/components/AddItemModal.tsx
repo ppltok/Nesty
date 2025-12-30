@@ -125,6 +125,13 @@ export default function AddItemModal({
     }
   }, [isOpen, prefilledData, editItem])
 
+  // Auto-set privacy to true when birth_prep category is selected (for new items only)
+  useEffect(() => {
+    if (!editItem && formData.category === 'birth_prep') {
+      setFormData(prev => ({ ...prev, isPrivate: true }))
+    }
+  }, [formData.category, editItem])
+
   const handleExtractUrl = async () => {
     // Validate URL format
     try {
@@ -361,7 +368,7 @@ export default function AddItemModal({
         </div>
 
         {/* Content */}
-        <div className="p-5 overflow-y-auto flex-1">
+        <div className="p-3 sm:p-4 overflow-y-auto flex-1">
           {error && (
             <div className="bg-[#ffebee] text-[#b3261e] px-4 py-2.5 rounded-xl text-sm mb-4 font-medium">
               {error}
@@ -437,10 +444,10 @@ export default function AddItemModal({
 
           {/* Manual Tab Content */}
           {activeTab === 'manual' && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
             {/* Name - Full width */}
             <div className="col-span-2">
-              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1">
                 שם המוצר *
               </label>
               <input
@@ -448,19 +455,19 @@ export default function AddItemModal({
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="למשל: עגלת תינוק"
-                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
+                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-3 py-2 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
               />
             </div>
 
             {/* Category */}
             <div>
-              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1">
                 קטגוריה *
               </label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all appearance-none cursor-pointer"
+                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-3 py-2 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all appearance-none cursor-pointer"
               >
                 <option value="">בחרו קטגוריה</option>
                 {CATEGORIES.map((cat) => (
@@ -471,7 +478,7 @@ export default function AddItemModal({
 
             {/* Price */}
             <div>
-              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1">
                 מחיר (₪)
               </label>
               <input
@@ -480,20 +487,20 @@ export default function AddItemModal({
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 placeholder="0"
                 min="0"
-                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
+                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-3 py-2 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
               />
             </div>
 
             {/* Quantity */}
             <div>
-              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1">
                 כמות
               </label>
               <div className="flex items-center rounded-xl border border-[#e7e0ec] bg-white">
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, quantity: Math.max(getMinQuantity(editItem), formData.quantity - 1) })}
-                  className="px-3 py-2.5 text-[#49454f] hover:text-[#6750a4] transition-colors text-lg font-medium"
+                  className="px-3 py-2 text-[#49454f] hover:text-[#6750a4] transition-colors text-lg font-medium"
                 >
                   −
                 </button>
@@ -501,7 +508,7 @@ export default function AddItemModal({
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, quantity: formData.quantity + 1 })}
-                  className="px-3 py-2.5 text-[#49454f] hover:text-[#6750a4] transition-colors text-lg font-medium"
+                  className="px-3 py-2 text-[#49454f] hover:text-[#6750a4] transition-colors text-lg font-medium"
                 >
                   +
                 </button>
@@ -510,7 +517,7 @@ export default function AddItemModal({
 
             {/* Color */}
             <div>
-              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1">
                 <Palette className="w-3 h-3 inline ml-1" />
                 צבע מועדף
               </label>
@@ -519,13 +526,13 @@ export default function AddItemModal({
                 value={formData.color}
                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                 placeholder="אפור, ורוד..."
-                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
+                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-3 py-2 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
               />
             </div>
 
             {/* Store Name */}
             <div>
-              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1">
                 <Package className="w-3 h-3 inline ml-1" />
                 חנות
               </label>
@@ -534,13 +541,13 @@ export default function AddItemModal({
                 value={formData.storeName}
                 onChange={(e) => setFormData({ ...formData, storeName: e.target.value })}
                 placeholder="בייבי סטאר..."
-                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
+                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-3 py-2 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
               />
             </div>
 
             {/* Product URL - Full width */}
             <div className="col-span-2">
-              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1">
                 <LinkIcon className="w-3 h-3 inline ml-1" />
                 קישור למוצר
                 {isExtractedData && (
@@ -557,13 +564,13 @@ export default function AddItemModal({
                   setIsExtractedData(false) // Clear indicator on manual edit
                 }}
                 placeholder="https://..."
-                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
+                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-3 py-2 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
               />
             </div>
 
             {/* Notes - Full width */}
             <div className="col-span-2">
-              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1.5">
+              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1">
                 הערות
               </label>
               <input
@@ -571,9 +578,9 @@ export default function AddItemModal({
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="מידה, פרטים נוספים..."
-                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
+                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-3 py-2 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
               />
-              <p className="text-xs text-[#49454f] mt-1.5 flex items-center gap-1">
+              <p className="text-[10px] text-[#49454f] mt-1 flex items-center gap-1">
                 <Eye className="w-3 h-3" />
                 האורחים יראו הערה זו
               </p>
@@ -583,44 +590,44 @@ export default function AddItemModal({
             <button
               type="button"
               onClick={() => setFormData({ ...formData, isMostWanted: !formData.isMostWanted })}
-              className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+              className={`flex items-center gap-2 p-2.5 rounded-xl border-2 transition-all ${
                 formData.isMostWanted
                   ? 'border-[#b3261e] bg-[#ffebee]'
                   : 'border-[#e7e0ec] hover:border-[#d0bcff]'
               }`}
             >
-              <Star className={`w-5 h-5 ${formData.isMostWanted ? 'text-[#b3261e] fill-[#b3261e]' : 'text-[#49454f]'}`} />
+              <Star className={`w-4 h-4 ${formData.isMostWanted ? 'text-[#b3261e] fill-[#b3261e]' : 'text-[#49454f]'}`} />
               <div className="text-right flex-1">
                 <p className={`text-sm font-bold ${formData.isMostWanted ? 'text-[#b3261e]' : 'text-[#1d192b]'}`}>
                   הכי רוצה!
                 </p>
               </div>
-              <div className={`w-10 h-6 rounded-full transition-colors relative ${formData.isMostWanted ? 'bg-[#b3261e]' : 'bg-[#e7e0ec]'}`}>
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${formData.isMostWanted ? 'right-1' : 'left-1'}`} />
+              <div className={`w-9 h-5 rounded-full transition-colors relative ${formData.isMostWanted ? 'bg-[#b3261e]' : 'bg-[#e7e0ec]'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${formData.isMostWanted ? 'right-0.5' : 'left-0.5'}`} />
               </div>
             </button>
 
             <button
               type="button"
               onClick={() => setFormData({ ...formData, isPrivate: !formData.isPrivate })}
-              className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+              className={`flex items-center gap-2 p-2.5 rounded-xl border-2 transition-all ${
                 formData.isPrivate
                   ? 'border-[#6750a4] bg-[#f3edff]'
                   : 'border-[#e7e0ec] hover:border-[#d0bcff]'
               }`}
             >
               {formData.isPrivate ? (
-                <EyeOff className="w-5 h-5 text-[#6750a4]" />
+                <EyeOff className="w-4 h-4 text-[#6750a4]" />
               ) : (
-                <Eye className="w-5 h-5 text-[#49454f]" />
+                <Eye className="w-4 h-4 text-[#49454f]" />
               )}
               <div className="text-right flex-1">
                 <p className={`text-sm font-bold ${formData.isPrivate ? 'text-[#6750a4]' : 'text-[#1d192b]'}`}>
                   פריט פרטי
                 </p>
               </div>
-              <div className={`w-10 h-6 rounded-full transition-colors relative ${formData.isPrivate ? 'bg-[#6750a4]' : 'bg-[#e7e0ec]'}`}>
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${formData.isPrivate ? 'right-1' : 'left-1'}`} />
+              <div className={`w-9 h-5 rounded-full transition-colors relative ${formData.isPrivate ? 'bg-[#6750a4]' : 'bg-[#e7e0ec]'}`}>
+                <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${formData.isPrivate ? 'right-0.5' : 'left-0.5'}`} />
               </div>
             </button>
           </div>
@@ -628,17 +635,17 @@ export default function AddItemModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-5 border-t border-[#e7e0ec] bg-[#fdfcff] rounded-b-[28px] flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 border-t border-[#e7e0ec] bg-[#fdfcff] rounded-b-[28px] flex-shrink-0">
           <button
             onClick={handleClose}
-            className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full border border-[#e7e0ec] text-[#49454f] font-bold text-sm hover:bg-[#f3edff] hover:text-[#6750a4] hover:border-[#d0bcff] transition-all"
+            className="flex-1 px-4 sm:px-6 py-2.5 rounded-full border border-[#e7e0ec] text-[#49454f] font-bold text-sm hover:bg-[#f3edff] hover:text-[#6750a4] hover:border-[#d0bcff] transition-all"
           >
             ביטול
           </button>
           <button
             onClick={handleSave}
             disabled={isLoading || (activeTab === 'paste' && !urlInput.trim())}
-            className="flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full bg-[#6750a4] text-white font-bold text-sm hover:bg-[#503e85] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+            className="flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 rounded-full bg-[#6750a4] text-white font-bold text-sm hover:bg-[#503e85] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
