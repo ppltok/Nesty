@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Gift, Check, ExternalLink, Heart, EyeOff, Store, MapPin, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react'
+import { X, Gift, Check, ExternalLink, Heart, EyeOff, Store, MapPin, MessageCircle, ChevronDown, ChevronUp, Copy } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
 import { supabase } from '../lib/supabase'
@@ -71,6 +71,7 @@ export default function PurchaseModal({
   const [showAddress, setShowAddress] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [addressCopied, setAddressCopied] = useState(false)
   const [formData, setFormData] = useState<PurchaseFormData>({
     buyerName: '',
     buyerEmail: '',
@@ -429,7 +430,7 @@ export default function PurchaseModal({
                       </div>
                     ) : (
                       // Address is visible
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <div className="flex items-start gap-2">
                           <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                           <div className="text-sm text-foreground">
@@ -449,6 +450,34 @@ export default function PurchaseModal({
                             )}
                           </div>
                         </div>
+                        {/* Copy Address Button */}
+                        <button
+                          onClick={() => {
+                            const addressText = [
+                              addressInfo.street,
+                              addressInfo.apt ? `דירה ${addressInfo.apt}` : '',
+                              addressInfo.city,
+                              addressInfo.postal || '',
+                              addressInfo.phone ? `טלפון: ${addressInfo.phone}` : ''
+                            ].filter(Boolean).join(', ')
+                            navigator.clipboard.writeText(addressText)
+                            setAddressCopied(true)
+                            setTimeout(() => setAddressCopied(false), 2000)
+                          }}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#f3edff] text-[#6750a4] text-sm font-medium hover:bg-[#e8deff] transition-colors"
+                        >
+                          {addressCopied ? (
+                            <>
+                              <Check className="w-4 h-4" />
+                              הכתובת הועתקה!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-4 h-4" />
+                              העתק כתובת
+                            </>
+                          )}
+                        </button>
                       </div>
                     )}
                   </div>

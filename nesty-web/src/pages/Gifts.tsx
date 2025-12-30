@@ -10,6 +10,16 @@ import type { Purchase } from '../types'
 
 type ViewMode = 'grid' | 'list'
 
+// Format date to Hebrew format
+function formatDate(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('he-IL', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  })
+}
+
 export default function Gifts() {
   const { registry } = useAuth()
   const { refreshGiftsCount } = useDashboardLayout()
@@ -24,6 +34,7 @@ export default function Gifts() {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [showSurpriseWarning, setShowSurpriseWarning] = useState<string | null>(null)
+  const [selectedGift, setSelectedGift] = useState<(Purchase & { item_name?: string; item_category?: string }) | null>(null)
 
   // Reveal a surprise gift with warning
   const handleRevealClick = (purchaseId: string) => {
@@ -349,6 +360,7 @@ export default function Gifts() {
                 onReveal={() => handleRevealClick(purchase.id)}
                 onMarkReceived={handleMarkReceived}
                 onSendThankYou={handleSendThankYou}
+                onViewDetails={() => setSelectedGift(purchase)}
               />
             ))}
           </div>
@@ -362,6 +374,7 @@ export default function Gifts() {
                 onReveal={() => handleRevealClick(purchase.id)}
                 onMarkReceived={handleMarkReceived}
                 onSendThankYou={handleSendThankYou}
+                onViewDetails={() => setSelectedGift(purchase)}
               />
             ))}
           </div>
@@ -397,6 +410,113 @@ export default function Gifts() {
               >
                 כן, הראה לי!
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gift Detail Modal */}
+      {selectedGift && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedGift(null)} />
+          <div className="relative bg-white rounded-[28px] shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 bg-white rounded-t-[28px] border-b border-[#e7e0ec] p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#f3edff] rounded-xl flex items-center justify-center">
+                  <Gift className="w-5 h-5 text-[#6750a4]" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-[#1d192b]">פרטי המתנה</h3>
+                  <p className="text-xs text-[#49454f]">מאת {selectedGift.buyer_name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedGift(null)}
+                className="p-2 text-[#49454f] hover:text-[#1d192b] hover:bg-[#f3edff] rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Item Name */}
+              <div className="mb-6">
+                <p className="text-xs text-[#49454f] mb-1">שם המתנה</p>
+                <h2 className="text-xl font-bold text-[#1d192b]">{selectedGift.item_name}</h2>
+                {selectedGift.quantity_purchased > 1 && (
+                  <p className="text-sm text-[#6750a4] mt-1">כמות: {selectedGift.quantity_purchased}</p>
+                )}
+              </div>
+
+              {/* Greeting Message */}
+              {selectedGift.gift_message && (
+                <div className="mb-6">
+                  <p className="text-xs text-[#49454f] mb-2">ברכה מ{selectedGift.buyer_name}</p>
+                  <div className="bg-[#f3edff] rounded-2xl p-5 border border-[#eaddff]">
+                    <Heart className="w-5 h-5 text-[#b3261e] fill-current mb-3" />
+                    <p className="text-[#1d192b] leading-relaxed whitespace-pre-wrap text-base">
+                      "{selectedGift.gift_message}"
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Purchase Info */}
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center py-2 border-b border-[#e7e0ec]">
+                  <span className="text-[#49454f]">התקבל ב:</span>
+                  <span className="font-medium text-[#1d192b]">{formatDate(selectedGift.created_at)}</span>
+                </div>
+                {selectedGift.buyer_email && (
+                  <div className="flex justify-between items-center py-2 border-b border-[#e7e0ec]">
+                    <span className="text-[#49454f]">אימייל:</span>
+                    <span className="font-medium text-[#1d192b]">{selectedGift.buyer_email}</span>
+                  </div>
+                )}
+                {selectedGift.buyer_phone && (
+                  <div className="flex justify-between items-center py-2 border-b border-[#e7e0ec]">
+                    <span className="text-[#49454f]">טלפון:</span>
+                    <span className="font-medium text-[#1d192b]">{selectedGift.buyer_phone}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-[#49454f]">סטטוס:</span>
+                  <span className={`font-medium ${selectedGift.is_received ? 'text-green-600' : 'text-[#6750a4]'}`}>
+                    {selectedGift.is_received ? '✓ התקבל' : 'ממתין לקבלה'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="sticky bottom-0 bg-white rounded-b-[28px] border-t border-[#e7e0ec] p-4 flex gap-3">
+              <button
+                onClick={() => {
+                  handleMarkReceived(selectedGift.id)
+                  setSelectedGift(prev => prev ? { ...prev, is_received: !prev.is_received } : null)
+                }}
+                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
+                  selectedGift.is_received
+                    ? 'bg-[#f1f8e9] text-[#33691e] border border-[#dcedc8]'
+                    : 'bg-[#6750a4] text-white'
+                }`}
+              >
+                {selectedGift.is_received ? '✓ התקבל' : 'קיבלתי!'}
+              </button>
+              {selectedGift.buyer_phone && !selectedGift.thanked_at && (
+                <button
+                  onClick={() => {
+                    handleSendThankYou(selectedGift)
+                    setSelectedGift(null)
+                  }}
+                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#25D366] text-white font-bold text-sm hover:bg-[#128C7E] transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  שלח תודה
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -437,12 +557,14 @@ function PurchaseCard({
   onReveal,
   onMarkReceived,
   onSendThankYou,
+  onViewDetails,
 }: {
   purchase: Purchase & { item_name?: string; item_category?: string }
   isRevealed: boolean
   onReveal: () => void
   onMarkReceived: (purchaseId: string) => void
   onSendThankYou: (purchase: Purchase & { item_name?: string }) => void
+  onViewDetails: () => void
 }) {
   const isSurprise = purchase.is_surprise
   const isHidden = isSurprise && !isRevealed
@@ -490,11 +612,12 @@ function PurchaseCard({
   // --- REVEALED / NORMAL VIEW ---
   return (
     <div
-      className={`h-[340px] flex flex-col rounded-[40px] rounded-tr-[12px] rounded-bl-[12px] border-2 transition-all duration-300 relative overflow-hidden bg-white ${
+      onClick={onViewDetails}
+      className={`h-[340px] flex flex-col rounded-[40px] rounded-tr-[12px] rounded-bl-[12px] border-2 transition-all duration-300 relative overflow-hidden bg-white cursor-pointer ${
         isReceived
-          ? 'border-[#dcedc8] shadow-none'
+          ? 'border-[#dcedc8] shadow-none hover:shadow-sm'
           : isPending
-          ? 'border-orange-200 shadow-sm'
+          ? 'border-orange-200 shadow-sm hover:shadow-md'
           : 'border-[#e7e0ec] shadow-sm hover:shadow-md hover:border-[#d0bcff]'
       }`}
     >
@@ -516,11 +639,6 @@ function PurchaseCard({
           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm ${isReceived ? 'bg-[#dcedc8] text-[#33691e]' : 'bg-[#f3edff] text-[#6750a4]'}`}>
             {isReceived ? <CheckCircle className="w-7 h-7" /> : <Gift className="w-7 h-7" />}
           </div>
-          {purchase.purchased_at && (
-            <span className="text-xs font-medium text-[#49454f] bg-[#f5f5f5] px-3 py-1 rounded-full">
-              {purchase.purchased_at}
-            </span>
-          )}
         </div>
 
         {/* Item Info */}
@@ -538,7 +656,7 @@ function PurchaseCard({
 
         {/* Message Bubble (if exists) */}
         {purchase.gift_message && (
-          <div className="bg-[#f9f9f9] p-3 rounded-xl rounded-tr-sm mb-4 relative mt-2 border border-[#f0f0f0]">
+          <div className="bg-[#f9f9f9] p-3 rounded-xl rounded-tr-sm mb-4 relative mt-2 border border-[#f0f0f0] w-full text-right">
             <Heart className="w-3 h-3 text-[#b3261e] absolute -top-1.5 -right-1.5 fill-current bg-white rounded-full" />
             <p className="text-sm text-[#49454f] italic line-clamp-2">"{purchase.gift_message}"</p>
           </div>
@@ -546,7 +664,7 @@ function PurchaseCard({
 
         {/* Action Buttons */}
         {purchase.status === 'confirmed' && (
-          <div className="mt-4 pt-4 border-t border-[#e7e0ec]/60 flex flex-col gap-2">
+          <div className="mt-4 pt-4 border-t border-[#e7e0ec]/60 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
             <div className="flex gap-2">
               <button
                 onClick={() => onMarkReceived(purchase.id)}
@@ -601,12 +719,14 @@ function PurchaseListItem({
   onReveal,
   onMarkReceived,
   onSendThankYou,
+  onViewDetails,
 }: {
   purchase: Purchase & { item_name?: string; item_category?: string }
   isRevealed: boolean
   onReveal: () => void
   onMarkReceived: (purchaseId: string) => void
   onSendThankYou: (purchase: Purchase & { item_name?: string }) => void
+  onViewDetails: () => void
 }) {
   const isSurprise = purchase.is_surprise
   const isHidden = isSurprise && !isRevealed
@@ -642,12 +762,13 @@ function PurchaseListItem({
   // --- REVEALED / NORMAL VIEW (LIST) ---
   return (
     <div
-      className={`bg-white rounded-2xl border-2 p-4 transition-all ${
+      onClick={onViewDetails}
+      className={`bg-white rounded-2xl border-2 p-4 transition-all cursor-pointer ${
         isReceived
-          ? 'border-[#dcedc8]'
+          ? 'border-[#dcedc8] hover:shadow-sm'
           : isPending
-          ? 'border-orange-200'
-          : 'border-[#e7e0ec] hover:border-[#d0bcff]'
+          ? 'border-orange-200 hover:shadow-sm'
+          : 'border-[#e7e0ec] hover:border-[#d0bcff] hover:shadow-sm'
       }`}
     >
       <div className="flex items-center gap-4">
@@ -678,13 +799,15 @@ function PurchaseListItem({
             {category && <span className="text-[#49454f]/60"> • {category.name}</span>}
           </p>
           {purchase.gift_message && (
-            <p className="text-xs text-[#49454f] mt-1 italic line-clamp-1">"{purchase.gift_message}"</p>
+            <p className="text-xs text-[#49454f] mt-1 italic line-clamp-2 sm:line-clamp-3">
+              "{purchase.gift_message}"
+            </p>
           )}
         </div>
 
         {/* Actions */}
         {purchase.status === 'confirmed' && (
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => onMarkReceived(purchase.id)}
               className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${

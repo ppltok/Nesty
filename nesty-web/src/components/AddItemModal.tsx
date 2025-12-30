@@ -573,6 +573,10 @@ export default function AddItemModal({
                 placeholder="מידה, פרטים נוספים..."
                 className="w-full rounded-xl border border-[#e7e0ec] bg-white px-4 py-2.5 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
               />
+              <p className="text-xs text-[#49454f] mt-1.5 flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                האורחים יראו הערה זו
+              </p>
             </div>
 
             {/* Toggle buttons - side by side */}
