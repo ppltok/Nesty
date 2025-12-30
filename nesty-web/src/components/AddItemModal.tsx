@@ -301,7 +301,7 @@ export default function AddItemModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir="rtl">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" dir="rtl">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -309,28 +309,28 @@ export default function AddItemModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-[28px] shadow-2xl w-full max-w-xl">
+      <div className="relative bg-white rounded-t-[28px] sm:rounded-[28px] shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-[#e7e0ec]">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between p-3 sm:p-5 border-b border-[#e7e0ec] flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             {/* Tab Navigation - hide tabs in edit mode */}
             {!isEditMode && (
-              <div className="flex gap-2">
+              <div className="flex gap-1 sm:gap-2">
                 <button
                   onClick={() => setActiveTab('paste')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-all ${
                     activeTab === 'paste'
                       ? 'bg-[#6750a4] text-white'
                       : 'bg-[#f3edff] text-[#6750a4] opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <Link2 className="w-4 h-4" />
-                  הדבקת קישור
-                  <span className="bg-orange-100 text-orange-600 text-xs px-2 py-0.5 rounded-full">מומלץ</span>
+                  <Link2 className="w-4 h-4 hidden sm:block" />
+                  <span className="whitespace-nowrap">הדבקת קישור</span>
+                  <span className="bg-orange-100 text-orange-600 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap">מומלץ</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('manual')}
-                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                  className={`px-2 sm:px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm transition-all whitespace-nowrap ${
                     activeTab === 'manual'
                       ? 'bg-[#6750a4] text-white'
                       : 'bg-[#f3edff] text-[#6750a4] opacity-70 hover:opacity-100'
@@ -344,9 +344,9 @@ export default function AddItemModal({
               <h2 className="text-lg font-bold text-[#1d192b]">עריכת פריט</h2>
             )}
 
-            {/* Extension Status Badge */}
+            {/* Extension Status Badge - hide on mobile */}
             {extensionInstalled && !isEditMode && (
-              <div className="flex items-center gap-1.5 bg-[#e8f5e9] text-[#1b5e20] px-3 py-1.5 rounded-full text-xs font-semibold">
+              <div className="hidden sm:flex items-center gap-1.5 bg-[#e8f5e9] text-[#1b5e20] px-3 py-1.5 rounded-full text-xs font-semibold">
                 <Check className="w-3.5 h-3.5" />
                 תוסף פעיל
               </div>
@@ -354,14 +354,14 @@ export default function AddItemModal({
           </div>
           <button
             onClick={handleClose}
-            className="p-2 text-[#49454f] hover:text-[#1d192b] hover:bg-[#f3edff] rounded-xl transition-colors"
+            className="p-2 text-[#49454f] hover:text-[#1d192b] hover:bg-[#f3edff] rounded-xl transition-colors flex-shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5">
+        <div className="p-5 overflow-y-auto flex-1">
           {error && (
             <div className="bg-[#ffebee] text-[#b3261e] px-4 py-2.5 rounded-xl text-sm mb-4 font-medium">
               {error}
@@ -370,10 +370,10 @@ export default function AddItemModal({
 
           {/* Paste Tab Content */}
           {activeTab === 'paste' && (
-            <div className="py-8 px-4 flex flex-col items-center max-w-md mx-auto">
-              <Link2 className="w-12 h-12 text-[#6750a4] mb-4" />
-              <h3 className="text-lg font-bold text-[#1d192b] mb-2">הדבק קישור למוצר</h3>
-              <p className="text-sm text-[#49454f] text-center mb-6">
+            <div className="py-4 sm:py-8 px-2 sm:px-4 flex flex-col items-center max-w-md mx-auto">
+              <Link2 className="w-10 h-10 sm:w-12 sm:h-12 text-[#6750a4] mb-3 sm:mb-4" />
+              <h3 className="text-base sm:text-lg font-bold text-[#1d192b] mb-1 sm:mb-2">הדבק קישור למוצר</h3>
+              <p className="text-xs sm:text-sm text-[#49454f] text-center mb-4 sm:mb-6">
                 הדבק כתובת URL של מוצר מכל אתר מסחר אלקטרוני
               </p>
 
@@ -409,9 +409,9 @@ export default function AddItemModal({
                 </div>
               )}
 
-              {/* Extension Tip */}
+              {/* Extension Tip - hide on mobile to save space */}
               {!extensionInstalled && (
-                <div className="mt-6 bg-[#f3edff] rounded-2xl p-4 border border-[#d0bcff]">
+                <div className="hidden sm:block mt-6 bg-[#f3edff] rounded-2xl p-4 border border-[#d0bcff]">
                   <div className="flex items-start gap-3">
                     <Chrome className="w-5 h-5 text-[#6750a4] flex-shrink-0 mt-0.5" />
                     <div>
@@ -624,17 +624,17 @@ export default function AddItemModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center gap-3 p-5 border-t border-[#e7e0ec] bg-[#fdfcff] rounded-b-[28px]">
+        <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-5 border-t border-[#e7e0ec] bg-[#fdfcff] rounded-b-[28px] flex-shrink-0">
           <button
             onClick={handleClose}
-            className="flex-1 px-6 py-3 rounded-full border border-[#e7e0ec] text-[#49454f] font-bold text-sm hover:bg-[#f3edff] hover:text-[#6750a4] hover:border-[#d0bcff] transition-all"
+            className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full border border-[#e7e0ec] text-[#49454f] font-bold text-sm hover:bg-[#f3edff] hover:text-[#6750a4] hover:border-[#d0bcff] transition-all"
           >
             ביטול
           </button>
           <button
             onClick={handleSave}
             disabled={isLoading || (activeTab === 'paste' && !urlInput.trim())}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#6750a4] text-white font-bold text-sm hover:bg-[#503e85] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+            className="flex-1 flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-full bg-[#6750a4] text-white font-bold text-sm hover:bg-[#503e85] transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
