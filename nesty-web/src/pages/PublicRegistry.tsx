@@ -637,6 +637,11 @@ function ItemCard({
                 <span className="font-bold text-[#1d192b] text-lg">₪{item.price.toLocaleString()}</span>
               )}
             </div>
+            {item.notes && (
+              <p className="text-xs text-[#49454f] mt-2 italic line-clamp-2">
+                {item.notes}
+              </p>
+            )}
           </div>
 
           {!isItemPurchased && (
@@ -720,6 +725,11 @@ function ItemCard({
             <p className="text-sm text-[#49454f] flex items-center gap-2 bg-[#f5f5f5] px-3 py-1.5 rounded-lg w-fit">
               <ShoppingCart className="w-3 h-3" />
               {item.store_name}
+            </p>
+          )}
+          {item.notes && (
+            <p className="text-sm text-[#49454f] mt-2 italic line-clamp-2">
+              {item.notes}
             </p>
           )}
         </div>

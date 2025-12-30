@@ -65,6 +65,14 @@ export default function Dashboard() {
   const [selectedQuantity, setSelectedQuantity] = useState(1)
   const [isEditingPurchased, setIsEditingPurchased] = useState(false)
 
+  // Delete confirmation modal state
+  const [deleteModalItem, setDeleteModalItem] = useState<Item | null>(null)
+  const [deleteModalPurchaseCount, setDeleteModalPurchaseCount] = useState(0)
+
+  // Unmark confirmation modal state (when guest has purchased)
+  const [unmarkModalItem, setUnmarkModalItem] = useState<Item | null>(null)
+  const [unmarkModalGuestCount, setUnmarkModalGuestCount] = useState(0)
+
   // Track if address modal is shown right after onboarding (to redirect to checklist on close)
   const addressModalFromOnboarding = useRef(false)
 
@@ -286,19 +294,18 @@ export default function Dashboard() {
       console.error('Error checking purchase count:', err)
     }
 
-    let confirmMessage = 'האם למחוק את הפריט?'
-    if (purchaseCount > 0) {
-      confirmMessage = `לפריט זה יש ${purchaseCount} רכישות רשומות.\nמחיקת הפריט תמחק גם את כל הרכישות.\n\nהאם להמשיך?`
-    } else if (itemToDelete.quantity_received > 0) {
-      confirmMessage = `הפריט סומן כנרכש (${itemToDelete.quantity_received} יחידות).\n\nהאם למחוק?`
-    }
+    // Show custom confirmation modal instead of browser confirm()
+    setDeleteModalPurchaseCount(purchaseCount)
+    setDeleteModalItem(itemToDelete)
+  }
 
-    if (!confirm(confirmMessage)) return
+  const confirmDeleteItem = async () => {
+    if (!deleteModalItem) return
 
     try {
-      await supabase.from('purchases').delete().eq('item_id', itemId)
+      await supabase.from('purchases').delete().eq('item_id', deleteModalItem.id)
 
-      const { error } = await supabase.from('items').delete().eq('id', itemId)
+      const { error } = await supabase.from('items').delete().eq('id', deleteModalItem.id)
 
       if (error) {
         console.error('Delete error:', error)
@@ -306,18 +313,45 @@ export default function Dashboard() {
         return
       }
 
-      setItems((prev) => prev.filter((item) => item.id !== itemId))
+      setItems((prev) => prev.filter((item) => item.id !== deleteModalItem.id))
     } catch (err) {
       console.error('Error deleting item:', err)
+    } finally {
+      setDeleteModalItem(null)
+      setDeleteModalPurchaseCount(0)
     }
   }
 
   // Handle click on "mark as purchased" button
-  const handleMarkPurchasedClick = (item: Item) => {
+  const handleMarkPurchasedClick = async (item: Item) => {
     const isPurchased = item.quantity_received >= item.quantity
 
     if (isPurchased) {
-      // Toggling OFF - directly call the update function
+      // Toggling OFF - check if there are guest purchases first
+      try {
+        const { data: purchases, error } = await supabase
+          .from('purchases')
+          .select('quantity_purchased')
+          .eq('item_id', item.id)
+          .eq('status', 'confirmed')
+
+        if (error) {
+          console.error('Error checking purchases:', error)
+        }
+
+        const guestPurchaseCount = purchases?.reduce((sum, p) => sum + (p.quantity_purchased || 1), 0) || 0
+
+        if (guestPurchaseCount > 0) {
+          // Show warning modal
+          setUnmarkModalGuestCount(guestPurchaseCount)
+          setUnmarkModalItem(item)
+          return
+        }
+      } catch (err) {
+        console.error('Error checking purchases:', err)
+      }
+
+      // No guest purchases, proceed directly
       updateItemQuantityReceived(item.id, item.quantity_received, item.quantity, 0)
     } else if (item.quantity > 1) {
       // Multi-quantity item - show modal to select quantity
@@ -327,6 +361,34 @@ export default function Dashboard() {
     } else {
       // Single quantity - directly mark as purchased
       updateItemQuantityReceived(item.id, item.quantity_received, item.quantity, 1)
+    }
+  }
+
+  // Confirm unmarking item with guest purchases
+  const confirmUnmarkItem = async () => {
+    if (!unmarkModalItem) return
+
+    // Force set to 0, ignoring guest purchases
+    try {
+      const { error } = await supabase
+        .from('items')
+        .update({ quantity_received: 0 })
+        .eq('id', unmarkModalItem.id)
+
+      if (error) {
+        console.error('Update error:', error)
+        alert(`שגיאה בעדכון הפריט: ${error.message}`)
+        return
+      }
+
+      setItems((prev) =>
+        prev.map((item) => (item.id === unmarkModalItem.id ? { ...item, quantity_received: 0 } : item))
+      )
+    } catch (err) {
+      console.error('Error updating item:', err)
+    } finally {
+      setUnmarkModalItem(null)
+      setUnmarkModalGuestCount(0)
     }
   }
 
@@ -549,6 +611,11 @@ export default function Dashboard() {
                   </span>
                 )}
               </div>
+              {item.notes && (
+                <p className="text-xs text-[#49454f] mt-2 italic line-clamp-2">
+                  {item.notes}
+                </p>
+              )}
             </div>
 
             <div className="flex items-end justify-between gap-4 mt-2">
@@ -684,6 +751,12 @@ export default function Dashboard() {
             {item.store_name && item.store_name !== 'ידני' && (
               <p className="text-sm text-[#49454f] mt-1 flex items-center gap-1">
                 <ShoppingCart className="w-3 h-3" /> {item.store_name}
+              </p>
+            )}
+
+            {item.notes && (
+              <p className="text-sm text-[#49454f] mt-2 italic line-clamp-2">
+                {item.notes}
               </p>
             )}
           </div>
@@ -887,6 +960,91 @@ export default function Dashboard() {
                 className="flex-1 py-3 rounded-xl bg-[#6750a4] text-white font-bold hover:bg-[#7c6aaf] transition-colors"
               >
                 אישור
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalItem && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setDeleteModalItem(null); setDeleteModalPurchaseCount(0); }}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 bg-[#ffebee] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-7 h-7 text-[#b3261e]" />
+            </div>
+            <h3 className="text-xl font-bold text-[#1d192b] mb-2 text-center">
+              למחוק את הפריט?
+            </h3>
+            <p className="text-[#49454f] text-sm mb-2 text-center">
+              {deleteModalItem.name}
+            </p>
+            {deleteModalPurchaseCount > 0 ? (
+              <p className="text-[#b3261e] text-sm mb-6 text-center bg-[#ffebee] rounded-xl px-4 py-3">
+                לפריט זה יש {deleteModalPurchaseCount} רכישות רשומות.
+                <br />
+                מחיקת הפריט תמחק גם את כל הרכישות.
+              </p>
+            ) : deleteModalItem.quantity_received > 0 ? (
+              <p className="text-[#49454f] text-sm mb-6 text-center">
+                הפריט סומן כנרכש ({deleteModalItem.quantity_received} יחידות)
+              </p>
+            ) : (
+              <div className="mb-6" />
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setDeleteModalItem(null); setDeleteModalPurchaseCount(0); }}
+                className="flex-1 py-3 rounded-xl border border-[#e7e0ec] text-[#49454f] font-medium hover:bg-gray-50 transition-colors"
+              >
+                ביטול
+              </button>
+              <button
+                onClick={confirmDeleteItem}
+                className="flex-1 py-3 rounded-xl bg-[#b3261e] text-white font-bold hover:bg-[#8c1d18] transition-colors"
+              >
+                מחק
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unmark Guest Purchase Confirmation Modal */}
+      {unmarkModalItem && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setUnmarkModalItem(null); setUnmarkModalGuestCount(0); }}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="w-14 h-14 bg-[#fff3e0] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Gift className="w-7 h-7 text-[#e65100]" />
+            </div>
+            <h3 className="text-xl font-bold text-[#1d192b] mb-2 text-center">
+              שימי לב!
+            </h3>
+            <p className="text-[#49454f] text-sm mb-2 text-center">
+              {unmarkModalItem.name}
+            </p>
+            <p className="text-[#e65100] text-sm mb-6 text-center bg-[#fff3e0] rounded-xl px-4 py-3">
+              {unmarkModalGuestCount === 1
+                ? 'משתמש אחד כבר סימן שקנה את הפריט הזה.'
+                : `${unmarkModalGuestCount} משתמשים כבר סימנו שקנו את הפריט הזה.`
+              }
+              <br />
+              האם את בטוחה שברצונך לסמן כלא נרכש?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setUnmarkModalItem(null); setUnmarkModalGuestCount(0); }}
+                className="flex-1 py-3 rounded-xl border border-[#e7e0ec] text-[#49454f] font-medium hover:bg-gray-50 transition-colors"
+              >
+                ביטול
+              </button>
+              <button
+                onClick={confirmUnmarkItem}
+                className="flex-1 py-3 rounded-xl bg-[#e65100] text-white font-bold hover:bg-[#bf360c] transition-colors"
+              >
+                כן, סמני כלא נרכש
               </button>
             </div>
           </div>
