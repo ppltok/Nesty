@@ -5,7 +5,8 @@ import { asset } from '../lib/assets'
 import {
   Menu, X, Heart, Sparkles, ArrowLeft,
   ClipboardList, Star, Send, TrendingDown,
-  Bell, CheckCircle, Users, Shield, Lock, EyeOff, Gift
+  Bell, CheckCircle, Users, Shield, Lock, EyeOff, Gift,
+  Chrome, MousePointerClick, Zap, ShoppingBag, ExternalLink
 } from 'lucide-react'
 
 export default function Home() {
@@ -25,6 +26,9 @@ export default function Home() {
           <nav className="hidden md:flex items-center gap-8">
             <a href="#how-it-works" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">
               איך זה עובד
+            </a>
+            <a href="#chrome-extension" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">
+              תוסף לכרום
             </a>
             <a href="#chip-in" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">
               Chip-In
@@ -80,6 +84,13 @@ export default function Home() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 איך זה עובד
+              </a>
+              <a
+                href="#chrome-extension"
+                className="block text-[#49454f] hover:text-[#6750a4] font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                תוסף לכרום
               </a>
               <a
                 href="#smart-engine"
@@ -261,6 +272,174 @@ export default function Home() {
                 <p className="text-[#49454f] text-lg leading-relaxed">
                   שתפו את הרשימה בוואטסאפ, במייל או בכל מקום אחר. קבלו התראות כשמישהו קונה מתנה.
                 </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Chrome Extension Section */}
+        <section id="chrome-extension" className="py-10 md:py-14 bg-[#f3edff] relative overflow-x-hidden">
+          {/* Background decoration */}
+          <div className="absolute inset-0 -z-10 overflow-hidden">
+            <div className="absolute top-10 left-10 w-80 h-80 bg-[#eaddff]/50 rounded-full blur-3xl" />
+            <div className="absolute bottom-10 right-10 w-60 h-60 bg-[#ffd8e4]/30 rounded-full blur-3xl" />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              {/* Content */}
+              <div className="text-center lg:text-right">
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-6">
+                  <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#6750a4] to-[#381e72] text-white px-4 py-2 rounded-full font-medium">
+                    <Chrome className="w-5 h-5" />
+                    <span>תוסף לכרום</span>
+                  </div>
+                  <span className="inline-flex items-center gap-1 bg-[#ffd600]/20 text-[#7c6f00] px-3 py-1 rounded-full text-xs font-bold">
+                    <Zap className="w-3 h-3 fill-current" />
+                    חינם
+                  </span>
+                </div>
+
+                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6 px-2 lg:px-0">
+                  הוסיפו מוצרים בקליק אחד מכל אתר
+                </h2>
+
+                <p className="text-xl text-[#49454f] mb-8 leading-relaxed px-2 lg:px-0">
+                  עם התוסף שלנו לכרום, אתם יכולים להוסיף מוצרים לרשימה ישירות מכל אתר קניות באינטרנט - בלי להעתיק קישורים, בלי לעבור בין חלונות.
+                </p>
+
+                {/* Steps */}
+                <div className="flex justify-center lg:justify-start px-2 lg:px-0">
+                  <div className="space-y-4 text-right w-full max-w-md lg:max-w-none">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white rounded-[14px] flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <ShoppingBag className="w-6 h-6 text-[#6750a4]" />
+                      </div>
+                      <span className="text-lg text-[#1d192b]">גלשו באתר המועדף</span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <MousePointerClick className="w-6 h-6 text-[#31111d]" />
+                      </div>
+                      <span className="text-lg text-[#1d192b]">לחצו על כפתור Nesty</span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#d1fae5] rounded-[14px] flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <CheckCircle className="w-6 h-6 text-[#059669]" />
+                      </div>
+                      <span className="text-lg text-[#1d192b]">הפרטים מתמלאים אוטומטית!</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTA Button */}
+                <div className="mt-8 px-2 lg:px-0">
+                  <a
+                    href="https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-3 px-8 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300"
+                  >
+                    <Chrome className="w-5 h-5" />
+                    <span>התקינו את התוסף - חינם</span>
+                    <ExternalLink className="w-4 h-4 opacity-70" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Visual Demo */}
+              <div className="relative px-2 lg:px-0">
+                <div className="bg-white rounded-[40px] shadow-[0_20px_60px_-15px_rgba(103,80,164,0.2)] p-4 sm:p-6 max-w-md mx-auto border border-[#e7e0ec] relative overflow-hidden">
+                  {/* Browser mockup header */}
+                  <div className="bg-[#f2f0f4] rounded-t-[20px] -mx-4 sm:-mx-6 -mt-4 sm:-mt-6 mb-4 sm:mb-6 px-3 sm:px-4 py-2 sm:py-3 border-b border-[#e7e0ec]">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <div className="flex gap-1 sm:gap-1.5 flex-shrink-0">
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#ff5f57]" />
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#ffbd2e]" />
+                        <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#28c840]" />
+                      </div>
+                      <div className="flex-1 bg-white rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs text-[#49454f] font-mono truncate mx-2 sm:mx-4 min-w-0">
+                        la-mer.co.il/products/lamer-x-soft
+                      </div>
+                      {/* Extension icon in toolbar */}
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#6750a4] rounded-lg flex items-center justify-center shadow-sm cursor-pointer hover:bg-[#503e85] transition-colors flex-shrink-0">
+                        <img src={asset('Circle_logo.png')} alt="Nesty" className="w-4 h-4 sm:w-5 sm:h-5 rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Product preview */}
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="flex gap-3 sm:gap-4">
+                      <img
+                        src="https://la-mer.co.il/cdn/shop/files/9269e28d93ef21964decb2c1bc2a6722.jpg?v=1721649124&width=713"
+                        alt="מנשא בד La Mer"
+                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] sm:text-xs text-[#49454f] mb-1">נמצא מוצר:</p>
+                        <h4 className="font-bold text-[#1d192b] mb-1 sm:mb-2 leading-tight text-xs sm:text-sm md:text-base">מנשא בד La Mer X Soft</h4>
+                        <p className="text-base sm:text-lg font-bold text-[#6750a4]">₪899</p>
+                      </div>
+                    </div>
+
+                    {/* Auto-filled badge */}
+                    <div className="flex items-center gap-2 bg-[#d1fae5] text-[#059669] px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium">
+                      <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="whitespace-nowrap">הפרטים נשלפו אוטומטית!</span>
+                    </div>
+
+                    {/* Add button */}
+                    <button className="w-full py-2.5 sm:py-3 rounded-2xl bg-[#6750a4] text-white font-bold text-sm sm:text-base shadow-md flex items-center justify-center gap-2">
+                      <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                      הוסף לרשימה
+                    </button>
+                  </div>
+
+                  {/* Floating click indicator - hidden on mobile */}
+                  <div className="hidden md:flex absolute top-14 left-4 bg-[#ffd8e4] px-3 py-1.5 rounded-full shadow-lg text-sm font-bold text-[#31111d] items-center gap-1.5 animate-bounce whitespace-nowrap">
+                    <MousePointerClick className="w-4 h-4" />
+                    לחיצה אחת!
+                  </div>
+                </div>
+
+                {/* Decorative elements - hidden on mobile */}
+                <div className="hidden md:block absolute -top-6 -right-6 w-32 h-32 bg-[#eaddff]/50 rounded-full blur-2xl -z-10" />
+                <div className="hidden md:block absolute -bottom-6 -left-6 w-40 h-40 bg-[#ffd8e4]/40 rounded-full blur-2xl -z-10" />
+
+                {/* Supported stores badge - hidden on mobile, positioned lower */}
+                <div className="hidden md:block absolute -bottom-8 right-4 bg-white px-5 py-3 rounded-[20px] shadow-lg border border-[#e7e0ec]">
+                  <p className="text-xs text-[#49454f] mb-1">עובד עם:</p>
+                  <p className="text-sm font-bold text-[#1d192b]">KSP, AliExpress, Amazon <span className="text-[#6750a4]">וכל אתר!</span></p>
+                </div>
+
+                {/* Supported stores - inline on mobile */}
+                <div className="md:hidden mt-4 text-center">
+                  <p className="text-sm text-[#49454f]">
+                    עובד עם: <span className="font-bold text-[#1d192b]">KSP, AliExpress, Amazon</span> <span className="text-[#6750a4] font-bold">וכל אתר!</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Troubleshooting tip */}
+            <div className="mt-16 max-w-2xl mx-auto">
+              <div className="bg-[#fef7ff] border border-[#e7e0ec] rounded-[24px] p-6 text-center">
+                <p className="text-[#49454f] mb-2">
+                  <span className="font-bold text-[#381e72]">לא רואים את הכפתור? </span>
+                  נסו ללחוץ על סמל הפאזל 🧩 בסרגל הדפדפן כדי להצמיד את התוסף.
+                </p>
+                <a
+                  href="https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[#6750a4] font-semibold hover:underline"
+                >
+                  להתקנה
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
             </div>
           </div>
@@ -572,6 +751,11 @@ export default function Home() {
                 <li>
                   <a href="#how-it-works" className="text-[#49454f] hover:text-[#6750a4] transition-colors">
                     איך זה עובד
+                  </a>
+                </li>
+                <li>
+                  <a href="#chrome-extension" className="text-[#49454f] hover:text-[#6750a4] transition-colors">
+                    תוסף לכרום
                   </a>
                 </li>
                 <li>
