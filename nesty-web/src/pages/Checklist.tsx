@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { ChevronDown, Check, Plus, Trash2, ClipboardList, Sparkles, Heart, AlertCircle, Feather, Save, RotateCcw, X, Info, Lightbulb } from 'lucide-react'
+import { ChevronDown, Check, Plus, Trash2, ClipboardList, Sparkles, Heart, AlertCircle, Feather, Save, RotateCcw, X, Info, Lightbulb, EyeOff } from 'lucide-react'
 import AddItemModal from '../components/AddItemModal'
 import { CATEGORIES, ITEMS_DATA } from '../data/categories'
 import { supabase } from '../lib/supabase'
@@ -578,9 +578,17 @@ export default function Checklist() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <p className={`font-bold text-lg text-right ${isExpanded ? 'text-[#1d192b]' : 'text-[#49454f]'}`}>
-                        {category.name}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className={`font-bold text-lg text-right ${isExpanded ? 'text-[#1d192b]' : 'text-[#49454f]'}`}>
+                          {category.name}
+                        </p>
+                        {category.id === 'birth_prep' && (
+                          <span className="flex items-center gap-1 bg-[#fce4ec] text-[#880e4f] text-xs px-2 py-0.5 rounded-full">
+                            <EyeOff className="w-3 h-3" />
+                            פרטי
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs text-[#49454f] font-medium whitespace-nowrap mr-2">
                         {progress.checked}/{progress.total}
                       </span>
