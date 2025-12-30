@@ -43,7 +43,7 @@ export default function AuthCallback() {
       // The hash contains the OAuth tokens that Supabase client will extract
       if (window.location.hash.includes('access_token')) {
         console.log('AuthCallback: Found access_token in hash, letting Supabase process...')
-        setStatus('מעבד את הטוקן...')
+        setStatus('בונים את הקן...')
 
         // Give Supabase time to process the hash and establish the session
         // The onAuthStateChange listener in AuthContext will handle this
@@ -82,7 +82,7 @@ export default function AuthCallback() {
 
       if (session) {
         console.log('AuthCallback: Session found, checking profile for user', session.user.id)
-        setStatus('בודק פרופיל...')
+        setStatus('מתחילים להתרגש! ')
 
         // Check if user has completed onboarding
         // Use maybeSingle() instead of single() to handle case where profile doesn't exist yet

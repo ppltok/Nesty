@@ -39,6 +39,7 @@ export type ItemCategory =
   | 'safety'
   | 'feeding'
   | 'nursing'
+  | 'birth_prep'
   | 'bath'
   | 'clothing'
   | 'bedding'
