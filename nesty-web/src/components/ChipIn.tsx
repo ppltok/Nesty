@@ -71,7 +71,7 @@ export default function ChipIn() {
             <ul className="space-y-3 sm:space-y-4 text-right">
               <li className="flex items-center gap-2 sm:gap-3 justify-center lg:justify-start">
                 <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-accent-pink flex-shrink-0" />
-                <span className="text-sm sm:text-base">כל אחד תורם כמה שנוח לו</span>
+                <span className="text-sm sm:text-base">כל אחד נותן כמה שנוח לו</span>
               </li>
               <li className="flex items-center gap-2 sm:gap-3 justify-center lg:justify-start">
                 <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0" />

@@ -28,7 +28,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'dashboard',
-    title: 'לוח הבקרה',
+    title: 'הרשימה',
     description: 'זאת הרשימה שלך!\n תוכלי להוסיף פריטים חדשים, לנהל את הרשימה הקיימת ולשתף עם חברים ומשפחה.',
     navItemId: 'dashboard',
     route: '/dashboard',
