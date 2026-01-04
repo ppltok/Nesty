@@ -3,7 +3,7 @@
  * Switch between local development and production
  */
 
-const ENV = 'development' // Change to 'production' for deployed version
+const ENV = 'production' // Change to 'production' for deployed version
 
 const CONFIG = {
   development: {
