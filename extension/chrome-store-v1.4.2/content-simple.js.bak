@@ -1,0 +1,273 @@
+/**
+ * Nesty Extension - Final Version
+ * Combines working extraction logic from minimal-extension with user-friendly popup UI
+ */
+
+(async function() {
+  console.log('🚀 Nesty Extension - Loading...');
+
+  // Inject CSS
+  injectStyles();
+
+  try {
+    const productData = extractProductData();
+
+    if (productData) {
+      showProductModal(productData);
+    } else {
+      showErrorModal('No product data found on this page');
+    }
+  } catch (error) {
+    console.error('❌ Error:', error);
+    showErrorModal(error.message);
+  }
+})();
+
+/**
+ * Inject popup styles
+ */
+function injectStyles() {
+  if (document.getElementById('nesty-styles')) return;
+
+  const link = document.createElement('link');
+  link.id = 'nesty-styles';
+  link.rel = 'stylesheet';
+  link.href = chrome.runtime.getURL('popup-styles.css');
+  document.head.appendChild(link);
+}
+
+/**
+ * Extract product data from the page
+ */
+function extractProductData() {
+  console.log('🔍 Extracting product data...');
+
+  // Look for JSON-LD scripts
+  const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
+  console.log(`Found ${jsonLdScripts.length} JSON-LD script(s)`);
+
+  for (let script of jsonLdScripts) {
+    try {
+      const data = JSON.parse(script.textContent);
+
+      // Handle Product type
+      if (data['@type'] === 'Product') {
+        console.log('✅ Found Product type');
+        return extractFromProduct(data);
+      }
+
+      // Handle ProductGroup type (like Shopify variants)
+      if (data['@type'] === 'ProductGroup') {
+        console.log('✅ Found ProductGroup type');
+        return extractFromProductGroup(data);
+      }
+
+      // Handle @graph array
+      if (data['@graph']) {
+        const product = data['@graph'].find(item =>
+          item['@type'] === 'Product' || item['@type'] === 'ProductGroup'
+        );
+        if (product) {
+          console.log('✅ Found Product in @graph');
+          return product['@type'] === 'Product'
+            ? extractFromProduct(product)
+            : extractFromProductGroup(product);
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to parse JSON-LD:', error);
+    }
+  }
+
+  console.log('❌ No product data found');
+  return null;
+}
+
+/**
+ * Extract data from Product type
+ */
+function extractFromProduct(data) {
+  const offer = Array.isArray(data.offers) ? data.offers[0] : data.offers;
+
+  // Handle images
+  const imageUrls = [];
+  if (data.image) {
+    if (Array.isArray(data.image)) {
+      imageUrls.push(...data.image);
+    } else {
+      imageUrls.push(data.image);
+    }
+  }
+
+  return {
+    name: data.name || 'N/A',
+    category: data.category || 'N/A',
+    price: offer?.price || offer?.lowPrice || 'N/A',
+    priceCurrency: offer?.priceCurrency || 'N/A',
+    brand: data.brand?.name || data.brand || 'N/A',
+    imageUrls: [...new Set(imageUrls)]
+  };
+}
+
+/**
+ * Extract data from ProductGroup type
+ */
+function extractFromProductGroup(data) {
+  // Get first variant
+  const variants = data.hasVariant || [];
+  const firstVariant = Array.isArray(variants) ? variants[0] : variants;
+  const offer = firstVariant?.offers;
+
+  // Collect all unique images from variants
+  const imageUrls = [];
+  if (Array.isArray(variants)) {
+    variants.forEach(variant => {
+      if (variant.image) {
+        if (Array.isArray(variant.image)) {
+          imageUrls.push(...variant.image);
+        } else {
+          imageUrls.push(variant.image);
+        }
+      }
+    });
+  }
+
+  return {
+    name: data.name || 'N/A',
+    category: data.category || 'N/A',
+    price: offer?.price || 'N/A',
+    priceCurrency: offer?.priceCurrency || 'N/A',
+    brand: data.brand?.name || data.brand || 'N/A',
+    imageUrls: [...new Set(imageUrls)]
+  };
+}
+
+/**
+ * Show product modal
+ */
+function showProductModal(product) {
+  const overlay = document.createElement('div');
+  overlay.className = 'nesty-overlay';
+
+  const modal = document.createElement('div');
+  modal.className = 'nesty-modal';
+
+  const imageUrl = product.imageUrls[0] || '';
+  const priceDisplay = product.priceCurrency !== 'N/A'
+    ? `${product.price} ${product.priceCurrency}`
+    : product.price;
+
+  modal.innerHTML = `
+    <div class="nesty-modal-header">
+      <h2 class="nesty-modal-title">Product Found!</h2>
+      <button class="nesty-close-btn" id="nesty-close">×</button>
+    </div>
+
+    <div class="nesty-modal-body">
+      <div class="nesty-product-grid">
+        <img src="${imageUrl}" alt="${product.name}" class="nesty-product-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27120%27 height=%27120%27%3E%3Crect fill=%27%23f3f4f6%27 width=%27120%27 height=%27120%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 fill=%27%236b7280%27%3ENo Image%3C/text%3E%3C/svg%3E'">
+
+        <div class="nesty-product-details">
+          <h3 class="nesty-product-name">${product.name}</h3>
+          ${product.brand !== 'N/A' ? `<div class="nesty-product-brand">${product.brand}</div>` : ''}
+          <div class="nesty-product-price">${priceDisplay}</div>
+          ${product.category !== 'N/A' ? `<div class="nesty-product-category">${product.category}</div>` : ''}
+        </div>
+      </div>
+
+      <div class="nesty-json-section">
+        <label class="nesty-json-label">Product Data (JSON)</label>
+        <textarea class="nesty-json-textarea" readonly id="nesty-json">${JSON.stringify(product, null, 2)}</textarea>
+      </div>
+    </div>
+
+    <div class="nesty-modal-footer">
+      <button class="nesty-btn nesty-btn-tertiary" id="nesty-cancel">Cancel</button>
+      <button class="nesty-btn nesty-btn-secondary" id="nesty-copy">Copy JSON</button>
+      <button class="nesty-btn nesty-btn-primary" id="nesty-add">Add to Registry</button>
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Event listeners
+  document.getElementById('nesty-close').addEventListener('click', () => overlay.remove());
+  document.getElementById('nesty-cancel').addEventListener('click', () => overlay.remove());
+
+  document.getElementById('nesty-copy').addEventListener('click', () => {
+    const textarea = document.getElementById('nesty-json');
+    textarea.select();
+    document.execCommand('copy');
+
+    const btn = document.getElementById('nesty-copy');
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.backgroundColor = '#10b981';
+
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.backgroundColor = '';
+    }, 2000);
+  });
+
+  document.getElementById('nesty-add').addEventListener('click', () => {
+    // TODO: Implement add to registry functionality
+    alert('Add to Registry feature coming soon!');
+  });
+
+  // Close on overlay click
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', function escHandler(e) {
+    if (e.key === 'Escape') {
+      overlay.remove();
+      document.removeEventListener('keydown', escHandler);
+    }
+  });
+}
+
+/**
+ * Show error modal
+ */
+function showErrorModal(message) {
+  const overlay = document.createElement('div');
+  overlay.className = 'nesty-overlay';
+
+  const modal = document.createElement('div');
+  modal.className = 'nesty-modal';
+  modal.style.maxWidth = '400px';
+
+  modal.innerHTML = `
+    <div class="nesty-modal-header">
+      <h2 class="nesty-modal-title" style="color: #dc2626;">Error</h2>
+      <button class="nesty-close-btn" id="nesty-close">×</button>
+    </div>
+
+    <div class="nesty-modal-body">
+      <p style="color: #374151; font-size: 14px;">${message}</p>
+      <p style="color: #6b7280; font-size: 12px; margin-top: 12px;">
+        This extension works on product pages. Please navigate to a product page and try again.
+      </p>
+    </div>
+
+    <div class="nesty-modal-footer">
+      <button class="nesty-btn nesty-btn-primary" id="nesty-ok">OK</button>
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  document.getElementById('nesty-close').addEventListener('click', () => overlay.remove());
+  document.getElementById('nesty-ok').addEventListener('click', () => overlay.remove());
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+}
