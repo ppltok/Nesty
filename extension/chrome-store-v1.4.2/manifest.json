@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "Add to Nesty Button",
+  "version": "1.4.2",
+  "description": "הוסיפי מוצרים מכל אתר מסחר אלקטרוני לרשימת הלידה שלך בהקלקה אחת על התוסף",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://nestyil.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://nestyil.com/*"
+      ],
+      "js": ["detector.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_title": "Add to Nesty",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["popup-styles.css", "page-script.js", "config.js", "supabase-client.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
