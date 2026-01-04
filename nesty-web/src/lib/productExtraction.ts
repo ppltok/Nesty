@@ -79,7 +79,9 @@ function normalizeImageUrls(imageData: string | string[] | any | any[] | undefin
  * Extract product data from a Product schema (standard e-commerce product)
  */
 function extractFromProduct(data: ProductSchema): ExtractedProductData {
-  const offer = Array.isArray(data.offers) ? data.offers[0] : data.offers
+  // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
+  const offersData = (data as any).offers || (data as any).Offers
+  const offer = Array.isArray(offersData) ? offersData[0] : offersData
 
   // Normalize image URLs (handles both strings and objects)
   const imageUrls = normalizeImageUrls(data.image)
@@ -100,7 +102,8 @@ function extractFromProduct(data: ProductSchema): ExtractedProductData {
 function extractFromProductGroup(data: ProductGroupSchema): ExtractedProductData {
   const variants = data.hasVariant || []
   const firstVariant = Array.isArray(variants) ? variants[0] : variants
-  const offer = firstVariant?.offers as OfferSchema | undefined
+  // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
+  const offer = ((firstVariant as any)?.offers || (firstVariant as any)?.Offers) as OfferSchema | undefined
 
   // Extract and normalize images from all variants
   const imageUrls: string[] = []
@@ -159,6 +162,15 @@ function detectPlatform(url?: string, doc?: Document): string | null {
       hostname.includes('amazon.es') ||
       hostname.includes('amazon.ca')) {
     return 'amazon'
+  }
+
+  // Check for Wix (has wix-specific meta tags or scripts)
+  if (doc) {
+    if (doc.querySelector('meta[name="generator"][content*="Wix"]') ||
+        doc.querySelector('script[src*="static.wixstatic.com"]') ||
+        doc.querySelector('meta[http-equiv="X-Wix-Meta-Site-Id"]')) {
+      return 'wix'
+    }
   }
 
   // Can add more platform detection here in the future
@@ -487,6 +499,105 @@ function extractFromAmazon(doc: Document): ExtractedProductData | null {
 }
 
 /**
+ * Extract product data from Wix sites
+ * Uses Wix-specific DOM selectors and meta tags
+ */
+function extractFromWix(doc: Document): ExtractedProductData | null {
+  console.log('🎨 Attempting Wix extraction...')
+
+  const productData: ExtractedProductData = {
+    name: '',
+    price: '',
+    priceCurrency: 'ILS',
+    brand: '',
+    category: '',
+    imageUrls: []
+  }
+
+  // Priority 1: Extract from Wix-specific DOM element (most reliable)
+  const priceElement = doc.querySelector('[data-hook="formatted-primary-price"]')
+  let price = ''
+  let currency = 'ILS'
+
+  if (priceElement) {
+    // Try data-wix-price attribute first
+    const wixPrice = priceElement.getAttribute('data-wix-price')
+    if (wixPrice) {
+      console.log(`   💰 Found price in data-wix-price: ${wixPrice}`)
+      // Parse "159.00 ₪" format
+      const priceMatch = wixPrice.match(/([0-9.,]+)/)
+      if (priceMatch) {
+        price = priceMatch[1]
+      }
+    } else {
+      // Fall back to text content
+      const priceText = priceElement.textContent?.trim() || ''
+      console.log(`   💰 Found price in element text: ${priceText}`)
+      const priceMatch = priceText.match(/([0-9.,]+)/)
+      if (priceMatch) {
+        price = priceMatch[1]
+      }
+    }
+  }
+
+  // Priority 2: Fall back to meta tags if DOM extraction failed
+  if (!price) {
+    console.log('   ⚠️ DOM price not found, trying meta tags...')
+    const priceMetaElement = doc.querySelector('meta[property="product:price:amount"]')
+    price = priceMetaElement?.getAttribute('content') || ''
+  }
+
+  // Extract currency from meta tag
+  const currencyMetaElement = doc.querySelector('meta[property="product:price:currency"]')
+  if (currencyMetaElement) {
+    currency = currencyMetaElement.getAttribute('content') || 'ILS'
+  }
+
+  productData.price = price
+  productData.priceCurrency = currency
+
+  // Extract name from meta tags
+  const titleElement = doc.querySelector('meta[property="og:title"]') || doc.querySelector('title')
+  let name = ''
+  if (titleElement) {
+    if (titleElement.tagName === 'META') {
+      name = titleElement.getAttribute('content') || ''
+    } else {
+      name = titleElement.textContent || ''
+    }
+  }
+
+  // Clean product name (remove site name)
+  if (name.includes('|')) {
+    name = name.split('|')[0].trim()
+  }
+
+  productData.name = name
+
+  // Extract image from meta tags
+  const imageElement = doc.querySelector('meta[property="og:image"]')
+  const image = imageElement?.getAttribute('content') || ''
+  if (image) {
+    productData.imageUrls.push(image)
+  }
+
+  console.log(`   📊 Wix extraction summary:`)
+  console.log(`      Title: ${productData.name ? '✓' : '✗'}`)
+  console.log(`      Price: ${productData.price ? `${productData.price} ${productData.priceCurrency}` : '✗'}`)
+  console.log(`      Images: ${productData.imageUrls.length}`)
+  console.log(`      Method: ${priceElement ? 'DOM (data-hook)' : 'meta tags'}`)
+
+  // Validate that we have minimum required data
+  if (productData.name && productData.price) {
+    console.log('✅ Wix extraction successful')
+    return productData
+  }
+
+  console.log('❌ Wix extraction failed - insufficient data')
+  return null
+}
+
+/**
  * Extract product data from a DOM document by finding JSON-LD structured data
  * or using platform-specific extraction methods
  * @param doc - The parsed HTML document
@@ -512,6 +623,15 @@ function extractProductDataFromDocument(doc: Document, url?: string): ExtractedP
       return amazonResult
     }
     console.log('⚠️ Amazon extraction failed, falling back to JSON-LD')
+  }
+
+  if (platform === 'wix') {
+    console.log('🏪 Detected platform: wix')
+    const wixResult = extractFromWix(doc)
+    if (wixResult) {
+      return wixResult
+    }
+    console.log('⚠️ Wix extraction failed, falling back to JSON-LD')
   }
 
   // Fall back to JSON-LD extraction for all other sites
@@ -552,6 +672,141 @@ function extractProductDataFromDocument(doc: Document, url?: string): ExtractedP
     }
   }
 
+  // Final fallback: Try generic DOM extraction
+  console.log('⚠️ JSON-LD extraction failed, trying generic DOM extraction...')
+  const genericResult = extractFromGenericDOM(doc)
+  if (genericResult) {
+    return genericResult
+  }
+
+  return null
+}
+
+/**
+ * Generic DOM extraction fallback for sites without JSON-LD
+ * Tries common price and product selectors
+ */
+function extractFromGenericDOM(doc: Document): ExtractedProductData | null {
+  console.log('🔍 Attempting generic DOM extraction...')
+
+  const productData: ExtractedProductData = {
+    name: '',
+    price: '',
+    priceCurrency: 'ILS',
+    brand: '',
+    category: '',
+    imageUrls: []
+  }
+
+  // Try to extract price from common selectors
+  const priceSelectors = [
+    '#tovel_initial_price',  // Elementor-based sites like mommyshop.co.il
+    '.price--highlight .price-item--regular',
+    '.price-item--regular',
+    '.price__regular .price-item--regular',
+    '[data-product-price]',
+    '.product-price',
+    '.price',
+    '[itemprop="price"]',
+    '.money',
+    '.product__price',
+    '.product-single__price'
+  ]
+
+  let price = ''
+  for (const selector of priceSelectors) {
+    const element = doc.querySelector(selector)
+    if (element) {
+      const priceText = element.textContent?.trim() || ''
+      let priceMatch = priceText.match(/[\d,]+\.?\d*/)
+
+      // If regex doesn't match (possible encoding issue), try manual extraction
+      if (!priceMatch) {
+        // Filter for ASCII digits and common separators
+        const numericChars = Array.from(priceText)
+          .filter(ch => {
+            const code = ch.charCodeAt(0)
+            return (code >= 48 && code <= 57) || ch === ',' || ch === '.'  // 0-9, comma, dot
+          })
+          .join('')
+        priceMatch = numericChars ? [numericChars] : null
+      }
+
+      if (priceMatch) {
+        price = priceMatch[0].replace(',', '')
+        console.log(`   💰 Found price in ${selector}: ${price}`)
+        break
+      }
+    }
+  }
+
+  // Try to extract name from common selectors
+  const nameSelectors = [
+    'h1',
+    '[itemprop="name"]',
+    '.product-name',
+    '.product-title',
+    '.product__title',
+    'meta[property="og:title"]'
+  ]
+
+  let name = ''
+  for (const selector of nameSelectors) {
+    const element = doc.querySelector(selector)
+    if (element) {
+      if (element.tagName === 'META') {
+        name = element.getAttribute('content') || ''
+      } else {
+        name = element.textContent?.trim() || ''
+      }
+      if (name && name.length > 3) {
+        console.log(`   📝 Found name in ${selector}: ${name.substring(0, 50)}...`)
+        break
+      }
+    }
+  }
+
+  // Try to extract image from common selectors
+  const imageSelectors = [
+    'img[itemprop="image"]',
+    '.product-image img',
+    '.product__image img',
+    'meta[property="og:image"]'
+  ]
+
+  for (const selector of imageSelectors) {
+    const element = doc.querySelector(selector)
+    if (element) {
+      let imageSrc = ''
+      if (element.tagName === 'META') {
+        imageSrc = element.getAttribute('content') || ''
+      } else {
+        imageSrc = element.getAttribute('src') || ''
+      }
+      if (imageSrc) {
+        productData.imageUrls.push(imageSrc)
+        console.log(`   🖼️ Found image: ${imageSrc.substring(0, 50)}...`)
+        break
+      }
+    }
+  }
+
+  productData.name = name
+  productData.price = price
+  productData.priceCurrency = 'ILS'
+
+  console.log(`   📊 Generic DOM extraction summary:`)
+  console.log(`      Title: ${name ? '✓' : '✗'}`)
+  console.log(`      Price: ${price ? `₪${price} ILS` : '✗'}`)
+  console.log(`      Images: ${productData.imageUrls.length}`)
+
+  // Require both name and price for successful extraction
+  if (productData.name && productData.price) {
+    console.log('✅ Generic DOM extraction successful')
+    return productData
+  }
+
+  console.log('❌ Generic DOM extraction failed - insufficient data')
   return null
 }
 

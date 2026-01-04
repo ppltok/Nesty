@@ -9,7 +9,7 @@
 
   // Signal to website that extension is installed
   document.documentElement.setAttribute('data-nesty-extension-installed', 'true');
-  document.documentElement.setAttribute('data-nesty-extension-version', '1.3.0');
+  document.documentElement.setAttribute('data-nesty-extension-version', '1.4.3');
   console.log('✅ Extension detection markers set');
 
   // Remove any existing Nesty UI elements (modals, overlays, styles)
@@ -425,6 +425,13 @@
     const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
     console.log(`🔍 Found ${jsonLdScripts.length} JSON-LD scripts`);
 
+    const currentUrl = doc.URL || window.location.href;
+    const currentPath = new URL(currentUrl).pathname;
+    console.log(`📍 Current page path: ${currentPath}`);
+
+    // Collect all valid products first
+    const allProducts = [];
+
     for (let i = 0; i < jsonLdScripts.length; i++) {
       const scriptContent = jsonLdScripts[i].textContent.trim();
       console.log(`📄 Parsing JSON-LD script #${i + 1}...`);
@@ -440,22 +447,38 @@
 
       if (data['@type'] === 'Product') {
         console.log('✅ Found Product type, extracting...');
+        const offersData = data.offers || data.Offers;
+        const offerUrl = offersData?.url || '';
+
         console.log('📦 Product data:', {
           name: data.name,
-          hasOffers: !!data.offers,
-          offersIsArray: Array.isArray(data.offers),
-          offersLength: Array.isArray(data.offers) ? data.offers.length : 'N/A'
+          offerUrl: offerUrl,
+          hasOffers: !!offersData,
+          offersIsArray: Array.isArray(offersData),
+          offersLength: Array.isArray(offersData) ? offersData.length : 'N/A'
         });
+
         const result = extractFromProduct(data);
         console.log('✅ Extraction result:', result);
 
-        // Validate result before returning
+        // Check if this product matches the current URL
+        let isMatch = false;
+        if (offerUrl) {
+          try {
+            const offerPath = new URL(offerUrl).pathname;
+            isMatch = offerPath === currentPath;
+            console.log(`🔗 URL match check: ${isMatch ? '✅ MATCH' : '❌ NO MATCH'} (offer: ${offerPath})`);
+          } catch (e) {
+            console.log('⚠️ Could not parse offer URL');
+          }
+        }
+
+        // Validate result before adding to candidates
         if (isValidProductData(result)) {
-          console.log('✅ Valid product data, using JSON-LD extraction');
-          return result;
+          allProducts.push({ result, isMatch, index: i });
+          console.log(`✅ Valid product data found (match: ${isMatch})`);
         } else {
-          console.log('⚠️ JSON-LD data incomplete, will try fallback methods');
-          // Continue to next script or fallback
+          console.log('⚠️ JSON-LD data incomplete, will try next');
         }
       }
 
@@ -464,13 +487,11 @@
         const result = extractFromProductGroup(data);
         console.log('✅ Extraction result:', result);
 
-        // Validate result before returning
         if (isValidProductData(result)) {
-          console.log('✅ Valid product data, using JSON-LD extraction');
-          return result;
+          allProducts.push({ result, isMatch: false, index: i });
+          console.log('✅ Valid ProductGroup data found');
         } else {
-          console.log('⚠️ JSON-LD data incomplete, will try fallback methods');
-          // Continue to next script or fallback
+          console.log('⚠️ ProductGroup data incomplete, will try next');
         }
       }
 
@@ -484,21 +505,32 @@
           const result = product['@type'] === 'Product'
             ? extractFromProduct(product)
             : extractFromProductGroup(product);
-          console.log('✅ Extraction result:', result);
 
-          // Validate result before returning
           if (isValidProductData(result)) {
+            allProducts.push({ result, isMatch: false, index: i });
             console.log('✅ Valid product data from @graph');
-            return result;
-          } else {
-            console.log('⚠️ @graph data incomplete, will try fallback methods');
-            // Continue to fallback
           }
         }
       }
     }
 
-    console.log('⚠️ No product found in JSON-LD, trying Shopify fallback...');
+    // After collecting all products, check for URL match
+    if (allProducts.length > 0) {
+      console.log(`📊 Found ${allProducts.length} valid product(s) in JSON-LD`);
+
+      // Only return if we have a URL match
+      const matchedProduct = allProducts.find(p => p.isMatch);
+      if (matchedProduct) {
+        console.log(`✅ Using URL-matched product from script #${matchedProduct.index + 1}`);
+        return matchedProduct.result;
+      }
+
+      // No URL match - fall through to platform-specific extraction
+      console.log(`⚠️ No URL match found in ${allProducts.length} product(s), trying platform-specific fallback...`);
+    } else {
+      console.log('⚠️ No valid products found in JSON-LD, trying platform-specific fallback...');
+    }
+
     return await extractFromShopifyFallback(doc);
   }
 
@@ -553,6 +585,13 @@
    * @returns {string} - Platform name
    */
   function detectPlatform(doc = document) {
+    // Check for Wix (has wix-specific meta tags or scripts)
+    if (doc.querySelector('meta[name="generator"][content*="Wix"]') ||
+        doc.querySelector('script[src*="static.wixstatic.com"]') ||
+        doc.querySelector('meta[http-equiv="X-Wix-Meta-Site-Id"]')) {
+      return 'wix';
+    }
+
     // Check for Amazon
     if (window.location.hostname.includes('amazon.com') ||
         window.location.hostname.includes('amazon.co.uk') ||
@@ -1238,7 +1277,88 @@
   }
 
   /**
-   * Fallback extraction for Shopify stores when JSON-LD fails
+   * Extract product data from Wix sites using meta tags and DOM
+   * @param {Document} doc - Document object
+   * @returns {Object|null} - Product data or null
+   */
+  function extractFromWix(doc = document) {
+    try {
+      console.log('🎨 Extracting from Wix using DOM selectors and meta tags...');
+
+      // Priority 1: Extract from Wix-specific DOM element (most reliable)
+      const priceElement = doc.querySelector('[data-hook="formatted-primary-price"]');
+      let price = '';
+      let currency = 'ILS';
+
+      if (priceElement) {
+        // Try data-wix-price attribute first
+        const wixPrice = priceElement.getAttribute('data-wix-price');
+        if (wixPrice) {
+          console.log('💰 Found price in data-wix-price:', wixPrice);
+          // Parse "159.00 ₪" format
+          const priceMatch = wixPrice.match(/([0-9.,]+)/);
+          if (priceMatch) {
+            price = priceMatch[1];
+          }
+        } else {
+          // Fall back to text content
+          const priceText = priceElement.textContent?.trim() || '';
+          console.log('💰 Found price in element text:', priceText);
+          const priceMatch = priceText.match(/([0-9.,]+)/);
+          if (priceMatch) {
+            price = priceMatch[1];
+          }
+        }
+      }
+
+      // Priority 2: Fall back to meta tags if DOM extraction failed
+      if (!price) {
+        console.log('⚠️ DOM price not found, trying meta tags...');
+        const priceMetaElement = doc.querySelector('meta[property="product:price:amount"]');
+        price = priceMetaElement?.getAttribute('content') || '';
+      }
+
+      // Extract currency from meta tag
+      const currencyMetaElement = doc.querySelector('meta[property="product:price:currency"]');
+      if (currencyMetaElement) {
+        currency = currencyMetaElement.getAttribute('content') || 'ILS';
+      }
+
+      // Extract name and image from meta tags
+      const titleElement = doc.querySelector('meta[property="og:title"]') || doc.querySelector('title');
+      let name = titleElement?.getAttribute('content') || titleElement?.textContent || '';
+      const imageElement = doc.querySelector('meta[property="og:image"]');
+      const image = imageElement?.getAttribute('content') || '';
+
+      // Clean product name (remove site name)
+      if (name.includes('|')) {
+        name = name.split('|')[0].trim();
+      }
+
+      console.log('📦 Wix extraction result:', { name, price, currency, image, method: priceElement ? 'DOM' : 'meta' });
+
+      if (!name || !price) {
+        console.log('⚠️ Wix extraction incomplete - missing name or price');
+        return null;
+      }
+
+      return {
+        name: name,
+        price: price,
+        priceCurrency: currency,
+        brand: '',
+        category: '',
+        imageUrls: image ? [image] : []
+      };
+
+    } catch (error) {
+      console.error('❌ Wix extraction error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fallback extraction for various platforms when JSON-LD fails
    * @param {Document} doc - Document object
    * @returns {Object|null} - Product data or null
    */
@@ -1246,6 +1366,16 @@
     try {
       const platform = detectPlatform(doc);
       console.log(`🏪 Detected platform: ${platform}`);
+
+      // For Wix, use meta tag extraction
+      if (platform === 'wix') {
+        console.log('🎨 Using Wix extractor...');
+        const wixResult = extractFromWix(doc);
+        if (wixResult) {
+          console.log('✅ Extracted from Wix meta tags');
+          return wixResult;
+        }
+      }
 
       // For Amazon, use specialized extractor with USD→ILS conversion
       if (platform === 'amazon') {
@@ -1361,6 +1491,7 @@
   function extractPriceFromDOM(doc = document) {
     // Common Shopify price selectors
     const priceSelectors = [
+      '#tovel_initial_price',  // Elementor-based sites like mommyshop.co.il
       '.price--highlight .price-item--regular',
       '.price-item--regular',
       '.price__regular .price-item--regular',
@@ -1380,7 +1511,21 @@
         console.log(`Found price in ${selector}:`, priceText);
 
         // Extract numeric value from text (handles formats like "₪549.00", "549", "549.00 ILS")
-        const priceMatch = priceText.match(/[\d,]+\.?\d*/);
+        // Use a pattern that skips currency symbols and extracts the first number sequence
+        let priceMatch = priceText.match(/[\d,]+\.?\d*/);
+
+        // If regex doesn't match (possible encoding issue), try manual extraction
+        if (!priceMatch) {
+          // Filter for ASCII digits and common separators
+          const numericChars = Array.from(priceText)
+            .filter(ch => {
+              const code = ch.charCodeAt(0);
+              return (code >= 48 && code <= 57) || ch === ',' || ch === '.';  // 0-9, comma, dot
+            })
+            .join('');
+          priceMatch = numericChars ? [numericChars] : null;
+        }
+
         if (priceMatch) {
           const price = priceMatch[0].replace(',', '');
           console.log(`✅ Extracted price from DOM: ${price}`);
@@ -1483,24 +1628,27 @@
   }
 
   function extractFromProduct(data) {
+    // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
+    const offersData = data.offers || data.Offers;
+
     console.log('🔄 extractFromProduct called with:', {
       hasName: !!data.name,
-      hasOffers: !!data.offers,
-      offersType: Array.isArray(data.offers) ? 'array' : typeof data.offers,
+      hasOffers: !!offersData,
+      offersType: Array.isArray(offersData) ? 'array' : typeof offersData,
       hasImage: !!data.image
     });
 
     // Handle offers - can be array or single object
     let offer = null;
-    if (Array.isArray(data.offers)) {
+    if (Array.isArray(offersData)) {
       // If array, try to find in-stock offer first, otherwise take first
-      offer = data.offers.find(o => o.availability !== 'OutOfStock') || data.offers[0];
-      console.log(`📦 Using offer from array (${data.offers.length} total):`, {
+      offer = offersData.find(o => o.availability !== 'OutOfStock') || offersData[0];
+      console.log(`📦 Using offer from array (${offersData.length} total):`, {
         price: offer?.price,
         availability: offer?.availability
       });
-    } else if (data.offers) {
-      offer = data.offers;
+    } else if (offersData) {
+      offer = offersData;
       console.log('📦 Using single offer:', { price: offer?.price });
     }
 
@@ -1523,7 +1671,8 @@
   function extractFromProductGroup(data) {
     const variants = data.hasVariant || [];
     const firstVariant = Array.isArray(variants) ? variants[0] : variants;
-    const offer = firstVariant?.offers;
+    // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
+    const offer = firstVariant?.offers || firstVariant?.Offers;
 
     // Extract and normalize images from all variants
     const imageUrls = [];
@@ -1657,7 +1806,8 @@
                 </div>
               </div>
 
-              <div id="toggle-secondhand" style="padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
+              <!-- TEMPORARILY HIDDEN: "Open to secondhand" feature not yet available on site -->
+              <div id="toggle-secondhand" style="display: none; padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
                 <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">פתוח למשומש</div>
                 <div style="margin-top: 6px;">
                   <div style="width: 40px; height: 20px; background: #e8e4e9; border-radius: 10px; margin: 0 auto; position: relative;">
