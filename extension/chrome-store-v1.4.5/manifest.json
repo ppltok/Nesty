@@ -14,7 +14,6 @@
     "storage"
   ],
   "host_permissions": [
-    "http://localhost:5173/*",
     "https://nestyil.com/*"
   ],
   "background": {
@@ -24,7 +23,6 @@
   "content_scripts": [
     {
       "matches": [
-        "http://localhost:5173/*",
         "https://nestyil.com/*"
       ],
       "js": ["detector.js"],
