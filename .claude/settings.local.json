@@ -4,7 +4,8 @@
       "Bash(rm:*)",
       "Bash(supabase functions:*)",
       "Bash(cd:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(ls:*)"
     ]
   }
 }
