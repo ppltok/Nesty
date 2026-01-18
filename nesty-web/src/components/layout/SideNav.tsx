@@ -5,9 +5,10 @@ import { asset } from '../../lib/assets'
 import {
   Menu,
   X,
-  LayoutDashboard,
+  Heart,
   ClipboardList,
   Gift,
+  BarChart3,
   Settings,
   LogOut,
   ChevronRight,
@@ -64,7 +65,7 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
     {
       id: 'dashboard',
       label: 'הרשימה שלי',
-      icon: LayoutDashboard,
+      icon: Heart,
       path: '/dashboard',
     },
     {
@@ -79,6 +80,12 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
       icon: Gift,
       path: '/gifts',
       badge: giftsCount > 0 ? giftsCount : undefined,
+    },
+    {
+      id: 'statistics',
+      label: 'מבט על',
+      icon: BarChart3,
+      path: '/statistics',
     },
   ]
 
@@ -111,7 +118,7 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
                 `}
               >
                 <div className="relative">
-                  <Icon className={`w-6 h-6 ${active ? 'text-[#6750a4]' : ''}`} />
+                  <Icon className={`w-6 h-6 ${item.id === 'dashboard' ? 'text-[#e91e63] fill-[#e91e63]' : active ? 'text-[#6750a4]' : ''}`} />
                   {item.badge && (
                     <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-[#b3261e] text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1">
                       {item.badge > 9 ? '9+' : item.badge}
@@ -252,7 +259,7 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
                 title={!isExpanded ? item.label : undefined}
               >
                 <div className="relative">
-                  <Icon className={`w-6 h-6 flex-shrink-0 ${active ? 'text-[#6750a4]' : ''}`} />
+                  <Icon className={`w-6 h-6 flex-shrink-0 ${item.id === 'dashboard' ? 'text-[#e91e63] fill-[#e91e63]' : active ? 'text-[#6750a4]' : ''}`} />
                   {item.badge && !isExpanded && (
                     <span className="absolute -top-2 -left-2 min-w-[20px] h-5 bg-[#b3261e] text-white text-[11px] rounded-full flex items-center justify-center font-bold px-1">
                       {item.badge > 9 ? '9+' : item.badge}

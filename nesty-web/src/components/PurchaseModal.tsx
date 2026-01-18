@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Gift, Check, ExternalLink, Heart, EyeOff, Store, MapPin, MessageCircle, ChevronDown, ChevronUp, Copy } from 'lucide-react'
+import { X, Gift, Check, ExternalLink, Heart, EyeOff, Store, MapPin, MessageCircle, ChevronDown, ChevronUp, Copy, Package } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
 import { supabase } from '../lib/supabase'
@@ -53,6 +53,7 @@ interface PurchaseFormData {
   buyerPhone: string
   purchasedAt: string
   customStore: string
+  orderNumber: string
   giftMessage: string
   isSurprise: boolean
   quantity: number
@@ -78,6 +79,7 @@ export default function PurchaseModal({
     buyerPhone: '',
     purchasedAt: '',
     customStore: '',
+    orderNumber: '',
     giftMessage: '',
     isSurprise: false,
     quantity: 1,
@@ -142,6 +144,7 @@ export default function PurchaseModal({
       buyerPhone: '',
       purchasedAt: '',
       customStore: '',
+      orderNumber: '',
       giftMessage: '',
       isSurprise: false,
       quantity: 1,
@@ -218,6 +221,7 @@ export default function PurchaseModal({
         buyer_email: formData.buyerEmail.trim().toLowerCase(),
         buyer_phone: formData.buyerPhone.trim() || null,
         purchased_at: storeName,
+        order_number: formData.orderNumber.trim() || null,
         gift_message: formData.giftMessage.trim() || null,
         is_surprise: formData.isSurprise,
         quantity_purchased: formData.quantity,
@@ -590,6 +594,26 @@ export default function PurchaseModal({
                   placeholder="הזינו את שם החנות"
                 />
               )}
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  <Package className="w-4 h-4 inline ml-1 text-primary" />
+                  מספר הזמנה (אופציונלי)
+                </label>
+                <input
+                  type="text"
+                  value={formData.orderNumber}
+                  onChange={(e) =>
+                    setFormData({ ...formData, orderNumber: e.target.value })
+                  }
+                  placeholder="לדוגמה: 12345678"
+                  className="w-full rounded-xl border border-border bg-white px-4 py-3 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+                  dir="ltr"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  כדי שההורים יוכלו לעקוב אחרי המשלוח
+                </p>
+              </div>
 
               {remainingQuantity > 1 && (
                 <div>

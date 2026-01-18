@@ -5,7 +5,12 @@
       "Bash(supabase functions:*)",
       "Bash(cd:*)",
       "Bash(npm run build:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm run dev:*)",
+      "Bash(node -e:*)",
+      "Bash(python3:*)",
+      "Bash(git checkout:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

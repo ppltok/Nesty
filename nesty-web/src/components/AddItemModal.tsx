@@ -20,8 +20,11 @@ interface AddItemModalProps {
     brand?: string
     storeName?: string
     originalUrl?: string
+    imageUrl?: string
   }
   editItem?: Item
+  forceManualTab?: boolean
+  highlightColor?: boolean
 }
 
 const getMinQuantity = (editItem?: Item): number => {
@@ -50,6 +53,8 @@ export default function AddItemModal({
   onSave,
   prefilledData,
   editItem,
+  forceManualTab,
+  highlightColor,
 }: AddItemModalProps) {
   const { isInstalled: extensionInstalled } = useExtensionDetection()
   const [isLoading, setIsLoading] = useState(false)
@@ -70,8 +75,11 @@ export default function AddItemModal({
 
   // URL extraction state
   const { session } = useAuth()
-  // Default to 'paste' for new items, 'manual' for editing existing items
-  const [activeTab, setActiveTab] = useState<'manual' | 'paste'>(editItem ? 'manual' : 'paste')
+  // Default to 'paste' for new items, 'manual' for editing existing items or when forceManualTab is true
+  const [activeTab, setActiveTab] = useState<'manual' | 'paste'>(editItem || forceManualTab ? 'manual' : 'paste')
+
+  // State for color field highlight animation
+  const [colorHighlighted, setColorHighlighted] = useState(false)
   const [extractionStatus, setExtractionStatus] = useState<{
     state: 'idle' | 'loading' | 'success' | 'error'
     message: string | null
@@ -120,6 +128,7 @@ export default function AddItemModal({
           storeName: prefilledData.storeName || '',
           originalUrl: prefilledData.originalUrl || '',
           notes: prefilledData.brand ? `מותג: ${prefilledData.brand}` : '',
+          imageUrl: prefilledData.imageUrl || '',
         }))
       }
     }
@@ -131,6 +140,21 @@ export default function AddItemModal({
       setFormData(prev => ({ ...prev, isPrivate: true }))
     }
   }, [formData.category, editItem])
+
+  // Handle forceManualTab and highlightColor when modal opens
+  useEffect(() => {
+    if (isOpen && forceManualTab) {
+      setActiveTab('manual')
+    }
+    if (isOpen && highlightColor) {
+      // Trigger highlight animation after a short delay
+      setTimeout(() => {
+        setColorHighlighted(true)
+        // Remove highlight after animation
+        setTimeout(() => setColorHighlighted(false), 2000)
+      }, 300)
+    }
+  }, [isOpen, forceManualTab, highlightColor])
 
   const handleExtractUrl = async () => {
     // Validate URL format
@@ -516,17 +540,18 @@ export default function AddItemModal({
             </div>
 
             {/* Color */}
-            <div>
-              <label className="block text-xs font-bold text-[#49454f] uppercase tracking-wide mb-1">
+            <div className={`transition-all duration-500 ${colorHighlighted ? 'scale-105' : ''}`}>
+              <label className={`block text-xs font-bold uppercase tracking-wide mb-1 transition-colors duration-500 ${colorHighlighted ? 'text-[#6750a4]' : 'text-[#49454f]'}`}>
                 <Palette className="w-3 h-3 inline ml-1" />
                 צבע מועדף
+                {colorHighlighted && <span className="text-[10px] mr-2 animate-pulse">בחרי צבע!</span>}
               </label>
               <input
                 type="text"
                 value={formData.color}
                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                 placeholder="אפור, ורוד..."
-                className="w-full rounded-xl border border-[#e7e0ec] bg-white px-3 py-2 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40"
+                className={`w-full rounded-xl border bg-white px-3 py-2 text-[#1d192b] text-sm focus:border-[#6750a4] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 transition-all placeholder:text-[#49454f]/40 ${colorHighlighted ? 'border-[#6750a4] ring-2 ring-[#6750a4]/30 bg-[#f3edff]' : 'border-[#e7e0ec]'}`}
               />
             </div>
 

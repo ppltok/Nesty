@@ -230,7 +230,7 @@ export default function Gifts() {
             </span>
           </h1>
           <p className="text-[#49454f] text-lg font-medium">
-            כל האהבה שקיבלתם במקום אחד.
+            כל האהבה שקיבלתם במקום אחד ❤️.
           </p>
         </div>
 
@@ -481,6 +481,12 @@ export default function Gifts() {
                     <span className="font-medium text-[#1d192b]">{selectedGift.buyer_phone}</span>
                   </div>
                 )}
+                {selectedGift.order_number && (
+                  <div className="flex justify-between items-center py-2 border-b border-[#e7e0ec]">
+                    <span className="text-[#49454f]">מספר הזמנה:</span>
+                    <span className="font-medium text-[#1d192b]" dir="ltr">{selectedGift.order_number}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center py-2">
                   <span className="text-[#49454f]">סטטוס:</span>
                   <span className={`font-medium ${selectedGift.is_received ? 'text-green-600' : 'text-[#6750a4]'}`}>
@@ -652,6 +658,11 @@ function PurchaseCard({
           {purchase.quantity_purchased > 1 && (
             <p className="text-xs text-[#49454f] mt-1">כמות: {purchase.quantity_purchased}</p>
           )}
+          {purchase.order_number && (
+            <p className="text-xs text-[#49454f] mt-1 flex items-center gap-1">
+              <span className="text-[#6750a4]">📦</span> מספר הזמנה: <span className="font-medium" dir="ltr">{purchase.order_number}</span>
+            </p>
+          )}
         </div>
 
         {/* Message Bubble (if exists) */}
@@ -782,7 +793,7 @@ function PurchaseListItem({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-bold text-[#1d192b] truncate">{purchase.item_name}</h3>
+            <h3 className="font-bold text-[#1d192b] line-clamp-2 leading-tight">{purchase.item_name}</h3>
             {isSurprise && (
               <span className="text-xs bg-[#fff0f5] text-[#b3261e] px-2 py-0.5 rounded-full font-bold">
                 הייתה הפתעה

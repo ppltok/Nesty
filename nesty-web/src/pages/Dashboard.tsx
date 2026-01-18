@@ -566,7 +566,7 @@ export default function Dashboard() {
           className={`bg-white rounded-[20px] border overflow-hidden group transition-all duration-300 flex ${isPurchased ? 'opacity-70' : ''} ${isHighlighted ? 'border-[#6750a4] ring-4 ring-[#6750a4]/30 shadow-lg' : 'border-[#e7e0ec] hover:border-[#d0bcff]'}`}
         >
           {/* Image */}
-          <div className="w-32 sm:w-48 aspect-square flex-shrink-0 bg-[#f5f5f5] relative overflow-hidden">
+          <div className="w-24 sm:w-36 aspect-square flex-shrink-0 bg-[#f5f5f5] relative overflow-hidden">
             {item.image_url ? (
               <img
                 src={item.image_url}
@@ -681,7 +681,7 @@ export default function Dashboard() {
         className={`bg-white rounded-[24px] border overflow-hidden group transition-all duration-300 ${isPurchased ? 'opacity-80' : ''} ${isHighlighted ? 'border-[#6750a4] ring-4 ring-[#6750a4]/30 shadow-lg' : 'border-[#e7e0ec] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:border-[#d0bcff]'}`}
       >
         {/* Image Area */}
-        <div className="aspect-square bg-[#f5f5f5] relative overflow-hidden">
+        <div className="aspect-[4/3] bg-[#f5f5f5] relative overflow-hidden">
           {item.image_url ? (
             <img
               src={item.image_url}
@@ -725,8 +725,8 @@ export default function Dashboard() {
         </div>
 
         {/* Content */}
-        <div className="p-5">
-          <div className="mb-4">
+        <div className="p-4">
+          <div className="mb-3">
             <div className="flex justify-between items-start mb-1">
               <p className="text-xs font-bold text-[#6750a4] uppercase tracking-wide">
                 {getCategoryName(item.category)}
