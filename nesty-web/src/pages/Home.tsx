@@ -6,7 +6,8 @@ import {
   Menu, X, Heart, Sparkles, ArrowLeft,
   ClipboardList, Star, Send, TrendingDown,
   Bell, CheckCircle, Users, Shield, Lock, EyeOff, Gift,
-  Chrome, MousePointerClick, Zap, ShoppingBag, ExternalLink
+  Chrome, MousePointerClick, Zap, ShoppingBag, ExternalLink,
+  ListChecks
 } from 'lucide-react'
 
 export default function Home() {
@@ -27,11 +28,11 @@ export default function Home() {
             <a href="#how-it-works" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">
               איך זה עובד
             </a>
+            <a href="#example-registry" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">
+              דוגמה לרשימה
+            </a>
             <a href="#chrome-extension" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">
               תוסף לכרום
-            </a>
-            <a href="#chip-in" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">
-              Chip-In
             </a>
             <a href="#smart-engine" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">
               המנוע החכם
@@ -84,6 +85,13 @@ export default function Home() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 איך זה עובד
+              </a>
+              <a
+                href="#example-registry"
+                className="block text-[#49454f] hover:text-[#6750a4] font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                דוגמה לרשימה
               </a>
               <a
                 href="#chrome-extension"
@@ -274,6 +282,28 @@ export default function Home() {
                 </p>
               </div>
             </div>
+
+            {/* Checklist CTA */}
+            <div className="mt-16 text-center">
+              <div className="bg-gradient-to-br from-[#ffd8e4] to-[#f3edff] rounded-[32px] p-8 md:p-12 max-w-3xl mx-auto">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6 bg-white text-[#6750a4] shadow-md">
+                  <ListChecks className="w-8 h-8" />
+                </div>
+                <h3 className="text-3xl md:text-4xl font-medium text-[#1d192b] mb-4">
+                  לא לפספס שום דבר
+                </h3>
+                <p className="text-lg text-[#49454f] mb-8 max-w-xl mx-auto">
+                  הצ'קליסט המקיף שלנו מכיל את כל מה שתינוק צריך - מהדברים ההכרחיים ועד הפינוקים הקטנים. בנינו אותו עם מומחים כדי שתגיעו מוכנים.
+                </p>
+                <Link
+                  to={isAuthenticated ? "/checklist" : "/auth/signin"}
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300"
+                >
+                  <ListChecks className="w-5 h-5" />
+                  <span>לצ'קליסט המלא</span>
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -364,7 +394,7 @@ export default function Home() {
                         la-mer.co.il/products/lamer-x-soft
                       </div>
                       {/* Extension icon in toolbar */}
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#6750a4] rounded-lg flex items-center justify-center shadow-sm cursor-pointer hover:bg-[#503e85] transition-colors flex-shrink-0">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg flex items-center justify-center shadow-sm cursor-pointer hover:bg-[#503e85] transition-colors flex-shrink-0">
                         <img src={asset('Circle_logo.png')} alt="Nesty" className="w-4 h-4 sm:w-5 sm:h-5 rounded-full" />
                       </div>
                     </div>
@@ -445,16 +475,178 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Registry Example Section */}
+        <section id="example-registry" className="py-10 md:py-14 bg-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-[24px] mb-6 bg-[#f3edff] text-[#6750a4]">
+                <Gift className="w-8 h-8" />
+              </div>
+              <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">
+                איך זה באמת נראה?
+              </h2>
+              <p className="text-xl text-[#49454f] max-w-2xl mx-auto">
+                הציצו ברשימה אמיתית - כמה קל וכיף לשתף את מה שאתם צריכים עם החברים והמשפחה
+              </p>
+            </div>
+
+            {/* Live Registry Embed - Mobile Mockup */}
+            <div className="flex justify-center h-[580px] sm:h-[670px] md:h-[760px]">
+              <div
+                className="relative scale-[0.65] sm:scale-[0.75] md:scale-[0.85] origin-top"
+              >
+                {/* Phone Frame - iPhone 14/15 dimensions (390x844) */}
+                <div className="relative bg-[#1d192b] rounded-[55px] p-3 shadow-2xl">
+                  {/* Dynamic Island */}
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[126px] h-[37px] bg-[#1d192b] rounded-full z-20" />
+
+                  {/* Phone screen */}
+                  <div className="relative bg-white rounded-[47px] overflow-hidden" style={{ width: '390px', height: '844px' }}>
+                    {/* Status bar */}
+                    <div className="bg-white px-8 pt-14 pb-2 flex justify-between items-center text-sm font-semibold text-[#1d192b]">
+                      <span>9:41</span>
+                      <div className="flex items-center gap-1.5">
+                        <svg className="w-4 h-3" viewBox="0 0 16 12" fill="currentColor">
+                          <path d="M1 4.5C1 3.67 1.67 3 2.5 3h1C4.33 3 5 3.67 5 4.5v7c0 .83-.67 1.5-1.5 1.5h-1C1.67 13 1 12.33 1 11.5v-7zM6 3c0-.55.45-1 1-1h1c.55 0 1 .45 1 1v8.5c0 .83-.67 1.5-1.5 1.5h0c-.83 0-1.5-.67-1.5-1.5V3zM11 1.5c0-.83.67-1.5 1.5-1.5h1c.83 0 1.5.67 1.5 1.5v10c0 .83-.67 1.5-1.5 1.5h-1c-.83 0-1.5-.67-1.5-1.5v-10z"/>
+                        </svg>
+                        <svg className="w-4 h-3" viewBox="0 0 16 12" fill="currentColor">
+                          <path d="M8 2.5c2.7 0 5.2 1.1 7 2.9-.4.4-1 .4-1.4 0C12.2 4 10.2 3.2 8 3.2S3.8 4 2.4 5.4c-.4.4-1 .4-1.4 0C2.8 3.6 5.3 2.5 8 2.5zm0 3c1.7 0 3.2.7 4.3 1.8-.4.4-1 .4-1.4 0-.8-.7-1.8-1.1-2.9-1.1s-2.1.4-2.9 1.1c-.4.4-1 .4-1.4 0C4.8 6.2 6.3 5.5 8 5.5zm0 3c.7 0 1.3.3 1.8.7-.4.5-1.2.5-1.6 0-.1-.1-.2-.1-.2-.1s-.1 0-.2.1c-.4.5-1.2.5-1.6 0 .5-.4 1.1-.7 1.8-.7z"/>
+                        </svg>
+                        <div className="w-6 h-3 border-2 border-[#1d192b] rounded-sm relative">
+                          <div className="absolute inset-0.5 bg-[#1d192b] rounded-sm" style={{ width: '70%' }} />
+                          <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-0.5 h-1.5 bg-[#1d192b] rounded-r" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* URL Bar */}
+                    <div className="bg-[#f5f5f5] mx-4 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2 mb-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500" />
+                      <span className="text-sm text-[#49454f] font-medium">www.NestyIL.com</span>
+                    </div>
+
+                    {/* Iframe container */}
+                    <div className="overflow-hidden" style={{ height: '700px' }}>
+                      <iframe
+                        src="https://nestyil.com/registry/%D7%AA%D7%9D-registry-mj4e3vy0"
+                        title="דוגמה לרשימת מתנות"
+                        className="border-0"
+                        style={{
+                          width: '390px',
+                          height: '1200px',
+                          marginTop: '-420px'
+                        }}
+                        loading="lazy"
+                      />
+                    </div>
+
+                    {/* Home indicator */}
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+                      <div className="w-32 h-1 bg-[#1d192b] rounded-full" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Decorative elements */}
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#f3edff] rounded-full blur-3xl -z-10" />
+                <div className="absolute -bottom-10 -left-10 w-60 h-60 bg-[#ffd8e4]/50 rounded-full blur-3xl -z-10" />
+              </div>
+            </div>
+
+            {/* CTA below phone */}
+            <div className="text-center">
+              <a
+                href="https://nestyil.com/registry/%D7%AA%D7%9D-registry-mj4e3vy0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-8 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <ExternalLink className="w-5 h-5" />
+                <span>פתחו בחלון חדש</span>
+              </a>
+              <p className="mt-4 text-xl text-[#49454f]">
+                זה בדיוק מה שהאורחים שלכם יראו 🎁
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Privacy Section */}
+        <section className="py-10 md:py-14 bg-[#f2f0f4]">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-[24px] mb-6 bg-white text-[#6750a4] shadow-sm">
+                <Shield className="w-8 h-8" />
+              </div>
+              <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">
+                הקן שלכם, החוקים שלכם.
+              </h2>
+              <p className="text-xl text-[#49454f] max-w-2xl mx-auto">
+                אתם שולטים במה שמשתפים ומה נשאר פרטי
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* Hide Items */}
+              <div className="bg-white rounded-[32px] p-8 shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-14 h-14 bg-[#f3edff] rounded-[18px] flex items-center justify-center mb-6">
+                  <EyeOff className="w-7 h-7 text-[#6750a4]" />
+                </div>
+                <h3 className="text-2xl font-medium text-[#1d192b] mb-3">
+                  הסתרת מוצרים
+                </h3>
+                <p className="text-lg text-[#49454f] leading-relaxed">
+                  יש פריטים שאתם רוצים לקנות לבד? סמנו אותם כפרטיים והם יישארו מוסתרים מכל האורחים.
+                </p>
+              </div>
+
+              {/* Hide Address */}
+              <div className="bg-white rounded-[32px] p-8 shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-14 h-14 bg-[#ffd8e4] rounded-[18px] flex items-center justify-center mb-6">
+                  <Lock className="w-7 h-7 text-[#31111d]" />
+                </div>
+                <h3 className="text-2xl font-medium text-[#1d192b] mb-3">
+                  הסתרת כתובת
+                </h3>
+                <p className="text-lg text-[#49454f] leading-relaxed">
+                  לא רוצים שכולם יראו את הכתובת שלכם? הפעילו מצב פרטי ונותני המתנות יצרו איתכם קשר לפני המשלוח.
+                </p>
+              </div>
+            </div>
+
+            {/* Trust Badge */}
+            <div className="mt-12 text-center">
+              <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-sm">
+                <Shield className="w-6 h-6 text-green-600" />
+                <span className="text-[#1d192b] font-medium">המידע שלכם מאובטח ומוגן</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Coming Soon Section Header */}
+        <section className="py-10 md:py-14 bg-white">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <span className="inline-block bg-[#eaddff] text-[#21005d] px-5 py-2 rounded-full mb-6 font-bold text-sm tracking-wide">
+                בקרוב
+              </span>
+              <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">
+                מה עוד מחכה לכם?
+              </h2>
+              <p className="text-xl text-[#49454f] max-w-2xl mx-auto">
+                פיצ'רים חדשים שאנחנו עובדים עליהם במיוחד בשבילכם
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Smart Engine Section */}
         <section id="smart-engine" className="py-10 md:py-14 bg-[#fffbff]">
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
               {/* Content */}
               <div className="text-center lg:text-right">
-                <span className="inline-block bg-[#eaddff] text-[#21005d] px-5 py-2 rounded-full mb-6 font-bold text-sm tracking-wide">
-                  בקרוב
-                </span>
-
                 <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">
                   המנוע החכם ששומר לכם על הכיס
                 </h2>
@@ -606,7 +798,6 @@ export default function Home() {
                     <Users className="w-5 h-5" />
                     <span>Chip-In</span>
                   </div>
-                  <span className="bg-[#eaddff] text-[#21005d] px-2 py-1 rounded-full text-xs font-bold">בקרוב</span>
                 </div>
 
                 <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">
@@ -639,59 +830,6 @@ export default function Home() {
                     </li>
                   </ul>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Privacy Section */}
-        <section className="py-10 md:py-14 bg-[#f2f0f4]">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-[24px] mb-6 bg-white text-[#6750a4] shadow-sm">
-                <Shield className="w-8 h-8" />
-              </div>
-              <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">
-                הקן שלכם, החוקים שלכם.
-              </h2>
-              <p className="text-xl text-[#49454f] max-w-2xl mx-auto">
-                אתם שולטים במה שמשתפים ומה נשאר פרטי
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              {/* Hide Items */}
-              <div className="bg-white rounded-[32px] p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-14 h-14 bg-[#f3edff] rounded-[18px] flex items-center justify-center mb-6">
-                  <EyeOff className="w-7 h-7 text-[#6750a4]" />
-                </div>
-                <h3 className="text-2xl font-medium text-[#1d192b] mb-3">
-                  הסתרת מוצרים
-                </h3>
-                <p className="text-lg text-[#49454f] leading-relaxed">
-                  יש פריטים שאתם רוצים לקנות לבד? סמנו אותם כפרטיים והם יישארו מוסתרים מכל האורחים.
-                </p>
-              </div>
-
-              {/* Hide Address */}
-              <div className="bg-white rounded-[32px] p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-14 h-14 bg-[#ffd8e4] rounded-[18px] flex items-center justify-center mb-6">
-                  <Lock className="w-7 h-7 text-[#31111d]" />
-                </div>
-                <h3 className="text-2xl font-medium text-[#1d192b] mb-3">
-                  הסתרת כתובת
-                </h3>
-                <p className="text-lg text-[#49454f] leading-relaxed">
-                  לא רוצים שכולם יראו את הכתובת שלכם? הפעילו מצב פרטי ונותני המתנות יצרו איתכם קשר לפני המשלוח.
-                </p>
-              </div>
-            </div>
-
-            {/* Trust Badge */}
-            <div className="mt-12 text-center">
-              <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-sm">
-                <Shield className="w-6 h-6 text-green-600" />
-                <span className="text-[#1d192b] font-medium">המידע שלכם מאובטח ומוגן</span>
               </div>
             </div>
           </div>
@@ -799,7 +937,7 @@ export default function Home() {
               © {new Date().getFullYear()} Nesty. כל הזכויות שמורות.
             </p>
             <p className="text-[#49454f] text-sm flex items-center gap-1">
-              נבנה עם <Heart className="w-4 h-4 text-[#ffd8e4] fill-[#ffd8e4]" /> בישראל
+              נבנה בישראל 🇮🇱
             </p>
           </div>
         </div>

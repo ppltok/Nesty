@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { X, ArrowLeft, ArrowRight, Check, Home, ClipboardList, Gift, Settings, LayoutDashboard } from 'lucide-react'
+import { X, ArrowLeft, ArrowRight, Check, Home, ClipboardList, Gift, Settings, LayoutDashboard, Sparkles, BarChart3 } from 'lucide-react'
 
 interface TutorialStep {
   id: string
@@ -61,6 +61,24 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     targetSelector: '[data-tutorial="checklist-category"]',
     route: '/checklist',
     position: 'top',
+  },
+  {
+    id: 'recommended-products',
+    title: 'המלצות מוצרים',
+    description: 'לא יודעת מאיפה להתחיל? לכל פריט ברשימה יש המלצות מוצרים מבוססות על חוות דעת של הורים. לחצי על פריט כדי לראות המלצות ולהוסיף במהירות.',
+    route: '/checklist',
+    position: 'center',
+    icon: Sparkles,
+  },
+  {
+    id: 'statistics',
+    title: 'מבט על',
+    description: 'רוצה לראות תמונה מלאה? בדף הסטטיסטיקות תוכלי לראות כמה השלמתם, מה נשאר, וכמה חסכתם. מעקב קל אחרי כל ההתקדמות.',
+    navItemId: 'statistics',
+    route: '/statistics',
+    position: 'center',
+    icon: BarChart3,
+    highlightNav: true,
   },
   {
     id: 'gifts',

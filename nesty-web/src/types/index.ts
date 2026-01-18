@@ -78,6 +78,7 @@ export interface Purchase {
   buyer_email: string
   buyer_phone: string | null
   purchased_at: string | null
+  order_number: string | null
   gift_message: string | null
   is_surprise: boolean
   quantity_purchased: number

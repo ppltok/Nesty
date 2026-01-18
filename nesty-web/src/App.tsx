@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard'
 import Checklist from './pages/Checklist'
 import PublicRegistry from './pages/PublicRegistry'
 import Gifts from './pages/Gifts'
+import Statistics from './pages/Statistics'
 import Settings from './pages/Settings'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
@@ -99,6 +100,9 @@ function AppRoutes() {
 
           {/* Checklist page */}
           <Route path="/checklist" element={<Checklist />} />
+
+          {/* Statistics page */}
+          <Route path="/statistics" element={<Statistics />} />
 
           {/* Settings page */}
           <Route path="/settings" element={<Settings />} />
