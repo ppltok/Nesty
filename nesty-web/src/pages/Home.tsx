@@ -179,7 +179,7 @@ export default function Home() {
                     className="px-10 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg flex gap-3 items-center justify-center shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300"
                   >
                     <Sparkles className="w-5 h-5" />
-                    <span>{isAuthenticated ? "לקן שלי" : "מתחילים להתארגן"}</span>
+                    <span>{isAuthenticated ? "לקן שלי" : "התחילי לבנות את הקן"}</span>
                   </Link>
                   <a
                     href="#how-it-works"
@@ -525,17 +525,13 @@ export default function Home() {
                       <span className="text-sm text-[#49454f] font-medium">www.NestyIL.com</span>
                     </div>
 
-                    {/* Iframe container */}
-                    <div className="overflow-hidden" style={{ height: '700px' }}>
-                      <iframe
-                        src="https://nestyil.com/registry/%D7%AA%D7%9D-registry-mj4e3vy0"
-                        title="דוגמה לרשימת מתנות"
-                        className="border-0"
-                        style={{
-                          width: '390px',
-                          height: '1200px',
-                          marginTop: '-420px'
-                        }}
+                    {/* Registry screenshot - scrollable */}
+                    <div className="overflow-y-auto overflow-x-hidden" style={{ height: '700px' }}>
+                      <img
+                        src={asset('IMG_80F37FA15505-1.jpeg')}
+                        alt="דוגמה לרשימת מתנות"
+                        className="w-full"
+                        style={{ width: '390px' }}
                         loading="lazy"
                       />
                     </div>
@@ -555,15 +551,13 @@ export default function Home() {
 
             {/* CTA below phone */}
             <div className="text-center">
-              <a
-                href="https://nestyil.com/registry/%D7%AA%D7%9D-registry-mj4e3vy0"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to={isAuthenticated ? "/dashboard" : "/auth/signin"}
                 className="inline-flex items-center gap-3 px-8 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300"
               >
-                <ExternalLink className="w-5 h-5" />
-                <span>פתחו בחלון חדש</span>
-              </a>
+                <Sparkles className="w-5 h-5" />
+                <span>{isAuthenticated ? "לקן שלי" : "יצירת הרשימה הראשונה שלי"}</span>
+              </Link>
               <p className="mt-4 text-xl text-[#49454f]">
                 זה בדיוק מה שהאורחים שלכם יראו 🎁
               </p>
