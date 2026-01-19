@@ -10,7 +10,8 @@
       "Bash(node -e:*)",
       "Bash(python3:*)",
       "Bash(git checkout:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(convert:*)"
     ]
   }
 }
