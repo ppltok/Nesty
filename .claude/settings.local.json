@@ -11,7 +11,18 @@
       "Bash(python3:*)",
       "Bash(git checkout:*)",
       "Bash(npx tsc:*)",
-      "Bash(convert:*)"
+      "Bash(convert:*)",
+      "WebFetch(domain:skills.sh)",
+      "Bash(npx skills:*)",
+      "Bash(npx create-video@latest nesty-video --template blank)",
+      "Bash(pkill:*)",
+      "Bash(npx create-video@latest nesty-video)",
+      "Bash(yes:*)",
+      "Bash(npx create-video@latest --no-git .)",
+      "Bash(npx create-video@latest --template blank --no-git .)",
+      "Bash(npm install)",
+      "Bash(sips:*)",
+      "Bash(curl:*)"
     ]
   }
 }

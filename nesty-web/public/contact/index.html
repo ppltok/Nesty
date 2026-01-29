@@ -5,7 +5,7 @@
   <link rel="icon" type="image/png" href="/favicon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>צור קשר - Nesty</title>
-  <meta name="description" content="יש לכם שאלות? רוצים לשתף פידבק? נשמח לשמוע מכם! צרו איתנו קשר.">
+  <meta name="description" content="יש לכם שאלות? רוצים לשתף פידבק? נשמח לשמוע מכם! צרו איתנו קשר בנושא רשימות מתנות לתינוקות.">
   <link rel="canonical" href="https://nestyil.com/contact" />
 
   <!-- Open Graph -->
@@ -13,18 +13,259 @@
   <meta property="og:description" content="יש לכם שאלות? רוצים לשתף פידבק? נשמח לשמוע מכם!" />
   <meta property="og:url" content="https://nestyil.com/contact" />
   <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://nestyil.com/Nesty_logo.png" />
 
-  <!-- Redirect to SPA -->
-  <script>
-    window.location.replace('/?/contact');
-  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #fffbff;
+      color: #1d192b;
+      line-height: 1.7;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 251, 255, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e7e0ec;
+      padding: 1rem 1.5rem;
+    }
+    .header-inner {
+      max-width: 56rem;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo { height: 3rem; width: auto; }
+    .back-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #6750a4;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #503e85; }
+    main {
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: #1d192b;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: #49454f;
+      font-size: 1.125rem;
+      margin-bottom: 3rem;
+    }
+    .contact-card {
+      background: #f3edf7;
+      border-radius: 1rem;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .contact-icon {
+      width: 4rem;
+      height: 4rem;
+      background: #6750a4;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+    }
+    .contact-icon svg {
+      width: 2rem;
+      height: 2rem;
+      color: white;
+    }
+    .contact-card h2 {
+      font-size: 1.5rem;
+      color: #1d192b;
+      margin-bottom: 0.75rem;
+    }
+    .contact-card p {
+      color: #49454f;
+      margin-bottom: 1.5rem;
+    }
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #6750a4;
+      color: white;
+      padding: 0.875rem 1.75rem;
+      border-radius: 0.75rem;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .cta-button:hover {
+      background: #503e85;
+    }
+    .info-section {
+      margin-top: 3rem;
+    }
+    .info-section h3 {
+      font-size: 1.25rem;
+      color: #1d192b;
+      margin-bottom: 1rem;
+    }
+    .info-section p {
+      color: #49454f;
+      margin-bottom: 1rem;
+    }
+    .info-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .info-list li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #e7e0ec;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: #49454f;
+    }
+    .info-list li:last-child {
+      border-bottom: none;
+    }
+    .info-list svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: #6750a4;
+      flex-shrink: 0;
+    }
+    a { color: #6750a4; }
+    a:hover { text-decoration: underline; }
+    footer {
+      padding: 2rem;
+      background: #fffbff;
+      border-top: 1px solid #e7e0ec;
+      text-align: center;
+      color: #49454f;
+      font-size: 0.875rem;
+    }
+    .noscript-notice {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      color: #856404;
+    }
+  </style>
 </head>
 <body>
-  <noscript>
-    <meta http-equiv="refresh" content="0;url=/?/contact">
-  </noscript>
-  <h1>צור קשר - Nesty</h1>
-  <p>יש לכם שאלות? רוצים לשתף פידבק? נשמח לשמוע מכם!</p>
-  <p><a href="/">חזרה לדף הבית</a></p>
+  <header>
+    <div class="header-inner">
+      <a href="/">
+        <img src="/Nesty_logo.png" alt="Nesty" class="logo" />
+      </a>
+      <a href="/" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        חזרה לדף הבית
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <h1>צור קשר</h1>
+    <p class="subtitle">נשמח לשמוע מכם! מלאו את הפרטים ונחזור אליכם בהקדם.</p>
+
+    <noscript>
+      <div class="noscript-notice">
+        לשליחת הודעה דרך טופס יצירת הקשר, יש להפעיל JavaScript בדפדפן.
+        לחלופין, שלחו לנו אימייל ישירות.
+      </div>
+    </noscript>
+
+    <div class="contact-card">
+      <div class="contact-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <h2>שלחו לנו הודעה</h2>
+      <p>יש לכם שאלה, הצעה או פידבק? נשמח לשמוע מכם!</p>
+      <a href="/#/contact" class="cta-button" id="contact-form-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 2L11 13"/>
+          <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
+        </svg>
+        פתח טופס יצירת קשר
+      </a>
+    </div>
+
+    <div class="info-section">
+      <h3>מידע נוסף</h3>
+      <p>אנחנו כאן כדי לעזור! הנה כמה דרכים נוספות ליצור איתנו קשר:</p>
+
+      <ul class="info-list">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+          </svg>
+          <span>זמני מענה: ימים א'-ה', 9:00-17:00</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          </svg>
+          <span>זמן תגובה ממוצע: תוך 24 שעות</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span>באבו קפיטל בע"מ, ישראל</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="info-section">
+      <h3>קישורים שימושיים</h3>
+      <ul class="info-list">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <a href="/terms">תנאי שימוש</a>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <a href="/privacy">מדיניות פרטיות</a>
+        </li>
+      </ul>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2025 Nesty. כל הזכויות שמורות.
+  </footer>
+
+  <script>
+    // Update the contact form link to work with hash routing
+    document.getElementById('contact-form-link').href = '/#/contact';
+  </script>
 </body>
 </html>
