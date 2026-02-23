@@ -22,7 +22,8 @@
       "Bash(npx create-video@latest --template blank --no-git .)",
       "Bash(npm install)",
       "Bash(sips:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx vite build:*)"
     ]
   }
 }

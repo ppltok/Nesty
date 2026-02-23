@@ -48,9 +48,666 @@
 
 /* Hide scrollbar for horizontal scroll containers */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* ═══════════════════════════════════
+   ANIMATED HOMEPAGE KEYFRAMES
+   ═══════════════════════════════════ */
+
+/* Gradient mesh background shift */
+@keyframes gradient-mesh {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  25% {
+    background-position: 100% 0%;
+  }
+
+  50% {
+    background-position: 100% 100%;
+  }
+
+  75% {
+    background-position: 0% 100%;
+  }
+}
+
+.animate-gradient-mesh {
+  animation: gradient-mesh 15s ease infinite;
+}
+
+/* Floating element drift */
+@keyframes floating-element {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  25% {
+    transform: translateY(-20px) rotate(5deg);
+  }
+
+  50% {
+    transform: translateY(-10px) rotate(-3deg);
+  }
+
+  75% {
+    transform: translateY(-25px) rotate(2deg);
+  }
+}
+
+.animate-floating-element {
+  animation: floating-element 6s ease-in-out infinite;
+}
+
+/* Faded icon background drift */
+@keyframes faded-icon-drift {
+
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  25% {
+    transform: translate(calc(var(--drift-x, 10px) * 0.5), calc(var(--drift-y, -10px) * 0.5)) rotate(3deg);
+  }
+
+  50% {
+    transform: translate(var(--drift-x, 10px), var(--drift-y, -10px)) rotate(-2deg);
+  }
+
+  75% {
+    transform: translate(calc(var(--drift-x, 10px) * 0.3), calc(var(--drift-y, -10px) * 0.8)) rotate(1deg);
+  }
+}
+
+.animate-faded-icon-drift {
+  animation: faded-icon-drift var(--duration, 20s) ease-in-out infinite;
+}
+
+/* Nest breathing glow */
+@keyframes breathe {
+
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* Nest float */
+@keyframes nest-float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-nest-float {
+  animation: nest-float 5s ease-in-out infinite;
+}
+
+/* Bird bob */
+@keyframes bird-bob {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  30% {
+    transform: translateY(-4px) rotate(-2deg);
+  }
+
+  70% {
+    transform: translateY(-2px) rotate(1deg);
+  }
+}
+
+.animate-bird-bob {
+  animation: bird-bob 3s ease-in-out infinite;
+}
+
+/* Wing flap */
+@keyframes wing-flap {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-15deg);
+  }
+
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-wing-flap {
+  animation: wing-flap 2s ease-in-out infinite;
+}
+
+/* Egg wobble animations */
+@keyframes egg-wobble {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(3deg);
+  }
+
+  75% {
+    transform: rotate(-2deg);
+  }
+}
+
+.animate-egg-wobble-1 {
+  animation: egg-wobble 4s ease-in-out infinite;
+}
+
+.animate-egg-wobble-2 {
+  animation: egg-wobble 4.5s ease-in-out infinite 0.5s;
+}
+
+.animate-egg-wobble-3 {
+  animation: egg-wobble 5s ease-in-out infinite 1s;
+}
+
+/* Baby bird peek */
+@keyframes baby-peek {
+
+  0%,
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+
+  80% {
+    transform: translateY(-6px);
+  }
+
+  90% {
+    transform: translateY(-3px);
+  }
+}
+
+.animate-baby-peek {
+  animation: baby-peek 6s ease-in-out infinite;
+}
+
+/* Heart float */
+@keyframes heart-float-1 {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: translateY(-15px) scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes heart-float-2 {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: translateY(-20px) scale(1.15);
+    opacity: 0.7;
+  }
+}
+
+.animate-heart-float-1 {
+  animation: heart-float-1 4s ease-in-out infinite;
+}
+
+.animate-heart-float-2 {
+  animation: heart-float-2 5s ease-in-out infinite 1s;
+}
+
+/* Sparkle animations */
+@keyframes sparkle-pulse {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.animate-sparkle-1 {
+  animation: sparkle-pulse 3s ease-in-out infinite;
+}
+
+.animate-sparkle-2 {
+  animation: sparkle-pulse 3.5s ease-in-out infinite 1s;
+}
+
+.animate-sparkle-3 {
+  animation: sparkle-pulse 4s ease-in-out infinite 2s;
+}
+
+/* Wave morph */
+@keyframes wave-morph {
+
+  0%,
+  100% {
+    d: path("M0 60L48 55C96 50 192 40 288 42C384 44 480 58 576 65C672 72 768 72 864 65C960 58 1056 44 1152 40C1248 36 1344 42 1392 45L1440 48V120H0V60Z");
+  }
+
+  50% {
+    d: path("M0 50L48 58C96 66 192 55 288 48C384 41 480 50 576 58C672 66 768 60 864 52C960 44 1056 52 1152 58C1248 64 1344 50 1392 43L1440 36V120H0V50Z");
+  }
+}
+
+@keyframes wave-morph-2 {
+
+  0%,
+  100% {
+    d: path("M0 80L48 76C96 72 192 64 288 62C384 60 480 64 576 70C672 76 768 84 864 82C960 80 1056 68 1152 62C1248 56 1344 56 1392 56L1440 56V120H0V80Z");
+  }
+
+  50% {
+    d: path("M0 70L48 68C96 66 192 72 288 76C384 80 480 76 576 68C672 60 768 64 864 72C960 80 1056 76 1152 68C1248 60 1344 64 1392 66L1440 68V120H0V70Z");
+  }
+}
+
+.animate-wave-morph {
+  animation: wave-morph 8s ease-in-out infinite;
+}
+
+.animate-wave-morph-2 {
+  animation: wave-morph-2 10s ease-in-out infinite;
+}
+
+/* Particle drift */
+@keyframes particle-drift {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-80px) translateX(30px);
+    opacity: 0;
+  }
+}
+
+.animate-particle-drift {
+  animation: particle-drift 8s ease-in-out infinite;
+}
+
+/* Glow orbs */
+@keyframes orb-drift-1 {
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  33% {
+    transform: translate(30px, -20px);
+  }
+
+  66% {
+    transform: translate(-20px, 15px);
+  }
+}
+
+@keyframes orb-drift-2 {
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  33% {
+    transform: translate(-25px, 20px);
+  }
+
+  66% {
+    transform: translate(15px, -30px);
+  }
+}
+
+@keyframes orb-drift-3 {
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(20px, 20px);
+  }
+}
+
+.animate-orb-1 {
+  animation: orb-drift-1 12s ease-in-out infinite;
+}
+
+.animate-orb-2 {
+  animation: orb-drift-2 14s ease-in-out infinite;
+}
+
+.animate-orb-3 {
+  animation: orb-drift-3 10s ease-in-out infinite;
+}
+
+/* Badge float (kept for use elsewhere) */
+@keyframes float-badge-1 {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes float-badge-2 {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float-badge-1 {
+  animation: float-badge-1 4s ease-in-out infinite;
+}
+
+.animate-float-badge-2 {
+  animation: float-badge-2 5s ease-in-out infinite 1s;
+}
+
+/* ═══════════════════════
+   ORBIT ANIMATIONS
+   Each icon orbits smoothly with rotate → translateY(offset) → counter-rotate
+   so the icon stays upright. Different speeds + start angles for organic motion.
+   ═══════════════════════ */
+
+/* Orbit 1 — Heart: 25s, starts at 0° */
+@keyframes orbit-1 {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-counter-1 {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.animate-orbit-1 {
+  animation: orbit-1 25s linear infinite;
+}
+
+.animate-orbit-counter-1 {
+  animation: orbit-counter-1 25s linear infinite;
+}
+
+/* Orbit 2 — Gift: 30s, starts at 72° */
+@keyframes orbit-2 {
+  from {
+    transform: rotate(72deg);
+  }
+
+  to {
+    transform: rotate(432deg);
+  }
+}
+
+@keyframes orbit-counter-2 {
+  from {
+    transform: rotate(-72deg);
+  }
+
+  to {
+    transform: rotate(-432deg);
+  }
+}
+
+.animate-orbit-2 {
+  animation: orbit-2 30s linear infinite;
+}
+
+.animate-orbit-counter-2 {
+  animation: orbit-counter-2 30s linear infinite;
+}
+
+/* Orbit 3 — Star: 22s, starts at 144° */
+@keyframes orbit-3 {
+  from {
+    transform: rotate(144deg);
+  }
+
+  to {
+    transform: rotate(504deg);
+  }
+}
+
+@keyframes orbit-counter-3 {
+  from {
+    transform: rotate(-144deg);
+  }
+
+  to {
+    transform: rotate(-504deg);
+  }
+}
+
+.animate-orbit-3 {
+  animation: orbit-3 22s linear infinite;
+}
+
+.animate-orbit-counter-3 {
+  animation: orbit-counter-3 22s linear infinite;
+}
+
+/* Orbit 4 — Baby: 28s, starts at 216° */
+@keyframes orbit-4 {
+  from {
+    transform: rotate(216deg);
+  }
+
+  to {
+    transform: rotate(576deg);
+  }
+}
+
+@keyframes orbit-counter-4 {
+  from {
+    transform: rotate(-216deg);
+  }
+
+  to {
+    transform: rotate(-576deg);
+  }
+}
+
+.animate-orbit-4 {
+  animation: orbit-4 28s linear infinite;
+}
+
+.animate-orbit-counter-4 {
+  animation: orbit-counter-4 28s linear infinite;
+}
+
+/* Orbit 5 — Sparkles: 20s, starts at 288° */
+@keyframes orbit-5 {
+  from {
+    transform: rotate(288deg);
+  }
+
+  to {
+    transform: rotate(648deg);
+  }
+}
+
+@keyframes orbit-counter-5 {
+  from {
+    transform: rotate(-288deg);
+  }
+
+  to {
+    transform: rotate(-648deg);
+  }
+}
+
+.animate-orbit-5 {
+  animation: orbit-5 20s linear infinite;
+}
+
+.animate-orbit-counter-5 {
+  animation: orbit-counter-5 20s linear infinite;
+}
+
+/* Entrance animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  opacity: 0;
+  animation: fade-in-up 0.8s ease-out forwards;
+}
+
+.animate-fade-in-down {
+  opacity: 0;
+  animation: fade-in-down 0.7s ease-out forwards;
+}
+
+/* Progress bar fill */
+@keyframes progress-fill {
+  from {
+    width: 0%;
+  }
+}
+
+.animate-progress-fill {
+  animation: progress-fill 1.5s ease-out;
+}
+
+/* CTA glow */
+@keyframes cta-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(255, 255, 255, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 30px 10px rgba(255, 255, 255, 0.15);
+  }
+}
+
+.animate-cta-glow {
+  animation: cta-glow 3s ease-in-out infinite;
+}
+
+/* Slow spin for sparkle icon */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.group:hover .group-hover\:animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }

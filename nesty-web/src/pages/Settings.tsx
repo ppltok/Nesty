@@ -12,11 +12,12 @@ import {
   Save,
   AlertTriangle,
   User,
+  LogOut,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 export default function Settings() {
-  const { registry, profile, refreshProfile } = useAuth()
+  const { registry, profile, refreshProfile, signOut } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -453,15 +454,39 @@ export default function Settings() {
             </Button>
           </div>
 
+          {/* Logout Section */}
+          <div className="bg-[#f9f7fc] rounded-2xl border border-[#e7e0ec] p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-[#e7e0ec]">
+                  <LogOut className="w-5 h-5 text-[#6750a4]" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">התנתקות</h2>
+                  <p className="text-muted-foreground text-xs">תוכלו להתחבר מחדש בכל עת</p>
+                </div>
+              </div>
+              <button
+                onClick={() => signOut()}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#e7e0ec] bg-white text-[#49454f] font-medium hover:bg-[#f3edff] hover:text-[#6750a4] hover:border-[#d0bcff] transition-colors active:scale-95"
+              >
+                <LogOut className="w-4 h-4" />
+                התנתק
+              </button>
+            </div>
+          </div>
+
           {/* Delete Account Section */}
-          <div className="bg-white rounded-2xl border border-destructive/30 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Trash2 className="w-5 h-5 text-destructive" />
-              <h2 className="text-lg font-bold text-destructive">מחיקת חשבון</h2>
+          <div className="bg-white rounded-2xl border-2 border-dashed border-destructive/30 p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-[#ffebee] rounded-xl flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-destructive" />
+              </div>
+              <h2 className="text-lg font-bold text-destructive">אזור מסוכן</h2>
             </div>
 
             <p className="text-muted-foreground text-sm mb-4">
-              פעולה זו תמחק את החשבון שלכם לצמיתות, כולל כל הנתונים, הרשימה והמתנות. לא ניתן לבטל פעולה זו.
+              מחיקת החשבון היא פעולה בלתי הפיכה. כל הנתונים, הרשימה והמתנות יימחקו לצמיתות.
             </p>
 
             {!showDeleteConfirm ? (

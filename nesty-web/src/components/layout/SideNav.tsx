@@ -1,16 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
 import { asset } from '../../lib/assets'
 import {
-  Menu,
-  X,
   Heart,
   ClipboardList,
   Gift,
   BarChart3,
   Settings,
-  LogOut,
   ChevronRight,
   ChevronLeft,
 } from 'lucide-react'
@@ -29,37 +25,7 @@ interface SideNavProps {
 
 export default function SideNav({ giftsCount = 0 }: SideNavProps) {
   const location = useLocation()
-  const { signOut } = useAuth()
   const [isExpanded, setIsExpanded] = useState(false)
-  const [isMobileOpen, setIsMobileOpen] = useState(false)
-
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setIsMobileOpen(false)
-  }, [location.pathname])
-
-  // Close mobile menu on escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsMobileOpen(false)
-      }
-    }
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [])
-
-  // Prevent body scroll when mobile menu is open
-  useEffect(() => {
-    if (isMobileOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [isMobileOpen])
 
   const navItems: NavItem[] = [
     {
@@ -90,10 +56,6 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
   ]
 
   const isActive = (path: string) => location.pathname === path
-
-  const handleSignOut = async () => {
-    await signOut()
-  }
 
   return (
     <>
@@ -132,89 +94,25 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
             )
           })}
 
-          {/* More menu button for settings */}
-          <button
-            onClick={() => setIsMobileOpen(true)}
-            data-tutorial="nav-more-mobile"
-            className="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-2xl text-[#49454f] hover:bg-[#f3edff] transition-all min-w-[72px]"
-          >
-            <Menu className="w-6 h-6" />
-            <span className="text-[11px] font-medium">עוד</span>
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Menu Overlay */}
-      {isMobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[60]"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
-
-      {/* Mobile Menu Sheet (slides from bottom) */}
-      <div
-        className={`
-          lg:hidden fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-[28px] shadow-2xl
-          transition-transform duration-300 ease-out
-          ${isMobileOpen ? 'translate-y-0' : 'translate-y-full'}
-        `}
-      >
-        {/* Handle bar */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 bg-[#e7e0ec] rounded-full" />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pb-4 border-b border-[#e7e0ec]">
-          <div className="flex items-center gap-3">
-            <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-8 w-auto" />
-          </div>
-          <button
-            onClick={() => setIsMobileOpen(false)}
-            className="p-2 text-[#49454f] hover:text-[#1d192b] hover:bg-[#f3edff] rounded-xl transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Menu Items */}
-        <div className="p-4 space-y-2">
+          {/* Settings button */}
           <Link
             to="/settings"
-            onClick={() => setIsMobileOpen(false)}
             data-tutorial="nav-settings-mobile"
             className={`
-              flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-200
+              flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-2xl transition-all duration-200 min-w-[72px]
               ${isActive('/settings')
                 ? 'bg-[#eaddff] text-[#6750a4]'
-                : 'text-[#1d192b] hover:bg-[#f3edff]'
+                : 'text-[#49454f] hover:bg-[#f3edff]'
               }
             `}
           >
-            <div className="w-10 h-10 rounded-xl bg-[#f3edff] flex items-center justify-center">
-              <Settings className="w-5 h-5 text-[#6750a4]" />
-            </div>
-            <span className="font-medium text-base">הגדרות</span>
+            <Settings className={`w-6 h-6 ${isActive('/settings') ? 'text-[#6750a4]' : ''}`} />
+            <span className={`text-[11px] font-medium ${isActive('/settings') ? 'text-[#6750a4]' : ''}`}>
+              הגדרות
+            </span>
           </Link>
-
-          <button
-            onClick={() => {
-              setIsMobileOpen(false)
-              handleSignOut()
-            }}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all duration-200 text-[#b3261e] hover:bg-[#ffebee]"
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#ffebee] flex items-center justify-center">
-              <LogOut className="w-5 h-5 text-[#b3261e]" />
-            </div>
-            <span className="font-medium text-base">התנתק</span>
-          </button>
         </div>
-
-        {/* Safe area padding for mobile */}
-        <div className="h-8" />
-      </div>
+      </nav>
 
       {/* Desktop Side Navigation - Full height fixed */}
       <aside
@@ -279,8 +177,8 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
           })}
         </nav>
 
-        {/* Bottom Actions - Settings & Logout */}
-        <div className="p-3 border-t border-[#e7e0ec] space-y-1 flex-shrink-0 bg-[#fdfcff]">
+        {/* Bottom Actions - Settings */}
+        <div className="p-3 border-t border-[#e7e0ec] flex-shrink-0 bg-[#fdfcff]">
           <Link
             to="/settings"
             data-tutorial="nav-settings"
@@ -297,19 +195,6 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
             <Settings className="w-6 h-6 flex-shrink-0" />
             {isExpanded && <span className="font-medium">הגדרות</span>}
           </Link>
-
-          <button
-            onClick={handleSignOut}
-            className={`
-              w-full flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200
-              text-[#b3261e] hover:bg-[#ffebee]
-              ${!isExpanded && 'justify-center'}
-            `}
-            title={!isExpanded ? 'התנתק' : undefined}
-          >
-            <LogOut className="w-6 h-6 flex-shrink-0" />
-            {isExpanded && <span className="font-medium">התנתק</span>}
-          </button>
         </div>
 
         {/* Expand/Collapse Toggle */}
