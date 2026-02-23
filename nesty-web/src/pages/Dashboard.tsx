@@ -26,6 +26,7 @@ import AddItemModal from '../components/AddItemModal'
 import ShareModal from '../components/ShareModal'
 import ExtensionBanner from '../components/ExtensionBanner'
 import ExtensionGuideModal from '../components/ExtensionGuideModal'
+import FadedIconsBackground from '../components/animations/FadedIconsBackground'
 import { useExtensionDetection } from '../hooks/useExtensionDetection'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
 import { CATEGORIES } from '../data/categories'
@@ -563,7 +564,7 @@ export default function Dashboard() {
       return (
         <div
           ref={(el) => { itemRefs.current[item.id] = el }}
-          className={`bg-white rounded-[20px] border overflow-hidden group transition-all duration-300 flex ${isPurchased ? 'opacity-70' : ''} ${isHighlighted ? 'border-[#6750a4] ring-4 ring-[#6750a4]/30 shadow-lg' : 'border-[#e7e0ec] hover:border-[#d0bcff]'}`}
+          className={`bg-white rounded-[20px] border overflow-hidden group transition-all duration-300 flex animate-fade-in-up ${isPurchased ? 'opacity-70' : ''} ${isHighlighted ? 'border-[#6750a4] ring-4 ring-[#6750a4]/30 shadow-lg' : 'border-[#e7e0ec] hover:border-[#d0bcff] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]'}`}
         >
           {/* Image */}
           <div className="w-24 sm:w-36 aspect-square flex-shrink-0 bg-[#f5f5f5] relative overflow-hidden">
@@ -678,7 +679,7 @@ export default function Dashboard() {
     return (
       <div
         ref={(el) => { itemRefs.current[item.id] = el }}
-        className={`bg-white rounded-[24px] border overflow-hidden group transition-all duration-300 ${isPurchased ? 'opacity-80' : ''} ${isHighlighted ? 'border-[#6750a4] ring-4 ring-[#6750a4]/30 shadow-lg' : 'border-[#e7e0ec] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:border-[#d0bcff]'}`}
+        className={`bg-white rounded-[24px] border overflow-hidden group transition-all duration-300 animate-fade-in-up ${isPurchased ? 'opacity-80' : ''} ${isHighlighted ? 'border-[#6750a4] ring-4 ring-[#6750a4]/30 shadow-lg' : 'border-[#e7e0ec] hover:shadow-[0_20px_40px_-12px_rgba(103,80,164,0.12)] hover:border-[#d0bcff] hover:-translate-y-1'}`}
       >
         {/* Image Area */}
         <div className="aspect-[4/3] bg-[#f5f5f5] relative overflow-hidden">
@@ -773,7 +774,7 @@ export default function Dashboard() {
             </div>
             <div className="h-2 w-full bg-[#f3edff] rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-500 ${isPurchased ? 'bg-green-500' : 'bg-[#6750a4]'}`}
+                className={`h-full rounded-full animate-progress-fill ${isPurchased ? 'bg-green-500' : 'bg-[#6750a4]'}`}
                 style={{ width: `${(item.quantity_received / item.quantity) * 100}%` }}
               />
             </div>
@@ -855,7 +856,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fffbff] font-sans text-[#1d192b]" dir="rtl">
+    <div className="min-h-screen bg-[#fffbff] font-sans text-[#1d192b] relative" dir="rtl">
       {/* Address Modal */}
       {registry && (
         <AddressModal
@@ -1052,15 +1053,19 @@ export default function Dashboard() {
       )}
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
         {/* Extension Banner */}
         <ExtensionBanner />
 
         {/* Welcome & Stats Section */}
         <div className="flex flex-col xl:flex-row gap-8 mb-12">
           {/* Welcome Card */}
-          <div className="flex-1 bg-gradient-to-br from-[#1d192b] to-[#49454f] rounded-[32px] p-8 text-white shadow-xl relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform duration-1000" />
+          <div className="flex-1 bg-gradient-to-br from-[#1d192b] via-[#352f44] to-[#49454f] bg-[length:200%_200%] animate-gradient-mesh rounded-[32px] p-8 text-white shadow-[0_20px_60px_-15px_rgba(29,25,43,0.4)] relative overflow-hidden group">
+            {/* Glow orbs */}
+            <div className="absolute top-0 left-0 w-64 h-64 bg-[#6750a4]/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 group-hover:scale-125 transition-transform duration-1000" />
+            <div className="absolute bottom-0 right-0 w-48 h-48 bg-[#d0bcff]/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
+            {/* Faded icons inside welcome card */}
+            <FadedIconsBackground count={18} className="opacity-40" />
 
             <div className="relative z-10 h-full flex flex-col justify-between">
               <div>
@@ -1079,13 +1084,13 @@ export default function Dashboard() {
                 <button
                   data-tutorial="add-item-button"
                   onClick={handleOpenAddModal}
-                  className="flex items-center gap-2 bg-[#d0bcff] text-[#381e72] px-6 py-3 rounded-full font-bold hover:bg-[#e8def8] transition-all shadow-sm active:scale-95"
+                  className="flex items-center gap-2 bg-[#d0bcff] text-[#381e72] px-7 py-3.5 rounded-[28px] font-bold hover:bg-[#e8def8] hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md active:scale-95"
                 >
                   <Plus className="w-5 h-5" />
                   הוסף פריט
                 </button>
                 <Link to="/checklist">
-                  <button className="flex items-center gap-2 bg-white/10 text-white px-6 py-3 rounded-full font-medium hover:bg-white/20 transition-all backdrop-blur-sm border border-white/20 active:scale-95">
+                  <button className="flex items-center gap-2 bg-white/10 text-white px-7 py-3.5 rounded-[28px] font-medium hover:bg-white/20 hover:-translate-y-0.5 transition-all backdrop-blur-sm border border-white/20 active:scale-95">
                     <ClipboardList className="w-5 h-5" />
                     בחרי מהצ'קליסט
                   </button>
@@ -1094,13 +1099,13 @@ export default function Dashboard() {
                   <>
                     <button
                       onClick={() => setShowShareModal(true)}
-                      className="flex items-center gap-2 bg-white/10 text-white px-6 py-3 rounded-full font-medium hover:bg-white/20 transition-all backdrop-blur-sm border border-white/10 active:scale-95"
+                      className="flex items-center gap-2 bg-white/10 text-white px-7 py-3.5 rounded-[28px] font-medium hover:bg-white/20 hover:-translate-y-0.5 transition-all backdrop-blur-sm border border-white/10 active:scale-95"
                     >
                       <Share2 className="w-5 h-5" />
                       שתף
                     </button>
                     <Link to={`/registry/${registry.slug}`}>
-                      <button className="flex items-center gap-2 bg-white/10 text-white px-6 py-3 rounded-full font-medium hover:bg-white/20 transition-all backdrop-blur-sm border border-white/10 active:scale-95">
+                      <button className="flex items-center gap-2 bg-white/10 text-white px-7 py-3.5 rounded-[28px] font-medium hover:bg-white/20 hover:-translate-y-0.5 transition-all backdrop-blur-sm border border-white/10 active:scale-95">
                         <Eye className="w-5 h-5" />
                         צפה כאורח
                       </button>
@@ -1113,7 +1118,7 @@ export default function Dashboard() {
 
           {/* Stats Cards */}
           <div data-tutorial="dashboard-stats" className="flex flex-col sm:flex-row gap-4 xl:w-auto">
-            <div className="bg-[#f3edff] rounded-[32px] p-6 flex flex-col justify-between min-w-[240px] border border-[#eaddff] relative overflow-hidden">
+            <div className="bg-[#f3edff] rounded-[32px] p-6 flex flex-col justify-between min-w-[240px] border border-[#eaddff] relative overflow-hidden hover:shadow-[0_20px_40px_-12px_rgba(103,80,164,0.15)] hover:-translate-y-1 transition-all duration-300">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <div className="bg-white p-2 rounded-xl text-[#6750a4] shadow-sm">
@@ -1126,7 +1131,7 @@ export default function Dashboard() {
               <div className="mt-6">
                 <div className="h-3 w-full bg-[#eaddff] rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#6750a4] rounded-full transition-all duration-1000 ease-out"
+                    className="h-full bg-[#6750a4] rounded-full animate-progress-fill"
                     style={{ width: `${completionPercent}%` }}
                   />
                 </div>
@@ -1135,9 +1140,9 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-            <div className="bg-white rounded-[32px] p-6 flex flex-col justify-between min-w-[200px] border border-[#e7e0ec] shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-[32px] p-6 flex flex-col justify-between min-w-[200px] border border-[#e7e0ec] shadow-sm hover:shadow-[0_20px_40px_-12px_rgba(103,80,164,0.15)] hover:-translate-y-1 transition-all duration-300">
               <div className="flex items-center gap-2 mb-2">
-                <div className="bg-[#f5f5f5] p-2 rounded-xl text-[#49454f]">
+                <div className="bg-[#f3edff] p-2 rounded-xl text-[#6750a4]">
                   <Gift className="w-5 h-5" />
                 </div>
                 <span className="text-xs font-bold text-[#49454f] uppercase tracking-wide">סה״כ מתנות</span>
@@ -1151,7 +1156,7 @@ export default function Dashboard() {
         </div>
 
         {/* Filters & Content */}
-        <div className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-4 sticky top-0 z-30 bg-white/70 backdrop-blur-xl rounded-[24px] p-4 -mx-2 px-6 border border-white/60 shadow-[0_4px_20px_-4px_rgba(103,80,164,0.08)]">
           <h2 className="text-2xl font-bold text-[#1d192b] flex items-center gap-3">
             הפריטים שלי
             <span className="text-sm font-bold text-[#6750a4] bg-[#eaddff] px-3 py-1 rounded-full">
@@ -1248,28 +1253,31 @@ export default function Dashboard() {
           </div>
         ) : items.length === 0 ? (
           /* Empty State */
-          <div className="bg-white rounded-[32px] border border-[#e7e0ec] p-12 text-center">
-            <div className="w-20 h-20 bg-[#f3edff] rounded-[24px] flex items-center justify-center mx-auto mb-6 text-[#6750a4] rotate-3">
-              <Package className="w-10 h-10" />
-            </div>
-            <h2 className="text-2xl font-bold text-[#1d192b] mb-3">הרשימה שלכם ריקה</h2>
-            <p className="text-[#49454f] mb-8 max-w-md mx-auto leading-relaxed">
-              זה הזמן למלא את הרשימה! אפשר להוסיף פריטים ידנית או להעזר בצ׳ק ליסט המומלץ שלנו.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={handleOpenAddModal}
-                className="flex items-center gap-2 bg-[#6750a4] text-white px-8 py-3 rounded-full font-bold hover:bg-[#503e85] transition-all shadow-md active:scale-95"
-              >
-                <Plus className="w-5 h-5" />
-                הוסף פריט ידנית
-              </button>
-              <Link to="/checklist">
-                <button className="flex items-center gap-2 bg-white border-2 border-[#e7e0ec] text-[#1d192b] px-8 py-3 rounded-full font-bold hover:border-[#6750a4] hover:text-[#6750a4] transition-all active:scale-95">
-                  <ClipboardList className="w-5 h-5" />
-                  בחרי מהצ'קליסט
+          <div className="bg-white rounded-[32px] border border-[#e7e0ec] p-12 text-center relative overflow-hidden animate-fade-in-up">
+            <FadedIconsBackground count={25} className="opacity-50" />
+            <div className="relative z-10">
+              <div className="w-20 h-20 bg-[#f3edff] rounded-[24px] flex items-center justify-center mx-auto mb-6 text-[#6750a4] rotate-3 shadow-lg">
+                <Package className="w-10 h-10" />
+              </div>
+              <h2 className="text-2xl font-bold text-[#1d192b] mb-3">הרשימה שלכם ריקה</h2>
+              <p className="text-[#49454f] mb-8 max-w-md mx-auto leading-relaxed">
+                זה הזמן למלא את הרשימה! אפשר להוסיף פריטים ידנית או להעזר בצ׳ק ליסט המומלץ שלנו.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={handleOpenAddModal}
+                  className="flex items-center gap-2 bg-[#6750a4] text-white px-8 py-3.5 rounded-[28px] font-bold hover:bg-[#503e85] hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md active:scale-95"
+                >
+                  <Plus className="w-5 h-5" />
+                  הוסף פריט ידנית
                 </button>
-              </Link>
+                <Link to="/checklist">
+                  <button className="flex items-center gap-2 bg-white border-2 border-[#e7e0ec] text-[#1d192b] px-8 py-3.5 rounded-[28px] font-bold hover:border-[#6750a4] hover:text-[#6750a4] hover:-translate-y-0.5 transition-all active:scale-95">
+                    <ClipboardList className="w-5 h-5" />
+                    בחרי מהצ'קליסט
+                  </button>
+                </Link>
+              </div>
             </div>
           </div>
         ) : (
@@ -1285,14 +1293,16 @@ export default function Dashboard() {
                 <div key={category.id}>
                   {/* Category Header */}
                   <div className="flex items-center gap-3 mb-6">
-                    <div
-                      className={`p-2 rounded-xl bg-gradient-to-br ${category.color} text-white shadow-sm`}
-                    >
-                      <CategoryIcon className="w-5 h-5" />
+                    <div className="flex items-center gap-3 bg-gradient-to-l from-transparent to-[#f3edff]/60 rounded-2xl py-2 px-3 pr-4">
+                      <div
+                        className={`p-2.5 rounded-xl bg-gradient-to-br ${category.color} text-white shadow-md`}
+                      >
+                        <CategoryIcon className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-xl font-bold text-[#1d192b]">{category.name}</h3>
                     </div>
-                    <h3 className="text-xl font-bold text-[#1d192b]">{category.name}</h3>
-                    <div className="h-px flex-1 bg-[#e7e0ec] ml-4" />
-                    <span className="text-sm font-medium text-[#49454f] bg-white border border-[#e7e0ec] px-3 py-1 rounded-full">
+                    <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#e7e0ec] ml-4" />
+                    <span className="text-sm font-medium text-[#6750a4] bg-[#f3edff] border border-[#eaddff] px-3 py-1 rounded-full">
                       {categoryItems.length} פריטים
                     </span>
                   </div>
@@ -1333,14 +1343,16 @@ export default function Dashboard() {
 
             {/* PURCHASED ITEMS SECTION */}
             {purchasedItems.length > 0 && (
-              <div className="pt-8 border-t-2 border-dashed border-[#e7e0ec] mt-12">
-                <div className="flex items-center gap-3 mb-8 opacity-70">
-                  <div className="p-2 rounded-xl bg-green-100 text-green-700 shadow-sm">
-                    <Check className="w-5 h-5" strokeWidth={3} />
+              <div className="pt-8 border-t-2 border-dashed border-[#e7e0ec] mt-12 bg-gradient-to-b from-green-50/30 to-transparent rounded-[32px] px-4 -mx-4 pb-4">
+                <div className="flex items-center gap-3 mb-8 opacity-80">
+                  <div className="flex items-center gap-3 bg-gradient-to-l from-transparent to-green-50/60 rounded-2xl py-2 px-3 pr-4">
+                    <div className="p-2.5 rounded-xl bg-green-100 text-green-700 shadow-md">
+                      <Check className="w-5 h-5" strokeWidth={3} />
+                    </div>
+                    <h3 className="text-xl font-bold text-[#1d192b]">נרכשו כבר</h3>
                   </div>
-                  <h3 className="text-xl font-bold text-[#1d192b]">נרכשו כבר</h3>
-                  <div className="h-px flex-1 bg-[#e7e0ec] ml-4" />
-                  <span className="text-sm font-medium text-[#49454f] bg-white border border-[#e7e0ec] px-3 py-1 rounded-full">
+                  <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#e7e0ec] ml-4" />
+                  <span className="text-sm font-medium text-green-700 bg-green-50 border border-green-100 px-3 py-1 rounded-full">
                     {purchasedItems.length} פריטים
                   </span>
                 </div>

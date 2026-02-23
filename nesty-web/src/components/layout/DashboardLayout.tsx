@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import SideNav from './SideNav'
 import OnboardingTutorial from '../OnboardingTutorial'
+import FadedIconsBackground from '../animations/FadedIconsBackground'
 
 // Helper to get user-specific localStorage keys
 const getTutorialKey = (userId: string) => `nesty_tutorial_completed_${userId}`
@@ -142,7 +143,9 @@ export default function DashboardLayout() {
       <SideNav giftsCount={giftsCount} />
 
       {/* Main Content - with padding for mobile bottom nav */}
-      <main className="flex-1 min-w-0 pb-20 lg:pb-0">
+      <main className="flex-1 min-w-0 pb-20 lg:pb-0 relative">
+        {/* Faded icons background across all dashboard pages */}
+        <FadedIconsBackground count={40} className="z-0 opacity-70" />
         <Outlet context={{
           giftsCount,
           refreshGiftsCount: fetchGiftsCount,
