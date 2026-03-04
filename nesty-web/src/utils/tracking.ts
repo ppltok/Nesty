@@ -4,6 +4,7 @@
 declare global {
   interface Window {
     dataLayer: Record<string, unknown>[];
+    fbq?: (...args: unknown[]) => void;
   }
 }
 
@@ -135,6 +136,14 @@ export const trackOnboardingCompleted = (params: {
   registry_id: string;
 }) => {
   pushEvent('onboarding_completed', params);
+
+  // Fire Meta Pixel CompleteRegistration standard event
+  if (typeof window !== 'undefined' && window.fbq) {
+    window.fbq('track', 'CompleteRegistration', {
+      content_name: 'Nesty Registry',
+      status: true,
+    });
+  }
 };
 
 // ===================
