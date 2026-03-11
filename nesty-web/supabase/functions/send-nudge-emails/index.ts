@@ -331,7 +331,7 @@ serve(async (req) => {
       .from('profiles')
       .select('id, email, first_name')
       .eq('onboarding_completed', true)
-      .eq('email_notifications', true)
+      .eq('marketing_emails', true)
       .is('checklist_nudge_sent_at', null)
       .lt('updated_at', sevenDaysAgo.toISOString())
 
@@ -407,7 +407,7 @@ serve(async (req) => {
       .from('profiles')
       .select('id, email, first_name')
       .eq('onboarding_completed', true)
-      .eq('email_notifications', true)
+      .eq('marketing_emails', true)
       .is('share_nudge_sent_at', null)
       .is('registry_shared_at', null)
 
