@@ -59,55 +59,107 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
 
   return (
     <>
-      {/* Mobile Bottom Navigation Bar */}
+      {/* Mobile Bottom Navigation Bar — Dashboard centered like Instagram */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#e7e0ec] shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="flex items-center justify-around h-16 px-2">
-          {navItems.map((item) => {
+        <div className="flex items-center justify-around h-16 px-1 relative">
+          {/* Right side items (RTL: appear first = right) */}
+          {navItems.filter(i => i.id !== 'dashboard').slice(0, 2).map((item) => {
             const Icon = item.icon
             const active = isActive(item.path)
-
             return (
               <Link
                 key={item.id}
                 to={item.path}
                 data-tutorial={`nav-${item.id}-mobile`}
                 className={`
-                  flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-2xl transition-all duration-200 min-w-[72px]
-                  ${active
-                    ? 'bg-[#eaddff] text-[#6750a4]'
-                    : 'text-[#49454f] hover:bg-[#f3edff]'
-                  }
+                  flex flex-col items-center justify-center gap-0.5 py-2 rounded-2xl transition-all duration-200 flex-1 max-w-[72px]
+                  ${active ? 'text-[#6750a4]' : 'text-[#49454f]'}
                 `}
               >
                 <div className="relative">
-                  <Icon className={`w-6 h-6 ${item.id === 'dashboard' ? 'text-[#e91e63] fill-[#e91e63]' : active ? 'text-[#6750a4]' : ''}`} />
+                  <Icon className={`w-[22px] h-[22px] ${active ? 'text-[#6750a4]' : ''}`} />
                   {item.badge && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] bg-[#b3261e] text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1">
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] bg-[#b3261e] text-white text-[9px] rounded-full flex items-center justify-center font-bold px-0.5">
                       {item.badge > 9 ? '9+' : item.badge}
                     </span>
                   )}
                 </div>
-                <span className={`text-[11px] font-medium ${active ? 'text-[#6750a4]' : ''}`}>
+                <span className={`text-[10px] font-medium ${active ? 'text-[#6750a4]' : ''}`}>
                   {item.label}
                 </span>
               </Link>
             )
           })}
 
-          {/* Settings button */}
+          {/* CENTER — Dashboard (raised, prominent) */}
+          {(() => {
+            const dashboardItem = navItems.find(i => i.id === 'dashboard')!
+            const DashIcon = dashboardItem.icon
+            const dashActive = isActive(dashboardItem.path)
+            return (
+              <Link
+                to={dashboardItem.path}
+                data-tutorial="nav-dashboard-mobile"
+                className="flex flex-col items-center -mt-5 relative z-10"
+              >
+                <div
+                  className={`
+                    w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 active:scale-90
+                    ${dashActive
+                      ? 'bg-gradient-to-br from-[#6750a4] to-[#503e85] shadow-[0_4px_20px_rgba(103,80,164,0.4)]'
+                      : 'bg-gradient-to-br from-[#e91e63] to-[#c2185b] shadow-[0_4px_20px_rgba(233,30,99,0.3)]'
+                    }
+                  `}
+                >
+                  <DashIcon className="w-6 h-6 text-white fill-white" />
+                </div>
+                <span className={`text-[10px] font-bold mt-0.5 ${dashActive ? 'text-[#6750a4]' : 'text-[#e91e63]'}`}>
+                  {dashboardItem.label}
+                </span>
+              </Link>
+            )
+          })()}
+
+          {/* Left side items (RTL: appear last = left) */}
+          {navItems.filter(i => i.id !== 'dashboard').slice(2).map((item) => {
+            const Icon = item.icon
+            const active = isActive(item.path)
+            return (
+              <Link
+                key={item.id}
+                to={item.path}
+                data-tutorial={`nav-${item.id}-mobile`}
+                className={`
+                  flex flex-col items-center justify-center gap-0.5 py-2 rounded-2xl transition-all duration-200 flex-1 max-w-[72px]
+                  ${active ? 'text-[#6750a4]' : 'text-[#49454f]'}
+                `}
+              >
+                <div className="relative">
+                  <Icon className={`w-[22px] h-[22px] ${active ? 'text-[#6750a4]' : ''}`} />
+                  {item.badge && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] bg-[#b3261e] text-white text-[9px] rounded-full flex items-center justify-center font-bold px-0.5">
+                      {item.badge > 9 ? '9+' : item.badge}
+                    </span>
+                  )}
+                </div>
+                <span className={`text-[10px] font-medium ${active ? 'text-[#6750a4]' : ''}`}>
+                  {item.label}
+                </span>
+              </Link>
+            )
+          })}
+
+          {/* Settings */}
           <Link
             to="/settings"
             data-tutorial="nav-settings-mobile"
             className={`
-              flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-2xl transition-all duration-200 min-w-[72px]
-              ${isActive('/settings')
-                ? 'bg-[#eaddff] text-[#6750a4]'
-                : 'text-[#49454f] hover:bg-[#f3edff]'
-              }
+              flex flex-col items-center justify-center gap-0.5 py-2 rounded-2xl transition-all duration-200 flex-1 max-w-[72px]
+              ${isActive('/settings') ? 'text-[#6750a4]' : 'text-[#49454f]'}
             `}
           >
-            <Settings className={`w-6 h-6 ${isActive('/settings') ? 'text-[#6750a4]' : ''}`} />
-            <span className={`text-[11px] font-medium ${isActive('/settings') ? 'text-[#6750a4]' : ''}`}>
+            <Settings className={`w-[22px] h-[22px] ${isActive('/settings') ? 'text-[#6750a4]' : ''}`} />
+            <span className={`text-[10px] font-medium ${isActive('/settings') ? 'text-[#6750a4]' : ''}`}>
               הגדרות
             </span>
           </Link>
