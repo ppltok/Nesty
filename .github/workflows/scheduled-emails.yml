@@ -1,0 +1,68 @@
+name: Scheduled Emails
+
+on:
+  schedule:
+    # Weekly emails: Mondays at 6:00 UTC (9:00 Israel time during DST)
+    - cron: '0 6 * * 1'
+    # Nudge emails: Daily at 7:00 UTC (10:00 Israel time during DST)
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+    inputs:
+      function:
+        description: 'Which function to run'
+        required: true
+        type: choice
+        options:
+          - send-weekly-emails
+          - send-nudge-emails
+          - both
+
+jobs:
+  send-emails:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Weekly Emails
+        if: >
+          github.event.schedule == '0 6 * * 1' ||
+          github.event.inputs.function == 'send-weekly-emails' ||
+          github.event.inputs.function == 'both'
+        run: |
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/send-weekly-emails" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json")
+
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+
+          echo "Status: $http_code"
+          echo "Response: $body"
+
+          if [ "$http_code" -ge 400 ]; then
+            echo "::error::Weekly emails failed with status $http_code"
+            exit 1
+          fi
+
+      - name: Send Nudge Emails
+        if: >
+          github.event.schedule == '0 7 * * *' ||
+          github.event.inputs.function == 'send-nudge-emails' ||
+          github.event.inputs.function == 'both'
+        run: |
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/send-nudge-emails" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json")
+
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+
+          echo "Status: $http_code"
+          echo "Response: $body"
+
+          if [ "$http_code" -ge 400 ]; then
+            echo "::error::Nudge emails failed with status $http_code"
+            exit 1
+          fi
