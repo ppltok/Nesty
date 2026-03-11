@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, Link2, Check, MessageCircle, Mail, QrCode, Copy, Share2 } from 'lucide-react'
 import { Button } from './ui/Button'
 import { trackRegistryShared } from '../utils/tracking'
+import { supabase } from '../lib/supabase'
 
 interface ShareModalProps {
   isOpen: boolean
@@ -26,6 +27,15 @@ export default function ShareModal({ isOpen, onClose, registrySlug, ownerName, r
         share_method: method,
         items_count: itemsCount,
       })
+      // Mark first share in DB for nudge email tracking (fire-and-forget)
+      supabase
+        .from('profiles')
+        .update({ registry_shared_at: new Date().toISOString() })
+        .eq('id', userId)
+        .is('registry_shared_at', null)
+        .then(({ error }) => {
+          if (error) console.error('Failed to track share:', error)
+        })
     }
   }
 
