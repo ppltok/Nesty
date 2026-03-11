@@ -215,14 +215,21 @@ export default function PurchaseModal({
 
       console.log('Attempting to insert purchase for item:', item.id)
 
+      // NOTE: order_number column does not exist in the purchases table yet.
+      // Store it in gift_message as a prefix until the column is added via migration.
+      const orderNum = formData.orderNumber.trim()
+      const giftMsg = formData.giftMessage.trim()
+      const combinedMessage = orderNum
+        ? (giftMsg ? `[הזמנה: ${orderNum}] ${giftMsg}` : `[הזמנה: ${orderNum}]`)
+        : (giftMsg || null)
+
       const purchaseData = {
         item_id: item.id,
         buyer_name: formData.buyerName.trim(),
         buyer_email: formData.buyerEmail.trim().toLowerCase(),
         buyer_phone: formData.buyerPhone.trim() || null,
         purchased_at: storeName,
-        order_number: formData.orderNumber.trim() || null,
-        gift_message: formData.giftMessage.trim() || null,
+        gift_message: combinedMessage,
         is_surprise: formData.isSurprise,
         quantity_purchased: formData.quantity,
         status: 'confirmed',

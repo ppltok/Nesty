@@ -1,53 +1,82 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { ChevronDown, Check, Plus, Trash2, ClipboardList, Sparkles, Heart, AlertCircle, Feather, Save, RotateCcw, X, Info, Lightbulb, EyeOff, ShoppingBag, ExternalLink } from 'lucide-react'
+import {
+  ChevronDown, Check, Plus, Trash2, Sparkles,
+  RotateCcw, X, Info, Lightbulb,
+  EyeOff, ShoppingBag, ExternalLink, Search
+} from 'lucide-react'
 import AddItemModal from '../components/AddItemModal'
 import { CATEGORIES, ITEMS_DATA } from '../data/categories'
 import { supabase } from '../lib/supabase'
 import type { ChecklistPreference, PriorityLevel } from '../types'
 
+// Category accent colors for left border + header tint
+const CATEGORY_COLORS: Record<string, { border: string; bg: string; text: string }> = {
+  strollers:  { border: '#6366f1', bg: '#eef2ff', text: '#4338ca' },
+  car_safety: { border: '#ef4444', bg: '#fef2f2', text: '#dc2626' },
+  furniture:  { border: '#f59e0b', bg: '#fffbeb', text: '#d97706' },
+  safety:     { border: '#10b981', bg: '#ecfdf5', text: '#059669' },
+  feeding:    { border: '#3b82f6', bg: '#eff6ff', text: '#2563eb' },
+  nursing:    { border: '#ec4899', bg: '#fdf2f8', text: '#db2777' },
+  birth_prep: { border: '#8b5cf6', bg: '#f5f3ff', text: '#7c3aed' },
+  bath:       { border: '#06b6d4', bg: '#ecfeff', text: '#0891b2' },
+  clothing:   { border: '#f97316', bg: '#fff7ed', text: '#ea580c' },
+  bedding:    { border: '#14b8a6', bg: '#f0fdfa', text: '#0d9488' },
+  toys:       { border: '#a855f7', bg: '#faf5ff', text: '#9333ea' },
+  general:    { border: '#64748b', bg: '#f8fafc', text: '#475569' },
+  siblings:   { border: '#e11d48', bg: '#fff1f2', text: '#be123c' },
+}
+
 export default function Checklist() {
   const { user, registry, isLoading: authLoading } = useAuth()
+
+  // === Existing state (unchanged) ===
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [prefilledCategory, setPrefilledCategory] = useState<string | undefined>()
-  const [expandedCategory, setExpandedCategory] = useState<string | null>('strollers')
   const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
+  const [preferences, setPreferences] = useState<ChecklistPreference[]>([])
+  const [localNotes, setLocalNotes] = useState<Record<string, string>>({})
   const [showDeletedSection, setShowDeletedSection] = useState(false)
   const [showAddCustomItem, setShowAddCustomItem] = useState(false)
   const [customItemName, setCustomItemName] = useState('')
   const [customItemCategory, setCustomItemCategory] = useState('')
-
-  // Checklist preferences from database
-  const [preferences, setPreferences] = useState<ChecklistPreference[]>([])
-
-  // Local notes state (not synced to DB until save)
-  const [localNotes, setLocalNotes] = useState<Record<string, string>>({})
-  const [hasUnsavedNotes, setHasUnsavedNotes] = useState(false)
-
-  // State for mobile info/tip popovers
   const [activePopover, setActivePopover] = useState<{ item: string; type: 'info' | 'tip' } | null>(null)
-
-  // State for recommended products popover
   const [activeProductsPopover, setActiveProductsPopover] = useState<string | null>(null)
-
-  // State for prefilled product data when adding to registry
   const [prefilledProductData, setPrefilledProductData] = useState<{
-    name?: string
-    category?: string
-    price?: string
-    storeName?: string
-    originalUrl?: string
-    imageUrl?: string
+    name?: string; category?: string; price?: string; storeName?: string; originalUrl?: string; imageUrl?: string
   } | undefined>()
-
-  // State to track if adding from recommended product (opens manual tab + highlights color)
   const [isFromRecommendedProduct, setIsFromRecommendedProduct] = useState(false)
 
-  // Create a key for the notes map
+  // === NEW: Redesign state ===
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'done' | 'remaining'>('all')
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'essential' | 'nice_to_have'>('all')
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(() => {
+    // Default: all collapsed. Persist opened sections in localStorage.
+    const allIds = new Set(CATEGORIES.map(c => c.id))
+    try {
+      const saved = localStorage.getItem('checklist_open_categories')
+      if (saved) {
+        const openIds: string[] = JSON.parse(saved)
+        openIds.forEach(id => allIds.delete(id))
+      }
+    } catch { /* ignore */ }
+    return allIds
+  })
+  const [savingNotes, setSavingNotes] = useState<Set<string>>(new Set())
+  const [savedNotes, setSavedNotes] = useState<Set<string>>(new Set())
+  const [activeCategory, setActiveCategory] = useState<string>(CATEGORIES[0]?.id || '')
+
+  // Refs
+  const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const autoSaveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const savedTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const chipScrollRef = useRef<HTMLDivElement>(null)
+
+  // === Key helper ===
   const getNotesKey = (categoryId: string, itemName: string) => `${categoryId}::${itemName}`
 
-  // Fetch preferences from database
+  // === Fetch preferences (unchanged) ===
   const fetchPreferences = useCallback(async () => {
     if (!user) return
     setIsLoading(true)
@@ -56,11 +85,8 @@ export default function Checklist() {
         .from('checklist_preferences')
         .select('*')
         .eq('user_id', user.id)
-
       if (error) throw error
       setPreferences(data || [])
-
-      // Initialize local notes from fetched data
       const notesMap: Record<string, string> = {}
       data?.forEach(pref => {
         notesMap[getNotesKey(pref.category_id, pref.item_name)] = pref.notes || ''
@@ -74,61 +100,40 @@ export default function Checklist() {
   }, [user])
 
   useEffect(() => {
-    if (user) {
-      fetchPreferences()
-    }
+    if (user) fetchPreferences()
   }, [user, fetchPreferences])
 
-  // Warn before leaving with unsaved changes
+  // Cleanup timers on unmount
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedNotes) {
-        e.preventDefault()
-        e.returnValue = 'יש לך הערות שלא נשמרו. האם אתה בטוח שברצונך לעזוב?'
-        return e.returnValue
-      }
+    const autoTimers = autoSaveTimers.current
+    const svdTimers = savedTimers.current
+    return () => {
+      Object.values(autoTimers).forEach(clearTimeout)
+      Object.values(svdTimers).forEach(clearTimeout)
     }
+  }, [])
 
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [hasUnsavedNotes])
-
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategory(expandedCategory === categoryId ? null : categoryId)
-  }
-
-  // Get preference for a specific item
+  // === DB helpers (unchanged) ===
   const getPreference = (categoryId: string, itemName: string): ChecklistPreference | undefined => {
     return preferences.find(p => p.category_id === categoryId && p.item_name === itemName)
   }
 
-  // Upsert preference (create or update) - excluding notes
   const upsertPreference = async (
     categoryId: string,
     itemName: string,
     updates: Partial<Pick<ChecklistPreference, 'quantity' | 'is_checked' | 'is_hidden' | 'priority'>>
   ) => {
     if (!user) return
-
     const existing = getPreference(categoryId, itemName)
-
     try {
       if (existing) {
-        // Update existing
         const { error } = await supabase
           .from('checklist_preferences')
           .update(updates)
           .eq('id', existing.id)
-
         if (error) throw error
-
-        setPreferences(prev =>
-          prev.map(p =>
-            p.id === existing.id ? { ...p, ...updates } : p
-          )
-        )
+        setPreferences(prev => prev.map(p => p.id === existing.id ? { ...p, ...updates } : p))
       } else {
-        // Insert new
         const { data, error } = await supabase
           .from('checklist_preferences')
           .insert({
@@ -143,160 +148,91 @@ export default function Checklist() {
           })
           .select()
           .single()
-
         if (error) throw error
-        if (data) {
-          setPreferences(prev => [...prev, data])
-        }
+        if (data) setPreferences(prev => [...prev, data])
       }
     } catch (err) {
       console.error('Error saving preference:', err)
     }
   }
 
-  // Save all unsaved notes
-  const saveAllNotes = async () => {
+  // === Auto-save notes ===
+  const autoSaveNote = useCallback(async (categoryId: string, itemName: string, notes: string) => {
     if (!user) return
-
-    setIsSaving(true)
+    const key = getNotesKey(categoryId, itemName)
+    setSavingNotes(prev => new Set(prev).add(key))
     try {
-      // Find all notes that differ from DB
-      const notesToSave: { categoryId: string; itemName: string; notes: string }[] = []
-
-      Object.entries(localNotes).forEach(([key, localNote]) => {
-        const [categoryId, itemName] = key.split('::')
-        const dbNote = getPreference(categoryId, itemName)?.notes ?? ''
-        if (localNote !== dbNote) {
-          notesToSave.push({ categoryId, itemName, notes: localNote })
-        }
-      })
-
-      // Save each note
-      for (const { categoryId, itemName, notes } of notesToSave) {
-        const existing = getPreference(categoryId, itemName)
-
-        if (existing) {
-          await supabase
-            .from('checklist_preferences')
-            .update({ notes })
-            .eq('id', existing.id)
-
-          setPreferences(prev =>
-            prev.map(p =>
-              p.id === existing.id ? { ...p, notes } : p
-            )
-          )
-        } else {
-          const { data } = await supabase
-            .from('checklist_preferences')
-            .insert({
-              user_id: user.id,
-              category_id: categoryId,
-              item_name: itemName,
-              quantity: 1,
-              is_checked: false,
-              is_hidden: false,
-              notes,
-              priority: 'essential',
-            })
-            .select()
-            .single()
-
-          if (data) {
-            setPreferences(prev => [...prev, data])
-          }
-        }
+      const existing = getPreference(categoryId, itemName)
+      if (existing) {
+        await supabase.from('checklist_preferences').update({ notes }).eq('id', existing.id)
+        setPreferences(prev => prev.map(p => p.id === existing.id ? { ...p, notes } : p))
+      } else {
+        const { data } = await supabase.from('checklist_preferences')
+          .insert({ user_id: user.id, category_id: categoryId, item_name: itemName, quantity: 1, is_checked: false, is_hidden: false, notes, priority: 'essential' as PriorityLevel })
+          .select().single()
+        if (data) setPreferences(prev => [...prev, data])
       }
-
-      setHasUnsavedNotes(false)
+      setSavedNotes(prev => new Set(prev).add(key))
+      savedTimers.current[key] = setTimeout(() => {
+        setSavedNotes(prev => { const n = new Set(prev); n.delete(key); return n })
+      }, 2000)
     } catch (err) {
-      console.error('Error saving notes:', err)
-      alert('שגיאה בשמירת ההערות. נסה שוב.')
+      console.error('Error auto-saving note:', err)
     } finally {
-      setIsSaving(false)
+      setSavingNotes(prev => { const n = new Set(prev); n.delete(key); return n })
+    }
+  }, [user, preferences])
+
+  const updateLocalNotes = (categoryId: string, itemName: string, notes: string) => {
+    const key = getNotesKey(categoryId, itemName)
+    setLocalNotes(prev => ({ ...prev, [key]: notes }))
+    if (autoSaveTimers.current[key]) clearTimeout(autoSaveTimers.current[key])
+    autoSaveTimers.current[key] = setTimeout(() => autoSaveNote(categoryId, itemName, notes), 1000)
+  }
+
+  const handleNotesBlur = (categoryId: string, itemName: string) => {
+    const key = getNotesKey(categoryId, itemName)
+    const localNote = localNotes[key] ?? ''
+    const dbNote = getPreference(categoryId, itemName)?.notes ?? ''
+    if (localNote !== dbNote) {
+      if (autoSaveTimers.current[key]) clearTimeout(autoSaveTimers.current[key])
+      autoSaveNote(categoryId, itemName, localNote)
     }
   }
 
-  // Hide a suggestion from the checklist
+  // === Item operations (unchanged logic) ===
   const hideSuggestion = async (categoryId: string, itemName: string) => {
     if (!confirm(`בטוח שאתם לא צריכים "${itemName}"?`)) return
     await upsertPreference(categoryId, itemName, { is_hidden: true })
   }
 
-  // Restore a hidden suggestion
   const restoreSuggestion = async (categoryId: string, itemName: string) => {
     await upsertPreference(categoryId, itemName, { is_hidden: false })
   }
 
-  // Add a custom item to a category
   const addCustomItem = async () => {
     if (!customItemName.trim() || !customItemCategory) return
-
     await upsertPreference(customItemCategory, customItemName.trim(), {
-      is_checked: false,
-      is_hidden: false,
-      priority: 'essential',
-      quantity: 1,
+      is_checked: false, is_hidden: false, priority: 'essential', quantity: 1,
     })
-
     setCustomItemName('')
     setCustomItemCategory('')
     setShowAddCustomItem(false)
   }
 
-  // Toggle check on a suggestion
   const toggleSuggestionCheck = async (categoryId: string, itemName: string) => {
     const pref = getPreference(categoryId, itemName)
-    const newChecked = !(pref?.is_checked ?? false)
-    await upsertPreference(categoryId, itemName, { is_checked: newChecked })
+    await upsertPreference(categoryId, itemName, { is_checked: !(pref?.is_checked ?? false) })
   }
 
-  // Check if a suggestion is checked
   const isSuggestionChecked = (categoryId: string, itemName: string): boolean => {
     return getPreference(categoryId, itemName)?.is_checked ?? false
   }
 
-  // Check if a suggestion is hidden
   const isSuggestionHidden = (categoryId: string, itemName: string): boolean => {
     return getPreference(categoryId, itemName)?.is_hidden ?? false
   }
 
-  // Get all deleted (hidden) items across all categories
-  const getDeletedItems = () => {
-    const deleted: { categoryId: string; categoryName: string; itemName: string }[] = []
-
-    CATEGORIES.forEach(category => {
-      category.suggestedItems.forEach(item => {
-        if (isSuggestionHidden(category.id, item)) {
-          deleted.push({
-            categoryId: category.id,
-            categoryName: category.name,
-            itemName: item,
-          })
-        }
-      })
-    })
-
-    // Also include custom items that are hidden
-    preferences
-      .filter(p => p.is_hidden && !CATEGORIES.some(c => c.suggestedItems.includes(p.item_name)))
-      .forEach(p => {
-        const category = CATEGORIES.find(c => c.id === p.category_id)
-        if (category) {
-          deleted.push({
-            categoryId: p.category_id,
-            categoryName: category.name,
-            itemName: p.item_name,
-          })
-        }
-      })
-
-    return deleted
-  }
-
-  const deletedItems = getDeletedItems()
-
-  // Get/set quantity for a suggestion
   const getQuantity = (categoryId: string, itemName: string): number => {
     return getPreference(categoryId, itemName)?.quantity ?? 1
   }
@@ -305,47 +241,44 @@ export default function Checklist() {
     await upsertPreference(categoryId, itemName, { quantity: Math.max(1, qty) })
   }
 
-  // Priority helpers
   const getPriority = (categoryId: string, itemName: string): PriorityLevel => {
     return getPreference(categoryId, itemName)?.priority ?? 'essential'
   }
 
   const togglePriority = async (categoryId: string, itemName: string) => {
     const current = getPriority(categoryId, itemName)
-    const newPriority = current === 'essential' ? 'nice_to_have' : 'essential'
-    await upsertPreference(categoryId, itemName, { priority: newPriority })
+    await upsertPreference(categoryId, itemName, { priority: current === 'essential' ? 'nice_to_have' : 'essential' })
   }
 
-  // Notes helpers - now use local state
   const getLocalNotes = (categoryId: string, itemName: string): string => {
     const key = getNotesKey(categoryId, itemName)
-    if (key in localNotes) {
-      return localNotes[key]
-    }
+    if (key in localNotes) return localNotes[key]
     return getPreference(categoryId, itemName)?.notes ?? ''
   }
 
-  const updateLocalNotes = (categoryId: string, itemName: string, notes: string) => {
-    const key = getNotesKey(categoryId, itemName)
-    setLocalNotes(prev => ({ ...prev, [key]: notes }))
-
-    // Check if this differs from DB
-    const dbNote = getPreference(categoryId, itemName)?.notes ?? ''
-    if (notes !== dbNote) {
-      setHasUnsavedNotes(true)
-    } else {
-      // Check if any other notes are unsaved
-      const otherUnsaved = Object.entries(localNotes).some(([k, v]) => {
-        if (k === key) return false
-        const [catId, itemN] = k.split('::')
-        const dbN = getPreference(catId, itemN)?.notes ?? ''
-        return v !== dbN
+  // === Deleted items (unchanged) ===
+  const getDeletedItems = () => {
+    const deleted: { categoryId: string; categoryName: string; itemName: string }[] = []
+    CATEGORIES.forEach(category => {
+      category.suggestedItems.forEach(item => {
+        if (isSuggestionHidden(category.id, item)) {
+          deleted.push({ categoryId: category.id, categoryName: category.name, itemName: item })
+        }
       })
-      setHasUnsavedNotes(otherUnsaved)
-    }
+    })
+    preferences
+      .filter(p => p.is_hidden && !CATEGORIES.some(c => c.suggestedItems.includes(p.item_name)))
+      .forEach(p => {
+        const category = CATEGORIES.find(c => c.id === p.category_id)
+        if (category) {
+          deleted.push({ categoryId: p.category_id, categoryName: category.name, itemName: p.item_name })
+        }
+      })
+    return deleted
   }
+  const deletedItems = getDeletedItems()
 
-  // Open add modal with category prefilled but name blank
+  // === Modal handlers (unchanged) ===
   const handleAddFromSuggestion = (categoryId: string) => {
     setPrefilledCategory(categoryId)
     setShowAddItemModal(true)
@@ -361,55 +294,120 @@ export default function Checklist() {
     setPrefilledCategory(undefined)
   }
 
-  // Get category progress
+  // === Category progress (unchanged) ===
   const getCategoryProgress = (categoryId: string) => {
     const category = CATEGORIES.find(c => c.id === categoryId)
     if (!category) return { checked: 0, total: 0 }
-
-    const visibleSuggestions = category.suggestedItems.filter(
-      item => !isSuggestionHidden(categoryId, item)
-    )
-
-    // Include custom items
+    const visibleSuggestions = category.suggestedItems.filter(item => !isSuggestionHidden(categoryId, item))
     const customItems = preferences
       .filter(p => p.category_id === categoryId && !p.is_hidden && !category.suggestedItems.includes(p.item_name))
       .map(p => p.item_name)
-
     const allVisibleItems = [...visibleSuggestions, ...customItems]
-
-    const checkedCount = allVisibleItems.filter(itemName =>
-      isSuggestionChecked(categoryId, itemName)
-    ).length
-
-    return {
-      checked: checkedCount,
-      total: allVisibleItems.length
-    }
+    const checkedCount = allVisibleItems.filter(itemName => isSuggestionChecked(categoryId, itemName)).length
+    return { checked: checkedCount, total: allVisibleItems.length }
   }
 
-  // Calculate all items for metrics (including custom items)
+  // === Metrics (unchanged) ===
   const allItems = [
-    // Suggested items
     ...CATEGORIES.flatMap(cat =>
       cat.suggestedItems
         .filter(item => !isSuggestionHidden(cat.id, item))
         .map(item => ({ categoryId: cat.id, name: item }))
     ),
-    // Custom items
     ...preferences
       .filter(p => !p.is_hidden && !CATEGORIES.some(c => c.id === p.category_id && c.suggestedItems.includes(p.item_name)))
       .map(p => ({ categoryId: p.category_id, name: p.item_name }))
   ]
-
   const totalItems = allItems.length
   const checkedItems = allItems.filter(i => isSuggestionChecked(i.categoryId, i.name)).length
-
-  // Mom's Metric: Weighted towards "Essential" items
   const essentialItems = allItems.filter(i => getPriority(i.categoryId, i.name) === 'essential')
   const checkedEssential = essentialItems.filter(i => isSuggestionChecked(i.categoryId, i.name)).length
   const nestingScore = essentialItems.length > 0 ? Math.round((checkedEssential / essentialItems.length) * 100) : 0
+  const remainingEssential = essentialItems.length - checkedEssential
 
-  // Show loading if auth or checklist is still loading
+  // === NEW: Category collapse toggle ===
+  const toggleCategoryCollapse = (categoryId: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(categoryId)) next.delete(categoryId)
+      else next.add(categoryId)
+      // Persist: save which categories are OPEN to localStorage
+      const allIds = CATEGORIES.map(c => c.id)
+      const openIds = allIds.filter(id => !next.has(id))
+      try { localStorage.setItem('checklist_open_categories', JSON.stringify(openIds)) } catch { /* ignore */ }
+      return next
+    })
+  }
+
+  // === NEW: Filter items ===
+  const getFilteredItems = (categoryId: string, items: string[]) => {
+    return items.filter(item => {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase()
+        if (!item.toLowerCase().includes(q)) return false
+      }
+      if (statusFilter === 'done' && !isSuggestionChecked(categoryId, item)) return false
+      if (statusFilter === 'remaining' && isSuggestionChecked(categoryId, item)) return false
+      if (priorityFilter !== 'all' && getPriority(categoryId, item) !== priorityFilter) return false
+      return true
+    })
+  }
+
+  // === NEW: Scroll to category ===
+  const scrollToCategory = (categoryId: string) => {
+    const el = categoryRefs.current[categoryId]
+    if (el) {
+      const offset = 200
+      const top = el.getBoundingClientRect().top + window.scrollY - offset
+      window.scrollTo({ top, behavior: 'smooth' })
+    }
+    // If collapsed, expand it (and persist)
+    setCollapsedCategories(prev => {
+      const next = new Set(prev)
+      next.delete(categoryId)
+      const allIds = CATEGORIES.map(c => c.id)
+      const openIds = allIds.filter(id => !next.has(id))
+      try { localStorage.setItem('checklist_open_categories', JSON.stringify(openIds)) } catch { /* ignore */ }
+      return next
+    })
+  }
+
+  // === NEW: IntersectionObserver for active category ===
+  useEffect(() => {
+    if (isLoading) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const catId = entry.target.getAttribute('data-category-id')
+            if (catId) setActiveCategory(catId)
+          }
+        })
+      },
+      { rootMargin: '-200px 0px -60% 0px', threshold: 0 }
+    )
+    Object.entries(categoryRefs.current).forEach(([, el]) => {
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [isLoading])
+
+  // Has any active filters?
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || priorityFilter !== 'all'
+
+  // Count filtered results
+  const filteredCount = useMemo(() => {
+    if (!hasActiveFilters) return totalItems
+    return CATEGORIES.reduce((acc, cat) => {
+      const visible = cat.suggestedItems.filter(item => !isSuggestionHidden(cat.id, item))
+      const custom = preferences
+        .filter(p => p.category_id === cat.id && !p.is_hidden && !cat.suggestedItems.includes(p.item_name))
+        .map(p => p.item_name)
+      return acc + getFilteredItems(cat.id, [...visible, ...custom]).length
+    }, 0)
+  }, [searchQuery, statusFilter, priorityFilter, preferences, hasActiveFilters])
+
+  // === Loading state ===
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-[#fffbff] flex items-center justify-center">
@@ -421,43 +419,28 @@ export default function Checklist() {
     )
   }
 
+  // === RENDER ===
   return (
-    <div className="min-h-screen bg-[#fffbff] font-sans text-[#1d192b]" dir="rtl">
+    <div className="min-h-screen bg-[#fafafa] font-sans text-[#1d192b]" dir="rtl">
       {/* Add Item Modal */}
       {registry && (
         <AddItemModal
           isOpen={showAddItemModal}
-          onClose={() => {
-            handleCloseModal()
-            setPrefilledProductData(undefined)
-            setIsFromRecommendedProduct(false)
-          }}
+          onClose={() => { handleCloseModal(); setPrefilledProductData(undefined); setIsFromRecommendedProduct(false) }}
           registryId={registry.id}
-          onSave={() => {
-            handleCloseModal()
-            setPrefilledProductData(undefined)
-            setIsFromRecommendedProduct(false)
-          }}
+          onSave={() => { handleCloseModal(); setPrefilledProductData(undefined); setIsFromRecommendedProduct(false) }}
           prefilledData={prefilledProductData || (prefilledCategory ? { category: prefilledCategory } : undefined)}
           forceManualTab={isFromRecommendedProduct}
           highlightColor={isFromRecommendedProduct}
         />
       )}
 
-      {/* Mobile Info/Tip Popover Modal */}
+      {/* Mobile Info/Tip Bottom Sheet */}
       {activePopover && ITEMS_DATA[activePopover.item] && (
-        <div
-          className="md:hidden fixed inset-0 z-50 flex items-end justify-center"
-          onClick={() => setActivePopover(null)}
-        >
+        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setActivePopover(null)}>
           <div className="absolute inset-0 bg-black/30" />
-          <div
-            className="relative w-full max-w-lg bg-white rounded-t-[24px] p-5 pb-8 shadow-2xl animate-in slide-in-from-bottom duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Handle bar */}
+          <div className="relative w-full max-w-lg bg-white rounded-t-[24px] p-5 pb-8 shadow-2xl animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
             <div className="w-12 h-1.5 bg-[#e7e0ec] rounded-full mx-auto mb-4" />
-
             <div className="flex items-start gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                 activePopover.type === 'info' ? 'bg-[#e3f2fd] text-[#1976d2]' : 'bg-[#fff8e1] text-[#f9a825]'
@@ -465,714 +448,528 @@ export default function Checklist() {
                 {activePopover.type === 'info' ? <Info className="w-5 h-5" /> : <Lightbulb className="w-5 h-5" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-bold mb-1 ${
-                  activePopover.type === 'info' ? 'text-[#1976d2]' : 'text-[#f9a825]'
-                }`}>
+                <p className={`text-sm font-bold mb-1 ${activePopover.type === 'info' ? 'text-[#1976d2]' : 'text-[#f9a825]'}`}>
                   {activePopover.type === 'info' ? 'מה זה?' : 'הטיפ שלנו'}
                 </p>
                 <p className="text-sm font-medium text-[#1d192b] mb-2">{activePopover.item}</p>
                 <p className="text-sm text-[#49454f] leading-relaxed">
-                  {activePopover.type === 'info'
-                    ? ITEMS_DATA[activePopover.item].description
-                    : ITEMS_DATA[activePopover.item].tip
-                  }
+                  {activePopover.type === 'info' ? ITEMS_DATA[activePopover.item].description : ITEMS_DATA[activePopover.item].tip}
                 </p>
               </div>
             </div>
-
-            <button
-              onClick={() => setActivePopover(null)}
-              className="mt-5 w-full py-3 bg-[#f3edff] hover:bg-[#eaddff] text-[#6750a4] rounded-xl font-medium transition-colors"
-            >
+            <button onClick={() => setActivePopover(null)} className="mt-5 w-full py-3 bg-[#f3edff] hover:bg-[#eaddff] text-[#6750a4] rounded-xl font-medium transition-colors">
               סגור
             </button>
           </div>
         </div>
       )}
 
-
-      {/* Unsaved Changes Banner */}
-      {hasUnsavedNotes && (
-        <div className="sticky top-0 z-40 bg-[#fff3cd] border-b border-[#ffc107] px-4 py-3">
-          <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-            <p className="text-[#856404] font-medium text-sm">
-              יש לך הערות שלא נשמרו
-            </p>
-            <button
-              onClick={saveAllNotes}
-              disabled={isSaving}
-              className="flex items-center gap-2 bg-[#6750a4] hover:bg-[#503e85] text-white px-4 py-2 rounded-full font-medium text-sm transition-all shadow-md disabled:opacity-50"
-            >
-              {isSaving ? (
-                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              שמור הערות
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Header Section */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
-
-          <div className="flex items-center gap-5">
-            <div className="w-20 h-20 rounded-[28px] bg-[#eaddff] flex items-center justify-center text-[#21005d] shadow-inner rotate-3 hover:rotate-6 transition-transform duration-500">
-              <ClipboardList className="w-10 h-10" />
-            </div>
-            <div>
-              <h1 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight leading-tight">
-                מה <span className="text-[#6750a4]">באמת</span> צריך?
-              </h1>
-              <div className="flex flex-wrap items-center gap-4 mt-2">
-                <p className="text-[#49454f] text-lg font-medium">
-                  התחילי כאן לגלות מה לקנות לגוזל הקטן 🐣.
+      {/* === STICKY HEADER + FILTERS === */}
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#e7e0ec]/80 shadow-sm">
+        {/* Top bar: Score + Add button */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-3">
+          <div className="flex items-center justify-between gap-4">
+            {/* Nesting Score - compact */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="relative w-12 h-12 flex-shrink-0">
+                <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3edff" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#6750a4" strokeWidth="3"
+                    strokeDasharray={`${nestingScore} ${100 - nestingScore}`}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000"
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#6750a4]">{nestingScore}%</span>
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-xl font-bold text-[#1d192b] truncate">צ'קליסט ההכנה</h1>
+                <p className="text-xs text-[#49454f] truncate">
+                  <span className="font-semibold text-[#6750a4]">{checkedItems}</span>/{totalItems} פריטים
+                  {remainingEssential > 0 && <span className="text-[#b3261e]"> · {remainingEssential} חובה נותרו</span>}
+                  {remainingEssential === 0 && checkedItems > 0 && <span className="text-[#00c875]"> · כל החובה הושלמו! 🎉</span>}
                 </p>
-                {/* Global Add Button */}
-                {registry && (
-                  <button
-                    onClick={handleGlobalAdd}
-                    className="flex items-center gap-2 bg-[#6750a4] hover:bg-[#503e85] text-white px-5 py-2 rounded-full font-medium transition-all shadow-md active:scale-95"
-                  >
-                    <Plus className="w-4 h-4" />
-                    הוסף פריט
-                  </button>
-                )}
               </div>
             </div>
-          </div>
 
-          {/* Nesting Score Metric */}
-          <div className="bg-gradient-to-br from-[#ffd8e4] to-[#fff0f5] rounded-[24px] p-5 w-full md:w-72 border border-[#ffd8e4] shadow-sm relative overflow-hidden group">
-            <div className="absolute -right-6 -top-6 bg-white/40 w-24 h-24 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700"></div>
-            <div className="relative z-10">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="bg-white/60 p-1.5 rounded-lg text-[#b3261e]">
-                    <Heart className="w-4 h-4 fill-current" />
-                  </div>
-                  <span className="text-xs font-bold text-[#b3261e] uppercase tracking-wide">מדד הקינון</span>
-                </div>
-                <span className="text-3xl font-bold text-[#1d192b]">{nestingScore}%</span>
-              </div>
-              <div className="w-full bg-white/50 h-2 rounded-full overflow-hidden">
-                <div className="h-full bg-[#b3261e] rounded-full transition-all duration-1000" style={{ width: `${nestingScore}%` }} />
-              </div>
-              <p className="text-xs text-[#1d192b]/70 mt-2 font-medium">
-                {checkedItems} מתוך {totalItems} פריטים
-              </p>
-            </div>
+            {/* Add button */}
+            {registry && (
+              <button
+                onClick={handleGlobalAdd}
+                className="flex items-center gap-1.5 bg-[#6750a4] hover:bg-[#503e85] text-white px-4 py-2 rounded-full font-medium text-sm transition-all shadow-md active:scale-95 flex-shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">הוסף פריט</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Categories Grid */}
-        <div className="space-y-6">
-          {CATEGORIES.filter(cat => cat.suggestedItems.length > 0).map((category) => {
-            const CategoryIcon = category.icon
-            const isExpanded = expandedCategory === category.id
-            const progress = getCategoryProgress(category.id)
-            const progressPercent = progress.total > 0 ? (progress.checked / progress.total) * 100 : 0
-            // Get suggested items that aren't hidden
-            const visibleSuggestedItems = category.suggestedItems.filter(item => !isSuggestionHidden(category.id, item))
-            // Get custom items for this category (not in suggested items and not hidden)
-            const customItems = preferences
-              .filter(p => p.category_id === category.id && !p.is_hidden && !category.suggestedItems.includes(p.item_name))
-              .map(p => p.item_name)
-            // Combine both
-            const visibleItems = [...visibleSuggestedItems, ...customItems]
+        {/* Search + Filters */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-3">
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#49454f]/50" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="חיפוש פריט..."
+                className="w-full pr-9 pl-3 py-2 bg-[#f5f5f5] rounded-xl text-sm text-[#1d192b] placeholder:text-[#49454f]/40 focus:outline-none focus:ring-2 focus:ring-[#6750a4]/30 focus:bg-white transition-all border border-transparent focus:border-[#6750a4]/20"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-[#e7e0ec] text-[#49454f]">
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
 
-            return (
-              <div
-                key={category.id}
-                data-tutorial={category.id === 'strollers' ? 'checklist-category' : undefined}
-                className={`bg-white rounded-[24px] border border-[#e7e0ec] overflow-hidden transition-all duration-300 ${isExpanded ? 'shadow-[0_8px_30px_rgba(0,0,0,0.06)] ring-1 ring-[#eaddff]' : 'hover:shadow-md'}`}
-              >
-                {/* Category Header */}
+            {/* Status filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'done' | 'remaining')}
+              className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                statusFilter !== 'all'
+                  ? 'bg-[#6750a4] text-white border-[#6750a4]'
+                  : 'bg-[#f5f5f5] text-[#49454f] border-transparent hover:bg-[#e7e0ec]'
+              }`}
+            >
+              <option value="all">הכל</option>
+              <option value="remaining">נותרו</option>
+              <option value="done">הושלמו</option>
+            </select>
+
+            {/* Priority filter */}
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value as 'all' | 'essential' | 'nice_to_have')}
+              className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                priorityFilter !== 'all'
+                  ? 'bg-[#6750a4] text-white border-[#6750a4]'
+                  : 'bg-[#f5f5f5] text-[#49454f] border-transparent hover:bg-[#e7e0ec]'
+              }`}
+            >
+              <option value="all">עדיפות</option>
+              <option value="essential">חובה</option>
+              <option value="nice_to_have">פינוק</option>
+            </select>
+          </div>
+
+          {/* Active filter indicator */}
+          {hasActiveFilters && (
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-[#49454f]">
+                מציג {filteredCount} מתוך {totalItems} פריטים
+              </p>
+              <button onClick={() => { setSearchQuery(''); setStatusFilter('all'); setPriorityFilter('all') }} className="text-xs text-[#6750a4] font-medium hover:underline">
+                נקה סינון
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Category navigation chips */}
+        <div ref={chipScrollRef} className="max-w-5xl mx-auto px-4 sm:px-6 pb-3 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-1.5 min-w-max">
+            {CATEGORIES.filter(c => c.suggestedItems.length > 0).map(cat => {
+              const progress = getCategoryProgress(cat.id)
+              const isDone = progress.checked === progress.total && progress.total > 0
+              const isActive = activeCategory === cat.id
+              const CategoryIcon = cat.icon
+              const colors = CATEGORY_COLORS[cat.id] || CATEGORY_COLORS.general
+
+              return (
                 <button
-                  onClick={() => toggleCategory(category.id)}
-                  className="w-full flex items-center gap-4 p-5 hover:bg-[#f3edff]/30 transition-colors group"
+                  key={cat.id}
+                  onClick={() => scrollToCategory(cat.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap border ${
+                    isActive
+                      ? 'shadow-sm scale-105'
+                      : 'border-transparent hover:bg-[#f5f5f5]'
+                  }`}
+                  style={isActive ? {
+                    backgroundColor: colors.bg,
+                    borderColor: colors.border + '40',
+                    color: colors.text,
+                  } : {
+                    color: '#49454f',
+                  }}
                 >
-                  <div className={`w-12 h-12 rounded-[16px] flex-shrink-0 flex items-center justify-center relative transition-transform group-hover:scale-105 ${isExpanded ? 'bg-[#eaddff] text-[#21005d]' : 'bg-[#f5f5f5] text-gray-500'}`}>
-                    <CategoryIcon className="w-6 h-6" />
+                  <CategoryIcon className="w-3.5 h-3.5" />
+                  <span>{cat.name}</span>
+                  {isDone && <Check className="w-3 h-3 text-[#00c875]" />}
+                  {!isDone && <span className="opacity-60">{progress.checked}/{progress.total}</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* === MAIN CONTENT === */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+
+        {/* Category Groups */}
+        {CATEGORIES.filter(cat => cat.suggestedItems.length > 0).map((category) => {
+          const CategoryIcon = category.icon
+          const progress = getCategoryProgress(category.id)
+          const progressPercent = progress.total > 0 ? (progress.checked / progress.total) * 100 : 0
+          const isCollapsed = collapsedCategories.has(category.id)
+          const colors = CATEGORY_COLORS[category.id] || CATEGORY_COLORS.general
+
+          // Get visible items
+          const visibleSuggestedItems = category.suggestedItems.filter(item => !isSuggestionHidden(category.id, item))
+          const customItems = preferences
+            .filter(p => p.category_id === category.id && !p.is_hidden && !category.suggestedItems.includes(p.item_name))
+            .map(p => p.item_name)
+          const allVisibleItems = [...visibleSuggestedItems, ...customItems]
+          const filteredItems = getFilteredItems(category.id, allVisibleItems)
+
+          // Skip category if all filtered out
+          if (hasActiveFilters && filteredItems.length === 0) return null
+
+          return (
+            <div
+              key={category.id}
+              ref={el => { categoryRefs.current[category.id] = el }}
+              data-category-id={category.id}
+              data-tutorial={category.id === 'strollers' ? 'checklist-category' : undefined}
+              className="bg-white rounded-2xl border border-[#e7e0ec]/80 overflow-hidden shadow-sm"
+              style={{ borderRight: `4px solid ${colors.border}` }}
+            >
+              {/* Category Header */}
+              <button
+                onClick={() => toggleCategoryCollapse(category.id)}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f9f9f9] transition-colors"
+                style={{ backgroundColor: isCollapsed ? 'transparent' : colors.bg + '40' }}
+              >
+                <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: colors.bg, color: colors.text }}>
+                  <CategoryIcon className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0 text-right">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-[#1d192b]">{category.name}</span>
+                    {category.id === 'birth_prep' && (
+                      <span className="flex items-center gap-1 bg-[#fce4ec] text-[#880e4f] text-[10px] px-1.5 py-0.5 rounded-full">
+                        <EyeOff className="w-2.5 h-2.5" />
+                        פרטי
+                      </span>
+                    )}
                     {progress.checked === progress.total && progress.total > 0 && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#00c875] rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                        <Check className="w-3 h-3 text-white" />
-                      </div>
+                      <span className="text-[10px] bg-[#e8f5e9] text-[#2e7d32] px-1.5 py-0.5 rounded-full font-semibold">הושלם ✓</span>
                     )}
                   </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <p className={`font-bold text-lg text-right ${isExpanded ? 'text-[#1d192b]' : 'text-[#49454f]'}`}>
-                          {category.name}
-                        </p>
-                        {category.id === 'birth_prep' && (
-                          <span className="flex items-center gap-1 bg-[#fce4ec] text-[#880e4f] text-xs px-2 py-0.5 rounded-full">
-                            <EyeOff className="w-3 h-3" />
-                            פרטי
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs text-[#49454f] font-medium whitespace-nowrap mr-2">
-                        {progress.checked}/{progress.total}
-                      </span>
-                    </div>
-
-                    <div className="w-full h-1.5 bg-[#f3edff] rounded-full overflow-hidden">
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden max-w-[200px]">
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${progressPercent === 100 ? 'bg-[#00c875]' : 'bg-[#6750a4]'}`}
-                        style={{ width: `${progressPercent}%` }}
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${progressPercent}%`, backgroundColor: progressPercent === 100 ? '#00c875' : colors.border }}
                       />
                     </div>
+                    <span className="text-[10px] text-[#49454f] font-medium">{progress.checked}/{progress.total}</span>
                   </div>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-[#49454f] transition-transform flex-shrink-0 ${isCollapsed ? '-rotate-90' : ''}`} />
+              </button>
 
-                  <div className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center transition-all ${isExpanded ? 'bg-[#f3edff] rotate-180 text-[#6750a4]' : 'bg-transparent text-[#49454f]'}`}>
-                    <ChevronDown className="w-5 h-5" />
-                  </div>
-                </button>
+              {/* Items — flat layout: no expand needed */}
+              {!isCollapsed && filteredItems.length > 0 && (
+                <div className="border-t border-[#e7e0ec]/60">
+                  {filteredItems.map((item, index) => {
+                    const isChecked = isSuggestionChecked(category.id, item)
+                    const priority = getPriority(category.id, item)
+                    const hasProducts = ITEMS_DATA[item]?.products && ITEMS_DATA[item].products!.length > 0
+                    const hasItemData = !!ITEMS_DATA[item]
+                    const quantity = getQuantity(category.id, item)
+                    const notes = getLocalNotes(category.id, item)
+                    const noteKey = getNotesKey(category.id, item)
+                    const isSavingNote = savingNotes.has(noteKey)
+                    const isSavedNote = savedNotes.has(noteKey)
 
-                {/* Content Area */}
-                {isExpanded && visibleItems.length > 0 && (
-                  <div className="border-t border-[#e7e0ec]">
-                    {/* Desktop Table - Enhanced with Priority & Notes */}
-                    <div className="hidden md:block overflow-x-auto">
-                      <table className="w-full">
-                        <thead className="bg-[#fffbff] border-b border-[#e7e0ec]">
-                          <tr>
-                            <th className="px-6 py-4 text-right text-xs font-bold text-[#6750a4] uppercase tracking-wider w-16">סטטוס</th>
-                            <th className="px-6 py-4 text-right text-xs font-bold text-[#49454f] uppercase tracking-wider w-32">עדיפות</th>
-                            <th className="px-6 py-4 text-right text-xs font-bold text-[#49454f] uppercase tracking-wider">פריט</th>
-                            <th className="px-6 py-4 text-right text-xs font-bold text-[#49454f] uppercase tracking-wider w-64">הערות</th>
-                            <th className="px-6 py-4 text-center text-xs font-bold text-[#49454f] uppercase tracking-wider w-32">כמות</th>
-                            <th className="px-6 py-4 text-center text-xs font-bold text-[#49454f] uppercase tracking-wider w-24">פעולות</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#e7e0ec]">
-                          {visibleItems.map((item, index) => {
-                            const isChecked = isSuggestionChecked(category.id, item)
-                            const quantity = getQuantity(category.id, item)
-                            const priority = getPriority(category.id, item)
-                            const notes = getLocalNotes(category.id, item)
-                            const dbNotes = getPreference(category.id, item)?.notes ?? ''
-                            const hasUnsavedNote = notes !== dbNotes
-
-                            const hasProducts = ITEMS_DATA[item]?.products && ITEMS_DATA[item].products!.length > 0
-                            const isProductsExpanded = activeProductsPopover === item
-
-                            return (
-                              <React.Fragment key={index}>
-                              <tr
-                                className={`transition-colors group/row ${isChecked ? 'bg-[#f3edff]/30' : 'hover:bg-[#f3edff]/20'}`}
-                              >
-                                {/* Status Checkbox */}
-                                <td className="px-6 py-4 align-middle">
-                                  <button
-                                    onClick={() => toggleSuggestionCheck(category.id, item)}
-                                    className={`w-8 h-8 rounded-[8px] border-2 flex items-center justify-center transition-all duration-200 shadow-sm ${
-                                      isChecked
-                                        ? 'border-[#6750a4] bg-[#6750a4] text-white scale-105'
-                                        : 'border-[#e7e0ec] bg-white text-transparent hover:border-[#6750a4]'
-                                    }`}
-                                  >
-                                    <Check className="w-5 h-5" strokeWidth={3} />
-                                  </button>
-                                </td>
-
-                                {/* Priority Badge */}
-                                <td className="px-6 py-4 align-middle">
-                                  <button
-                                    onClick={() => togglePriority(category.id, item)}
-                                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border flex items-center gap-1.5 w-fit ${
-                                      priority === 'essential'
-                                        ? 'bg-[#1d192b] text-white border-[#1d192b] shadow-sm hover:bg-[#49454f]'
-                                        : 'bg-white text-[#49454f] border-[#e7e0ec] hover:border-[#6750a4] hover:text-[#6750a4]'
-                                    }`}
-                                  >
-                                    {priority === 'essential' ? (
-                                      <>
-                                        <AlertCircle className="w-3 h-3" />
-                                        <span>חובה</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Feather className="w-3 h-3" />
-                                        <span>פינוק</span>
-                                      </>
-                                    )}
-                                  </button>
-                                </td>
-
-                                {/* Item Name with Info & Tip */}
-                                <td className="px-6 py-4 align-middle">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`text-base font-medium transition-all ${isChecked ? 'text-[#49454f]/60 line-through decoration-[#6750a4]/30' : 'text-[#1d192b]'}`}>
-                                      {item}
-                                    </span>
-                                    {/* Info & Tip Icons */}
-                                    {ITEMS_DATA[item] && (
-                                      <div className="flex items-center gap-1">
-                                        {/* Info Icon with Tooltip */}
-                                        <div className="relative group/info">
-                                          <button className="p-1 rounded-full hover:bg-[#e3f2fd] text-[#1976d2] transition-colors">
-                                            <Info className="w-4 h-4" />
-                                          </button>
-                                          <div className="absolute z-[100] top-full right-0 mt-2 w-64 p-3 bg-white rounded-xl shadow-xl border border-[#e7e0ec] opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all duration-200">
-                                            <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-r border-t border-[#e7e0ec] transform rotate-[-45deg]"></div>
-                                            <div className="flex items-start gap-2">
-                                              <Info className="w-4 h-4 text-[#1976d2] flex-shrink-0 mt-0.5" />
-                                              <div>
-                                                <p className="text-xs font-bold text-[#1976d2] mb-1">מה זה?</p>
-                                                <p className="text-xs text-[#49454f] leading-relaxed">{ITEMS_DATA[item].description}</p>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                        {/* Tip Icon with Tooltip */}
-                                        <div className="relative group/tip">
-                                          <button className="p-1 rounded-full hover:bg-[#fff8e1] text-[#f9a825] transition-colors">
-                                            <Lightbulb className="w-4 h-4" />
-                                          </button>
-                                          <div className="absolute z-[100] top-full right-0 mt-2 w-72 p-3 bg-white rounded-xl shadow-xl border border-[#e7e0ec] opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all duration-200">
-                                            <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-r border-t border-[#e7e0ec] transform rotate-[-45deg]"></div>
-                                            <div className="flex items-start gap-2">
-                                              <Lightbulb className="w-4 h-4 text-[#f9a825] flex-shrink-0 mt-0.5" />
-                                              <div>
-                                                <p className="text-xs font-bold text-[#f9a825] mb-1">הטיפ שלנו</p>
-                                                <p className="text-xs text-[#49454f] leading-relaxed">{ITEMS_DATA[item].tip}</p>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                        {/* Recommended Products Toggle */}
-                                        {ITEMS_DATA[item].products && ITEMS_DATA[item].products.length > 0 && (
-                                          <button
-                                            onClick={() => setActiveProductsPopover(activeProductsPopover === item ? null : item)}
-                                            className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all ${
-                                              activeProductsPopover === item
-                                                ? 'bg-[#e8f5e9] text-[#2e7d32]'
-                                                : 'bg-[#f5f5f5] text-[#49454f] hover:bg-[#e8f5e9] hover:text-[#43a047]'
-                                            }`}
-                                          >
-                                            <ShoppingBag className="w-3.5 h-3.5" />
-                                            <span>מומלצים</span>
-                                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${activeProductsPopover === item ? 'rotate-180' : ''}`} />
-                                          </button>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                </td>
-
-                                {/* Notes Input */}
-                                <td className="px-6 py-4 align-middle">
-                                  <div className="relative">
-                                    <input
-                                      type="text"
-                                      placeholder="הוסף הערה..."
-                                      value={notes}
-                                      onChange={(e) => updateLocalNotes(category.id, item, e.target.value)}
-                                      className={`w-full bg-transparent border-b ${hasUnsavedNote ? 'border-[#ffc107]' : 'border-transparent hover:border-[#e7e0ec]'} focus:border-[#6750a4] focus:outline-none text-sm text-[#1d192b] py-1 transition-colors placeholder:text-[#49454f]/30`}
-                                    />
-                                    {hasUnsavedNote && (
-                                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#ffc107]" title="לא נשמר"></span>
-                                    )}
-                                  </div>
-                                </td>
-
-                                {/* Quantity Control */}
-                                <td className="px-6 py-4 align-middle">
-                                  <div className="flex items-center justify-center gap-2 bg-[#f5f5f5] rounded-full p-1 w-fit mx-auto border border-[#e7e0ec]">
-                                    <button
-                                      onClick={() => setQuantity(category.id, item, quantity - 1)}
-                                      className="w-6 h-6 rounded-full bg-white shadow-sm flex items-center justify-center text-[#49454f] hover:text-[#6750a4] disabled:opacity-50"
-                                      disabled={quantity <= 1}
-                                    >
-                                      -
-                                    </button>
-                                    <span className="w-6 text-center text-sm font-bold text-[#1d192b]">{quantity}</span>
-                                    <button
-                                      onClick={() => setQuantity(category.id, item, quantity + 1)}
-                                      className="w-6 h-6 rounded-full bg-white shadow-sm flex items-center justify-center text-[#49454f] hover:text-[#6750a4]"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                </td>
-
-                                {/* Actions */}
-                                <td className="px-6 py-4 align-middle">
-                                  <div className="flex items-center justify-center gap-2">
-                                    {registry && (
-                                      <button
-                                        onClick={() => handleAddFromSuggestion(category.id)}
-                                        className="p-2 rounded-xl bg-[#6750a4] text-white hover:bg-[#503e85] shadow-sm transition-all hover:scale-105"
-                                        title="הוסף לרשימה שלי"
-                                      >
-                                        <Plus className="w-4 h-4" />
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => hideSuggestion(category.id, item)}
-                                      className="p-2 rounded-xl text-[#49454f] hover:bg-[#ffebee] hover:text-[#b3261e] transition-colors"
-                                      title="הסר מהרשימה"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                              {/* Expandable Products Row */}
-                              {hasProducts && isProductsExpanded && (
-                                <tr>
-                                  <td colSpan={6} className="px-4 py-3 bg-gradient-to-b from-[#f0fdf4] to-[#fafafa]">
-                                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-[#c8e6c9] scrollbar-track-transparent">
-                                      {ITEMS_DATA[item].products!.map((product, pIndex) => (
-                                        <div key={pIndex} className="flex-shrink-0 w-56 bg-white rounded-xl border border-[#e7e0ec] p-3 shadow-sm hover:shadow-md transition-shadow">
-                                          <img
-                                            src={product.image}
-                                            alt={product.name}
-                                            className="w-full h-32 object-contain rounded-lg mb-2 bg-[#f5f5f5]"
-                                            onError={(e) => {
-                                              (e.target as HTMLImageElement).src = '/favicon.png'
-                                            }}
-                                          />
-                                          <p className="text-sm font-semibold text-[#1d192b] mb-1 leading-tight">{product.name}</p>
-                                          <p className="text-xs text-[#49454f] mb-1">{product.store}</p>
-                                          <p className="text-base font-bold text-[#2e7d32] mb-2">₪{product.price.toLocaleString()}</p>
-                                          <div className="flex gap-2">
-                                            <a
-                                              href={product.url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-[#f5f5f5] hover:bg-[#e0e0e0] text-[#49454f] text-xs font-medium transition-colors"
-                                            >
-                                              <ExternalLink className="w-3 h-3" />
-                                              לחנות
-                                            </a>
-                                            <button
-                                              onClick={() => {
-                                                setPrefilledProductData({
-                                                  name: product.name,
-                                                  category: category.id,
-                                                  price: product.price.toString(),
-                                                  storeName: product.store,
-                                                  originalUrl: product.url,
-                                                  imageUrl: product.image,
-                                                })
-                                                setIsFromRecommendedProduct(true)
-                                                setActiveProductsPopover(null)
-                                                setShowAddItemModal(true)
-                                              }}
-                                              className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-[#6750a4] hover:bg-[#503e85] text-white text-xs font-medium transition-colors"
-                                            >
-                                              <Plus className="w-3 h-3" />
-                                              הוסף
-                                            </button>
-                                          </div>
-                                        </div>
-                                      ))}
-                                      {/* Add Custom Item Card */}
-                                      <div
-                                        onClick={() => {
-                                          setPrefilledCategory(category.id)
-                                          setActiveProductsPopover(null)
-                                          setShowAddItemModal(true)
-                                        }}
-                                        className="flex-shrink-0 w-40 bg-white rounded-xl border-2 border-dashed border-[#d0bcff] p-3 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-[#f3edff] hover:border-[#6750a4] transition-all min-h-[200px]"
-                                      >
-                                        <div className="w-10 h-10 rounded-full bg-[#f3edff] flex items-center justify-center text-[#6750a4]">
-                                          <Plus className="w-5 h-5" />
-                                        </div>
-                                        <span className="text-sm font-medium text-[#6750a4] text-center">הוסף פריט אחר</span>
-                                      </div>
-                                    </div>
-                                  </td>
-                                </tr>
-                              )}
-                              </React.Fragment>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Mobile Cards (Stack Layout) */}
-                    <div className="md:hidden p-4 space-y-3 bg-[#fdfcff]">
-                      {visibleItems.map((item, index) => {
-                        const isChecked = isSuggestionChecked(category.id, item)
-                        const quantity = getQuantity(category.id, item)
-                        const priority = getPriority(category.id, item)
-                        const notes = getLocalNotes(category.id, item)
-                        const dbNotes = getPreference(category.id, item)?.notes ?? ''
-                        const hasUnsavedNote = notes !== dbNotes
-
-                        return (
-                          <div
-                            key={index}
-                            className={`p-4 rounded-[20px] border transition-all ${
+                    return (
+                      <div key={index} className={`border-b border-[#e7e0ec]/40 last:border-b-0 ${isChecked ? 'bg-[#f9f8fc]' : ''}`}>
+                        {/* Row 1: Checkbox + Name + Priority + Delete(desktop) */}
+                        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 pt-2.5 pb-1 group">
+                          {/* Checkbox */}
+                          <button
+                            onClick={() => toggleSuggestionCheck(category.id, item)}
+                            className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg border-2 flex-shrink-0 flex items-center justify-center transition-all duration-200 ${
                               isChecked
-                                ? 'bg-[#f3edff] border-[#eaddff]'
-                                : 'bg-white border-[#e7e0ec] shadow-sm'
+                                ? 'border-[#6750a4] bg-[#6750a4] text-white'
+                                : 'border-[#d0d0d0] bg-white hover:border-[#6750a4]'
                             }`}
                           >
-                            <div className="flex items-start gap-4 mb-3">
-                              <button
-                                onClick={() => toggleSuggestionCheck(category.id, item)}
-                                className={`w-8 h-8 rounded-[8px] border-2 flex-shrink-0 flex items-center justify-center transition-all mt-0.5 ${
-                                  isChecked
-                                    ? 'border-[#6750a4] bg-[#6750a4] text-white'
-                                    : 'border-[#e7e0ec] bg-white'
-                                }`}
-                              >
-                                {isChecked && <Check className="w-5 h-5" strokeWidth={3} />}
-                              </button>
+                            {isChecked && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" strokeWidth={3} />}
+                          </button>
 
-                              <div className="flex-1">
-                                <div className="flex justify-between items-start">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`text-base font-medium ${isChecked ? 'line-through text-[#49454f]/60' : 'text-[#1d192b]'}`}>
-                                      {item}
-                                    </span>
-                                    {/* Info, Tip & Products Icons for Mobile (Click-based) */}
-                                    {ITEMS_DATA[item] && (
-                                      <div className="flex items-center gap-0.5">
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation()
-                                            setActivePopover(activePopover?.item === item && activePopover?.type === 'info' ? null : { item, type: 'info' })
-                                          }}
-                                          className="p-1 rounded-full hover:bg-[#e3f2fd] text-[#1976d2] transition-colors"
-                                        >
-                                          <Info className="w-3.5 h-3.5" />
-                                        </button>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation()
-                                            setActivePopover(activePopover?.item === item && activePopover?.type === 'tip' ? null : { item, type: 'tip' })
-                                          }}
-                                          className="p-1 rounded-full hover:bg-[#fff8e1] text-[#f9a825] transition-colors"
-                                        >
-                                          <Lightbulb className="w-3.5 h-3.5" />
-                                        </button>
-                                      </div>
-                                    )}
+                          {/* Item name + Desktop info/tip hover icons */}
+                          <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                            <span className={`text-sm font-medium transition-all truncate ${isChecked ? 'text-[#49454f]/50 line-through decoration-[#6750a4]/30' : 'text-[#1d192b]'}`}>
+                              {item}
+                            </span>
+                            {hasItemData && (
+                              <div className="hidden sm:flex items-center gap-0.5 flex-shrink-0">
+                                <div className="relative group/info">
+                                  <span className="p-0.5 rounded text-[#90a4ae] hover:text-[#1976d2] transition-colors cursor-help">
+                                    <Info className="w-3.5 h-3.5" />
+                                  </span>
+                                  <div className="absolute z-[100] top-full right-0 mt-2 w-64 p-3 bg-white rounded-xl shadow-xl border border-[#e7e0ec] opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all duration-200 pointer-events-none group-hover/info:pointer-events-auto">
+                                    <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-r border-t border-[#e7e0ec] transform rotate-[-45deg]" />
+                                    <p className="text-xs font-bold text-[#1976d2] mb-1">מה זה?</p>
+                                    <p className="text-xs text-[#49454f] leading-relaxed">{ITEMS_DATA[item].description}</p>
                                   </div>
-                                  <button
-                                    onClick={() => togglePriority(category.id, item)}
-                                    className={`px-2 py-1 rounded-full text-[10px] font-bold border transition-colors flex-shrink-0 ${
-                                      priority === 'essential'
-                                        ? 'bg-[#1d192b] text-white border-[#1d192b]'
-                                        : 'bg-white text-[#49454f] border-[#e7e0ec]'
-                                    }`}
-                                  >
-                                    {priority === 'essential' ? 'חובה' : 'פינוק'}
-                                  </button>
                                 </div>
-                                <div className="relative">
-                                  <input
-                                    type="text"
-                                    placeholder="הערות..."
-                                    value={notes}
-                                    onChange={(e) => updateLocalNotes(category.id, item, e.target.value)}
-                                    className={`w-full bg-transparent border-b border-dashed ${hasUnsavedNote ? 'border-[#ffc107]' : 'border-[#e7e0ec]'} focus:border-[#6750a4] focus:outline-none text-xs text-[#1d192b] py-2 mt-1 transition-colors placeholder:text-[#49454f]/40`}
-                                  />
-                                  {hasUnsavedNote && (
-                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-[#ffc107]" title="לא נשמר"></span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#e7e0ec]/60">
-                              <div className="flex items-center gap-3 bg-[#f5f5f5] rounded-full p-1 pl-3">
-                                <span className="text-xs text-[#49454f]">כמות:</span>
-                                <div className="flex items-center gap-2">
-                                  <button onClick={() => setQuantity(category.id, item, quantity - 1)} className="w-6 h-6 bg-white rounded-full shadow-sm text-sm" disabled={quantity <= 1}>-</button>
-                                  <span className="font-bold text-sm min-w-[1rem] text-center">{quantity}</span>
-                                  <button onClick={() => setQuantity(category.id, item, quantity + 1)} className="w-6 h-6 bg-white rounded-full shadow-sm text-sm">+</button>
-                                </div>
-                              </div>
-                              <div className="flex gap-2">
-                                {/* Primary CTA on Mobile */}
-                                {registry && (
-                                  <button onClick={() => handleAddFromSuggestion(category.id)} className="p-2 bg-[#6750a4] text-white rounded-full shadow-sm active:scale-95 transition-transform">
-                                    <Plus className="w-4 h-4" />
-                                  </button>
-                                )}
-                                <button onClick={() => hideSuggestion(category.id, item)} className="p-2 text-[#49454f] hover:text-[#b3261e] hover:bg-[#ffebee] rounded-full">
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Recommended Products Toggle for Mobile */}
-                            {ITEMS_DATA[item]?.products && ITEMS_DATA[item].products!.length > 0 && (
-                              <>
-                                <button
-                                  onClick={() => setActiveProductsPopover(activeProductsPopover === item ? null : item)}
-                                  className={`w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                                    activeProductsPopover === item
-                                      ? 'bg-[#e8f5e9] text-[#2e7d32]'
-                                      : 'bg-[#f5f5f5] text-[#49454f]'
-                                  }`}
-                                >
-                                  <ShoppingBag className="w-4 h-4" />
-                                  <span>מוצרים מומלצים ({ITEMS_DATA[item].products!.length})</span>
-                                  <ChevronDown className={`w-4 h-4 transition-transform ${activeProductsPopover === item ? 'rotate-180' : ''}`} />
-                                </button>
-
-                                {/* Expandable Products Section with Horizontal Scroll */}
-                                {activeProductsPopover === item && (
-                                  <div className="mt-3 -mx-4 px-4">
-                                    <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-                                      {ITEMS_DATA[item].products!.map((product, pIndex) => (
-                                        <div key={pIndex} className="flex-shrink-0 w-44 snap-start bg-[#fafafa] rounded-xl border border-[#e7e0ec] p-2.5">
-                                          <img
-                                            src={product.image}
-                                            alt={product.name}
-                                            className="w-full h-28 object-contain rounded-lg mb-2 bg-[#f5f5f5]"
-                                            onError={(e) => {
-                                              (e.target as HTMLImageElement).src = '/favicon.png'
-                                            }}
-                                          />
-                                          <p className="text-xs font-semibold text-[#1d192b] mb-0.5 leading-tight">{product.name}</p>
-                                          <p className="text-[10px] text-[#49454f] mb-1">{product.store}</p>
-                                          <p className="text-sm font-bold text-[#2e7d32] mb-2">₪{product.price.toLocaleString()}</p>
-                                          <div className="flex gap-1.5">
-                                            <a
-                                              href={product.url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white border border-[#e7e0ec] text-[#49454f] text-[10px] font-medium"
-                                            >
-                                              <ExternalLink className="w-3 h-3" />
-                                              לחנות
-                                            </a>
-                                            <button
-                                              onClick={() => {
-                                                setPrefilledProductData({
-                                                  name: product.name,
-                                                  category: category.id,
-                                                  price: product.price.toString(),
-                                                  storeName: product.store,
-                                                  originalUrl: product.url,
-                                                  imageUrl: product.image,
-                                                })
-                                                setIsFromRecommendedProduct(true)
-                                                setActiveProductsPopover(null)
-                                                setShowAddItemModal(true)
-                                              }}
-                                              className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-[#6750a4] text-white text-[10px] font-medium"
-                                            >
-                                              <Plus className="w-3 h-3" />
-                                              הוסף
-                                            </button>
-                                          </div>
-                                        </div>
-                                      ))}
-                                      {/* Add Custom Item Card */}
-                                      <div
-                                        onClick={() => {
-                                          setPrefilledCategory(category.id)
-                                          setActiveProductsPopover(null)
-                                          setShowAddItemModal(true)
-                                        }}
-                                        className="flex-shrink-0 w-32 snap-start bg-white rounded-xl border-2 border-dashed border-[#d0bcff] p-2.5 flex flex-col items-center justify-center gap-2 cursor-pointer min-h-[180px]"
-                                      >
-                                        <div className="w-8 h-8 rounded-full bg-[#f3edff] flex items-center justify-center text-[#6750a4]">
-                                          <Plus className="w-4 h-4" />
-                                        </div>
-                                        <span className="text-xs font-medium text-[#6750a4] text-center">הוסף פריט אחר</span>
-                                      </div>
-                                    </div>
+                                <div className="relative group/tip">
+                                  <span className="p-0.5 rounded text-[#90a4ae] hover:text-[#f9a825] transition-colors cursor-help">
+                                    <Lightbulb className="w-3.5 h-3.5" />
+                                  </span>
+                                  <div className="absolute z-[100] top-full right-0 mt-2 w-72 p-3 bg-white rounded-xl shadow-xl border border-[#e7e0ec] opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all duration-200 pointer-events-none group-hover/tip:pointer-events-auto">
+                                    <div className="absolute -top-1.5 right-4 w-3 h-3 bg-white border-r border-t border-[#e7e0ec] transform rotate-[-45deg]" />
+                                    <p className="text-xs font-bold text-[#f9a825] mb-1">הטיפ שלנו</p>
+                                    <p className="text-xs text-[#49454f] leading-relaxed">{ITEMS_DATA[item].tip}</p>
                                   </div>
-                                )}
-                              </>
+                                </div>
+                              </div>
                             )}
                           </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
 
-                {/* Empty State */}
-                {isExpanded && visibleItems.length === 0 && (
-                  <div className="border-t border-[#e7e0ec] p-8 text-center bg-[#fffbff]">
-                    <div className="w-12 h-12 bg-[#f5f5f5] rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400">
-                      <Sparkles className="w-6 h-6" />
-                    </div>
-                    <p className="text-[#49454f]">כל הפריטים בקטגוריה זו הוסרו</p>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+                          {/* Priority badge */}
+                          <button
+                            onClick={() => togglePriority(category.id, item)}
+                            className={`px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold transition-all border flex-shrink-0 ${
+                              priority === 'essential'
+                                ? 'bg-[#fef3c7] text-[#92400e] border-[#fde68a] hover:bg-[#fde68a]'
+                                : 'bg-[#f5f5f5] text-[#9e9e9e] border-[#e0e0e0] hover:border-[#bdbdbd]'
+                            }`}
+                          >
+                            {priority === 'essential' ? 'חובה' : 'פינוק'}
+                          </button>
+
+                          {/* Delete — desktop, shown on hover */}
+                          <button
+                            onClick={() => hideSuggestion(category.id, item)}
+                            className="hidden sm:flex p-1.5 rounded-lg text-[#c0c0c0] hover:text-[#b3261e] hover:bg-[#ffebee] opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        {/* Row 2: Notes + Quantity + Actions — always visible */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-3 sm:px-4 pb-2.5 mr-8 sm:mr-10">
+                          {/* Notes — compact inline with label */}
+                          <div className="flex items-center gap-1.5 sm:flex-1 sm:min-w-0">
+                            <span className="text-[10px] text-[#9e9e9e] font-medium whitespace-nowrap flex-shrink-0">הערה:</span>
+                            <div className="relative flex-1 min-w-0">
+                              <input
+                                type="text"
+                                placeholder="הוסיפי הערה..."
+                                value={notes}
+                                onChange={(e) => updateLocalNotes(category.id, item, e.target.value)}
+                                onBlur={() => handleNotesBlur(category.id, item)}
+                                className="w-full bg-transparent border-b border-[#e7e0ec] focus:border-[#6750a4] py-0.5 text-xs text-[#1d192b] placeholder:text-[#d0d0d0] focus:outline-none transition-all"
+                              />
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 text-[9px] font-medium pointer-events-none">
+                                {isSavingNote && <span className="text-[#f9a825] animate-pulse">שומר...</span>}
+                                {isSavedNote && !isSavingNote && <span className="text-[#00c875]">✓</span>}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Actions row */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {/* Quantity */}
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] text-[#9e9e9e] font-medium">כמות:</span>
+                              <button onClick={() => setQuantity(category.id, item, quantity - 1)} disabled={quantity <= 1} className="w-5 h-5 rounded bg-[#f5f5f5] hover:bg-[#e7e0ec] text-[#49454f] text-xs font-medium flex items-center justify-center disabled:opacity-30 transition-colors">-</button>
+                              <span className="w-4 text-center text-xs font-bold text-[#1d192b]">{quantity}</span>
+                              <button onClick={() => setQuantity(category.id, item, quantity + 1)} className="w-5 h-5 rounded bg-[#f5f5f5] hover:bg-[#e7e0ec] text-[#49454f] text-xs font-medium flex items-center justify-center transition-colors">+</button>
+                            </div>
+
+                            {/* Mobile info/tip */}
+                            {hasItemData && (
+                              <div className="flex sm:hidden items-center gap-0.5">
+                                <button onClick={() => setActivePopover({ item, type: 'info' })} className="p-1 rounded-md bg-[#e3f2fd]/40 text-[#1976d2]">
+                                  <Info className="w-3 h-3" />
+                                </button>
+                                <button onClick={() => setActivePopover({ item, type: 'tip' })} className="p-1 rounded-md bg-[#fff8e1]/50 text-[#f9a825]">
+                                  <Lightbulb className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Spacer to push add/delete to end when no products badge here */}
+
+                            {/* Add to registry */}
+                            {registry && (
+                              <button
+                                onClick={() => handleAddFromSuggestion(category.id)}
+                                className="flex items-center gap-1.5 bg-[#6750a4] hover:bg-[#503e85] text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm hover:shadow-md"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>הוסף לרשימה</span>
+                              </button>
+                            )}
+
+                            {/* Mobile delete */}
+                            <button
+                              onClick={() => hideSuggestion(category.id, item)}
+                              className="sm:hidden p-1 rounded-md text-[#c0c0c0] hover:text-[#b3261e] hover:bg-[#ffebee] transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Recommended Products — prominent banner + carousel */}
+                        {hasProducts && (
+                          <div className="mx-2 sm:mx-3 mb-2 mr-8 sm:mr-10">
+                            <button
+                              onClick={() => setActiveProductsPopover(activeProductsPopover === item ? null : item)}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
+                                activeProductsPopover === item
+                                  ? 'bg-gradient-to-l from-[#e8f5e9] to-[#f1f8e9] ring-1 ring-[#a5d6a7]/60'
+                                  : 'bg-gradient-to-l from-[#f1f8e9]/60 to-[#f9fbe7]/40 hover:from-[#e8f5e9] hover:to-[#f1f8e9]'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                                  activeProductsPopover === item ? 'bg-[#2e7d32] text-white' : 'bg-[#c8e6c9] text-[#2e7d32]'
+                                }`}>
+                                  <ShoppingBag className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-xs font-bold text-[#2e7d32]">מוצרים מומלצים</p>
+                                  <p className="text-[10px] text-[#66bb6a]">{ITEMS_DATA[item].products!.length} מוצרים נבחרו עבורך</p>
+                                </div>
+                              </div>
+                              <ChevronDown className={`w-4 h-4 text-[#43a047] transition-transform duration-200 ${activeProductsPopover === item ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {activeProductsPopover === item && (
+                              <div className="mt-2 animate-in slide-in-from-top-2 duration-200">
+                                <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+                                  {ITEMS_DATA[item].products!.map((product, pIndex) => (
+                                    <div key={pIndex} className="flex-shrink-0 w-44 sm:w-52 snap-start bg-white rounded-xl border border-[#e7e0ec] p-2.5 shadow-sm hover:shadow-md transition-shadow">
+                                      <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        className="w-full h-28 sm:h-32 object-contain rounded-lg mb-2 bg-[#f5f5f5]"
+                                        onError={(e) => { (e.target as HTMLImageElement).src = '/favicon.png' }}
+                                      />
+                                      <p className="text-xs font-semibold text-[#1d192b] mb-0.5 leading-tight line-clamp-2">{product.name}</p>
+                                      <p className="text-[10px] text-[#49454f] mb-1">{product.store}</p>
+                                      <p className="text-sm font-bold text-[#2e7d32] mb-2">₪{product.price.toLocaleString()}</p>
+                                      <div className="flex gap-1.5">
+                                        <a
+                                          href={product.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-[#f5f5f5] hover:bg-[#e0e0e0] text-[#49454f] text-[10px] font-medium transition-colors"
+                                        >
+                                          <ExternalLink className="w-3 h-3" />
+                                          לחנות
+                                        </a>
+                                        <button
+                                          onClick={() => {
+                                            setPrefilledProductData({
+                                              name: product.name,
+                                              category: category.id,
+                                              price: product.price.toString(),
+                                              storeName: product.store,
+                                              originalUrl: product.url,
+                                              imageUrl: product.image,
+                                            })
+                                            setIsFromRecommendedProduct(true)
+                                            setActiveProductsPopover(null)
+                                            setShowAddItemModal(true)
+                                          }}
+                                          className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-[#6750a4] hover:bg-[#503e85] text-white text-[10px] font-medium transition-colors"
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                          הוסף
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {/* Add custom product card */}
+                                  <div
+                                    onClick={() => {
+                                      setPrefilledCategory(category.id)
+                                      setActiveProductsPopover(null)
+                                      setShowAddItemModal(true)
+                                    }}
+                                    className="flex-shrink-0 w-32 sm:w-40 snap-start bg-white rounded-xl border-2 border-dashed border-[#d0bcff] p-3 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-[#f3edff] hover:border-[#6750a4] transition-all min-h-[180px]"
+                                  >
+                                    <div className="w-8 h-8 rounded-full bg-[#f3edff] flex items-center justify-center text-[#6750a4]">
+                                      <Plus className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-xs font-medium text-[#6750a4] text-center">הוסף פריט אחר</span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Empty category state */}
+              {!isCollapsed && filteredItems.length === 0 && !hasActiveFilters && allVisibleItems.length === 0 && (
+                <div className="border-t border-[#e7e0ec]/60 p-6 text-center">
+                  <Sparkles className="w-5 h-5 text-[#d0d0d0] mx-auto mb-2" />
+                  <p className="text-sm text-[#9e9e9e]">כל הפריטים בקטגוריה זו הוסרו</p>
+                </div>
+              )}
+            </div>
+          )
+        })}
 
         {/* Add Custom Item Section */}
-        <div className="mt-8">
+        <div className="mt-6">
           {!showAddCustomItem ? (
             <button
               onClick={() => setShowAddCustomItem(true)}
-              className="w-full flex items-center justify-center gap-3 p-4 bg-white rounded-[20px] border-2 border-dashed border-[#e7e0ec] hover:border-[#6750a4] hover:bg-[#f3edff]/30 transition-all group"
+              className="w-full flex items-center justify-center gap-3 p-4 bg-white rounded-2xl border-2 border-dashed border-[#e7e0ec] hover:border-[#6750a4] hover:bg-[#f3edff]/20 transition-all group"
             >
-              <div className="w-10 h-10 rounded-full bg-[#f3edff] flex items-center justify-center text-[#6750a4] group-hover:scale-110 transition-transform">
-                <Plus className="w-5 h-5" />
+              <div className="w-8 h-8 rounded-full bg-[#f3edff] flex items-center justify-center text-[#6750a4] group-hover:scale-110 transition-transform">
+                <Plus className="w-4 h-4" />
               </div>
-              <span className="text-[#49454f] font-medium group-hover:text-[#6750a4]">הוסף פריט מותאם אישית לצ'קליסט</span>
+              <span className="text-sm text-[#49454f] font-medium group-hover:text-[#6750a4]">הוסף פריט מותאם אישית לצ'קליסט</span>
             </button>
           ) : (
-            <div className="bg-white rounded-[24px] border border-[#e7e0ec] p-6 shadow-sm">
+            <div className="bg-white rounded-2xl border border-[#e7e0ec] p-5 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-[#1d192b]">הוסף פריט חדש</h3>
-                <button
-                  onClick={() => {
-                    setShowAddCustomItem(false)
-                    setCustomItemName('')
-                    setCustomItemCategory('')
-                  }}
-                  className="p-2 rounded-full hover:bg-[#f5f5f5] text-[#49454f]"
-                >
-                  <X className="w-5 h-5" />
+                <h3 className="text-base font-bold text-[#1d192b]">הוסף פריט חדש</h3>
+                <button onClick={() => { setShowAddCustomItem(false); setCustomItemName(''); setCustomItemCategory('') }} className="p-1.5 rounded-full hover:bg-[#f5f5f5] text-[#49454f]">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#49454f] mb-2">קטגוריה</label>
-                  <select
-                    value={customItemCategory}
-                    onChange={(e) => setCustomItemCategory(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-[#e7e0ec] bg-white text-[#1d192b] focus:outline-none focus:ring-2 focus:ring-[#6750a4] focus:border-transparent"
-                  >
-                    <option value="">בחרי קטגוריה...</option>
-                    {CATEGORIES.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#49454f] mb-2">שם הפריט</label>
-                  <input
-                    type="text"
-                    value={customItemName}
-                    onChange={(e) => setCustomItemName(e.target.value)}
-                    placeholder="לדוגמה: שמיכת תינוק מיוחדת"
-                    className="w-full p-3 rounded-xl border border-[#e7e0ec] bg-white text-[#1d192b] placeholder:text-[#49454f]/40 focus:outline-none focus:ring-2 focus:ring-[#6750a4] focus:border-transparent"
-                  />
-                </div>
-
+              <div className="space-y-3">
+                <select
+                  value={customItemCategory}
+                  onChange={(e) => setCustomItemCategory(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-[#e7e0ec] bg-white text-sm text-[#1d192b] focus:outline-none focus:ring-2 focus:ring-[#6750a4]/30 focus:border-[#6750a4]/30"
+                >
+                  <option value="">בחרי קטגוריה...</option>
+                  {CATEGORIES.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                </select>
+                <input
+                  type="text"
+                  value={customItemName}
+                  onChange={(e) => setCustomItemName(e.target.value)}
+                  placeholder="שם הפריט..."
+                  className="w-full p-2.5 rounded-xl border border-[#e7e0ec] bg-white text-sm text-[#1d192b] placeholder:text-[#49454f]/40 focus:outline-none focus:ring-2 focus:ring-[#6750a4]/30 focus:border-[#6750a4]/30"
+                />
                 <button
                   onClick={addCustomItem}
                   disabled={!customItemName.trim() || !customItemCategory}
-                  className="w-full flex items-center justify-center gap-2 bg-[#6750a4] hover:bg-[#503e85] disabled:bg-[#e7e0ec] disabled:text-[#49454f] text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md disabled:shadow-none"
+                  className="w-full flex items-center justify-center gap-2 bg-[#6750a4] hover:bg-[#503e85] disabled:bg-[#e7e0ec] disabled:text-[#49454f] text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-all shadow-md disabled:shadow-none"
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4" />
                   הוסף לצ'קליסט
                 </button>
               </div>
@@ -1182,47 +979,40 @@ export default function Checklist() {
 
         {/* Deleted Items Section */}
         {deletedItems.length > 0 && (
-          <div className="mt-8">
+          <div className="mt-4">
             <button
               onClick={() => setShowDeletedSection(!showDeletedSection)}
-              className="w-full flex items-center justify-between p-4 bg-[#fff8f8] rounded-[20px] border border-[#ffebee] hover:bg-[#ffebee]/50 transition-colors"
+              className="w-full flex items-center justify-between p-3 bg-[#fff8f8] rounded-2xl border border-[#ffebee] hover:bg-[#ffebee]/50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#ffebee] flex items-center justify-center text-[#b3261e]">
-                  <Trash2 className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-full bg-[#ffebee] flex items-center justify-center text-[#b3261e]">
+                  <Trash2 className="w-4 h-4" />
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-[#1d192b]">פריטים שהוסרו</p>
-                  <p className="text-sm text-[#49454f]">{deletedItems.length} פריטים • לחץ לשחזור</p>
+                  <p className="font-bold text-sm text-[#1d192b]">פריטים שהוסרו</p>
+                  <p className="text-xs text-[#49454f]">{deletedItems.length} פריטים • לחץ לשחזור</p>
                 </div>
               </div>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform ${showDeletedSection ? 'rotate-180' : ''}`}>
-                <ChevronDown className="w-5 h-5 text-[#49454f]" />
-              </div>
+              <ChevronDown className={`w-4 h-4 text-[#49454f] transition-transform ${showDeletedSection ? 'rotate-180' : ''}`} />
             </button>
 
             {showDeletedSection && (
-              <div className="mt-3 bg-white rounded-[20px] border border-[#e7e0ec] overflow-hidden">
-                <div className="divide-y divide-[#e7e0ec]">
+              <div className="mt-2 bg-white rounded-2xl border border-[#e7e0ec] overflow-hidden">
+                <div className="divide-y divide-[#e7e0ec]/60">
                   {deletedItems.map((item, index) => (
-                    <div
-                      key={`${item.categoryId}-${item.itemName}-${index}`}
-                      className="flex items-center justify-between p-4 hover:bg-[#f3edff]/20 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#f5f5f5] flex items-center justify-center text-[#49454f]">
-                          <Trash2 className="w-4 h-4" />
-                        </div>
+                    <div key={`${item.categoryId}-${item.itemName}-${index}`} className="flex items-center justify-between px-4 py-3 hover:bg-[#f3edff]/20 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <Trash2 className="w-3.5 h-3.5 text-[#c0c0c0]" />
                         <div>
-                          <p className="font-medium text-[#1d192b]">{item.itemName}</p>
-                          <p className="text-xs text-[#49454f]">{item.categoryName}</p>
+                          <p className="text-sm font-medium text-[#1d192b]">{item.itemName}</p>
+                          <p className="text-[10px] text-[#49454f]">{item.categoryName}</p>
                         </div>
                       </div>
                       <button
                         onClick={() => restoreSuggestion(item.categoryId, item.itemName)}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#f3edff] hover:bg-[#eaddff] text-[#6750a4] rounded-full font-medium text-sm transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f3edff] hover:bg-[#eaddff] text-[#6750a4] rounded-full font-medium text-xs transition-colors"
                       >
-                        <RotateCcw className="w-4 h-4" />
+                        <RotateCcw className="w-3 h-3" />
                         שחזר
                       </button>
                     </div>
@@ -1232,6 +1022,9 @@ export default function Checklist() {
             )}
           </div>
         )}
+
+        {/* Bottom spacer for scroll comfort */}
+        <div className="h-20" />
       </div>
     </div>
   )

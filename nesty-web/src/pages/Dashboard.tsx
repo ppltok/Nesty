@@ -10,15 +10,14 @@ import {
   Trash2,
   ShoppingCart,
   ClipboardList,
-  Filter,
-  ArrowUpDown,
   Pencil,
   Sparkles,
   Gift,
   Package,
-  Banknote,
   LayoutGrid,
   List,
+  Search,
+  X,
 } from 'lucide-react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import AddressModal from '../components/AddressModal'
@@ -32,6 +31,23 @@ import { useDashboardLayout } from '../components/layout/DashboardLayout'
 import { CATEGORIES } from '../data/categories'
 import { supabase } from '../lib/supabase'
 import type { Item, ItemCategory } from '../types'
+
+// Category accent colors (same as Checklist)
+const CATEGORY_COLORS: Record<string, { border: string; bg: string; text: string }> = {
+  strollers:  { border: '#6366f1', bg: '#eef2ff', text: '#4338ca' },
+  car_safety: { border: '#ef4444', bg: '#fef2f2', text: '#dc2626' },
+  furniture:  { border: '#f59e0b', bg: '#fffbeb', text: '#d97706' },
+  safety:     { border: '#10b981', bg: '#ecfdf5', text: '#059669' },
+  feeding:    { border: '#3b82f6', bg: '#eff6ff', text: '#2563eb' },
+  nursing:    { border: '#ec4899', bg: '#fdf2f8', text: '#db2777' },
+  birth_prep: { border: '#8b5cf6', bg: '#f5f3ff', text: '#7c3aed' },
+  bath:       { border: '#06b6d4', bg: '#ecfeff', text: '#0891b2' },
+  clothing:   { border: '#f97316', bg: '#fff7ed', text: '#ea580c' },
+  bedding:    { border: '#14b8a6', bg: '#f0fdfa', text: '#0d9488' },
+  toys:       { border: '#a855f7', bg: '#faf5ff', text: '#9333ea' },
+  general:    { border: '#64748b', bg: '#f8fafc', text: '#475569' },
+  siblings:   { border: '#e11d48', bg: '#fff1f2', text: '#be123c' },
+}
 
 // Helper to get user-specific localStorage keys
 const getAddressSkippedKey = (userId: string) => `nesty_address_skipped_${userId}`
@@ -53,8 +69,10 @@ export default function Dashboard() {
   const [isLoadingItems, setIsLoadingItems] = useState(true)
 
   // Filter and sort state
+  const [searchQuery, setSearchQuery] = useState('')
   const [filterCategory, setFilterCategory] = useState<ItemCategory | ''>('')
   const [filterMostWanted, setFilterMostWanted] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'purchased'>('all')
   const [filterPriceRange, setFilterPriceRange] = useState<'all' | '0-200' | '200-500' | '500-1000' | '1000+'>('all')
   const [sortBy, setSortBy] = useState<'date' | 'price' | 'category'>('date')
 
@@ -484,6 +502,17 @@ export default function Dashboard() {
   const filteredItems = useMemo(() => {
     let result = [...items]
 
+    // Search query
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((i) =>
+        i.name.toLowerCase().includes(q) ||
+        i.store_name?.toLowerCase().includes(q) ||
+        i.notes?.toLowerCase().includes(q) ||
+        getCategoryName(i.category).toLowerCase().includes(q)
+      )
+    }
+
     // Category Filter
     if (filterCategory) {
       result = result.filter((i) => i.category === filterCategory)
@@ -492,6 +521,13 @@ export default function Dashboard() {
     // Most Wanted Filter
     if (filterMostWanted) {
       result = result.filter((i) => i.is_most_wanted)
+    }
+
+    // Status Filter
+    if (statusFilter === 'active') {
+      result = result.filter((i) => i.quantity_received < i.quantity)
+    } else if (statusFilter === 'purchased') {
+      result = result.filter((i) => i.quantity_received >= i.quantity)
     }
 
     // Price Range Filter
@@ -525,7 +561,17 @@ export default function Dashboard() {
     }
 
     return result
-  }, [items, filterCategory, filterMostWanted, filterPriceRange, sortBy])
+  }, [items, searchQuery, filterCategory, filterMostWanted, statusFilter, filterPriceRange, sortBy])
+
+  // Check if any filters are active
+  const hasActiveFilters = searchQuery || filterCategory || filterMostWanted || statusFilter !== 'all' || filterPriceRange !== 'all'
+  const clearAllFilters = () => {
+    setSearchQuery('')
+    setFilterCategory('')
+    setFilterMostWanted(false)
+    setStatusFilter('all')
+    setFilterPriceRange('all')
+  }
 
   // Split items into Active and Purchased
   const { activeItems, purchasedItems } = useMemo(() => {
@@ -1060,12 +1106,22 @@ export default function Dashboard() {
         {/* Welcome & Stats Section */}
         <div className="flex flex-col xl:flex-row gap-8 mb-12">
           {/* Welcome Card */}
-          <div className="flex-1 bg-gradient-to-br from-[#1d192b] via-[#352f44] to-[#49454f] bg-[length:200%_200%] animate-gradient-mesh rounded-[32px] p-8 text-white shadow-[0_20px_60px_-15px_rgba(29,25,43,0.4)] relative overflow-hidden group">
-            {/* Glow orbs */}
-            <div className="absolute top-0 left-0 w-64 h-64 bg-[#6750a4]/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 group-hover:scale-125 transition-transform duration-1000" />
-            <div className="absolute bottom-0 right-0 w-48 h-48 bg-[#d0bcff]/10 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
+          <div className="flex-1 bg-[#1d192b] rounded-[32px] p-8 text-white shadow-[0_20px_60px_-15px_rgba(29,25,43,0.4)] relative overflow-hidden group">
+            {/* Dynamic flowing aurora background */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {/* Deep purple blob */}
+              <div className="aurora-blob-1 absolute -top-1/4 -right-1/4 w-[70%] h-[70%] rounded-full bg-[#6750a4]/40 blur-[60px]" />
+              {/* Warm violet blob */}
+              <div className="aurora-blob-2 absolute -bottom-1/3 -left-1/4 w-[65%] h-[65%] rounded-full bg-[#9c27b0]/25 blur-[70px]" />
+              {/* Cool indigo blob */}
+              <div className="aurora-blob-3 absolute top-1/4 left-1/3 w-[50%] h-[50%] rounded-full bg-[#3f51b5]/20 blur-[50px]" />
+              {/* Soft lavender accent */}
+              <div className="aurora-blob-4 absolute -bottom-1/4 right-1/4 w-[45%] h-[45%] rounded-full bg-[#d0bcff]/15 blur-[55px]" />
+              {/* Subtle base gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-transparent via-[#1d192b]/30 to-[#49454f]/20" />
+            </div>
             {/* Faded icons inside welcome card */}
-            <FadedIconsBackground count={18} className="opacity-40" />
+            <FadedIconsBackground count={18} className="opacity-30" />
 
             <div className="relative z-10 h-full flex flex-col justify-between">
               <div>
@@ -1080,37 +1136,37 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3 mt-8">
+              <div className="flex flex-wrap gap-2.5 mt-8">
                 <button
                   data-tutorial="add-item-button"
                   onClick={handleOpenAddModal}
-                  className="flex items-center gap-2 bg-[#d0bcff] text-[#381e72] px-7 py-3.5 rounded-[28px] font-bold hover:bg-[#e8def8] hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md active:scale-95"
+                  className="flex items-center gap-1.5 bg-[#d0bcff] text-[#381e72] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#e8def8] hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-md active:scale-95"
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4" />
                   הוסף פריט
                 </button>
+                {registry && (
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="flex items-center gap-1.5 bg-white/20 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-white/30 hover:-translate-y-0.5 transition-all backdrop-blur-sm border border-white/30 active:scale-95 shadow-sm"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    שתף
+                  </button>
+                )}
                 <Link to="/checklist">
-                  <button className="flex items-center gap-2 bg-white/10 text-white px-7 py-3.5 rounded-[28px] font-medium hover:bg-white/20 hover:-translate-y-0.5 transition-all backdrop-blur-sm border border-white/20 active:scale-95">
-                    <ClipboardList className="w-5 h-5" />
-                    בחרי מהצ'קליסט
+                  <button className="flex items-center gap-1.5 bg-white/8 text-white/80 px-4 py-2.5 rounded-full text-sm font-medium hover:bg-white/15 hover:-translate-y-0.5 transition-all backdrop-blur-sm border border-white/10 active:scale-95">
+                    <ClipboardList className="w-4 h-4" />
+                    צ'קליסט
                   </button>
                 </Link>
                 {registry && (
-                  <>
-                    <button
-                      onClick={() => setShowShareModal(true)}
-                      className="flex items-center gap-2 bg-white/10 text-white px-7 py-3.5 rounded-[28px] font-medium hover:bg-white/20 hover:-translate-y-0.5 transition-all backdrop-blur-sm border border-white/10 active:scale-95"
-                    >
-                      <Share2 className="w-5 h-5" />
-                      שתף
+                  <Link to={`/registry/${registry.slug}`}>
+                    <button className="flex items-center gap-1.5 bg-white/8 text-white/80 px-4 py-2.5 rounded-full text-sm font-medium hover:bg-white/15 hover:-translate-y-0.5 transition-all backdrop-blur-sm border border-white/10 active:scale-95">
+                      <Eye className="w-4 h-4" />
+                      צפה כאורח
                     </button>
-                    <Link to={`/registry/${registry.slug}`}>
-                      <button className="flex items-center gap-2 bg-white/10 text-white px-7 py-3.5 rounded-[28px] font-medium hover:bg-white/20 hover:-translate-y-0.5 transition-all backdrop-blur-sm border border-white/10 active:scale-95">
-                        <Eye className="w-5 h-5" />
-                        צפה כאורח
-                      </button>
-                    </Link>
-                  </>
+                  </Link>
                 )}
               </div>
             </div>
@@ -1155,94 +1211,178 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Filters & Content */}
-        <div className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-4 sticky top-0 z-30 bg-white/70 backdrop-blur-xl rounded-[24px] p-4 -mx-2 px-6 border border-white/60 shadow-[0_4px_20px_-4px_rgba(103,80,164,0.08)]">
-          <h2 className="text-2xl font-bold text-[#1d192b] flex items-center gap-3">
-            הפריטים שלי
-            <span className="text-sm font-bold text-[#6750a4] bg-[#eaddff] px-3 py-1 rounded-full">
-              {filteredItems.length}
-            </span>
-          </h2>
+        {/* Filters & Content — Full-width sticky bar */}
+        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#e7e0ec]/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] -mx-4 sm:-mx-6 lg:-mx-8 mb-8">
+          {/* Row 1: Title + View toggle */}
+          <div className="px-4 sm:px-6 pt-4 pb-3 flex items-center justify-between gap-4">
+            <h2 className="text-xl sm:text-3xl font-bold text-[#1d192b] flex items-center gap-3">
+              הפריטים שלי
+              <span className="text-sm font-bold text-[#6750a4] bg-[#eaddff] px-3 py-1 rounded-full">
+                {filteredItems.length}
+              </span>
+            </h2>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* View Mode Toggle */}
-            <div className="flex bg-white rounded-xl border border-[#e7e0ec] p-1 gap-1">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#f3edff] text-[#6750a4] shadow-sm' : 'text-[#49454f] hover:bg-[#f5f5f5]'}`}
-              >
-                <LayoutGrid className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#f3edff] text-[#6750a4] shadow-sm' : 'text-[#49454f] hover:bg-[#f5f5f5]'}`}
-              >
-                <List className="w-5 h-5" />
-              </button>
+            <div className="flex items-center gap-2">
+              {/* View Mode Toggle */}
+              <div className="flex bg-[#f5f5f5] rounded-xl p-1 gap-1">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-[#6750a4] shadow-sm' : 'text-[#49454f] hover:bg-white/50'}`}
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-[#6750a4] shadow-sm' : 'text-[#49454f] hover:bg-white/50'}`}
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
             </div>
+          </div>
 
-            <div className="h-8 w-px bg-[#e7e0ec] mx-2 hidden sm:block"></div>
+          {/* Row 2: Search + Filters */}
+          <div className="px-4 sm:px-6 pb-3">
+            <div className="flex items-center gap-2">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#49454f]/50" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="חיפוש פריט..."
+                  className="w-full pr-9 pl-3 py-2 bg-[#f5f5f5] rounded-xl text-sm text-[#1d192b] placeholder:text-[#49454f]/40 focus:outline-none focus:ring-2 focus:ring-[#6750a4]/30 focus:bg-white transition-all border border-transparent focus:border-[#6750a4]/20"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-[#e7e0ec] text-[#49454f]">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
 
-            {/* Most Wanted Toggle */}
-            <button
-              onClick={() => setFilterMostWanted(!filterMostWanted)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold transition-all hover:scale-105 active:scale-95 ${
-                filterMostWanted
-                  ? 'bg-[#b3261e] text-white border-[#b3261e] shadow-md shadow-red-200'
-                  : 'bg-white text-[#49454f] border-[#e7e0ec] hover:border-[#b3261e] hover:text-[#b3261e]'
-              }`}
-            >
-              <Star className={`w-4 h-4 ${filterMostWanted ? 'fill-white' : ''}`} />
-              הכי רוצה
-            </button>
+              {/* Status filter */}
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'purchased')}
+                className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                  statusFilter !== 'all'
+                    ? 'bg-[#6750a4] text-white border-[#6750a4]'
+                    : 'bg-[#f5f5f5] text-[#49454f] border-transparent hover:bg-[#e7e0ec]'
+                }`}
+              >
+                <option value="all">הכל</option>
+                <option value="active">טרם נרכש</option>
+                <option value="purchased">נרכש</option>
+              </select>
 
-            {/* Price Range Filter */}
-            <div className="relative group">
-              <Banknote className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#49454f] pointer-events-none group-hover:text-[#6750a4] transition-colors" />
+              {/* Price filter */}
               <select
                 value={filterPriceRange}
                 onChange={(e) => setFilterPriceRange(e.target.value as typeof filterPriceRange)}
-                className="appearance-none bg-white border border-[#e7e0ec] rounded-xl pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 focus:border-[#6750a4] hover:border-[#d0bcff] transition-all cursor-pointer text-[#1d192b] font-medium min-w-[140px]"
+                className={`py-2 px-3 rounded-xl text-xs font-medium border transition-all cursor-pointer hidden sm:block ${
+                  filterPriceRange !== 'all'
+                    ? 'bg-[#6750a4] text-white border-[#6750a4]'
+                    : 'bg-[#f5f5f5] text-[#49454f] border-transparent hover:bg-[#e7e0ec]'
+                }`}
               >
-                <option value="all">כל המחירים</option>
+                <option value="all">מחיר</option>
                 <option value="0-200">עד 200 ₪</option>
-                <option value="200-500">200 ₪ - 500 ₪</option>
-                <option value="500-1000">500 ₪ - 1,000 ₪</option>
-                <option value="1000+">מעל 1,000 ₪</option>
+                <option value="200-500">200-500 ₪</option>
+                <option value="500-1000">500-1,000 ₪</option>
+                <option value="1000+">1,000+ ₪</option>
               </select>
-            </div>
 
-            {/* Category Filter */}
-            <div className="relative group">
-              <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#49454f] pointer-events-none group-hover:text-[#6750a4] transition-colors" />
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value as ItemCategory | '')}
-                className="appearance-none bg-white border border-[#e7e0ec] rounded-xl pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 focus:border-[#6750a4] hover:border-[#d0bcff] transition-all cursor-pointer text-[#1d192b] font-medium min-w-[140px]"
-              >
-                <option value="">כל הקטגוריות</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Sort */}
-            <div className="relative group">
-              <ArrowUpDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#49454f] pointer-events-none group-hover:text-[#6750a4] transition-colors" />
+              {/* Sort */}
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'date' | 'price' | 'category')}
-                className="appearance-none bg-white border border-[#e7e0ec] rounded-xl pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6750a4]/20 focus:border-[#6750a4] hover:border-[#d0bcff] transition-all cursor-pointer text-[#1d192b] font-medium"
+                className="py-2 px-3 rounded-xl text-xs font-medium border border-transparent bg-[#f5f5f5] text-[#49454f] hover:bg-[#e7e0ec] transition-all cursor-pointer hidden sm:block"
               >
-                <option value="date">לפי תאריך</option>
-                <option value="price">לפי מחיר</option>
-                <option value="category">לפי קטגוריה</option>
+                <option value="date">תאריך</option>
+                <option value="price">מחיר</option>
+                <option value="category">קטגוריה</option>
               </select>
+
+              {/* Most Wanted Toggle */}
+              <button
+                onClick={() => setFilterMostWanted(!filterMostWanted)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  filterMostWanted
+                    ? 'bg-[#b3261e] text-white border-[#b3261e]'
+                    : 'bg-[#f5f5f5] text-[#49454f] border-transparent hover:bg-[#ffebee] hover:text-[#b3261e]'
+                }`}
+              >
+                <Star className={`w-3.5 h-3.5 ${filterMostWanted ? 'fill-white' : ''}`} />
+                <span className="hidden sm:inline">הכי רוצה</span>
+              </button>
             </div>
+
+            {/* Active filter indicator */}
+            {hasActiveFilters && (
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-[#49454f]">
+                  מציג {filteredItems.length} מתוך {items.length} פריטים
+                </p>
+                <button onClick={clearAllFilters} className="text-xs text-[#6750a4] font-medium hover:underline">
+                  נקה סינון
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Row 3: Category chips — scrollable */}
+          {items.length > 0 && (
+            <div className="px-4 sm:px-6 pb-3 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-1.5 min-w-max">
+                {/* All categories chip */}
+                <button
+                  onClick={() => setFilterCategory('')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap border ${
+                    !filterCategory
+                      ? 'bg-[#6750a4] text-white border-[#6750a4] shadow-sm'
+                      : 'border-transparent text-[#49454f] hover:bg-[#f5f5f5]'
+                  }`}
+                >
+                  <Package className="w-3.5 h-3.5" />
+                  <span>הכל</span>
+                </button>
+
+                {CATEGORIES.map(cat => {
+                  const catItems = items.filter(i => i.category === cat.id)
+                  if (catItems.length === 0) return null
+                  const isActive = filterCategory === cat.id
+                  const CategoryIcon = cat.icon
+                  const colors = CATEGORY_COLORS[cat.id] || CATEGORY_COLORS.general
+                  const purchasedCount = catItems.filter(i => i.quantity_received >= i.quantity).length
+
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setFilterCategory(isActive ? '' : cat.id as ItemCategory)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap border ${
+                        isActive
+                          ? 'shadow-sm scale-105'
+                          : 'border-transparent hover:bg-[#f5f5f5]'
+                      }`}
+                      style={isActive ? {
+                        backgroundColor: colors.bg,
+                        borderColor: colors.border + '40',
+                        color: colors.text,
+                      } : {
+                        color: '#49454f',
+                      }}
+                    >
+                      <CategoryIcon className="w-3.5 h-3.5" />
+                      <span>{cat.name}</span>
+                      {purchasedCount === catItems.length && catItems.length > 0 && <Check className="w-3 h-3 text-[#00c875]" />}
+                      {purchasedCount < catItems.length && <span className="opacity-60">{catItems.length}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Loading / Empty / Grid */}
@@ -1288,21 +1428,29 @@ export default function Dashboard() {
               const categoryItems = activeItems.filter((i) => i.category === category.id)
               if (categoryItems.length === 0) return null
               const CategoryIcon = category.icon
+              const colors = CATEGORY_COLORS[category.id] || CATEGORY_COLORS.general
 
               return (
                 <div key={category.id}>
-                  {/* Category Header */}
+                  {/* Category Header — colored like Checklist */}
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="flex items-center gap-3 bg-gradient-to-l from-transparent to-[#f3edff]/60 rounded-2xl py-2 px-3 pr-4">
+                    <div
+                      className="flex items-center gap-3 rounded-2xl py-2 px-3 pr-4"
+                      style={{ backgroundColor: colors.bg + '60' }}
+                    >
                       <div
-                        className={`p-2.5 rounded-xl bg-gradient-to-br ${category.color} text-white shadow-md`}
+                        className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center"
+                        style={{ backgroundColor: colors.bg, color: colors.text }}
                       >
                         <CategoryIcon className="w-5 h-5" />
                       </div>
                       <h3 className="text-xl font-bold text-[#1d192b]">{category.name}</h3>
                     </div>
-                    <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#e7e0ec] ml-4" />
-                    <span className="text-sm font-medium text-[#6750a4] bg-[#f3edff] border border-[#eaddff] px-3 py-1 rounded-full">
+                    <div className="h-px flex-1 bg-gradient-to-l from-transparent ml-4" style={{ backgroundColor: colors.border + '30' }} />
+                    <span
+                      className="text-sm font-medium px-3 py-1 rounded-full border"
+                      style={{ color: colors.text, backgroundColor: colors.bg, borderColor: colors.border + '30' }}
+                    >
                       {categoryItems.length} פריטים
                     </span>
                   </div>
