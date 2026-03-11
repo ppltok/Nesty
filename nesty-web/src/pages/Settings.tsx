@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   User,
   LogOut,
+  Calendar,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -44,6 +45,10 @@ export default function Settings() {
   // Welcome message
   const [welcomeMessage, setWelcomeMessage] = useState('')
 
+  // Due date
+  const [dueDate, setDueDate] = useState('')
+  const [showDueDateWarning, setShowDueDateWarning] = useState(false)
+
   // Delete account
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
@@ -55,6 +60,7 @@ export default function Settings() {
         firstName: profile.first_name || '',
         lastName: profile.last_name || '',
       })
+      setDueDate(profile.due_date ? profile.due_date.split('T')[0] : '')
     }
   }, [profile])
 
@@ -108,6 +114,35 @@ export default function Settings() {
     } catch (err) {
       console.error('Error saving name:', err)
       showError('שגיאה בשמירת השם')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Save due date
+  const handleSaveDueDate = async () => {
+    if (!profile) return
+    if (!dueDate) {
+      showError('נא לבחור תאריך לידה משוער')
+      return
+    }
+    setIsLoading(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          due_date: dueDate,
+          last_weekly_email_week: null, // Reset so the correct week email is sent next
+        })
+        .eq('id', profile.id)
+
+      if (error) throw error
+      await refreshProfile()
+      setShowDueDateWarning(false)
+      showSuccess('תאריך הלידה המשוער עודכן בהצלחה')
+    } catch (err) {
+      console.error('Error saving due date:', err)
+      showError('שגיאה בשמירת תאריך הלידה')
     } finally {
       setIsLoading(false)
     }
@@ -286,6 +321,84 @@ export default function Settings() {
               <Save className="w-4 h-4 ml-2" />
               שמור שם
             </Button>
+          </div>
+
+          {/* Due Date Section */}
+          <div className="bg-white rounded-2xl border border-border p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Calendar className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold text-foreground">תאריך לידה משוער</h2>
+            </div>
+
+            <p className="text-muted-foreground text-sm mb-4">
+              התאריך משפיע על העדכונים השבועיים, הצ'קליסט והתכנים שמותאמים לך
+            </p>
+
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => {
+                setDueDate(e.target.value)
+                setShowDueDateWarning(false)
+              }}
+              className="w-full rounded-xl border border-border bg-white px-4 py-3 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+              dir="ltr"
+            />
+
+            {!showDueDateWarning ? (
+              <Button
+                onClick={() => {
+                  // Only show warning if the date actually changed
+                  const currentDate = profile?.due_date ? profile.due_date.split('T')[0] : ''
+                  if (dueDate === currentDate) {
+                    showSuccess('התאריך לא השתנה')
+                    return
+                  }
+                  setShowDueDateWarning(true)
+                }}
+                variant="outline"
+                className="mt-4"
+              >
+                <Save className="w-4 h-4 ml-2" />
+                עדכון תאריך
+              </Button>
+            ) : (
+              <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                <div className="flex items-start gap-3 mb-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-amber-800">
+                      שינוי תאריך הלידה ישפיע על:
+                    </p>
+                    <ul className="text-sm text-amber-700 mt-1 space-y-1 list-disc list-inside">
+                      <li>העדכונים השבועיים שתקבלי במייל</li>
+                      <li>שבוע ההריון שמוצג באפליקציה</li>
+                      <li>התכנים המותאמים בצ'קליסט</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowDueDateWarning(false)
+                      setDueDate(profile?.due_date ? profile.due_date.split('T')[0] : '')
+                    }}
+                  >
+                    ביטול
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveDueDate}
+                    isLoading={isLoading}
+                  >
+                    <Save className="w-4 h-4 ml-2" />
+                    אישור עדכון
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Address Section */}

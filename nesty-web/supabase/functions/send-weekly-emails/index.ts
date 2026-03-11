@@ -226,6 +226,103 @@ const WEEKLY_DATA: WeekData[] = [
   },
 ]
 
+// ── Postpartum data (weeks 1-12 after birth) ─────────────────────────
+interface PostpartumWeekData {
+  week: number
+  milestone: string
+  milestoneEmoji: string
+  babyDev: string
+  momRecovery: string
+  tips: string
+}
+
+const POSTPARTUM_DATA: PostpartumWeekData[] = [
+  {
+    week: 1,
+    milestone: 'השבוע הראשון!', milestoneEmoji: '🌟',
+    babyDev: 'התינוק לומד להסתגל לעולם החדש. הוא ישן 16-17 שעות ביום, אוכל כל 2-3 שעות, ומתחיל להכיר את הקול שלך ואת הריח שלך. המשקל ירד קלות בימים הראשונים — זה נורמלי לחלוטין.',
+    momRecovery: 'הגוף שלך עובר שינויים דרמטיים. הרחם מתכווץ בחזרה ויש דימום (לוכיה). אם עברת ניתוח קיסרי, הצלקת רגישה. ייתכנו זיעה מרובה בלילה עקב שינויים הורמונליים. ירידת המשקל מתחילה בהדרגה.',
+    tips: 'קבלי כל עזרה שמציעים לך — זה לא חולשה, זה חוכמה.נוחי כשהתינוק ישן, גם אם זה באמצע היום.שתי הרבה מים, במיוחד אם את מניקה.אל תשוו את עצמכן לאף אחת — כל אחת והקצב שלה.',
+  },
+  {
+    week: 2,
+    milestone: 'שבועיים!', milestoneEmoji: '👀',
+    babyDev: 'התינוק מתחיל לזהות פנים מקרוב (20-30 ס"מ). הוא עשוי להתחיל ליצור קשר עין קצר. השמיעה מתחדדת — הוא מעדיף קולות גבוהים ורכים. תנועות הידיים והרגליים עדיין רפלקסיביות.',
+    momRecovery: 'הדימום לאחר הלידה ממשיך אך הולך ומתמעט. אם את מניקה, ייתכנו כאבים או סדקים בפטמות — זה שלב קשה אך חולף. ההורמונים משתוללים, ובכי פתאומי הוא נורמלי לחלוטין.',
+    tips: 'אם ההנקה כואבת, פני ליועצת הנקה — זה באמת עוזר.בדקי שהתינוק עולה במשקל (ביקור ראשון אצל רופא ילדים).תני לעצמך לבכות — ה-Baby Blues הוא תופעה נורמלית ב-80% מהנשים.',
+  },
+  {
+    week: 3,
+    milestone: 'שלושה שבועות!', milestoneEmoji: '💪',
+    babyDev: 'התינוק מתחיל לפתח שרירי צוואר ועשוי להרים את הראש לרגע קצר בזמן שכיבה על הבטן. הוא מגיב לקולות חזקים בהפתעה. דפוסי שינה עדיין לא סדירים — זה נורמלי.',
+    momRecovery: 'הגוף ממשיך להחלים. ייתכנו כאבי גב וכתפיים מהנקה וסחיבת התינוק. ירידת שיער מוגברת עשויה להתחיל (זה זמני!). אם ה-Baby Blues לא חולף או מחמיר, שוחחי עם הרופא.',
+    tips: 'התחילי Tummy Time קצר (2-3 דקות על הבטן בפיקוח).נסי לצאת מהבית לטיול קצר — אוויר צח עושה פלאים.בקשי מבן/בת הזוג להחליף אותך למשמרת לילה אחת.',
+  },
+  {
+    week: 4,
+    milestone: 'חודש שלם!', milestoneEmoji: '🎂',
+    babyDev: 'מזל טוב — חודש ראשון! התינוק מתחיל לחייך חיוך חברתי ראשון (לא רק גזים!). הוא עוקב אחרי חפצים בתנועה איטית עם העיניים. כוח אחיזת הידיים חזק. הוא מזהה את האמא בבירור.',
+    momRecovery: 'רוב הנשים מרגישות שיפור משמעותי בהחלמה הגופנית. הדימום אמור להפסיק או להתמעט מאוד. תחושת "ערפל מוחי" נפוצה — זה אמיתי ויחלוף. ביקור מעקב אצל הרופא/מיילדת.',
+    tips: 'צלמי תמונה ביום ההולדת חודש! (תודי לנו אחר כך 📸).קבעי ביקור אצל רופא ילדים לחיסון ראשון.נסי לקבוע שגרה גמישה — אפילו בסיסית.',
+  },
+  {
+    week: 5,
+    milestone: '5 שבועות', milestoneEmoji: '😊',
+    babyDev: 'התינוק הופך ליותר ויותר ערני ומגיב. החיוכים החברתיים הופכים לתכופים יותר. הוא מתחיל להוציא קולות "אה" ו"או" — ההתחלה של תקשורת! ראייתו משתפרת ומגיעה ל-30-40 ס"מ.',
+    momRecovery: 'האנרגיה חוזרת לאט. אם את מניקה, ייתכן שתרגישי רעבה כל הזמן — תאכלי! הגוף צריך 500 קלוריות נוספות ליום. שרירי הבטן מתחילים להתחזק מחדש.',
+    tips: 'דברי עם התינוק — הוא מקשיב ולומד.הקשיבי למוזיקה יחד.אם יש דיאסטזיס (פיצול שרירי בטן), התייעצי עם פיזיותרפיסטית.',
+  },
+  {
+    week: 6,
+    milestone: 'חודש וחצי!', milestoneEmoji: '🌈',
+    babyDev: 'התינוק מחייך בתגובה לפנים ולקולות. עוקב אחרי חפצים בסיבוב 180 מעלות. מתחיל להוציא קולות מגוונים יותר. שרירי הצוואר חזקים יותר — מרים ראש ב-Tummy Time.',
+    momRecovery: 'ביקור 6 שבועות אחרי לידה — בדיקה חשובה! הרופא/ה יבדוק את ההחלמה, ישוחח על אמצעי מניעה, ויוודא שהכל בסדר. אם עברת קיסרי, הצלקת כבר מתחילה להחלים.',
+    tips: 'אל תפספסי את ביקור 6 השבועות — גם בשבילך, לא רק בשביל התינוק.שקלי חזרה לפעילות גופנית קלה (הליכה, יוגה).זה הזמן לחגוג — עברת חודש וחצי!',
+  },
+  {
+    week: 7,
+    milestone: '7 שבועות', milestoneEmoji: '🗣️',
+    babyDev: 'התינוק מתחיל "לדבר" — מוציא סדרות של קולות ומגיב כשמדברים אליו. אחיזה מכוונת מתפתחת — הוא מנסה לתפוס חפצים. מתרגש כשרואה פנים מוכרות.',
+    momRecovery: 'רוב הנשים מרגישות חזקות יותר. שרירי האגן מתחזקים (המשיכי בתרגילי קיגל!). אם חזרת לעבודה או מתכננת, זה זמן טוב להתחיל לחשוב על לוגיסטיקה.',
+    tips: 'שחקי עם התינוק — משחק מול מראה, רעשנים, ספרי בד.אם את שואבת חלב, התחילי לבנות מלאי.תכנני מי יטפל בתינוק כשתחזרי לעבודה.',
+  },
+  {
+    week: 8,
+    milestone: 'חודשיים!', milestoneEmoji: '🎉',
+    babyDev: 'חודשיים של גדילה מדהימה! התינוק מחייך הרבה, עוקב אחרי תנועה בעיניים, ומתחיל לגלות את הידיים שלו. שרירי הצוואר מספיק חזקים להרים ראש ב-45 מעלות. שנת הלילה מתחילה להתארך.',
+    momRecovery: 'תבחיני שיפור בשינה — תינוקות רבים מתחילים לישון מתיחות ארוכות יותר בלילה. הגוף ממשיך להחלים וירידת המשקל ממשיכה בהדרגה. ייתכנו רגעי עצבנות — זה עדיין ההורמונים.',
+    tips: 'חיסון חודשיים — חשוב מאוד!.צלמי תמונה לחודש שני.התחילי שגרת שינה קלה (אמבטיה, שיר, לילה טוב).',
+  },
+  {
+    week: 9,
+    milestone: '9 שבועות', milestoneEmoji: '🧸',
+    babyDev: 'התינוק מגלה את הידיים ואת הרגליים ומשחק איתן. הוא מוציא קולות צחוק ראשונים. ההעדפה לפנים אנושיות חזקה — הוא אוהב להסתכל עליך. תנועות הידיים הופכות מכוונות יותר.',
+    momRecovery: 'את מתרגלת לשגרה החדשה. ייתכן שתרגישי בודדה — זה נפוץ מאוד. חשוב למצוא קהילה של אמהות (קבוצות WhatsApp, מפגשי אמהות). ההורמונים ממשיכים להתייצב.',
+    tips: 'חפשי מפגשי אמהות באזור שלך — השקעה שמשתלמת.הציעי לתינוק צעצועים בצבעים מנוגדים (שחור-לבן).תני לעצמך "שעה של אני" לפחות פעם בשבוע.',
+  },
+  {
+    week: 10,
+    milestone: '10 שבועות', milestoneEmoji: '💜',
+    babyDev: 'התינוק מתחיל להבין שהוא ישות נפרדת ממך. הוא מחייך בכוונה, מפטפט, ומגיב לשמו. שרירי הגב חזקים יותר — הוא מסוגל לשכב על הצד. כף היד נפתחת ונסגרת בכוונה.',
+    momRecovery: 'נשירת שיער עשויה להגיע לשיא שלה — זה מפחיד אבל זמני. הגוף ממשיך לחזור לעצמו. אם את מניקה, ייתכן שתבחיני ירידה בכמות החלב — שתייה ומנוחה יעזרו.',
+    tips: 'אם השיער נושר, תירגעי — תוך כמה חודשים זה ייעצר.נסי לצאת לטיולים ארוכים יותר עם העגלה.חפשי שיעורי התפתחות תינוקות באזור.',
+  },
+  {
+    week: 11,
+    milestone: '11 שבועות', milestoneEmoji: '🌸',
+    babyDev: 'התינוק מגלה את העולם דרך הפה — הכל נכנס פנימה! הוא מנסה להגיע לצעצועים ולתפוס אותם. הצחוק הופך לחלק קבוע מהיום. הוא מתחיל לזהות דפוסים ושגרה.',
+    momRecovery: 'אם חזרת לעבודה, ייתכן שתרגישי אשמה — זה נורמלי וזה לא אומר שאת אמא פחות טובה. שרירי הבטן ממשיכים להתחזק. רוב הנשים חוזרות למחזור בשלב הזה (אם לא מניקות).',
+    tips: 'תני לתינוק לגלות מרקמים שונים (בד רך, צעצוע קשיח).קראי לו ספרים — גם אם הוא לא מבין, הוא שומע ולומד.תכנני מה לעשות עם הפריטים שכבר לא מתאימים לגיל.',
+  },
+  {
+    week: 12,
+    milestone: 'שלושה חודשים!', milestoneEmoji: '🎊',
+    babyDev: 'מזל טוב — שלושה חודשים! סוף השליש הרביעי ("הטרימסטר הרביעי"). התינוק הופך ליצור חברתי: מחייך, צוחק, מפטפט. הוא מסוגל להרים ראש ב-90 מעלות, עוקב אחרי חפצים, ותופס צעצועים. דפוסי שינה מתחילים להתייצב.',
+    momRecovery: 'את מרגישה הרבה יותר בטוחה בתפקיד שלך כאמא. הגוף כמעט סיים את ההחלמה הבסיסית. האנרגיה חוזרת בצורה משמעותית. זה הזמן לחגוג — שלושה חודשים של אמהות!',
+    tips: 'חגגי 3 חודשים! צלמי, כתבי, תזכרי את הרגע הזה.שקלי להתחיל הרגלי שינה מסודרים (שיטת "שם, ישן").תתחדשי בבגדים לתינוק — הוא כנראה כבר קפץ מידה!',
+  },
+]
+
 // ── Symptom detection from body text ─────────────────────────────────
 const SYMPTOM_MAP: Array<{ keyword: string; emoji: string; label: string }> = [
   { keyword: 'בחילות', emoji: '🤢', label: 'בחילות' },
@@ -570,6 +667,420 @@ function generateWeeklyEmailHtml(
 </html>`
 }
 
+// ── Week 40 celebration email HTML ──────────────────────────────────
+function generateCelebrationEmailHtml(firstName: string): string {
+  return `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only"/>
+  <meta name="supported-color-modes" content="light"/>
+  <title>Nesty — שבוע 40! הגעת!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root { color-scheme: light only; }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f5f0fa;font-family:'Heebo',sans-serif;direction:rtl;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0fa;direction:rtl;">
+  <tr>
+    <td align="center" style="padding:40px 16px 64px;">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;direction:rtl;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="padding-bottom:28px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <a href="https://nestyil.com" style="text-decoration:none;">
+                    <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:40px;width:auto;display:block;" />
+                  </a>
+                </td>
+                <td align="left">
+                  <span style="font-size:12px;color:#a087c0;font-weight:600;">שבוע 40 — המייל המיוחד</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- CELEBRATION HERO -->
+        <tr>
+          <td style="background:linear-gradient(145deg,#6a35b0 0%,#9b62d4 40%,#e8a0d0 100%);border-radius:24px;padding:50px 40px;overflow:hidden;text-align:center;">
+            <div style="font-size:72px;line-height:1;margin-bottom:20px;">🎉👶🎉</div>
+            <h1 style="margin:0 0 16px;font-size:40px;font-weight:800;color:#ffffff;line-height:1.2;">
+              ${firstName}, הגעת לשבוע 40!
+            </h1>
+            <p style="margin:0 0 8px;font-size:18px;color:#ffffffe6;line-height:1.7;font-weight:400;">
+              תאריך הלידה המשוער הגיע. 40 שבועות של צמיחה, התרגשות, ציפייה — וזה קורה!
+            </p>
+            <div style="background:#ffffff33;border-radius:100px;height:7px;margin:28px 0 9px;">
+              <div style="background:#ffffff;height:7px;width:100%;border-radius:100px;"></div>
+            </div>
+            <p style="margin:0;font-size:13px;color:#ffffffb3;font-weight:600;">100% הושלם — ההריון שלך מושלם!</p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- EMOTIONAL MESSAGE -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:36px 36px;border:1.5px solid #e8daf5;text-align:center;">
+            <div style="font-size:48px;margin-bottom:16px;">💜</div>
+            <h2 style="margin:0 0 16px;font-size:26px;font-weight:800;color:#3b1f6b;line-height:1.3;">
+              כל הכבוד, אמא!
+            </h2>
+            <p style="margin:0;font-size:16px;line-height:2;color:#5a4470;">
+              את עברת מסע מדהים. 40 שבועות של שינויים, אתגרים, רגעים קסומים — ובקרוב מאוד את תחזיקי את התינוק שלך בידיים.
+              <br/><br/>
+              לא משנה מתי בדיוק הלידה תגיע — הכל בזמן שלכם. יש תינוקות שמגיעים קצת לפני ויש כאלה שמחכים עוד קצת. שני המצבים נורמליים לחלוטין.
+            </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- WHAT TO EXPECT -->
+        <tr>
+          <td style="background:#fdf6ff;border-radius:20px;padding:32px 36px;border:1.5px solid #e0ccf5;">
+            <div style="display:inline-block;background:#ead5ff;border-radius:100px;padding:6px 16px;margin-bottom:18px;">
+              <span style="font-size:12px;font-weight:700;color:#7c4dbd;">🏥 מה עכשיו?</span>
+            </div>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-bottom:18px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="vertical-align:top;padding-left:16px;">
+                        <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#3b1f6b;">מעקב עודף הריון</p>
+                        <p style="margin:0;font-size:14px;line-height:1.8;color:#7a6090;">אם עוד לא ילדת, הרופא/ה יתחיל מעקב צמוד יותר — בדיקת ניטור ואולטרסאונד</p>
+                      </td>
+                      <td width="48" style="vertical-align:top;">
+                        <div style="width:42px;height:42px;background:#f0e8ff;border-radius:12px;text-align:center;line-height:42px;font-size:20px;">🩺</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr><td><div style="height:1px;background:#f0e8ff;margin-bottom:18px;"></div></td></tr>
+              <tr>
+                <td style="padding-bottom:18px;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="vertical-align:top;padding-left:16px;">
+                        <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#3b1f6b;">התיק מוכן?</p>
+                        <p style="margin:0;font-size:14px;line-height:1.8;color:#7a6090;">בדקי שהתיק ללידה ארוז ומוכן ליד הדלת. הכל מוכן — רק צריכות לנשום ולחכות</p>
+                      </td>
+                      <td width="48" style="vertical-align:top;">
+                        <div style="width:42px;height:42px;background:#f0e8ff;border-radius:12px;text-align:center;line-height:42px;font-size:20px;">🧳</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr><td><div style="height:1px;background:#f0e8ff;margin-bottom:18px;"></div></td></tr>
+              <tr>
+                <td>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="vertical-align:top;padding-left:16px;">
+                        <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#3b1f6b;">סימנים ללידה</p>
+                        <p style="margin:0;font-size:14px;line-height:1.8;color:#7a6090;">צירים סדירים (כל 5 דקות), ירידת מים, דימום — הגיע הזמן לנסוע לבית החולים!</p>
+                      </td>
+                      <td width="48" style="vertical-align:top;">
+                        <div style="width:42px;height:42px;background:#f0e8ff;border-radius:12px;text-align:center;line-height:42px;font-size:20px;">⏰</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- NESTY REMINDER -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:28px 36px;border:1.5px solid #e8daf5;text-align:center;">
+            <p style="margin:0 0 14px;font-size:15px;line-height:1.8;color:#5a4470;">
+              אחרי הלידה, נמשיך לשלוח לך עדכונים שבועיים על התפתחות התינוק ועל ההחלמה שלך. אנחנו ממשיכות ביחד!
+            </p>
+            <p style="margin:0;font-size:28px;">🌟</p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- WARM CLOSING -->
+        <tr>
+          <td style="background:linear-gradient(145deg,#3b1f6b 0%,#5c3490 100%);border-radius:20px;padding:36px 36px;text-align:center;">
+            <h2 style="margin:0 0 14px;font-size:24px;font-weight:700;color:#f5eeff;line-height:1.4;">בהצלחה, ${firstName}!</h2>
+            <p style="margin:0 0 24px;font-size:15px;color:#ffffffa6;line-height:1.8;">
+              הרגע הגדול כבר כאן. אנחנו שולחים לך חיבוק ענק ומחכים לבשורות טובות!
+            </p>
+            <a href="https://nestyil.com" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:15px 36px;border-radius:100px;">פתחי את Nesty</a>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- CONTACT -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #e8daf5;text-align:center;">
+            <div style="display:inline-block;background:#fce4ec;border-radius:100px;padding:6px 16px;margin-bottom:18px;">
+              <span style="font-size:12px;font-weight:700;color:#c62828;">💬 צריכה עזרה?</span>
+            </div>
+            <h3 style="margin:0 0 10px;font-size:20px;font-weight:700;color:#3b1f6b;line-height:1.4;">אנחנו כאן בשבילך</h3>
+            <p style="margin:0 0 22px;font-size:14px;line-height:1.8;color:#7a6090;max-width:400px;margin-left:auto;margin-right:auto;">
+              יש שאלה? רוצה עזרה? קבעי שיחת זום קצרה (5 דקות) ונעזור לך.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding-bottom:10px;">
+                  <a href="https://calendar.app.google/Cu8AZgor4zohXxqUA" style="display:block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;text-align:center;">📅 קבעי שיחה קצרה</a>
+                </td>
+              </tr>
+              <tr>
+                <td align="center">
+                  <a href="mailto:tom@ppltok.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="padding:30px 0 0;text-align:center;">
+            <a href="https://nestyil.com" style="text-decoration:none;">
+              <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" />
+            </a>
+            <p style="margin:0 0 8px;font-size:13px;color:#a087c0;">
+              נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
+            </p>
+            <p style="margin:0;font-size:12px;color:#bca8d4;">
+              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              &nbsp;·&nbsp;
+              <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
+              &nbsp;·&nbsp;
+              <a href="https://nestyil.com" style="color:#9070b8;text-decoration:underline;">nestyil.com</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`
+}
+
+// ── Postpartum weekly email HTML ────────────────────────────────────
+function generatePostpartumEmailHtml(
+  firstName: string,
+  weekData: PostpartumWeekData,
+): string {
+  const tips = weekData.tips.split('.').map(t => t.trim()).filter(t => t.length > 10)
+  const tipsFormatted = tips.slice(0, 3)
+  const tipEmojis = ['💡', '📋', '🎯']
+
+  const tipsHtml = tipsFormatted.map((tip, i) => `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:${i < tipsFormatted.length - 1 ? '18' : '0'}px;">
+      <tr>
+        <td style="vertical-align:top;padding-left:16px;">
+          <p style="margin:0;font-size:14px;line-height:1.8;color:#5a4470;">${tip}</p>
+        </td>
+        <td width="48" style="vertical-align:top;">
+          <div style="width:42px;height:42px;background:#f0e8ff;border-radius:12px;text-align:center;line-height:42px;font-size:20px;">${tipEmojis[i] || '💡'}</div>
+        </td>
+      </tr>
+    </table>
+    ${i < tipsFormatted.length - 1 ? '<div style="height:1px;background:#f0e8ff;margin-bottom:18px;"></div>' : ''}
+  `).join('')
+
+  // Baby development — first 3 sentences
+  const babyDevShort = weekData.babyDev.split(/(?<=[.!])\s+/).slice(0, 3).join(' ')
+
+  return `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only"/>
+  <meta name="supported-color-modes" content="light"/>
+  <title>Nesty — ${weekData.milestone} ${weekData.milestoneEmoji}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root { color-scheme: light only; }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f5f0fa;font-family:'Heebo',sans-serif;direction:rtl;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0fa;direction:rtl;">
+  <tr>
+    <td align="center" style="padding:40px 16px 64px;">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;direction:rtl;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="padding-bottom:28px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <a href="https://nestyil.com" style="text-decoration:none;">
+                    <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:40px;width:auto;display:block;" />
+                  </a>
+                </td>
+                <td align="left">
+                  <span style="font-size:12px;color:#a087c0;font-weight:600;">שבוע ${weekData.week} אחרי לידה · העדכון שלך</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- HERO CARD -->
+        <tr>
+          <td style="background:linear-gradient(145deg,#5c3490 0%,#9b62d4 50%,#e8a0d0 100%);border-radius:24px;padding:44px 40px 40px;overflow:hidden;text-align:center;">
+            <div style="font-size:64px;line-height:1;margin-bottom:16px;">${weekData.milestoneEmoji}</div>
+            <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.08em;color:#ffffffa6;text-transform:uppercase;">העדכון השבועי אחרי לידה</p>
+            <h1 style="margin:0 0 14px;font-size:40px;font-weight:800;color:#ffffff;line-height:1.2;">
+              ${weekData.milestone}
+            </h1>
+            <p style="margin:0;font-size:16px;color:#ffffffe6;line-height:1.8;font-weight:400;">
+              היי <strong style="font-weight:800;color:#ffffff;">${firstName}</strong> — עברו ${weekData.week} שבועות מהלידה! איך את ואיך הקטנצ׳יק? 💜
+            </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- BABY DEVELOPMENT -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #e8daf5;">
+            <div style="display:inline-block;background:#e8f5e9;border-radius:100px;padding:6px 16px;margin-bottom:18px;">
+              <span style="font-size:12px;font-weight:700;color:#2e7d32;">👶 התפתחות התינוק</span>
+            </div>
+            <h2 style="margin:0 0 14px;font-size:24px;font-weight:800;color:#3b1f6b;">מה התינוק עושה השבוע</h2>
+            <p style="margin:0;font-size:15px;line-height:1.9;color:#5a4470;">
+              ${babyDevShort}
+            </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- MOM RECOVERY -->
+        <tr>
+          <td style="background:#fdf6ff;border-radius:20px;padding:32px 36px;border:1.5px solid #e0ccf5;">
+            <div style="display:inline-block;background:#ead5ff;border-radius:100px;padding:6px 16px;margin-bottom:18px;">
+              <span style="font-size:12px;font-weight:700;color:#7c4dbd;">🌸 ההחלמה שלך</span>
+            </div>
+            <h2 style="margin:0 0 14px;font-size:24px;font-weight:800;color:#3b1f6b;">איך את עשויה להרגיש 💜</h2>
+            <p style="margin:0;font-size:15px;line-height:1.9;color:#5a4470;">
+              ${weekData.momRecovery}
+            </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- TIPS -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #e8daf5;">
+            <div style="display:inline-block;background:#f0e8ff;border-radius:100px;padding:6px 16px;margin-bottom:22px;">
+              <span style="font-size:12px;font-weight:700;color:#7c4dbd;">💡 טיפים לשבוע ${weekData.week}</span>
+            </div>
+            ${tipsHtml}
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- NESTY CTA -->
+        <tr>
+          <td style="background:linear-gradient(145deg,#3b1f6b 0%,#5c3490 100%);border-radius:20px;padding:32px 36px;text-align:center;">
+            <div style="display:inline-block;background:#ffffff1f;border-radius:100px;padding:6px 16px;margin-bottom:20px;">
+              <span style="font-size:12px;font-weight:700;color:#d4b0f5;">✨ הרשימה שלך</span>
+            </div>
+            <h2 style="margin:0 0 14px;font-size:22px;font-weight:700;color:#f5eeff;line-height:1.4;">עדכני את הרשימה שלך 💜</h2>
+            <p style="margin:0 0 28px;font-size:14px;color:#ffffffa6;line-height:1.8;">
+              סמני מתנות שהתקבלו, שלחי תודות — והרשימה תישאר מסודרת!
+            </p>
+            <a href="https://nestyil.com/gifts" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.02em;text-decoration:none;padding:15px 36px;border-radius:100px;">פתחי את Nesty</a>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- WARM CLOSING -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:28px 36px;border:1.5px solid #e8daf5;text-align:center;">
+            <p style="margin:0 0 8px;font-size:28px;">🌸</p>
+            <p style="margin:0;font-size:15px;line-height:1.8;color:#5a4470;">
+              שבוע ${weekData.week} אחרי לידה — את עושה עבודה מדהימה.<br/>
+              <strong style="color:#7c4dbd;">אנחנו כאן איתך — כל צעד בדרך.</strong>
+            </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- CONTACT -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #e8daf5;text-align:center;">
+            <div style="display:inline-block;background:#fce4ec;border-radius:100px;padding:6px 16px;margin-bottom:18px;">
+              <span style="font-size:12px;font-weight:700;color:#c62828;">💬 צריכה עזרה?</span>
+            </div>
+            <h3 style="margin:0 0 10px;font-size:20px;font-weight:700;color:#3b1f6b;line-height:1.4;">אנחנו כאן בשבילך</h3>
+            <p style="margin:0 0 22px;font-size:14px;line-height:1.8;color:#7a6090;max-width:400px;margin-left:auto;margin-right:auto;">
+              יש שאלה? רוצה עזרה? קבעי שיחת זום קצרה (5 דקות) ונעזור לך.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding-bottom:10px;">
+                  <a href="https://calendar.app.google/Cu8AZgor4zohXxqUA" style="display:block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;text-align:center;">📅 קבעי שיחה קצרה</a>
+                </td>
+              </tr>
+              <tr>
+                <td align="center">
+                  <a href="mailto:tom@ppltok.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="padding:30px 0 0;text-align:center;">
+            <a href="https://nestyil.com" style="text-decoration:none;">
+              <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" />
+            </a>
+            <p style="margin:0 0 8px;font-size:13px;color:#a087c0;">
+              נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
+            </p>
+            <p style="margin:0;font-size:12px;color:#bca8d4;">
+              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              &nbsp;·&nbsp;
+              <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
+              &nbsp;·&nbsp;
+              <a href="https://nestyil.com" style="color:#9070b8;text-decoration:underline;">nestyil.com</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`
+}
+
 // ── Main handler ─────────────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -632,8 +1143,8 @@ serve(async (req) => {
         const dueDate = new Date(profile.due_date)
         const currentWeek = calculatePregnancyWeek(dueDate)
 
-        // Only send for weeks 12-40
-        if (currentWeek < 12 || currentWeek > 40) {
+        // Supported range: weeks 12-52 (12-40 pregnancy, 41-52 postpartum)
+        if (currentWeek < 12 || currentWeek > 52) {
           results.push({ email: profile.email, week: currentWeek, status: 'out_of_range' })
           continue
         }
@@ -644,16 +1155,36 @@ serve(async (req) => {
           continue
         }
 
-        // Find week data
-        const weekData = WEEKLY_DATA.find(w => w.week === currentWeek)
-        if (!weekData) {
-          results.push({ email: profile.email, week: currentWeek, status: 'no_data' })
-          continue
-        }
-
-        // Generate email HTML
         const firstName = profile.first_name || profile.email.split('@')[0]
-        const html = generateWeeklyEmailHtml(firstName, weekData)
+        let html: string
+        let subject: string
+
+        if (currentWeek === 40) {
+          // ── Week 40: Special celebration email ──
+          html = generateCelebrationEmailHtml(firstName)
+          subject = `🎉 ${firstName}, הגעת לשבוע 40! המסע המדהים שלך מגיע לשיא 💜`
+
+        } else if (currentWeek > 40) {
+          // ── Weeks 41-52: Postpartum emails ──
+          const postpartumWeek = currentWeek - 40
+          const ppData = POSTPARTUM_DATA.find(w => w.week === postpartumWeek)
+          if (!ppData) {
+            results.push({ email: profile.email, week: currentWeek, status: 'no_data' })
+            continue
+          }
+          html = generatePostpartumEmailHtml(firstName, ppData)
+          subject = `${ppData.milestoneEmoji} ${ppData.milestone} — ${firstName}, איך את והתינוק? 💜`
+
+        } else {
+          // ── Weeks 12-39: Regular pregnancy emails ──
+          const weekData = WEEKLY_DATA.find(w => w.week === currentWeek)
+          if (!weekData) {
+            results.push({ email: profile.email, week: currentWeek, status: 'no_data' })
+            continue
+          }
+          html = generateWeeklyEmailHtml(firstName, weekData)
+          subject = `🌿 שבוע ${currentWeek} — ${firstName}, התינוק שלך בגודל של ${weekData.fruit} ${weekData.fruitEmoji}`
+        }
 
         // Send via Resend
         const res = await fetch('https://api.resend.com/emails', {
@@ -665,7 +1196,7 @@ serve(async (req) => {
           body: JSON.stringify({
             from: 'Nesty <noreply@nestyil.com>',
             to: [profile.email],
-            subject: `🌿 שבוע ${currentWeek} — ${firstName}, התינוק שלך בגודל של ${weekData.fruit} ${weekData.fruitEmoji}`,
+            subject,
             html,
           }),
         })
