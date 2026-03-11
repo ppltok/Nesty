@@ -9,6 +9,47 @@ import OnboardingCelebration from '../../components/OnboardingCelebration'
 import FadedIconsBackground from '../../components/animations/FadedIconsBackground'
 import { trackOnboardingStep, trackOnboardingCompleted, trackRegistryCreated } from '../../utils/tracking'
 
+// ── Fruit mapping for welcome email (weeks 12-40) ──
+const FRUIT_BY_WEEK: Record<number, { name: string; emoji: string }> = {
+  12: { name: 'ליים', emoji: '🍈' },
+  13: { name: 'לימון', emoji: '🍋' },
+  14: { name: 'תפוז', emoji: '🍊' },
+  15: { name: 'אגס', emoji: '🍐' },
+  16: { name: 'אבוקדו', emoji: '🥑' },
+  17: { name: 'בצל', emoji: '🧅' },
+  18: { name: 'מלפפון', emoji: '🥒' },
+  19: { name: 'מנגו', emoji: '🥭' },
+  20: { name: 'בטטה', emoji: '🍠' },
+  21: { name: 'בננה', emoji: '🍌' },
+  22: { name: 'פלפל אדום', emoji: '🌶️' },
+  23: { name: 'אשכולית', emoji: '🍊' },
+  24: { name: 'רימון', emoji: '🍎' },
+  25: { name: 'חציל', emoji: '🍆' },
+  26: { name: 'זוקיני', emoji: '🥒' },
+  27: { name: 'כרוב', emoji: '🥬' },
+  28: { name: 'חסה', emoji: '🥬' },
+  29: { name: 'כרובית', emoji: '🥦' },
+  30: { name: 'ברוקולי', emoji: '🥦' },
+  31: { name: 'קוקוס', emoji: '🥥' },
+  32: { name: 'פומלה', emoji: '🍊' },
+  33: { name: 'דלורית', emoji: '🎃' },
+  34: { name: 'אננס', emoji: '🍍' },
+  35: { name: 'פפאיה', emoji: '🍈' },
+  36: { name: 'קייל', emoji: '🥬' },
+  37: { name: 'מנגולד', emoji: '🥬' },
+  38: { name: 'אבטיח קטן', emoji: '🍉' },
+  39: { name: 'מלון', emoji: '🍈' },
+  40: { name: 'דלעת', emoji: '🎃' },
+}
+
+function calculatePregnancyWeek(dueDateStr: string): number {
+  const dueDate = new Date(dueDateStr)
+  const now = new Date()
+  const diffMs = dueDate.getTime() - now.getTime()
+  const weeksRemaining = Math.ceil(diffMs / (7 * 24 * 60 * 60 * 1000))
+  return Math.max(1, Math.min(40, 40 - weeksRemaining))
+}
+
 type Step = 1 | 2 | 3 | 4 | 5 | 'celebration'
 
 interface OnboardingData {
@@ -149,6 +190,30 @@ export default function Onboarding() {
           user_id: user.id,
           registry_id: registryData.id,
         })
+      }
+
+      // Send welcome email (fire-and-forget, don't block onboarding UI)
+      try {
+        const currentWeek = data.dueDate
+          ? calculatePregnancyWeek(data.dueDate)
+          : 12
+        const clampedWeek = Math.max(12, Math.min(40, currentWeek))
+        const fruitInfo = FRUIT_BY_WEEK[clampedWeek] || FRUIT_BY_WEEK[12]
+
+        supabase.functions.invoke('send-email', {
+          body: {
+            type: 'welcome',
+            to: user.email,
+            data: {
+              firstName: data.firstName || user.email?.split('@')[0] || 'את',
+              currentWeek: clampedWeek,
+              fruitName: fruitInfo.name,
+              fruitEmoji: fruitInfo.emoji,
+            },
+          },
+        }).catch((err) => console.error('Welcome email error:', err))
+      } catch (emailErr) {
+        console.error('Welcome email setup error:', emailErr)
       }
 
       // Don't refresh profile yet - it would trigger redirect
