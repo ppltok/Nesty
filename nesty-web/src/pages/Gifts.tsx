@@ -782,6 +782,7 @@ function PurchaseListItem({
           : 'border-[#e7e0ec] hover:border-[#d0bcff] hover:shadow-sm'
       }`}
     >
+      {/* Top row: Icon + Info (+ actions on desktop) */}
       <div className="flex items-center gap-4">
         {/* Icon */}
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
@@ -816,9 +817,9 @@ function PurchaseListItem({
           )}
         </div>
 
-        {/* Actions */}
+        {/* Actions - desktop only (inline) */}
         {purchase.status === 'confirmed' && (
-          <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div className="hidden sm:flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => onMarkReceived(purchase.id)}
               className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
@@ -830,7 +831,6 @@ function PurchaseListItem({
               {isReceived ? '✓ התקבל' : 'קיבלתי'}
             </button>
 
-            {/* See Item Button */}
             <Link
               to={`/dashboard?highlight=${purchase.item_id}`}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#f3edff] text-[#6750a4] hover:bg-[#eaddff] transition-colors"
@@ -858,6 +858,47 @@ function PurchaseListItem({
           </div>
         )}
       </div>
+
+      {/* Actions - mobile only (below content) */}
+      {purchase.status === 'confirmed' && (
+        <div className="flex sm:hidden items-center gap-2 mt-3 pt-3 border-t border-[#e7e0ec]/60" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => onMarkReceived(purchase.id)}
+            className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+              isReceived
+                ? 'bg-[#f1f8e9] text-[#33691e] border border-[#dcedc8]'
+                : 'bg-[#6750a4] text-white'
+            }`}
+          >
+            {isReceived ? '✓ התקבל' : 'קיבלתי'}
+          </button>
+
+          <Link
+            to={`/dashboard?highlight=${purchase.item_id}`}
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#f3edff] text-[#6750a4] hover:bg-[#eaddff] transition-colors"
+            title="צפה בפריט"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </Link>
+
+          {purchase.buyer_phone && !hasThanked && (
+            <button
+              onClick={() => onSendThankYou(purchase)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#25D366] text-white hover:bg-[#128C7E] transition-colors"
+              title="שלח תודה"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </button>
+          )}
+
+          {hasThanked && (
+            <div className="flex items-center gap-1 text-[#33691e] text-xs font-bold">
+              <Check className="w-3.5 h-3.5" />
+              תודה נשלחה
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
