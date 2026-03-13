@@ -25,7 +25,7 @@ export default function HomeNew() {
             <header className="sticky top-0 z-50 bg-[#fffbff]/70 backdrop-blur-2xl border-b border-[#e7e0ec]/50 px-6 py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-3">
-                        <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-16 w-auto" />
+                        <img src={asset('Nesty_logo.webp')} alt="Nesty" className="h-16 w-auto" />
                     </Link>
                     <nav className="hidden md:flex items-center gap-8">
                         <a href="#how-it-works" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">איך זה עובד</a>
@@ -74,14 +74,14 @@ export default function HomeNew() {
                 <section className="relative py-12 pb-32 md:py-20 md:pb-20 lg:py-24 overflow-x-clip">
                     {/* Animated gradient mesh background */}
                     <div className="absolute inset-0 -z-10 animate-gradient-mesh bg-gradient-to-br from-[#f3edff] via-[#fffbff] to-[#ffd8e4]/30 bg-[length:400%_400%]" />
-                    <FadedIconsBackground count={50} />
+                    <FadedIconsBackground count={20} />
 
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
                             {/* Text Content */}
                             <div className="text-center lg:text-right">
                                 <div className="flex justify-center lg:justify-center mb-8 animate-fade-in-down" style={{ animationDelay: '0.2s' }}>
-                                    <img src={asset('Circle_logo.png')} alt="Nesty" className="w-20 h-20 rounded-full shadow-lg" />
+                                    <img src={asset('Circle_logo.webp')} alt="Nesty" className="w-20 h-20 rounded-full shadow-lg" />
                                 </div>
 
                                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-medium mb-6 text-[#1d192b] tracking-tight leading-[1.1] animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
@@ -119,9 +119,10 @@ export default function HomeNew() {
                                     {/* Main image container */}
                                     <div className="bg-[#f3edff] p-4 rounded-[48px] rounded-tl-[16px] shadow-[0_20px_60px_-15px_rgba(103,80,164,0.2)]">
                                         <img
-                                            src={asset('Landing_Page_photo.png')}
+                                            src={asset('Landing_Page_photo.webp')}
                                             alt="אמא עם תינוק"
                                             className="w-full h-auto rounded-[36px] rounded-tl-[12px]"
+                                            fetchPriority="high"
                                         />
                                     </div>
 
@@ -256,7 +257,7 @@ export default function HomeNew() {
 
                 {/* ══════════ CHROME EXTENSION ══════════ */}
                 <section id="chrome-extension" className="py-10 md:py-14 bg-[#f3edff] relative overflow-hidden">
-                    <FadedIconsBackground count={40} />
+                    <FadedIconsBackground count={15} />
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
                             <ScrollReveal>
@@ -318,7 +319,7 @@ export default function HomeNew() {
                                                 </div>
                                                 <div className="flex-1 bg-white rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs text-[#49454f] font-mono truncate mx-2 sm:mx-4 min-w-0">la-mer.co.il/products/lamer-x-soft</div>
                                                 <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg flex items-center justify-center shadow-sm flex-shrink-0">
-                                                    <img src={asset('Circle_logo.png')} alt="Nesty" className="w-4 h-4 sm:w-5 sm:h-5 rounded-full" />
+                                                    <img src={asset('Circle_logo.webp')} alt="Nesty" className="w-4 h-4 sm:w-5 sm:h-5 rounded-full" />
                                                 </div>
                                             </div>
                                         </div>
@@ -392,7 +393,7 @@ export default function HomeNew() {
 
                         <ScrollReveal delay={100}>
                             <div className="flex justify-center h-[580px] sm:h-[670px] md:h-[760px] relative overflow-hidden">
-                                <FadedIconsBackground count={30} />
+                                <FadedIconsBackground count={12} />
                                 <div className="relative scale-[0.65] sm:scale-[0.75] md:scale-[0.85] origin-top">
                                     <div className="relative bg-[#1d192b] rounded-[55px] p-3 shadow-2xl">
                                         <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[126px] h-[37px] bg-[#1d192b] rounded-full z-20" />
@@ -410,7 +411,7 @@ export default function HomeNew() {
                                                 <span className="text-sm text-[#49454f] font-medium">www.NestyIL.com</span>
                                             </div>
                                             <div className="overflow-y-auto overflow-x-hidden" style={{ height: '700px' }}>
-                                                <img src={asset('IMG_80F37FA15505-1.jpeg')} alt="דוגמה לרשימת מתנות" className="w-full" style={{ width: '390px' }} loading="lazy" />
+                                                <img src={asset('IMG_80F37FA15505-1.webp')} alt="דוגמה לרשימת מתנות" className="w-full" style={{ width: '390px' }} loading="lazy" />
                                             </div>
                                             <div className="absolute bottom-2 left-1/2 -translate-x-1/2"><div className="w-32 h-1 bg-[#1d192b] rounded-full" /></div>
                                         </div>
@@ -493,7 +494,7 @@ export default function HomeNew() {
 
                 {/* ══════════ SMART ENGINE ══════════ */}
                 <section id="smart-engine" className="py-10 md:py-14 bg-[#fffbff] relative overflow-hidden">
-                    <FadedIconsBackground count={40} />
+                    <FadedIconsBackground count={15} />
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
                             <ScrollReveal>
@@ -565,7 +566,7 @@ export default function HomeNew() {
                             <ScrollReveal delay={100}>
                                 <div className="order-2 lg:order-1 relative">
                                     <div className="bg-[#f3edff] rounded-[40px] rounded-br-[12px] p-8 max-w-md mx-auto">
-                                        <img src={asset('Nanit.png')} alt="Nanit" className="w-40 h-40 rounded-[32px] object-cover mx-auto mb-6 shadow-lg" />
+                                        <img src={asset('Nanit.webp')} alt="Nanit" className="w-40 h-40 rounded-[32px] object-cover mx-auto mb-6 shadow-lg" loading="lazy" />
                                         <h4 className="text-2xl font-medium text-[#1d192b] text-center mb-2">Nanit</h4>
                                         <p className="text-lg text-[#49454f] text-center mb-6">₪1,999</p>
                                         <div className="mb-4">
@@ -626,7 +627,7 @@ export default function HomeNew() {
 
                 {/* ══════════ FINAL CTA ══════════ */}
                 <section className="py-16 md:py-20 bg-[#6750a4] relative overflow-hidden">
-                    <ParticleBackground count={35} />
+                    <ParticleBackground count={15} />
                     <div className="absolute inset-0">
                         <div className="absolute top-10 right-10 w-60 h-60 bg-white/10 rounded-full blur-3xl animate-orb-1" />
                         <div className="absolute bottom-10 left-10 w-80 h-80 bg-[#ffd8e4]/20 rounded-full blur-3xl animate-orb-2" />
@@ -654,7 +655,7 @@ export default function HomeNew() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                         <div className="col-span-2">
                             <Link to="/" className="flex items-center mb-4">
-                                <img src={asset('logo.png')} alt="Nesty" className="h-12 w-auto" />
+                                <img src={asset('logo.webp')} alt="Nesty" className="h-12 w-auto" loading="lazy" />
                             </Link>
                             <p className="text-[#49454f] max-w-sm">לבנות את הקן שלכם, חכם יותר. הרשימה שמאפשרת לכם לאסוף מוצרים מכל מקום ולשתף עם מי שאוהבים.</p>
                         </div>
