@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { X, ArrowLeft, ArrowRight, Check, Home, ClipboardList, Gift, Settings, LayoutDashboard, Sparkles, BarChart3 } from 'lucide-react'
+import { X, ArrowLeft, ArrowRight, Check, ClipboardList, Gift, Settings, Heart, Sparkles, BarChart3, Plus, Star } from 'lucide-react'
 
 interface TutorialStep {
   id: string
@@ -12,6 +12,7 @@ interface TutorialStep {
   position: 'top' | 'bottom' | 'left' | 'right' | 'center'
   icon?: React.ComponentType<{ className?: string }>
   highlightNav?: boolean
+  special?: boolean
 }
 
 // Check if we're on mobile
@@ -20,34 +21,17 @@ const isMobile = () => window.innerWidth < 1024
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'welcome',
-    title: 'ברוכים הבאים ל-Nesty!',
-    description: 'בואו נכיר את האפליקציה בקצרה. נראה לך את כל העמודים והכלים שיעזרו לך לנהל את רשימת התינוק.',
+    title: 'ברוכים הבאים ל-Nesty! 🪺',
+    description: 'Nesty עוזרת לכם לדעת מה באמת צריך לתינוק, לבנות רשימה חכמה ולשתף אותה עם כולם.\nבואו נכיר את הכלים.',
     route: '/checklist',
     position: 'center',
-    icon: Home,
-  },
-  {
-    id: 'dashboard',
-    title: 'הרשימה',
-    description: 'זאת הרשימה שלך!\n תוכלי להוסיף פריטים חדשים, לנהל את הרשימה הקיימת ולשתף עם חברים ומשפחה.',
-    navItemId: 'dashboard',
-    route: '/dashboard',
-    position: 'bottom',
-    icon: LayoutDashboard,
-    highlightNav: true,
-  },
-  {
-    id: 'add-item',
-    title: 'הוספת פריטים',
-    description: 'לחצי על "הוסף פריט" כדי להוסיף מוצרים לרשימה. אפשר להוסיף ידנית או להדביק לינק מחנות.',
-    targetSelector: '[data-tutorial="add-item-button"]',
-    route: '/dashboard',
-    position: 'bottom',
+    icon: Sparkles,
+    special: true,
   },
   {
     id: 'checklist',
-    title: 'מה את באמת צריכה?',
-    description: 'תתחילי מפה!\nכאן תגלי מה את באמת צריכה לקנות לתינוק. עברי על הרשימה המומלצת, סמני מה כבר יש לך, והחליטי מה חשוב לך.',
+    title: 'הצ׳קליסט - מפה מתחילים',
+    description: 'רשימת כל מה שתינוק צריך, מסודרת לפי קטגוריות.\nעברו על הפריטים, סמנו מה כבר יש לכם, ובחרו מה חשוב.',
     navItemId: 'checklist',
     route: '/checklist',
     position: 'top',
@@ -56,34 +40,43 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'checklist-categories',
-    title: 'קטגוריות וסימון',
-    description: 'ניתן להוסיף מוצרים או למחוק אם לא רלוונטי, הוסיפי הערות אישיות, והחליטי על כמות.',
+    title: 'קטגוריות וניהול',
+    description: 'לחצו על קטגוריה כדי לפתוח אותה.\nאפשר להוסיף פריטים, למחוק מה שלא רלוונטי, ולהוסיף הערות.',
     targetSelector: '[data-tutorial="checklist-category"]',
     route: '/checklist',
-    position: 'top',
+    position: 'bottom',
   },
   {
     id: 'recommended-products',
     title: 'המלצות מוצרים',
-    description: 'לא יודעת מאיפה להתחיל? לכל פריט ברשימה יש המלצות מוצרים מבוססות על חוות דעת של הורים. לחצי על פריט כדי לראות המלצות ולהוסיף במהירות.',
+    description: 'לא יודעים מאיפה להתחיל?\nלכל פריט יש המלצות מבוססות חוות דעת הורים. לחצו על פריט כדי לראות ולהוסיף.',
     route: '/checklist',
     position: 'center',
-    icon: Sparkles,
+    icon: Star,
   },
   {
-    id: 'statistics',
-    title: 'מבט על',
-    description: 'רוצה לראות תמונה מלאה? בדף הסטטיסטיקות תוכלי לראות כמה השלמתם, מה נשאר, וכמה חסכתם. מעקב קל אחרי כל ההתקדמות.',
-    navItemId: 'statistics',
-    route: '/statistics',
-    position: 'center',
-    icon: BarChart3,
+    id: 'dashboard',
+    title: 'הרשימה שלי',
+    description: 'כאן נמצאים כל הפריטים שהוספתם.\nשתפו את הרשימה עם חברים ומשפחה כדי שידעו מה לקנות.',
+    navItemId: 'dashboard',
+    route: '/dashboard',
+    position: 'bottom',
+    icon: Heart,
     highlightNav: true,
   },
   {
+    id: 'add-item',
+    title: 'הוספת פריטים',
+    description: 'לחצו כאן כדי להוסיף מוצר לרשימה.\nאפשר להדביק לינק מכל חנות או להוסיף ידנית.',
+    targetSelector: '[data-tutorial="add-item-button"]',
+    route: '/dashboard',
+    position: 'bottom',
+    icon: Plus,
+  },
+  {
     id: 'gifts',
-    title: 'מתנות שהתקבלו',
-    description: 'כאן תראי את כל המתנות שנרכשו עבורכם. תוכלי לראות מי קנה מה ולשלוח תודות.',
+    title: 'מתנות',
+    description: 'כשמישהו ירכוש פריט מהרשימה, תראו את זה כאן.\nתוכלו לראות מי קנה, מה הכמות, ולשלוח הודעת תודה אישית.',
     navItemId: 'gifts',
     route: '/gifts',
     position: 'center',
@@ -91,10 +84,20 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     highlightNav: true,
   },
   {
+    id: 'statistics',
+    title: 'מבט על',
+    description: 'תמונה מלאה של ההתקדמות שלכם:\nכמה פריטים הושלמו, מה נשאר לרכישה, התקציב הכולל, והתפלגות לפי קטגוריות.',
+    navItemId: 'statistics',
+    route: '/statistics',
+    position: 'center',
+    icon: BarChart3,
+    highlightNav: true,
+  },
+  {
     id: 'settings',
     title: 'הגדרות',
-    description: 'כאן תוכלי לעדכן כתובת למשלוח, להגדיר פרטיות הרשימה, ולנהל את החשבון. במובייל - לחצי על "עוד" כדי להגיע להגדרות.',
-    navItemId: 'more', // On mobile, highlight the "more" button which contains settings
+    description: 'הוסיפו כתובת למשלוח כדי שקונים ידעו לאן לשלוח.\nאפשר גם לערוך את שם הרשימה, לנהל פרטיות, ולהתנתק.',
+    navItemId: 'settings',
     route: '/settings',
     position: 'center',
     icon: Settings,
@@ -102,10 +105,11 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'complete',
-    title: 'סיימתם! 🎉',
-    description: 'עכשיו את מוכנה להתחיל לבנות את הרשימה שלך. בהצלחה!',
+    title: 'הכל מוכן! 🎉',
+    description: 'עכשיו אתם יודעים הכל!\nהתחילו מהצ׳קליסט, בחרו מוצרים, ושתפו את הרשימה.\nבהצלחה!',
     route: '/dashboard',
     position: 'center',
+    special: true,
   },
 ]
 
@@ -186,7 +190,7 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
     const mobile = isMobile()
     const padding = 16
     const tooltipWidth = mobile ? Math.min(340, window.innerWidth - 32) : 360
-    const tooltipHeight = 200
+    const tooltipHeight = 300
 
     // For mobile with nav items at bottom, always position tooltip above the nav
     if (mobile && step.highlightNav && targetRect) {
@@ -274,12 +278,12 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
               y="0"
               width="100%"
               height="100%"
-              fill="rgba(0, 0, 0, 0.75)"
+              fill="rgba(0, 0, 0, 0.7)"
               mask="url(#spotlight-mask)"
             />
           </svg>
         ) : (
-          <div className="w-full h-full bg-black/75" />
+          <div className="w-full h-full bg-black/70" />
         )}
       </div>
 
@@ -292,14 +296,14 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
             top: targetRect.top - 8,
             width: targetRect.width + 16,
             height: targetRect.height + 16,
-            boxShadow: '0 0 0 4px rgba(208, 188, 255, 0.3), 0 0 30px rgba(103, 80, 164, 0.5)',
+            boxShadow: '0 0 0 4px rgba(208, 188, 255, 0.4), 0 0 40px rgba(103, 80, 164, 0.4), 0 0 80px rgba(103, 80, 164, 0.15)',
           }}
         />
       )}
 
       {/* Tooltip card */}
       <div
-        className="bg-white rounded-[24px] shadow-2xl p-5 sm:p-6 w-full sm:w-[360px] max-w-[calc(100vw-32px)]"
+        className={`rounded-[24px] p-5 sm:p-6 w-full sm:w-[380px] max-w-[calc(100vw-32px)] border border-[#e7e0ec]/60 shadow-[0_20px_60px_-15px_rgba(103,80,164,0.15)] ${step.special ? 'bg-gradient-to-br from-white via-[#faf7ff] to-[#f3edff]' : 'bg-white'}`}
         style={getTooltipStyle()}
       >
         {/* Skip button */}
