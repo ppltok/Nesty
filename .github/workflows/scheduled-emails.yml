@@ -27,22 +27,39 @@ jobs:
           github.event.inputs.function == 'send-weekly-emails' ||
           github.event.inputs.function == 'both'
         run: |
-          response=$(curl -s -w "\n%{http_code}" \
-            -X POST \
-            "${{ secrets.SUPABASE_URL }}/functions/v1/send-weekly-emails" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            -H "Content-Type: application/json")
+          max_retries=3
+          retry_delay=10
 
-          http_code=$(echo "$response" | tail -1)
-          body=$(echo "$response" | head -n -1)
+          for attempt in $(seq 1 $max_retries); do
+            echo "Attempt $attempt of $max_retries..."
 
-          echo "Status: $http_code"
-          echo "Response: $body"
+            response=$(curl -s -w "\n%{http_code}" --max-time 60 \
+              -X POST \
+              "${{ secrets.SUPABASE_URL }}/functions/v1/send-weekly-emails" \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -H "Content-Type: application/json")
 
-          if [ "$http_code" -ge 400 ]; then
+            http_code=$(echo "$response" | tail -1)
+            body=$(echo "$response" | head -n -1)
+
+            echo "Status: $http_code"
+            echo "Response: $body"
+
+            if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 400 ]; then
+              echo "Weekly emails succeeded."
+              exit 0
+            fi
+
+            if [ "$http_code" -ge 500 ] && [ "$attempt" -lt "$max_retries" ]; then
+              echo "Server error ($http_code), retrying in ${retry_delay}s..."
+              sleep $retry_delay
+              retry_delay=$((retry_delay * 2))
+              continue
+            fi
+
             echo "::error::Weekly emails failed with status $http_code"
             exit 1
-          fi
+          done
 
       - name: Send Nudge Emails
         if: >
@@ -50,19 +67,36 @@ jobs:
           github.event.inputs.function == 'send-nudge-emails' ||
           github.event.inputs.function == 'both'
         run: |
-          response=$(curl -s -w "\n%{http_code}" \
-            -X POST \
-            "${{ secrets.SUPABASE_URL }}/functions/v1/send-nudge-emails" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            -H "Content-Type: application/json")
+          max_retries=3
+          retry_delay=10
 
-          http_code=$(echo "$response" | tail -1)
-          body=$(echo "$response" | head -n -1)
+          for attempt in $(seq 1 $max_retries); do
+            echo "Attempt $attempt of $max_retries..."
 
-          echo "Status: $http_code"
-          echo "Response: $body"
+            response=$(curl -s -w "\n%{http_code}" --max-time 60 \
+              -X POST \
+              "${{ secrets.SUPABASE_URL }}/functions/v1/send-nudge-emails" \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -H "Content-Type: application/json")
 
-          if [ "$http_code" -ge 400 ]; then
+            http_code=$(echo "$response" | tail -1)
+            body=$(echo "$response" | head -n -1)
+
+            echo "Status: $http_code"
+            echo "Response: $body"
+
+            if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 400 ]; then
+              echo "Nudge emails succeeded."
+              exit 0
+            fi
+
+            if [ "$http_code" -ge 500 ] && [ "$attempt" -lt "$max_retries" ]; then
+              echo "Server error ($http_code), retrying in ${retry_delay}s..."
+              sleep $retry_delay
+              retry_delay=$((retry_delay * 2))
+              continue
+            fi
+
             echo "::error::Nudge emails failed with status $http_code"
             exit 1
-          fi
+          done
