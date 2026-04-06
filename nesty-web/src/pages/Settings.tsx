@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -14,11 +14,17 @@ import {
   User,
   LogOut,
   Calendar,
+  Users,
+  Mail,
+  RefreshCw,
+  XCircle,
+  UserMinus,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import type { RegistryInvitation, Profile } from '../types'
 
 export default function Settings() {
-  const { registry, profile, refreshProfile, signOut } = useAuth()
+  const { registry, profile, refreshProfile, signOut, isRegistryOwner, user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -48,6 +54,13 @@ export default function Settings() {
   // Due date
   const [dueDate, setDueDate] = useState('')
   const [showDueDateWarning, setShowDueDateWarning] = useState(false)
+
+  // Co-parent invite
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [pendingInvitation, setPendingInvitation] = useState<RegistryInvitation | null>(null)
+  const [partnerProfile, setPartnerProfile] = useState<Profile | null>(null)
+  const [showRemovePartnerConfirm, setShowRemovePartnerConfirm] = useState(false)
 
   // Delete account
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -79,6 +92,166 @@ export default function Settings() {
       setWelcomeMessage(registry.welcome_message || '')
     }
   }, [registry])
+
+  // Load pending invitation and partner profile
+  const fetchCoParentData = useCallback(async () => {
+    if (!registry) return
+
+    // If partner is linked, fetch their profile
+    if (registry.partner_id) {
+      const { data: partner } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', registry.partner_id)
+        .maybeSingle()
+      setPartnerProfile(partner)
+      setPendingInvitation(null)
+    } else if (isRegistryOwner) {
+      // Check for pending invitation
+      const { data: invitation } = await supabase
+        .from('registry_invitations')
+        .select('*')
+        .eq('registry_id', registry.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      setPendingInvitation(invitation)
+      setPartnerProfile(null)
+    }
+  }, [registry, isRegistryOwner])
+
+  useEffect(() => {
+    fetchCoParentData()
+  }, [fetchCoParentData])
+
+  // Send co-parent invitation
+  const handleSendInvitation = async () => {
+    if (!registry || !profile || !user) return
+    const email = inviteEmail.trim().toLowerCase()
+    if (!email || !email.includes('@')) {
+      showError('נא להזין כתובת מייל תקינה')
+      return
+    }
+    if (email === profile.email) {
+      showError('לא ניתן להזמין את עצמך')
+      return
+    }
+
+    setInviteLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('No session')
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invitation`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            registry_id: registry.id,
+            invited_email: email,
+          }),
+        }
+      )
+
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Failed to send invitation')
+
+      setInviteEmail('')
+      await fetchCoParentData()
+      showSuccess('ההזמנה נשלחה בהצלחה!')
+    } catch (err: any) {
+      console.error('Error sending invitation:', err)
+      showError(err.message || 'שגיאה בשליחת ההזמנה')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
+  // Resend invitation
+  const handleResendInvitation = async () => {
+    if (!pendingInvitation) return
+    setInviteLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('No session')
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-invitation`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            registry_id: registry!.id,
+            invited_email: pendingInvitation.invited_email,
+            resend: true,
+          }),
+        }
+      )
+
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Failed to resend')
+
+      await fetchCoParentData()
+      showSuccess('ההזמנה נשלחה מחדש!')
+    } catch (err: any) {
+      console.error('Error resending invitation:', err)
+      showError(err.message || 'שגיאה בשליחה מחדש')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
+  // Cancel pending invitation
+  const handleCancelInvitation = async () => {
+    if (!pendingInvitation) return
+    setInviteLoading(true)
+    try {
+      const { error } = await supabase
+        .from('registry_invitations')
+        .update({ status: 'revoked' })
+        .eq('id', pendingInvitation.id)
+
+      if (error) throw error
+      setPendingInvitation(null)
+      showSuccess('ההזמנה בוטלה')
+    } catch (err) {
+      console.error('Error cancelling invitation:', err)
+      showError('שגיאה בביטול ההזמנה')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
+  // Remove partner
+  const handleRemovePartner = async () => {
+    if (!registry) return
+    setInviteLoading(true)
+    try {
+      const { error } = await supabase
+        .from('registries')
+        .update({ partner_id: null })
+        .eq('id', registry.id)
+
+      if (error) throw error
+      setShowRemovePartnerConfirm(false)
+      setPartnerProfile(null)
+      await refreshProfile()
+      showSuccess('השיתוף הוסר בהצלחה')
+    } catch (err) {
+      console.error('Error removing partner:', err)
+      showError('שגיאה בהסרת השיתוף')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
 
   const showSuccess = (message: string) => {
     setSuccessMessage(message)
@@ -565,6 +738,165 @@ export default function Settings() {
               <Save className="w-4 h-4 ml-2" />
               שמור הודעה
             </Button>
+          </div>
+
+          {/* Co-Parent Sharing Section */}
+          <div className="bg-white rounded-2xl border border-border p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Users className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-bold text-foreground">שיתוף הורה נוסף</h2>
+            </div>
+
+            {/* Partner is linked */}
+            {registry?.partner_id && partnerProfile ? (
+              <div>
+                <div className="flex items-center gap-4 p-4 bg-green-50 rounded-xl border border-green-200">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-lg">
+                    {partnerProfile.first_name?.[0] || partnerProfile.email[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground">
+                      {partnerProfile.first_name} {partnerProfile.last_name}
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {partnerProfile.email}
+                    </p>
+                  </div>
+                  <div className="text-xs text-green-600 font-medium bg-green-100 px-3 py-1 rounded-full">
+                    משותף
+                  </div>
+                </div>
+
+                {isRegistryOwner && (
+                  <div className="mt-4">
+                    {!showRemovePartnerConfirm ? (
+                      <button
+                        onClick={() => setShowRemovePartnerConfirm(true)}
+                        className="text-sm text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
+                      >
+                        <UserMinus className="w-4 h-4" />
+                        הסר שיתוף
+                      </button>
+                    ) : (
+                      <div className="p-4 bg-destructive/5 rounded-xl border border-destructive/20">
+                        <div className="flex items-start gap-3 mb-3">
+                          <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                          <p className="text-sm text-destructive font-medium">
+                            {partnerProfile.first_name} יאבד/תאבד גישה לרשימה. האם להמשיך?
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowRemovePartnerConfirm(false)}
+                          >
+                            ביטול
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-destructive hover:bg-destructive/90"
+                            onClick={handleRemovePartner}
+                            isLoading={inviteLoading}
+                          >
+                            <UserMinus className="w-4 h-4 ml-2" />
+                            הסר שיתוף
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!isRegistryOwner && (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    הרשימה משותפת איתך. רק בעל/ת הרשימה יכול/ה לנהל את השיתוף.
+                  </p>
+                )}
+              </div>
+            ) : pendingInvitation ? (
+              /* Pending invitation */
+              <div>
+                <div className="flex items-center gap-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                  <Mail className="w-5 h-5 text-amber-600" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground">
+                      הזמנה נשלחה אל
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {pendingInvitation.invited_email}
+                    </p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      תפוגה ב-{new Date(pendingInvitation.expires_at).toLocaleDateString('he-IL')}
+                    </p>
+                  </div>
+                  <div className="text-xs text-amber-700 font-medium bg-amber-100 px-3 py-1 rounded-full">
+                    ממתין
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground mt-3 flex items-start gap-1.5">
+                  <span className="mt-0.5">💡</span>
+                  <span>לא קיבלו? בקשו מבן/בת הזוג לבדוק בתיקיית הספאם או הדואר הזבל.</span>
+                </p>
+
+                <div className="flex gap-3 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResendInvitation}
+                    isLoading={inviteLoading}
+                  >
+                    <RefreshCw className="w-4 h-4 ml-2" />
+                    שלח מחדש
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCancelInvitation}
+                    isLoading={inviteLoading}
+                    className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                  >
+                    <XCircle className="w-4 h-4 ml-2" />
+                    בטל הזמנה
+                  </Button>
+                </div>
+              </div>
+            ) : isRegistryOwner ? (
+              /* No partner, no pending — show invite form */
+              <div>
+                <p className="text-muted-foreground text-sm mb-4">
+                  הזמינו את בן/בת הזוג לנהל יחד את רשימת התינוק. שניכם תוכלו להוסיף, לערוך ולנהל פריטים.
+                </p>
+
+                <div className="flex gap-3">
+                  <Input
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="כתובת המייל של בן/בת הזוג"
+                    type="email"
+                    dir="ltr"
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSendInvitation()
+                    }}
+                  />
+                  <Button
+                    onClick={handleSendInvitation}
+                    isLoading={inviteLoading}
+                    className="whitespace-nowrap"
+                  >
+                    <Mail className="w-4 h-4 ml-2" />
+                    שלח הזמנה
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Partner viewing — no invite capability */
+              <p className="text-muted-foreground text-sm">
+                רק בעל/ת הרשימה יכול/ה להזמין הורה נוסף.
+              </p>
+            )}
           </div>
 
           {/* Logout Section */}

@@ -11,6 +11,7 @@ interface AuthContextType {
   session: Session | null
   isLoading: boolean
   isAuthenticated: boolean
+  isRegistryOwner: boolean
   refreshProfile: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -72,20 +73,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 5000)
       })
 
-      // Race between query and timeout
-      const queryPromise = supabase
+      // Query by owner_id first, fallback to partner_id
+      // Two-step approach avoids conflicts with public read RLS policy + maybeSingle()
+      const ownerQuery = supabase
         .from('registries')
         .select('*')
         .eq('owner_id', userId)
         .maybeSingle()
 
-      const { data, error } = await Promise.race([queryPromise, timeoutPromise])
+      const { data: ownedRegistry, error: ownError } = await Promise.race([ownerQuery, timeoutPromise])
 
-      if (error) {
-        console.error('Error fetching registry:', error)
+      if (ownError) {
+        console.error('Error fetching owned registry:', ownError)
         return null
       }
-      return data
+
+      if (ownedRegistry) {
+        console.log('fetchRegistry: Found owned registry for', userId)
+        return ownedRegistry
+      }
+
+      // Not an owner — check if partner on someone else's registry
+      const partnerQuery = supabase
+        .from('registries')
+        .select('*')
+        .eq('partner_id', userId)
+        .maybeSingle()
+
+      const partnerTimeout = new Promise<{ data: null; error: any }>((resolve) => {
+        setTimeout(() => resolve({ data: null, error: new Error('Query timeout') }), 5000)
+      })
+
+      const { data: partnerRegistry, error: partnerError } = await Promise.race([partnerQuery, partnerTimeout])
+
+      if (partnerError) {
+        console.error('Error fetching partner registry:', partnerError)
+        return null
+      }
+
+      console.log('fetchRegistry: Partner registry for', userId, ':', !!partnerRegistry)
+      return partnerRegistry
     } catch (err) {
       console.error('Error fetching registry:', err)
       return null
@@ -303,6 +330,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       isLoading,
       isAuthenticated: !!user,
+      isRegistryOwner: !!user && !!registry && registry.owner_id === user.id,
       refreshProfile,
       signOut,
     }}>

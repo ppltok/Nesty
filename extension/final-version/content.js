@@ -145,8 +145,9 @@
    */
   async function fetchUserRegistry(userId) {
     try {
+      // Query by owner_id OR partner_id to support co-parent access
       const response = await fetch(
-        `${NESTY_CONFIG.SUPABASE_URL}/rest/v1/registries?owner_id=eq.${userId}&select=*`,
+        `${NESTY_CONFIG.SUPABASE_URL}/rest/v1/registries?or=(owner_id.eq.${userId},partner_id.eq.${userId})&select=*`,
         {
           headers: {
             'apikey': NESTY_CONFIG.SUPABASE_ANON_KEY,

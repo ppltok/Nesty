@@ -18,6 +18,7 @@ import PublicRegistry from './pages/PublicRegistry'
 import Gifts from './pages/Gifts'
 import Statistics from './pages/Statistics'
 import Settings from './pages/Settings'
+import InviteAccept from './pages/InviteAccept'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import Contact from './pages/Contact'
@@ -56,6 +57,7 @@ function AppRoutes() {
     pathname === '/home-new' ||
     pathname.startsWith('/registry/') ||
     pathname.startsWith('/auth/') ||
+    pathname.startsWith('/invite/') ||
     pathname === '/terms' ||
     pathname === '/privacy' ||
     pathname === '/contact'
@@ -77,6 +79,9 @@ function AppRoutes() {
 
       {/* Public registry view */}
       <Route path="/registry/:slug" element={<PublicRegistry />} />
+
+      {/* Invitation acceptance (works with or without auth) */}
+      <Route path="/invite/:token" element={<InviteAccept />} />
 
       {/* Protected routes */}
       <Route element={<ProtectedRoute />}>

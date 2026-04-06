@@ -18,6 +18,7 @@ import {
   List,
   Search,
   X,
+  Users,
 } from 'lucide-react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import AddressModal from '../components/AddressModal'
@@ -79,6 +80,9 @@ export default function Dashboard() {
   // View Mode State
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
 
+  // Co-parent indicator
+  const [partnerName, setPartnerName] = useState<string | null>(null)
+
   // Quantity selector modal state
   const [quantityModalItem, setQuantityModalItem] = useState<Item | null>(null)
   const [selectedQuantity, setSelectedQuantity] = useState(1)
@@ -123,6 +127,23 @@ export default function Dashboard() {
       fetchItems()
     }
   }, [registry, fetchItems])
+
+  // Fetch partner name for shared registry indicator
+  useEffect(() => {
+    if (!registry?.partner_id || !user) {
+      setPartnerName(null)
+      return
+    }
+    const partnerId = registry.owner_id === user.id ? registry.partner_id : registry.owner_id
+    supabase
+      .from('profiles')
+      .select('first_name')
+      .eq('id', partnerId)
+      .maybeSingle()
+      .then(({ data }) => {
+        setPartnerName(data?.first_name || null)
+      })
+  }, [registry, user])
 
   // Show address modal if registry exists but has no address (and user hasn't skipped)
   // Wait until tutorial check is complete AND tutorial is not active before showing
@@ -1134,6 +1155,14 @@ export default function Dashboard() {
                 <p className="text-[#eaddff] text-lg max-w-md font-medium leading-relaxed">
                   הרשימה שלך מוכנה. זה הזמן לשתף אותה עם האנשים שאת אוהבת ולהתחיל להתארגן ברוגע.
                 </p>
+                {registry?.partner_id && partnerName && (
+                  <div className="flex items-center gap-2 mt-3 bg-white/10 backdrop-blur-md rounded-full px-4 py-1.5 w-fit">
+                    <Users className="w-4 h-4 text-[#d0bcff]" />
+                    <span className="text-sm text-[#eaddff]">
+                      רשימה משותפת עם {partnerName}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-2.5 mt-8">

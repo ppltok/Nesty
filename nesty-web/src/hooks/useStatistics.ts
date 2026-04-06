@@ -80,7 +80,7 @@ export function useStatistics() {
           supabase
             .from('checklist_preferences')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('user_id', registry.owner_id)
         ])
 
         if (itemsResult.error) throw itemsResult.error

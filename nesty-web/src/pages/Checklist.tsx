@@ -30,6 +30,10 @@ const CATEGORY_COLORS: Record<string, { border: string; bg: string; text: string
 export default function Checklist() {
   const { user, registry, isLoading: authLoading } = useAuth()
 
+  // For co-parent support: checklist data is stored under the registry owner's user_id
+  // Both owner and partner read/write the same checklist
+  const checklistUserId = registry?.owner_id || user?.id
+
   // === Existing state (unchanged) ===
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [prefilledCategory, setPrefilledCategory] = useState<string | undefined>()
@@ -78,13 +82,13 @@ export default function Checklist() {
 
   // === Fetch preferences (unchanged) ===
   const fetchPreferences = useCallback(async () => {
-    if (!user) return
+    if (!checklistUserId) return
     setIsLoading(true)
     try {
       const { data, error } = await supabase
         .from('checklist_preferences')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', checklistUserId)
       if (error) throw error
       setPreferences(data || [])
       const notesMap: Record<string, string> = {}
@@ -97,11 +101,11 @@ export default function Checklist() {
     } finally {
       setIsLoading(false)
     }
-  }, [user])
+  }, [checklistUserId])
 
   useEffect(() => {
-    if (user) fetchPreferences()
-  }, [user, fetchPreferences])
+    if (checklistUserId) fetchPreferences()
+  }, [checklistUserId, fetchPreferences])
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -137,7 +141,7 @@ export default function Checklist() {
         const { data, error } = await supabase
           .from('checklist_preferences')
           .insert({
-            user_id: user.id,
+            user_id: checklistUserId,
             category_id: categoryId,
             item_name: itemName,
             quantity: updates.quantity ?? 1,
@@ -168,7 +172,7 @@ export default function Checklist() {
         setPreferences(prev => prev.map(p => p.id === existing.id ? { ...p, notes } : p))
       } else {
         const { data } = await supabase.from('checklist_preferences')
-          .insert({ user_id: user.id, category_id: categoryId, item_name: itemName, quantity: 1, is_checked: false, is_hidden: false, notes, priority: 'essential' as PriorityLevel })
+          .insert({ user_id: checklistUserId, category_id: categoryId, item_name: itemName, quantity: 1, is_checked: false, is_hidden: false, notes, priority: 'essential' as PriorityLevel })
           .select().single()
         if (data) setPreferences(prev => [...prev, data])
       }

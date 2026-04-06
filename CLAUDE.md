@@ -433,13 +433,16 @@ Routes in React Router must use basename from environment.
 ```sql
 profiles (id, email, first_name, last_name, due_date)
   ↓
-registries (id, owner_id, slug, title, address_*)
+registries (id, owner_id, partner_id, slug, title, address_*)
+  ↓                        ↓
+  |                registry_invitations (id, registry_id, invited_by, invited_email, status, token)
   ↓
 items (id, registry_id, name, price, quantity, quantity_received,
        is_most_wanted, is_private, image_url, original_url, category, ...)
 ```
 
 **Important Fields:**
+- `registries.partner_id` - Co-parent UUID, ON DELETE SET NULL. Equal access except invite/delete.
 - `items.quantity_received` - Required, not nullable (defaults to 0)
 - `items.enable_chip_in` - Boolean for group gifting
 - `items.cheaper_alternative_url` - For suggesting alternatives
@@ -448,8 +451,9 @@ items (id, registry_id, name, price, quantity, quantity_received,
 **Row Level Security (RLS):**
 - All tables have RLS enabled
 - Profiles: Users can only read/update their own profile
-- Registries: Public read, owner-only write
-- Items: Respect registry privacy settings
+- Registries: Public read, owner OR partner can read/update, only owner can delete
+- Items: Owner OR partner full access, public sees non-private items
+- Purchases: Anyone can create, owner OR partner can view/update
 
 See `NESTY_DATABASE_SCHEMA.md` for complete schema and policies.
 

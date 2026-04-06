@@ -18,6 +18,7 @@ export interface Profile {
 export interface Registry {
   id: string
   owner_id: string
+  partner_id: string | null
   slug: string
   title: string | null
   address_city: string | null
@@ -30,6 +31,18 @@ export interface Registry {
   welcome_message: string | null
   created_at: string
   updated_at: string
+}
+
+export interface RegistryInvitation {
+  id: string
+  registry_id: string
+  invited_by: string
+  invited_email: string
+  status: 'pending' | 'accepted' | 'expired' | 'revoked'
+  invitation_token: string
+  expires_at: string
+  accepted_at: string | null
+  created_at: string
 }
 
 export type ItemCategory =
