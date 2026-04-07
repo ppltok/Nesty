@@ -6,6 +6,8 @@ on:
     - cron: '0 6 * * 1'
     # Nudge emails: Daily at 7:00 UTC (10:00 Israel time during DST)
     - cron: '0 7 * * *'
+    # Image validation: Sundays at 5:00 UTC (8:00 Israel time)
+    - cron: '0 5 * * 0'
   workflow_dispatch:
     inputs:
       function:
@@ -16,6 +18,7 @@ on:
           - send-weekly-emails
           - send-nudge-emails
           - nudge-invitation
+          - validate-images
           - both
 
 jobs:
@@ -141,3 +144,27 @@ jobs:
             echo "::error::Invitation nudge failed with status $http_code"
             exit 1
           done
+
+      - name: Validate Images
+        if: >
+          github.event.schedule == '0 5 * * 0' ||
+          github.event.inputs.function == 'validate-images' ||
+          github.event.inputs.function == 'both'
+        run: |
+          response=$(curl -s -w "\n%{http_code}" --max-time 120 \
+            -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/validate-images" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json")
+
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+
+          echo "Status: $http_code"
+          echo "Response: $body"
+
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 400 ]; then
+            echo "Image validation succeeded."
+          else
+            echo "::warning::Image validation failed with status $http_code"
+          fi

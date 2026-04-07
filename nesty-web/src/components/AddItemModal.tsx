@@ -207,12 +207,28 @@ export default function AddItemModal({
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'שגיאה בחילוץ המוצר'
+      const isArticle = errorMessage.includes('כתבה')
+      const isNoProduct = errorMessage.includes('לא נמצא מידע')
       setExtractionStatus({
         state: 'error',
-        message: errorMessage.includes('לא נמצא מידע')
+        message: (isArticle || isNoProduct)
           ? errorMessage
           : 'שגיאה בחילוץ המוצר. נסה שוב או מלא ידנית'
       })
+
+      // Auto-report extraction failure for analytics
+      try {
+        const hostname = new URL(urlInput).hostname
+        await supabase.from('extraction_reports').insert({
+          user_id: session?.user?.id || null,
+          url: urlInput,
+          hostname,
+          error_type: isArticle ? 'non_product_page' : 'no_product_data',
+          extracted_data: { error: errorMessage },
+        })
+      } catch {
+        // Non-blocking — don't show error for reporting
+      }
     }
   }
 

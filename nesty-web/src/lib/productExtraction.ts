@@ -48,10 +48,35 @@ interface GraphSchema {
 }
 
 /**
+ * Resolve a potentially relative URL to an absolute URL
+ */
+function resolveUrl(src: string, baseUrl?: string): string {
+  if (!src) return ''
+  // Already absolute
+  if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
+    return src
+  }
+  // Protocol-relative
+  if (src.startsWith('//')) {
+    return 'https:' + src
+  }
+  // Relative — resolve against base URL
+  if (baseUrl) {
+    try {
+      return new URL(src, baseUrl).href
+    } catch {
+      return src
+    }
+  }
+  return src
+}
+
+/**
  * Normalize image data to string URLs
  * JSON-LD images can be: string, {url: string}, or arrays of either
+ * Resolves relative URLs when baseUrl is provided
  */
-function normalizeImageUrls(imageData: string | string[] | any | any[] | undefined): string[] {
+function normalizeImageUrls(imageData: string | string[] | any | any[] | undefined, baseUrl?: string): string[] {
   if (!imageData) return []
 
   const urls: string[] = []
@@ -59,15 +84,12 @@ function normalizeImageUrls(imageData: string | string[] | any | any[] | undefin
 
   dataArray.forEach(item => {
     if (typeof item === 'string') {
-      // Direct URL string
-      urls.push(item)
+      urls.push(resolveUrl(item, baseUrl))
     } else if (typeof item === 'object' && item !== null) {
-      // Image object with url property
       if (item.url && typeof item.url === 'string') {
-        urls.push(item.url)
+        urls.push(resolveUrl(item.url, baseUrl))
       } else if (item['@id'] && typeof item['@id'] === 'string') {
-        // Sometimes uses @id instead of url
-        urls.push(item['@id'])
+        urls.push(resolveUrl(item['@id'], baseUrl))
       }
     }
   })
@@ -78,13 +100,13 @@ function normalizeImageUrls(imageData: string | string[] | any | any[] | undefin
 /**
  * Extract product data from a Product schema (standard e-commerce product)
  */
-function extractFromProduct(data: ProductSchema): ExtractedProductData {
+function extractFromProduct(data: ProductSchema, baseUrl?: string): ExtractedProductData {
   // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
   const offersData = (data as any).offers || (data as any).Offers
   const offer = Array.isArray(offersData) ? offersData[0] : offersData
 
-  // Normalize image URLs (handles both strings and objects)
-  const imageUrls = normalizeImageUrls(data.image)
+  // Normalize image URLs (handles both strings and objects, resolves relative URLs)
+  const imageUrls = normalizeImageUrls(data.image, baseUrl)
 
   return {
     name: data.name || '',
@@ -99,7 +121,7 @@ function extractFromProduct(data: ProductSchema): ExtractedProductData {
 /**
  * Extract product data from a ProductGroup schema (Shopify-style with variants)
  */
-function extractFromProductGroup(data: ProductGroupSchema): ExtractedProductData {
+function extractFromProductGroup(data: ProductGroupSchema, baseUrl?: string): ExtractedProductData {
   const variants = data.hasVariant || []
   const firstVariant = Array.isArray(variants) ? variants[0] : variants
   // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
@@ -110,7 +132,7 @@ function extractFromProductGroup(data: ProductGroupSchema): ExtractedProductData
   if (Array.isArray(variants)) {
     variants.forEach(variant => {
       if (variant.image) {
-        imageUrls.push(...normalizeImageUrls(variant.image))
+        imageUrls.push(...normalizeImageUrls(variant.image, baseUrl))
       }
     })
   }
@@ -645,13 +667,13 @@ function extractProductDataFromDocument(doc: Document, url?: string): ExtractedP
       // Check for Product type
       if (data['@type'] === 'Product') {
         console.log('✅ Found Product type')
-        return extractFromProduct(data as ProductSchema)
+        return extractFromProduct(data as ProductSchema, url)
       }
 
       // Check for ProductGroup type
       if (data['@type'] === 'ProductGroup') {
         console.log('✅ Found ProductGroup type')
-        return extractFromProductGroup(data as ProductGroupSchema)
+        return extractFromProductGroup(data as ProductGroupSchema, url)
       }
 
       // Check for @graph structure
@@ -663,8 +685,8 @@ function extractProductDataFromDocument(doc: Document, url?: string): ExtractedP
         if (product) {
           console.log('✅ Found product in @graph')
           return product['@type'] === 'Product'
-            ? extractFromProduct(product as ProductSchema)
-            : extractFromProductGroup(product as ProductGroupSchema)
+            ? extractFromProduct(product as ProductSchema, url)
+            : extractFromProductGroup(product as ProductGroupSchema, url)
         }
       }
     } catch (error) {
@@ -672,9 +694,38 @@ function extractProductDataFromDocument(doc: Document, url?: string): ExtractedP
     }
   }
 
+  // Check for non-product page types (Article, BlogPost, etc.)
+  const nonProductTypes = ['Article', 'BlogPosting', 'NewsArticle', 'WebPage',
+    'AboutPage', 'ContactPage', 'FAQPage', 'CollectionPage']
+
+  for (const script of jsonLdScripts) {
+    try {
+      const data = JSON.parse(script.textContent || '')
+      const pageType = data['@type']
+      if (nonProductTypes.includes(pageType)) {
+        throw new Error('הדף הזה נראה כמו כתבה ולא כמו דף מוצר. נסה להדביק קישור ישיר לדף המוצר.')
+      }
+      if (data['@graph']) {
+        const hasNonProduct = data['@graph'].some((item: any) =>
+          nonProductTypes.includes(item['@type'])
+        )
+        const hasProduct = data['@graph'].some((item: any) =>
+          item['@type'] === 'Product' || item['@type'] === 'ProductGroup'
+        )
+        if (hasNonProduct && !hasProduct) {
+          throw new Error('הדף הזה נראה כמו כתבה ולא כמו דף מוצר. נסה להדביק קישור ישיר לדף המוצר.')
+        }
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('כתבה')) {
+        throw error
+      }
+    }
+  }
+
   // Final fallback: Try generic DOM extraction
   console.log('⚠️ JSON-LD extraction failed, trying generic DOM extraction...')
-  const genericResult = extractFromGenericDOM(doc)
+  const genericResult = extractFromGenericDOM(doc, url)
   if (genericResult) {
     return genericResult
   }
@@ -686,7 +737,7 @@ function extractProductDataFromDocument(doc: Document, url?: string): ExtractedP
  * Generic DOM extraction fallback for sites without JSON-LD
  * Tries common price and product selectors
  */
-function extractFromGenericDOM(doc: Document): ExtractedProductData | null {
+function extractFromGenericDOM(doc: Document, baseUrl?: string): ExtractedProductData | null {
   console.log('🔍 Attempting generic DOM extraction...')
 
   const productData: ExtractedProductData = {
@@ -784,7 +835,7 @@ function extractFromGenericDOM(doc: Document): ExtractedProductData | null {
         imageSrc = element.getAttribute('src') || ''
       }
       if (imageSrc) {
-        productData.imageUrls.push(imageSrc)
+        productData.imageUrls.push(resolveUrl(imageSrc, baseUrl))
         console.log(`   🖼️ Found image: ${imageSrc.substring(0, 50)}...`)
         break
       }
@@ -862,8 +913,9 @@ export async function extractProductFromUrl(
     const doc = parser.parseFromString(data.html, 'text/html')
 
     // Extract product data using same logic as current page
-    // Pass the original URL for platform detection (parsed doc has URL='about:blank')
-    const productData = extractProductDataFromDocument(doc, url)
+    // Use finalUrl (after redirects) for accurate base URL resolution
+    const baseUrl = data.finalUrl || url
+    const productData = extractProductDataFromDocument(doc, baseUrl)
 
     if (!productData) {
       throw new Error('לא נמצא מידע על מוצר בדף זה')

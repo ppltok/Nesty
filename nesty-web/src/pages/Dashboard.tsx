@@ -639,6 +639,7 @@ export default function Dashboard() {
               <img
                 src={item.image_url}
                 alt={item.name}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                 className={`w-full h-full object-cover ${isPurchased ? 'grayscale' : ''}`}
               />
             ) : (
@@ -754,6 +755,7 @@ export default function Dashboard() {
             <img
               src={item.image_url}
               alt={item.name}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${isPurchased ? 'grayscale' : ''}`}
             />
           ) : (

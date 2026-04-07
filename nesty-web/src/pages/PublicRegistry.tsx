@@ -611,7 +611,7 @@ function ItemCard({
       <div className={`bg-white rounded-[24px] border border-[#e7e0ec] overflow-hidden group hover:border-[#d0bcff] transition-all duration-300 flex ${isItemPurchased ? 'opacity-70 grayscale' : ''}`}>
         <div className="w-32 sm:w-48 aspect-square flex-shrink-0 bg-[#f5f5f5] relative">
           {item.image_url ? (
-            <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+            <img src={item.image_url} alt={item.name} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <div className={`w-12 h-12 rounded-[12px] bg-gradient-to-br ${category?.color || 'from-gray-300 to-gray-400'} flex items-center justify-center text-white`}>
@@ -677,6 +677,7 @@ function ItemCard({
           <img
             src={item.image_url}
             alt={item.name}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (

@@ -57,7 +57,7 @@ serve(async (req) => {
     const html = await response.text()
 
     return new Response(
-      JSON.stringify({ success: true, html }),
+      JSON.stringify({ success: true, html, finalUrl: response.url }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
