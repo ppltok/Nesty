@@ -114,7 +114,7 @@ serve(async (req) => {
         extracted_data: { name: item.name },
       }))
 
-      await supabaseAdmin.from('extraction_reports').insert(reports).throwOnError().catch(() => {})
+      try { await supabaseAdmin.from('extraction_reports').insert(reports) } catch { /* non-blocking */ }
     }
 
     // Send digest email to admin if there are broken images
