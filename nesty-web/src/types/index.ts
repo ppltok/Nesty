@@ -9,6 +9,7 @@ export interface Profile {
   feeling: 'excited' | 'overwhelmed' | 'exploring' | null
   preferred_language: 'en' | 'he'
   onboarding_completed: boolean
+  referral_source: string | null
   email_notifications: boolean
   marketing_emails: boolean
   created_at: string

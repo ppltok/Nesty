@@ -50,7 +50,9 @@ function calculatePregnancyWeek(dueDateStr: string): number {
   return Math.max(1, Math.min(40, 40 - weeksRemaining))
 }
 
-type Step = 1 | 2 | 3 | 4 | 5 | 'celebration'
+type Step = 1 | 2 | 3 | 4 | 5 | 6 | 'celebration'
+
+type ReferralSource = 'facebook' | 'instagram' | 'google' | 'tiktok' | 'friend' | 'other' | null
 
 interface OnboardingData {
   firstName: string
@@ -58,8 +60,18 @@ interface OnboardingData {
   dueDate: string
   feeling: 'excited' | 'overwhelmed' | 'exploring' | null
   isFirstTimeParent: boolean | null
+  referralSource: ReferralSource
   marketingEmails: boolean
 }
+
+const referralSources = [
+  { value: 'facebook' as const, emoji: '📘', title: 'פייסבוק' },
+  { value: 'instagram' as const, emoji: '📸', title: 'אינסטגרם' },
+  { value: 'google' as const, emoji: '🔍', title: 'חיפוש בגוגל' },
+  { value: 'tiktok' as const, emoji: '🎵', title: 'טיקטוק' },
+  { value: 'friend' as const, emoji: '💬', title: 'חבר/ה המליצ/ה' },
+  { value: 'other' as const, emoji: '✨', title: 'אחר' },
+]
 
 const feelings = [
   { value: 'excited' as const, emoji: '🎉', title: 'מתרגשים!', description: 'אנחנו כל כך שמחים' },
@@ -79,6 +91,7 @@ export default function Onboarding() {
     dueDate: '',
     feeling: null,
     isFirstTimeParent: null,
+    referralSource: null,
     marketingEmails: true,
   })
 
@@ -87,11 +100,12 @@ export default function Onboarding() {
     2: 'due_date',
     3: 'feeling',
     4: 'first_time_parent',
-    5: 'marketing_emails',
+    5: 'referral_source',
+    6: 'marketing_emails',
   }
 
   const handleNext = () => {
-    if (typeof step === 'number' && step < 5) {
+    if (typeof step === 'number' && step < 6) {
       // Track step completion
       if (user) {
         trackOnboardingStep({
@@ -119,6 +133,8 @@ export default function Onboarding() {
     } else if (step === 4) {
       setStep(5)
     } else if (step === 5) {
+      setStep(6)
+    } else if (step === 6) {
       handleComplete()
     }
   }
@@ -150,6 +166,11 @@ export default function Onboarding() {
       // Only include is_first_time_parent if user selected an option
       if (data.isFirstTimeParent !== null) {
         profileData.is_first_time_parent = data.isFirstTimeParent
+      }
+
+      // Include referral source if selected
+      if (data.referralSource) {
+        profileData.referral_source = data.referralSource
       }
 
       // Upsert profile (insert if not exists, update if exists)
@@ -543,8 +564,64 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Step 5: Marketing Emails */}
+          {/* Step 5: How did you hear about us? */}
           {step === 5 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-[#d3e4fd]/40 rounded-[20px] flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">📣</span>
+                </div>
+                <h1 className="text-2xl font-medium text-[#1d192b] mb-2">איך הגעת אלינו?</h1>
+                <p className="text-[#49454f]">זה עוזר לנו להבין איפה למצוא עוד הורים כמוך</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {referralSources.map(source => (
+                  <button
+                    key={source.value}
+                    onClick={() => {
+                      setData({ ...data, referralSource: source.value })
+                    }}
+                    className={`p-4 rounded-[20px] border-2 text-center transition-all ${
+                      data.referralSource === source.value
+                        ? 'border-[#6750a4] bg-[#f3edff]/50'
+                        : 'border-[#e7e0ec] hover:border-[#6750a4]/50'
+                    }`}
+                  >
+                    <span className="text-2xl block mb-2">{source.emoji}</span>
+                    <p className="font-medium text-[#1d192b] text-sm">{source.title}</p>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleBack}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-white border-2 border-[#e7e0ec] text-[#1d192b] font-medium hover:border-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  חזור
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium hover:bg-[#7c5fbd] transition-all duration-300"
+                >
+                  המשך
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              </div>
+
+              <button
+                onClick={handleSkip}
+                className="w-full text-center text-sm text-[#49454f] hover:text-[#6750a4] transition-colors"
+              >
+                דלג
+              </button>
+            </div>
+          )}
+
+          {/* Step 6: Marketing Emails */}
+          {step === 6 && (
             <div className="space-y-6">
               <div className="text-center">
                 <div className="w-16 h-16 bg-[#ffd8e4]/40 rounded-[20px] flex items-center justify-center mx-auto mb-4">
