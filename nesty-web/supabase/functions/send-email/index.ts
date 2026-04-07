@@ -8,7 +8,7 @@ const corsHeaders = {
 }
 
 interface EmailRequest {
-  type: 'purchase_notification' | 'thank_you' | 'admin_new_user' | 'contact' | 'welcome'
+  type: 'purchase_notification' | 'thank_you' | 'admin_new_user' | 'contact' | 'welcome' | 'price_drop'
   to?: string
   data?: {
     ownerName?: string
@@ -30,6 +30,16 @@ interface EmailRequest {
     fruitName?: string
     fruitEmoji?: string
     dueDate?: string
+    // For price drop email
+    drops?: Array<{
+      itemName: string
+      imageUrl: string
+      originalPrice: number
+      currentPrice: string
+      savingsPercent: number
+      productUrl: string
+      storeName: string
+    }>
   }
   // For contact form
   name?: string
@@ -454,6 +464,199 @@ serve(async (req) => {
         </body>
         </html>
       `
+    } else if (type === 'price_drop') {
+      const firstName = data?.firstName || 'את'
+      const drops = data?.drops || []
+      recipient = to || data?.ownerEmail || ''
+
+      if (drops.length === 0) {
+        throw new Error('No price drops provided')
+      }
+
+      // Subject line
+      if (drops.length === 1) {
+        emailSubject = `💰 ירידת מחיר! ${drops[0].itemName.substring(0, 40)} ירד ב-${drops[0].savingsPercent}%`
+      } else {
+        emailSubject = `💰 ${drops.length} מוצרים ירדו במחיר ברשימה שלך!`
+      }
+
+      // Build product cards HTML
+      const productCardsHtml = drops.map((drop, index) => {
+        const savingsIls = (drop.originalPrice - parseFloat(drop.currentPrice)).toFixed(0)
+        return `
+            ${index > 0 ? '<tr><td style="height:10px;"></td></tr>' : ''}
+            <tr>
+              <td style="background:#fff;border-radius:20px;padding:28px 32px;border:1.5px solid #e8daf5;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    ${drop.imageUrl ? `
+                    <td width="90" style="vertical-align:top;padding-left:20px;">
+                      <img src="${drop.imageUrl}" alt="${drop.itemName}" style="width:80px;height:80px;object-fit:cover;border-radius:14px;border:1px solid #f0e8ff;" />
+                    </td>
+                    ` : ''}
+                    <td style="vertical-align:top;">
+                      <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.06em;color:#a087c0;text-transform:uppercase;">${drop.storeName}</p>
+                      <p style="margin:0 0 12px;font-size:16px;font-weight:700;color:#3b1f6b;line-height:1.4;">${drop.itemName.substring(0, 60)}</p>
+
+                      <!-- Price comparison -->
+                      <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+                        <tr>
+                          <td style="padding-left:12px;">
+                            <span style="font-size:13px;color:#a087c0;text-decoration:line-through;font-weight:500;">₪${drop.originalPrice.toFixed(0)}</span>
+                          </td>
+                          <td>
+                            <span style="font-size:12px;color:#a087c0;padding:0 6px;">→</span>
+                          </td>
+                          <td>
+                            <span style="font-size:20px;font-weight:800;color:#2e7d32;">₪${parseFloat(drop.currentPrice).toFixed(0)}</span>
+                          </td>
+                          <td style="padding-right:10px;">
+                            <div style="display:inline-block;background:#e8f5e9;border-radius:100px;padding:4px 12px;margin-right:8px;">
+                              <span style="font-size:12px;font-weight:700;color:#2e7d32;">📉 חיסכון ${drop.savingsPercent}% (₪${savingsIls})</span>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <a href="${drop.productUrl}" style="display:inline-block;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;font-size:13px;font-weight:700;text-decoration:none;padding:10px 24px;border-radius:100px;">🛒 צפי במוצר</a>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>`
+      }).join('')
+
+      html = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only"/>
+  <meta name="supported-color-modes" content="light"/>
+  <title>ירידת מחיר!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root { color-scheme: light only; }
+    @media (prefers-color-scheme: dark) {
+      .hero-bg { background:linear-gradient(145deg,#6a35b0 0%,#9b62d4 60%,#c4a0e8 100%) !important; }
+      .dark-bg { background:linear-gradient(145deg,#3b1f6b 0%,#5c3490 100%) !important; }
+      .white-card { background:#ffffff !important; }
+      h1, h2, h3, p, span, a, td, div { color: inherit !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f5f0fa;font-family:'Heebo',sans-serif;direction:rtl;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0fa;direction:rtl;">
+  <tr>
+    <td align="center" style="padding:40px 16px 64px;">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;direction:rtl;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="padding-bottom:28px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <a href="https://nestyil.com" style="text-decoration:none;">
+                    <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:40px;width:auto;display:block;" />
+                  </a>
+                </td>
+                <td align="left">
+                  <span style="font-size:12px;color:#a087c0;font-weight:600;letter-spacing:0.04em;">התראת מחיר 💰</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- HERO -->
+        <tr>
+          <td class="hero-bg" style="background:linear-gradient(145deg,#6a35b0 0%,#9b62d4 60%,#c4a0e8 100%);border-radius:24px;padding:52px 40px 48px;text-align:center;">
+            <div style="display:inline-block;background:#ffffff;border-radius:50%;padding:2px;margin-bottom:24px;line-height:0;">
+              <img src="https://nestyil.com/Circle_logo.png" alt="Nesty" style="height:64px;width:64px;display:block;border-radius:50%;" />
+            </div>
+            <h1 style="margin:0 0 14px;font-size:34px;font-weight:800;color:#ffffff;line-height:1.2;">
+              ירידת מחיר! 💰<br/>
+              <span style="font-size:22px;font-weight:400;color:#e4c8ff;">חיסכון ברשימה שלך</span>
+            </h1>
+            <p style="margin:0;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:420px;margin-left:auto;margin-right:auto;">
+              היי ${firstName}, מצאנו ${drops.length === 1 ? 'ירידת מחיר במוצר' : `ירידות מחיר ב-${drops.length} מוצרים`} מהרשימה שלך! 🎉
+            </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- PRODUCT CARDS -->
+        ${productCardsHtml}
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- SHARE TIP -->
+        <tr>
+          <td class="dark-bg" style="background:linear-gradient(145deg,#3b1f6b 0%,#5c3490 100%);border-radius:20px;padding:36px 40px;text-align:center;">
+            <p style="margin:0 0 12px;font-size:36px;">💡</p>
+            <h3 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#f5eeff;line-height:1.5;">שתפי את הדיל!</h3>
+            <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:#ffffffa6;">
+              שלחי את הקישור לרשימה למשפחה ולחברים —<br/>אולי מישהו ירצה לנצל את ירידת המחיר ולקנות לך מתנה 🎁
+            </p>
+            <a href="https://nestyil.com/dashboard" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">צפי ברשימה שלך</a>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- HELP SECTION -->
+        <tr>
+          <td class="white-card" style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #e8daf5;text-align:center;">
+            <div style="display:inline-block;background:#fce4ec;border-radius:100px;padding:6px 16px;margin-bottom:18px;">
+              <span style="font-size:12px;font-weight:700;color:#c62828;">💬 צריכה עזרה?</span>
+            </div>
+            <h3 style="margin:0 0 10px;font-size:20px;font-weight:700;color:#3b1f6b;line-height:1.4;">אנחנו כאן בשבילך</h3>
+            <p style="margin:0 0 22px;font-size:14px;line-height:1.8;color:#7a6090;max-width:400px;margin-left:auto;margin-right:auto;">
+              רוצה שנסביר לך איך הכל עובד? קבעי שיחת זום קצרה (5 דקות) ונעזור לך להתחיל בצורה הכי טובה.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" style="padding-bottom:10px;">
+                  <a href="https://calendar.app.google/Cu8AZgor4zohXxqUA" style="display:block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;text-align:center;">📅 קבעי שיחה קצרה</a>
+                </td>
+              </tr>
+              <tr>
+                <td align="center">
+                  <a href="mailto:tom@ppltok.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="padding:30px 0 0;text-align:center;">
+            <a href="https://nestyil.com" style="text-decoration:none;">
+              <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" />
+            </a>
+            <p style="margin:0 0 8px;font-size:13px;color:#a087c0;">
+              נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
+            </p>
+            <p style="margin:0;font-size:12px;color:#bca8d4;">
+              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              &nbsp;·&nbsp;
+              <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
+              &nbsp;·&nbsp;
+              <a href="https://nestyil.com" style="color:#9070b8;text-decoration:underline;">nestyil.com</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`
+
     } else {
       throw new Error(`Invalid email type: ${type}`)
     }

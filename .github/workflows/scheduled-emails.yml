@@ -4,7 +4,7 @@ on:
   schedule:
     # Weekly emails: Mondays at 6:00 UTC (9:00 Israel time during DST)
     - cron: '0 6 * * 1'
-    # Nudge emails: Daily at 7:00 UTC (10:00 Israel time during DST)
+    # Nudge emails + price check: Daily at 7:00 UTC (10:00 Israel time during DST)
     - cron: '0 7 * * *'
     # Image validation: Sundays at 5:00 UTC (8:00 Israel time)
     - cron: '0 5 * * 0'
@@ -18,6 +18,7 @@ on:
           - send-weekly-emails
           - send-nudge-emails
           - nudge-invitation
+          - check-prices
           - validate-images
           - both
 
@@ -144,6 +145,30 @@ jobs:
             echo "::error::Invitation nudge failed with status $http_code"
             exit 1
           done
+
+      - name: Check Prices
+        if: >
+          github.event.schedule == '0 7 * * *' ||
+          github.event.inputs.function == 'check-prices' ||
+          github.event.inputs.function == 'both'
+        run: |
+          response=$(curl -s -w "\n%{http_code}" --max-time 150 \
+            -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/check-prices" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json")
+
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+
+          echo "Status: $http_code"
+          echo "Response: $body"
+
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 400 ]; then
+            echo "Price check succeeded."
+          else
+            echo "::warning::Price check failed with status $http_code"
+          fi
 
       - name: Validate Images
         if: >
