@@ -36,3 +36,21 @@ nesty-web/supabase/.temp/
 
 # Temporary files
 Untitled
+
+# Private / Strategic (DO NOT commit to public repo)
+Nesty-Obsidian/
+marketing/
+price-agent/
+NESTY_PRD.md
+NESTY_DATABASE_SCHEMA.md
+Documents/
+scripts/
+*.xlsx
+*.docx
+
+# Reverse engineering / competitive analysis
+extension/archive/
+extension/.reverse*
+
+# Video project node_modules
+nesty-video/node_modules/
