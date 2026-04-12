@@ -2,8 +2,8 @@ name: Scheduled Emails
 
 on:
   schedule:
-    # Weekly emails: Mondays at 6:00 UTC (9:00 Israel time during DST)
-    - cron: '0 6 * * 1'
+    # Weekly pregnancy emails: DAILY at 6:00 UTC (9:00 Israel time) — sends only when user's week changes
+    - cron: '0 6 * * *'
     # Nudge emails + price check: Daily at 7:00 UTC (10:00 Israel time during DST)
     - cron: '0 7 * * *'
     # Image validation: Sundays at 5:00 UTC (8:00 Israel time)
@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Send Weekly Emails
         if: >
-          github.event.schedule == '0 6 * * 1' ||
+          github.event.schedule == '0 6 * * *' ||
           github.event.inputs.function == 'send-weekly-emails' ||
           github.event.inputs.function == 'both'
         run: |
