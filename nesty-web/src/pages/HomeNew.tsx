@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { asset } from '../lib/assets'
@@ -18,6 +18,28 @@ import {
 export default function HomeNew() {
     const { isAuthenticated } = useAuth()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+    // Live savings counter — starts at 4,500 and keeps ticking up
+    const [savingsCount, setSavingsCount] = useState(4500)
+    const savingsRef = useRef<HTMLDivElement>(null)
+    const hasStarted = useRef(false)
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting && !hasStarted.current) {
+                    hasStarted.current = true
+                    const timer = setInterval(() => {
+                        setSavingsCount(prev => prev + 5)
+                    }, 1000)
+                    return () => clearInterval(timer)
+                }
+            },
+            { threshold: 0.3 }
+        )
+        if (savingsRef.current) observer.observe(savingsRef.current)
+        return () => observer.disconnect()
+    }, [])
 
     return (
         <div className="min-h-screen bg-[#fffbff] text-[#1d192b] overflow-x-hidden" dir="rtl">
@@ -85,16 +107,19 @@ export default function HomeNew() {
                                 </div>
 
                                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-medium mb-6 text-[#1d192b] tracking-tight leading-[1.1] animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-                                    לבנות את הקן שלכם,{' '}
+                                    את לא צריכה{' '}
                                     <span className="text-[#6750a4] relative inline-block">
-                                        חכם יותר.
+                                        לעשות את זה לבד.
                                         <svg className="absolute w-full h-3 -bottom-1 right-0 text-[#eaddff] -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
                                             <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
                                         </svg>
                                     </span>
                                 </h1>
 
-                                <p className="text-xl md:text-2xl text-[#49454f] leading-relaxed mb-10 max-w-xl mx-auto lg:mx-0 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                                <p className="text-xl md:text-2xl text-[#49454f] leading-relaxed mb-4 max-w-xl mx-auto lg:mx-0 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                                    ההכנה לתינוק יכולה להרגיש מבלבלת.<br /><bdi>Nesty</bdi> פה כמו אחות גדולה שכבר עברה את זה
+                                </p>
+                                <p className="text-lg md:text-xl text-[#49454f]/80 leading-relaxed mb-10 max-w-xl mx-auto lg:mx-0 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
                                     הרשימה היחידה שמאפשרת לכם לאסוף מוצרים מכל חנות בעולם, לשתף עם המשפחה והחברים, ולקבל התראות על מחירים טובים יותר.
                                 </p>
 
@@ -189,8 +214,8 @@ export default function HomeNew() {
                                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-[24px] mb-6 bg-[#ffd8e4] text-[#31111d]">
                                     <ClipboardList className="w-8 h-8" />
                                 </div>
-                                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">איך זה עובד?</h2>
-                                <p className="text-xl text-[#49454f] max-w-2xl mx-auto">שלושה צעדים פשוטים ואתם מוכנים לקבל את כל מה שאתם צריכים</p>
+                                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">פשוט ככה, בשלושה צעדים</h2>
+                                <p className="text-xl text-[#49454f] max-w-2xl mx-auto">בלי מדריכים ארוכים, בלי סיבוכים. פשוט מתחילים ו-<bdi>Nesty</bdi> דואגת לשאר.</p>
                             </div>
                         </ScrollReveal>
 
@@ -282,7 +307,7 @@ export default function HomeNew() {
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center flex-shrink-0 shadow-sm"><MousePointerClick className="w-6 h-6 text-[#31111d]" /></div>
-                                                <span className="text-lg text-[#1d192b]">לחצו על כפתור Nesty</span>
+                                                <span className="text-lg text-[#1d192b]">לחצו על כפתור <bdi>Nesty</bdi></span>
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 bg-[#d1fae5] rounded-[14px] flex items-center justify-center flex-shrink-0 shadow-sm"><CheckCircle className="w-6 h-6 text-[#059669]" /></div>
@@ -478,14 +503,88 @@ export default function HomeNew() {
                 {/* Wave Divider */}
                 <WaveDivider color="#ffffff" bgColor="#f2f0f4" />
 
-                {/* ══════════ COMING SOON & SMART ENGINE ══════════ */}
+                {/* ══════════ CO-PARENT SHARING ══════════ */}
+                <section className="py-10 md:py-14 bg-white relative overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                            <ScrollReveal>
+                                <div className="text-center lg:text-right">
+                                    <div className="inline-flex items-center gap-2 mb-6">
+                                        <div className="inline-flex items-center gap-2 bg-[#f3edff] text-[#6750a4] px-4 py-2 rounded-full font-medium">
+                                            <Users className="w-5 h-5" />
+                                            <span>ניהול משותף</span>
+                                        </div>
+                                        <span className="bg-[#d1fae5] text-[#065f46] px-3 py-1 rounded-full text-xs font-bold">חדש!</span>
+                                    </div>
+                                    <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">להכין את הקן ביחד, כמו שצריך.</h2>
+                                    <p className="text-xl text-[#49454f] mb-8 leading-relaxed">ההכנה לתינוק היא מסע של שניים. עכשיו שניכם יכולים לנהל את הרשימה, הצ'קליסט והמתנות — מכל מקום, בכל רגע.</p>
+                                    <div className="flex justify-center lg:justify-start">
+                                        <ul className="space-y-4 text-right">
+                                            <li className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-[#f3edff] rounded-[14px] flex items-center justify-center flex-shrink-0"><Heart className="w-6 h-6 text-[#6750a4]" /></div>
+                                                <span className="text-lg text-[#1d192b]">הזמנה בקליק אחד מההגדרות</span>
+                                            </li>
+                                            <li className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center flex-shrink-0"><Users className="w-6 h-6 text-[#31111d]" /></div>
+                                                <span className="text-lg text-[#1d192b]">שניכם רואים, עורכים ומוסיפים</span>
+                                            </li>
+                                            <li className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-[#d1fae5] rounded-[14px] flex items-center justify-center flex-shrink-0"><CheckCircle className="w-6 h-6 text-[#059669]" /></div>
+                                                <span className="text-lg text-[#1d192b]">צ'קליסט, מתנות והכל — משותף</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </ScrollReveal>
+
+                            <ScrollReveal delay={200}>
+                                <div className="relative">
+                                    <div className="bg-gradient-to-br from-[#f3edff] to-[#ffd8e4]/30 rounded-[40px] p-8 max-w-md mx-auto">
+                                        <div className="bg-white rounded-[24px] p-6 shadow-lg mb-4">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-10 h-10 bg-[#6750a4] rounded-full flex items-center justify-center text-white font-bold">ת</div>
+                                                <div className="w-10 h-10 bg-[#ffd8e4] rounded-full flex items-center justify-center text-[#31111d] font-bold">ק</div>
+                                                <div className="flex-1">
+                                                    <p className="font-bold text-[#1d192b]">הרשימה של תם וקרן</p>
+                                                    <p className="text-xs text-[#49454f]">משותף 💜</p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <div className="flex items-center gap-3 p-3 bg-[#f9f7fc] rounded-[14px]">
+                                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                                    <span className="text-sm text-[#1d192b]">עגלה — Anex IQ</span>
+                                                    <span className="mr-auto text-xs text-[#49454f]">תם הוסיף</span>
+                                                </div>
+                                                <div className="flex items-center gap-3 p-3 bg-[#f9f7fc] rounded-[14px]">
+                                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                                    <span className="text-sm text-[#1d192b]">מוניטור — Nanit</span>
+                                                    <span className="mr-auto text-xs text-[#49454f]">קרן הוסיפה</span>
+                                                </div>
+                                                <div className="flex items-center gap-3 p-3 bg-[#ffd8e4]/30 rounded-[14px]">
+                                                    <Star className="w-5 h-5 text-[#6750a4] fill-[#eaddff]" />
+                                                    <span className="text-sm text-[#1d192b] font-medium">כיסא בטיחות — Cybex</span>
+                                                    <span className="mr-auto text-xs bg-[#6750a4] text-white px-2 py-0.5 rounded-full">Most Wanted</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ScrollReveal>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Wave Divider */}
+                <WaveDivider color="#fffbff" bgColor="#ffffff" />
+
+                {/* ══════════ PRICE ALERTS (LIVE!) ══════════ */}
                 <section className="py-10 md:py-14 bg-white">
                     <div className="max-w-6xl mx-auto px-6">
                         <ScrollReveal>
                             <div className="text-center mb-12">
-                                <span className="inline-block bg-[#eaddff] text-[#21005d] px-5 py-2 rounded-full mb-6 font-bold text-sm tracking-wide">בקרוב</span>
-                                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">מה עוד מחכה לכם?</h2>
-                                <p className="text-xl text-[#49454f] max-w-2xl mx-auto">פיצ'רים חדשים שאנחנו עובדים עליהם במיוחד בשבילכם</p>
+                                <span className="inline-block bg-[#d1fae5] text-[#065f46] px-5 py-2 rounded-full mb-6 font-bold text-sm tracking-wide">חדש! ✨</span>
+                                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">חוסכים לכם כסף, אוטומטית</h2>
+                                <p className="text-xl text-[#49454f] max-w-2xl mx-auto"><bdi>Nesty</bdi> עוקבת אחרי המחירים של המוצרים ברשימה שלכם ומתריעה כשיש ירידת מחיר</p>
                             </div>
                         </ScrollReveal>
                     </div>
@@ -498,8 +597,8 @@ export default function HomeNew() {
                         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
                             <ScrollReveal>
                                 <div className="text-center lg:text-right">
-                                    <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">המנוע החכם ששומר לכם על הכיס</h2>
-                                    <p className="text-xl text-[#49454f] mb-8 leading-relaxed">הוסיפו מוצר לרשימה ואנחנו נחפש אותו בעשרות חנויות ברחבי ישראל. מצאנו מחיר טוב יותר? נשלח לכם התראה מיד!</p>
+                                    <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">אנחנו עוקבות אחרי המחירים בשבילכם</h2>
+                                    <p className="text-xl text-[#49454f] mb-8 leading-relaxed">הוסיפו מוצר לרשימה ותשכחו מזה. <bdi>Nesty</bdi> בודקת כל יום אם המחיר ירד — ואם כן, שולחת לכם הודעה. ככה חוסכים בלי מאמץ.</p>
                                     <div className="flex justify-center lg:justify-start">
                                         <ul className="space-y-4 text-right">
                                             <li className="flex items-center gap-4">
@@ -558,6 +657,46 @@ export default function HomeNew() {
                 {/* Wave Divider */}
                 <WaveDivider color="#ffffff" bgColor="#fffbff" />
 
+                {/* ══════════ SOCIAL PROOF ══════════ */}
+                <section className="py-12 md:py-16 bg-white">
+                    <div className="max-w-5xl mx-auto px-6">
+                        <ScrollReveal>
+                            <div className="text-center mb-10">
+                                <h2 className="text-3xl md:text-4xl font-medium text-[#1d192b] tracking-tight mb-3">הורים שכבר בונים את הקן שלהם</h2>
+                                <p className="text-lg text-[#49454f]">ומצטרפים עוד כל יום</p>
+                            </div>
+                        </ScrollReveal>
+                        <ScrollReveal delay={100}>
+                            <div ref={savingsRef} className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
+                                <div className="col-span-2 md:col-span-1 bg-gradient-to-br from-[#059669] to-[#10b981] rounded-[24px] p-6 text-center relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2210%22%20r%3D%221%22%20fill%3D%22white%22%20opacity%3D%220.1%22%2F%3E%3C%2Fsvg%3E')] opacity-50" />
+                                    <div className="relative">
+                                        <TrendingDown className="w-6 h-6 text-white/70 mx-auto mb-2" />
+                                        <p className="text-3xl md:text-4xl font-bold text-white mb-1" dir="ltr">₪{savingsCount.toLocaleString()}+</p>
+                                        <p className="text-xs text-white/80">נחסכו להורים שלנו</p>
+                                    </div>
+                                </div>
+                                <div className="bg-[#f3edff] rounded-[24px] p-6 text-center">
+                                    <p className="text-4xl font-bold text-[#6750a4] mb-1">200+</p>
+                                    <p className="text-sm text-[#49454f]">הורים מאושרים</p>
+                                </div>
+                                <div className="bg-[#ffd8e4]/40 rounded-[24px] p-6 text-center">
+                                    <p className="text-4xl font-bold text-[#31111d] mb-1">50+</p>
+                                    <p className="text-sm text-[#49454f]">חנויות נתמכות</p>
+                                </div>
+                                <div className="bg-[#d1fae5]/40 rounded-[24px] p-6 text-center">
+                                    <p className="text-4xl font-bold text-[#059669] mb-1">500+</p>
+                                    <p className="text-sm text-[#49454f]">מוצרים ברשימות</p>
+                                </div>
+                                <div className="bg-[#f3edff] rounded-[24px] p-6 text-center">
+                                    <p className="text-4xl font-bold text-[#6750a4] mb-1">100%</p>
+                                    <p className="text-sm text-[#49454f]">חינם, לתמיד</p>
+                                </div>
+                            </div>
+                        </ScrollReveal>
+                    </div>
+                </section>
+
                 {/* ══════════ CHIP-IN ══════════ */}
                 <section id="chip-in" className="py-10 md:py-14 bg-white">
                     <div className="max-w-7xl mx-auto px-6">
@@ -599,6 +738,7 @@ export default function HomeNew() {
                                         <div className="inline-flex items-center gap-2 bg-[#ffd8e4] text-[#31111d] px-4 py-2 rounded-full font-medium">
                                             <Users className="w-5 h-5" /><span>Chip-In</span>
                                         </div>
+                                        <span className="bg-[#eaddff] text-[#21005d] px-3 py-1 rounded-full text-xs font-bold">בקרוב</span>
                                     </div>
                                     <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">חולמים על עגלה יקרה? תנו להם להשתתף.</h2>
                                     <p className="text-xl text-[#49454f] mb-8 leading-relaxed">יש מוצרים שהם פשוט יקרים מדי לאדם אחד. עם Chip-In, כולם יכולים לתרום סכום קטן למתנה הגדולה.</p>
@@ -635,8 +775,8 @@ export default function HomeNew() {
                         <div className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full mb-6 font-medium backdrop-blur-sm">
                             <Sparkles className="w-5 h-5" /><span>חינם לגמרי</span>
                         </div>
-                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium text-white mb-6 tracking-tight">מוכנים להתחיל לקנן?</h2>
-                        <p className="text-xl md:text-2xl text-white/80 mb-10 max-w-2xl mx-auto">הצטרפו לאלפי הורים שכבר בונים את הרשימה החכמה שלהם.</p>
+                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium text-white mb-6 tracking-tight">הקן שלכם מחכה.</h2>
+                        <p className="text-xl md:text-2xl text-white/80 mb-10 max-w-2xl mx-auto">את לא צריכה עוד רשימה בוואטסאפ. את צריכה מקום אחד, חכם, שעובד בשבילך. <bdi>Nesty</bdi> פה.</p>
                         <Link
                             to={isAuthenticated ? "/dashboard" : "/auth/signin"}
                             className="inline-flex items-center gap-3 px-10 py-4 rounded-[28px] bg-white text-[#6750a4] font-medium text-lg shadow-[0_8px_24px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 transition-all duration-300 animate-cta-glow"
@@ -656,7 +796,7 @@ export default function HomeNew() {
                             <Link to="/" className="flex items-center mb-4">
                                 <img src={asset('logo.png')} alt="Nesty" className="h-12 w-auto" />
                             </Link>
-                            <p className="text-[#49454f] max-w-sm">לבנות את הקן שלכם, חכם יותר. הרשימה שמאפשרת לכם לאסוף מוצרים מכל מקום ולשתף עם מי שאוהבים.</p>
+                            <p className="text-[#49454f] max-w-sm"><bdi>Nesty</bdi> — כמו אחות גדולה שעוזרת לכם להתארגן. רשימת ציוד חכמה מכל חנות, שיתוף עם המשפחה, וחיסכון אוטומטי.</p>
                         </div>
                         <div>
                             <h4 className="font-bold text-[#1d192b] mb-4">קישורים</h4>
