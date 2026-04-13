@@ -226,7 +226,11 @@ export default function Checklist() {
 
   const toggleSuggestionCheck = async (categoryId: string, itemName: string) => {
     const pref = getPreference(categoryId, itemName)
-    await upsertPreference(categoryId, itemName, { is_checked: !(pref?.is_checked ?? false) })
+    const newChecked = !(pref?.is_checked ?? false)
+    await upsertPreference(categoryId, itemName, {
+      is_checked: newChecked,
+      checked_at: newChecked ? new Date().toISOString() : null,
+    })
   }
 
   const isSuggestionChecked = (categoryId: string, itemName: string): boolean => {
