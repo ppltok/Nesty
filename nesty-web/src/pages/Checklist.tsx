@@ -125,7 +125,7 @@ export default function Checklist() {
   const upsertPreference = async (
     categoryId: string,
     itemName: string,
-    updates: Partial<Pick<ChecklistPreference, 'quantity' | 'is_checked' | 'is_hidden' | 'priority'>>
+    updates: Partial<Pick<ChecklistPreference, 'quantity' | 'is_checked' | 'is_hidden' | 'priority' | 'checked_at'>>
   ) => {
     if (!user) return
     const existing = getPreference(categoryId, itemName)

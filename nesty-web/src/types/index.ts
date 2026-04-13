@@ -119,6 +119,7 @@ export interface ChecklistPreference {
   is_hidden: boolean
   notes: string
   priority: PriorityLevel
+  checked_at: string | null
   created_at: string
   updated_at: string
 }
