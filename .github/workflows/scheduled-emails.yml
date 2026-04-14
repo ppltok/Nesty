@@ -20,6 +20,7 @@ on:
           - nudge-invitation
           - check-prices
           - validate-images
+          - sync-resend-emails
           - both
 
 jobs:
@@ -193,3 +194,43 @@ jobs:
           else
             echo "::warning::Image validation failed with status $http_code"
           fi
+
+      - name: Sync Resend Email Logs
+        if: >
+          github.event.schedule == '0 7 * * *' ||
+          github.event.inputs.function == 'sync-resend-emails' ||
+          github.event.inputs.function == 'both'
+        run: |
+          max_retries=3
+          retry_delay=10
+
+          for attempt in $(seq 1 $max_retries); do
+            echo "Attempt $attempt of $max_retries..."
+
+            response=$(curl -s -w "\n%{http_code}" --max-time 120 \
+              -X POST \
+              "${{ secrets.SUPABASE_URL }}/functions/v1/sync-resend-emails" \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -H "Content-Type: application/json")
+
+            http_code=$(echo "$response" | tail -1)
+            body=$(echo "$response" | head -n -1)
+
+            echo "Status: $http_code"
+            echo "Response: $body"
+
+            if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 400 ]; then
+              echo "Resend email sync succeeded."
+              exit 0
+            fi
+
+            if [ "$http_code" -ge 500 ] && [ "$attempt" -lt "$max_retries" ]; then
+              echo "Server error ($http_code), retrying in ${retry_delay}s..."
+              sleep $retry_delay
+              retry_delay=$((retry_delay * 2))
+              continue
+            fi
+
+            echo "::error::Resend email sync failed with status $http_code"
+            exit 1
+          done
