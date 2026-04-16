@@ -379,10 +379,118 @@ function calculatePregnancyWeek(dueDate: Date): number {
   return 40 - weeksRemaining
 }
 
+// ── "This Week's Action" block ───────────────────────────────────────
+// Personalized registry-aware CTA shown before the email footer.
+// Turns a passive content email into a weekly engagement driver.
+
+interface RegistryState {
+  itemsCount: number
+  sharedAt: string | null
+  hasRegistry: boolean
+}
+
+// deno-lint-ignore no-explicit-any
+async function fetchRegistryState(supabase: any, userId: string): Promise<RegistryState> {
+  const { data: registry } = await supabase
+    .from('registries')
+    .select('id')
+    .or(`owner_id.eq.${userId},partner_id.eq.${userId}`)
+    .limit(1)
+    .maybeSingle()
+
+  // registry_shared_at lives on profiles (added in 20260311_add_nudge_email_columns.sql).
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('registry_shared_at')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!registry) {
+    return {
+      itemsCount: 0,
+      sharedAt: (profile as { registry_shared_at: string | null } | null)?.registry_shared_at ?? null,
+      hasRegistry: false,
+    }
+  }
+
+  const r = registry as { id: string }
+  const { count } = await supabase
+    .from('items')
+    .select('*', { count: 'exact', head: true })
+    .eq('registry_id', r.id)
+
+  return {
+    itemsCount: count ?? 0,
+    sharedAt: (profile as { registry_shared_at: string | null } | null)?.registry_shared_at ?? null,
+    hasRegistry: true,
+  }
+}
+
+function getWeeklyAction(week: number, state: RegistryState): { title: string; body: string; ctaLabel: string; ctaUrl: string } | null {
+  // Only for pregnancy weeks (postpartum weeks > 40 skip this section).
+  if (week > 40) return null
+
+  const empty = state.itemsCount === 0
+  const hasItems = state.itemsCount > 0
+  const shared = state.sharedAt !== null
+  const dashboardUrl = 'https://nestyil.com/dashboard'
+  const checklistUrl = 'https://nestyil.com/checklist'
+  const shareUrl = 'https://nestyil.com/share'
+
+  if (week >= 12 && week <= 16) {
+    if (empty) return { title: '✨ פעולה לשבוע זה', body: 'התחילי עם הצ\'קליסט — בלי מחויבות, רק לעבור על הדברים שכדאי להכיר. אין לחץ.', ctaLabel: 'פתחי את הצ\'קליסט', ctaUrl: checklistUrl }
+    return { title: '✨ פעולה לשבוע זה', body: 'התחלה יפה! המשיכי לעיין כשמתחשק לך.', ctaLabel: 'צפי ברשימה שלך', ctaUrl: dashboardUrl }
+  }
+  if (week >= 17 && week <= 22) {
+    if (empty) return { title: '✨ פעולה לשבוע זה', body: 'זה זמן טוב להתחיל להוסיף פריטים — עגלות ומיטות דורשות מחקר מראש.', ctaLabel: 'פתחי את הצ\'קליסט', ctaUrl: checklistUrl }
+    if (!shared) return { title: '✨ פעולה לשבוע זה', body: `יש לך ${state.itemsCount} פריטים — בדקי אם חסרות קטגוריות גדולות.`, ctaLabel: 'סקירת קטגוריות', ctaUrl: checklistUrl }
+    return { title: '✨ פעולה לשבוע זה', body: 'הרשימה שלך גדלה יפה!', ctaLabel: 'צפי ברשימה שלך', ctaUrl: dashboardUrl }
+  }
+  if (week >= 23 && week <= 27) {
+    if (empty) return { title: '✨ פעולה לשבוע זה', body: `שבוע ${week} — זה הזמן להתחיל לבנות את הרשימה. אנחנו כאן לעזור!`, ctaLabel: 'הוסיפי פריט ראשון', ctaUrl: dashboardUrl }
+    if (!shared) return { title: '✨ פעולה לשבוע זה', body: 'כבר שיתפת עם המשפחה הרחבה?', ctaLabel: 'שיתוף הרשימה', ctaUrl: shareUrl }
+    return { title: '✨ פעולה לשבוע זה', body: 'בדקי מה חסר ברשימה שלך.', ctaLabel: 'פתחי את הצ\'קליסט', ctaUrl: checklistUrl }
+  }
+  if (week >= 28 && week <= 32) {
+    if (empty) return { title: '✨ פעולה לשבוע זה', body: 'מתקרבים! בהחלט הזמן להתחיל את הרשימה.', ctaLabel: 'הוסיפי פריט', ctaUrl: dashboardUrl }
+    if (!shared) return { title: '✨ פעולה לשבוע זה', body: 'זה הזמן לשתף עם המשפחה — כאן אנשים מתחילים לשאול מה לקנות.', ctaLabel: 'שיתוף הרשימה', ctaUrl: shareUrl }
+    return { title: '✨ פעולה לשבוע זה', body: 'שיתוף חוזר — אולי הצטרפו בני משפחה שעוד לא ראו את הרשימה.', ctaLabel: 'שיתוף מחדש', ctaUrl: shareUrl }
+  }
+  if (week >= 33 && week <= 35) {
+    if (empty) return { title: '📦 פעולה לשבוע זה', body: 'הזמיני בקרוב — משלוחים יכולים לקחת 1–3 שבועות!', ctaLabel: 'עברי לרשימה', ctaUrl: dashboardUrl }
+    if (hasItems) return { title: '📦 פעולה לשבוע זה', body: 'בדקי את הרשימה שלך — כבר הוזמנו הפריטים הגדולים?', ctaLabel: 'סקירת הרשימה', ctaUrl: dashboardUrl }
+    return { title: '📦 פעולה לשבוע זה', body: 'תזכירי למעגל שלך — חלק מהפריטים לוקחים זמן להגיע.', ctaLabel: 'שיתוף מחדש', ctaUrl: shareUrl }
+  }
+  if (week >= 36 && week <= 37) {
+    if (empty) return { title: '✨ פעולה לשבוע זה', body: 'שבועות אחרונים! ארזי את התיק ללידה, בדקי את כיסא הבטיחות.', ctaLabel: 'רשימת תיק לידה', ctaUrl: dashboardUrl }
+    return { title: '✨ פעולה לשבוע זה', body: 'כמעט שם! סקירה אחרונה של הרשימה.', ctaLabel: 'סקירת הרשימה', ctaUrl: dashboardUrl }
+  }
+  if (week >= 38 && week <= 39) {
+    if (empty) return { title: '✨ פעולה לשבוע זה', body: 'בכל יום! הכל מוכן?', ctaLabel: 'סקירת הרשימה', ctaUrl: dashboardUrl }
+    return { title: '💜 פעולה לשבוע זה', body: 'בדיקה אחרונה — את יכולה לעשות את זה 💜', ctaLabel: 'סקירת הרשימה', ctaUrl: dashboardUrl }
+  }
+  return null
+}
+
+function renderWeeklyActionHtml(action: { title: string; body: string; ctaLabel: string; ctaUrl: string } | null): string {
+  if (!action) return ''
+  return `
+    <tr>
+      <td style="padding:20px 24px;">
+        <div style="background:linear-gradient(135deg,#f9f5ff,#f3edff);border-radius:16px;padding:22px;border:1px solid #e8daf5;">
+          <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#7c4dbd;letter-spacing:0.5px;">${action.title}</p>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#4a3d5e;">${action.body}</p>
+          <a href="${action.ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 24px;border-radius:100px;">${action.ctaLabel} ←</a>
+        </div>
+      </td>
+    </tr>`
+}
+
 // ── Generate weekly email HTML ───────────────────────────────────────
 function generateWeeklyEmailHtml(
   firstName: string,
   weekData: WeekData,
+  actionHtml: string = '',
 ): string {
   const progressPercent = Math.round((weekData.week / 40) * 100)
   const weeksRemaining = 40 - weekData.week
@@ -612,6 +720,9 @@ function generateWeeklyEmailHtml(
             </p>
           </td>
         </tr>
+
+        <!-- THIS WEEK'S ACTION (personalized) -->
+        ${actionHtml}
 
         <tr><td style="height:10px;"></td></tr>
 
@@ -1182,7 +1293,11 @@ serve(async (req) => {
             results.push({ email: profile.email, week: currentWeek, status: 'no_data' })
             continue
           }
-          html = generateWeeklyEmailHtml(firstName, weekData)
+          // Personalized "This Week's Action" block (registry-state-aware CTA)
+          const registryState = await fetchRegistryState(supabaseAdmin, profile.id)
+          const action = getWeeklyAction(currentWeek, registryState)
+          const actionHtml = renderWeeklyActionHtml(action)
+          html = generateWeeklyEmailHtml(firstName, weekData, actionHtml)
           subject = `🌿 שבוע ${currentWeek} — ${firstName}, התינוק שלך בגודל של ${weekData.fruit} ${weekData.fruitEmoji}`
         }
 

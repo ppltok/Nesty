@@ -27,8 +27,12 @@ import ShareModal from '../components/ShareModal'
 import ExtensionBanner from '../components/ExtensionBanner'
 import ExtensionGuideModal from '../components/ExtensionGuideModal'
 import FadedIconsBackground from '../components/animations/FadedIconsBackground'
+import PostOnboardingWizard from '../components/popups/PostOnboardingWizard'
+import SharePromptModal from '../components/popups/SharePromptModal'
+import MilestoneToast, { type MilestoneKind } from '../components/popups/MilestoneToast'
 import { useExtensionDetection } from '../hooks/useExtensionDetection'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
+import { usePopupState, advanceMilestone, milestoneForCount } from '../hooks/usePopups'
 import { CATEGORIES } from '../data/categories'
 import { supabase } from '../lib/supabase'
 import type { Item, ItemCategory } from '../types'
@@ -96,6 +100,15 @@ export default function Dashboard() {
   const [unmarkModalItem, setUnmarkModalItem] = useState<Item | null>(null)
   const [unmarkModalGuestCount, setUnmarkModalGuestCount] = useState(0)
 
+  // Engagement popups / toasts
+  const popups = usePopupState(user?.id)
+  const [showPostOnboarding, setShowPostOnboarding] = useState(false)
+  const [showSharePrompt, setShowSharePrompt] = useState(false)
+  const [activeToast, setActiveToast] = useState<MilestoneKind | null>(null)
+  // Snapshot of items.length before the latest add, so handleItemSave can
+  // detect milestone crossings without re-fetching state mid-flow.
+  const itemsCountBeforeSave = useRef<number>(0)
+
   // Track if address modal is shown right after onboarding (to redirect to checklist on close)
   const addressModalFromOnboarding = useRef(false)
 
@@ -127,6 +140,19 @@ export default function Dashboard() {
       fetchItems()
     }
   }, [registry, fetchItems])
+
+  // Post-onboarding wizard: show once for users who haven't dismissed AND
+  // still have an empty registry. Grandfathered users (any prior items) are
+  // auto-dismissed via migration 3c.
+  useEffect(() => {
+    if (!popups.loaded || !user) return
+    if (popups.dismissed.post_onboarding) return
+    if (isLoadingItems) return
+    if (items.length > 0) return
+    if (tutorialActive) return
+    if (showAddressModal) return
+    setShowPostOnboarding(true)
+  }, [popups.loaded, popups.dismissed.post_onboarding, user, isLoadingItems, items.length, tutorialActive, showAddressModal])
 
   // Fetch partner name for shared registry indicator
   useEffect(() => {
@@ -283,12 +309,40 @@ export default function Dashboard() {
     }
   }
 
-  const handleItemSave = () => {
-    fetchItems()
+  const handleItemSave = async () => {
+    const beforeCount = itemsCountBeforeSave.current
+    await fetchItems()
+    // After refetch, items.length is in a stale closure — read the new count
+    // via a targeted DB query. Avoids depending on React state timing.
+    if (!registry || !user) return
+    const { count } = await supabase
+      .from('items')
+      .select('*', { count: 'exact', head: true })
+      .eq('registry_id', registry.id)
+    const newCount = count ?? 0
+
+    // Share prompt: fires when user crosses to 5+ items, never shared,
+    // never previously dismissed. Grandfathered users have dismissed=true.
+    // registry_shared_at lives on profiles, not registries.
+    if (beforeCount < 5 && newCount >= 5 && !profile?.registry_shared_at && !popups.dismissed.share_prompt_5) {
+      setShowSharePrompt(true)
+    }
+
+    // Milestone toast: fires only when the NEW milestone is strictly higher
+    // than what the user has ever seen. Grandfathered users have
+    // last_milestone_shown set to their current position on rollout day.
+    const prevMilestone = milestoneForCount(beforeCount)
+    const newMilestone = milestoneForCount(newCount)
+    if (newMilestone > prevMilestone && newMilestone > popups.lastMilestoneShown) {
+      setActiveToast({ kind: 'items', count: newMilestone as 1 | 5 | 10 })
+      void advanceMilestone(user.id, newMilestone)
+    }
   }
 
   const handleOpenAddModal = () => {
     setEditingItem(null)
+    // Snapshot the count so handleItemSave can detect crossings.
+    itemsCountBeforeSave.current = items.length
 
     // Check if extension is installed and if user hasn't dismissed the guide
     const hasExtension = extensionInstalled
@@ -966,6 +1020,30 @@ export default function Dashboard() {
         isOpen={showExtensionGuideModal}
         onClose={() => setShowExtensionGuideModal(false)}
       />
+
+      {/* Engagement popups */}
+      {showPostOnboarding && user && (
+        <PostOnboardingWizard
+          userId={user.id}
+          onClose={() => setShowPostOnboarding(false)}
+          onAddItem={handleOpenAddModal}
+        />
+      )}
+
+      {showSharePrompt && user && (
+        <SharePromptModal
+          userId={user.id}
+          onClose={() => setShowSharePrompt(false)}
+          onShare={() => setShowShareModal(true)}
+        />
+      )}
+
+      {activeToast && (
+        <MilestoneToast
+          milestone={activeToast}
+          onClose={() => setActiveToast(null)}
+        />
+      )}
 
       {/* Quantity Selector Modal */}
       {quantityModalItem && (

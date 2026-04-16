@@ -1,5 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { calculatePregnancyWeek } from '../_shared/pregnancy.ts'
+import { canSendNudge, logNudge, type NudgeVariant } from '../_shared/nudge-log.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 
@@ -298,6 +300,102 @@ function shareNudgeHtml(firstName: string, itemsCount: number): string {
   return emailWrapper(content)
 }
 
+// ── First Item Nudge (repeatable, pregnancy-week-aware) ───────────────
+// Variants by week band:
+//   12–20: gentle, 21–27: practical, 28–33: urgent, 34+: final.
+// Max 3 total sends (including grandfather). Min 14 days between sends.
+
+function pickFirstItemVariant(week: number): { variant: NudgeVariant; subject: (name: string) => string; body: string; cta: string } {
+  if (week <= 20) {
+    return {
+      variant: 'gentle',
+      subject: (n) => `${n}, הצ'קליסט מחכה לך — בואי נציץ? 🌱`,
+      body: `יש לך המון זמן, אבל זה רגע טוב להתחיל להכיר את הצ'קליסט — בלי לחץ, רק לעבור על הדברים שכדאי להבין מראש.`,
+      cta: 'פתחי את הצ\'קליסט',
+    }
+  }
+  if (week <= 27) {
+    return {
+      variant: 'practical',
+      subject: (n) => `${n}, הגענו לשבוע ${week} ועדיין לא התחלנו — בואי נתחיל ביחד 🪺`,
+      body: `רוב ההורים מתחילים להוסיף פריטים סביב השבוע הזה. העגלות, המיטות והסלקלים דורשים מחקר — כדאי להתחיל עכשיו.`,
+      cta: 'התחילי עם פריט ראשון',
+    }
+  }
+  if (week <= 33) {
+    return {
+      variant: 'urgent',
+      subject: (n) => `${n}, שבוע ${week} — הגיע הזמן לבנות את הרשימה! 📦`,
+      body: `משלוחים לוקחים זמן, מחקר לוקח זמן, והבחירה של בני המשפחה לוקחת זמן. כדאי להתחיל עכשיו.`,
+      cta: 'הוסיפי פריט עכשיו',
+    }
+  }
+  return {
+    variant: 'final',
+    subject: (n) => `${n}, שבוע ${week} — לפחות את 5 הדברים הכי חשובים 🍼`,
+    body: `זה באמת הזמן. גם אם לא כל הרשימה מוכנה — לפחות כיסא בטיחות, מיטה, בקבוקים, אמבט וטטרות. הנה איך מתחילים:`,
+    cta: 'פתחי את הצ\'קליסט',
+  }
+}
+
+function firstItemNudgeHtml(firstName: string, week: number): string {
+  const { body, cta } = pickFirstItemVariant(week)
+  const content = `
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:36px 36px 30px;border:1.5px solid #e8daf5;text-align:right;">
+            <p style="margin:0 0 12px;font-size:28px;">🪺</p>
+            <h2 style="margin:0 0 14px;font-size:22px;font-weight:700;color:#3b1f6b;line-height:1.4;">היי ${firstName}!</h2>
+            <p style="margin:0 0 18px;font-size:15px;line-height:1.8;color:#5a4470;">${body}</p>
+            <a href="https://nestyil.com/checklist" style="display:inline-block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;">${cta} ←</a>
+          </td>
+        </tr>`
+  return emailWrapper(content)
+}
+
+// ── Registry Stalled Nudge (repeatable, pregnancy-week-aware) ─────────
+// Variants by week band:
+//   20–26: gentle, 27–32: practical, 33+: urgent.
+// Max 3 total sends. Min 14 days between sends.
+
+function pickStalledVariant(week: number, itemsCount: number): { variant: NudgeVariant; subject: (name: string) => string; body: string; cta: string } {
+  if (week <= 26) {
+    return {
+      variant: 'gentle',
+      subject: (n) => `${n}, חסרים לך עוד כמה דברים 🍼`,
+      body: `יש לך ${itemsCount} פריטים ברשימה — תיכף נבחן מה עוד אמהות בשבוע ${week} אוהבות להוסיף.`,
+      cta: 'מה עוד כדאי להוסיף?',
+    }
+  }
+  if (week <= 32) {
+    return {
+      variant: 'practical',
+      subject: (n) => `${n}, הרשימה שלך בשבוע ${week} — מה עוד חסר?`,
+      body: `יש לך ${itemsCount} פריטים. הממוצע ב-Nesty הוא 12. בדקי את הצ'קליסט — יש כנראה כמה דברים חיוניים שעוד לא ברשימה.`,
+      cta: 'פתחי את הצ\'קליסט',
+    }
+  }
+  return {
+    variant: 'urgent',
+    subject: (n) => `${n}, שבוע ${week} — כדאי להזמין עכשיו, משלוחים לוקחים זמן 📦`,
+    body: `יש לך ${itemsCount} פריטים — פחות מהממוצע. פריטים חיוניים כמו כיסא בטיחות, מיטה ובקבוקים לוקחים זמן להגיע. הזמיני היום.`,
+    cta: 'השלימי את הרשימה',
+  }
+}
+
+function stalledNudgeHtml(firstName: string, week: number, itemsCount: number): string {
+  const { body, cta } = pickStalledVariant(week, itemsCount)
+  const content = `
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:36px 36px 30px;border:1.5px solid #e8daf5;text-align:right;">
+            <p style="margin:0 0 12px;font-size:28px;">🪺</p>
+            <h2 style="margin:0 0 14px;font-size:22px;font-weight:700;color:#3b1f6b;line-height:1.4;">היי ${firstName}!</h2>
+            <p style="margin:0 0 18px;font-size:15px;line-height:1.8;color:#5a4470;">${body}</p>
+            <a href="https://nestyil.com/checklist" style="display:inline-block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;">${cta} ←</a>
+          </td>
+        </tr>`
+  return emailWrapper(content)
+}
+
 // ── Main handler ──────────────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -316,7 +414,13 @@ serve(async (req) => {
     const results = {
       checklist_nudge: { sent: 0, errors: 0, skipped: 0 },
       share_nudge: { sent: 0, errors: 0, skipped: 0 },
+      first_item: { sent: 0, errors: 0, skipped: 0 },
+      registry_stalled: { sent: 0, errors: 0, skipped: 0 },
     }
+
+    // Users who already received another nudge today shouldn't get a second.
+    // Populated as we send each nudge so cross-type dedup works.
+    const nudgedToday = new Set<string>()
 
     // ── 1. Checklist nudge ──────────────────────────────────────────
     // Find users who:
@@ -378,6 +482,7 @@ serve(async (req) => {
               .from('profiles')
               .update({ checklist_nudge_sent_at: new Date().toISOString() })
               .eq('id', user.id)
+            nudgedToday.add(user.id)
             results.checklist_nudge.sent++
             console.log(`Checklist nudge sent to ${user.email}`)
           } else {
@@ -474,6 +579,7 @@ serve(async (req) => {
               .from('profiles')
               .update({ share_nudge_sent_at: new Date().toISOString() })
               .eq('id', user.id)
+            nudgedToday.add(user.id)
             results.share_nudge.sent++
             console.log(`Share nudge sent to ${user.email}`)
           } else {
@@ -485,6 +591,177 @@ serve(async (req) => {
           console.error(`Error sending share nudge to ${user.email}:`, err)
           results.share_nudge.errors++
         }
+      }
+    }
+
+    // ── 3. First Item nudge (repeatable, pregnancy-week-aware) ─────
+    // Eligibility:
+    //   - onboarding_completed = true
+    //   - marketing_emails = true
+    //   - 0 items in any owned registry
+    //   - ≥5 days since profile.updated_at (proxy for onboarding date)
+    //   - pregnancy_week >= 12 (i.e. we can calculate it)
+    //   - canSendNudge('first_item'): <3 sends total AND last send ≥14d ago
+    //   - not already nudged today
+    const fiveDaysAgo = new Date()
+    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5)
+
+    const { data: firstItemCandidates } = await adminClient
+      .from('profiles')
+      .select('id, email, first_name, due_date')
+      .eq('onboarding_completed', true)
+      .eq('marketing_emails', true)
+      .not('due_date', 'is', null)
+      .lt('updated_at', fiveDaysAgo.toISOString())
+
+    for (const user of firstItemCandidates ?? []) {
+      if (nudgedToday.has(user.id)) {
+        results.first_item.skipped++
+        continue
+      }
+      const dueDate = new Date(user.due_date as string)
+      const week = calculatePregnancyWeek(dueDate)
+      if (week < 12 || week > 40) {
+        results.first_item.skipped++
+        continue
+      }
+
+      // 0 items check
+      const { data: registry } = await adminClient
+        .from('registries')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle()
+      if (registry) {
+        const { count } = await adminClient
+          .from('items')
+          .select('*', { count: 'exact', head: true })
+          .eq('registry_id', (registry as { id: string }).id)
+        if ((count ?? 0) > 0) {
+          results.first_item.skipped++
+          continue
+        }
+      }
+
+      // Spacing + max-sends guard
+      if (!(await canSendNudge(adminClient, user.id, 'first_item', { minSpacingDays: 14, maxSends: 3 }))) {
+        results.first_item.skipped++
+        continue
+      }
+
+      const { subject, variant } = pickFirstItemVariant(week)
+      try {
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Nesty <hello@nestyil.com>',
+            to: [user.email],
+            subject: subject(user.first_name || 'את'),
+            html: firstItemNudgeHtml(user.first_name || 'את', week),
+          }),
+        })
+        if (res.ok) {
+          await logNudge(adminClient, user.id, 'first_item', variant, week)
+          nudgedToday.add(user.id)
+          results.first_item.sent++
+          console.log(`First item nudge (${variant}, week ${week}) sent to ${user.email}`)
+        } else {
+          const errData = await res.json()
+          console.error(`Failed to send first_item nudge to ${user.email}:`, errData)
+          results.first_item.errors++
+        }
+      } catch (err) {
+        console.error(`Error sending first_item nudge to ${user.email}:`, err)
+        results.first_item.errors++
+      }
+    }
+
+    // ── 4. Registry Stalled nudge ──────────────────────────────────
+    // Eligibility:
+    //   - onboarding_completed + marketing_emails + due_date present
+    //   - 1–4 items in owned registry
+    //   - last item added ≥7 days ago
+    //   - pregnancy_week >= 20
+    //   - canSendNudge('registry_stalled'): <3 sends AND last ≥14d ago
+    //   - not already nudged today
+    const sevenDaysAgoForStalled = new Date()
+    sevenDaysAgoForStalled.setDate(sevenDaysAgoForStalled.getDate() - 7)
+
+    const { data: stalledCandidates } = await adminClient
+      .from('profiles')
+      .select('id, email, first_name, due_date')
+      .eq('onboarding_completed', true)
+      .eq('marketing_emails', true)
+      .not('due_date', 'is', null)
+
+    for (const user of stalledCandidates ?? []) {
+      if (nudgedToday.has(user.id)) {
+        results.registry_stalled.skipped++
+        continue
+      }
+      const dueDate = new Date(user.due_date as string)
+      const week = calculatePregnancyWeek(dueDate)
+      if (week < 20 || week > 40) {
+        results.registry_stalled.skipped++
+        continue
+      }
+
+      const { data: registry } = await adminClient
+        .from('registries')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle()
+      if (!registry) {
+        results.registry_stalled.skipped++
+        continue
+      }
+      const { data: items } = await adminClient
+        .from('items')
+        .select('created_at')
+        .eq('registry_id', (registry as { id: string }).id)
+        .order('created_at', { ascending: false })
+      const itemsCount = items?.length ?? 0
+      if (itemsCount < 1 || itemsCount > 4) {
+        results.registry_stalled.skipped++
+        continue
+      }
+      const latestAt = items?.[0]?.created_at
+      if (!latestAt || new Date(latestAt as string) > sevenDaysAgoForStalled) {
+        results.registry_stalled.skipped++
+        continue
+      }
+
+      if (!(await canSendNudge(adminClient, user.id, 'registry_stalled', { minSpacingDays: 14, maxSends: 3 }))) {
+        results.registry_stalled.skipped++
+        continue
+      }
+
+      const { subject, variant } = pickStalledVariant(week, itemsCount)
+      try {
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Nesty <hello@nestyil.com>',
+            to: [user.email],
+            subject: subject(user.first_name || 'את'),
+            html: stalledNudgeHtml(user.first_name || 'את', week, itemsCount),
+          }),
+        })
+        if (res.ok) {
+          await logNudge(adminClient, user.id, 'registry_stalled', variant, week)
+          nudgedToday.add(user.id)
+          results.registry_stalled.sent++
+          console.log(`Registry stalled nudge (${variant}, week ${week}, items ${itemsCount}) sent to ${user.email}`)
+        } else {
+          const errData = await res.json()
+          console.error(`Failed to send registry_stalled nudge to ${user.email}:`, errData)
+          results.registry_stalled.errors++
+        }
+      } catch (err) {
+        console.error(`Error sending registry_stalled nudge to ${user.email}:`, err)
+        results.registry_stalled.errors++
       }
     }
 

@@ -10,8 +10,22 @@ export interface Profile {
   preferred_language: 'en' | 'he'
   onboarding_completed: boolean
   referral_source: string | null
+  utm_source: string | null
+  utm_medium: string | null
+  utm_campaign: string | null
+  utm_content: string | null
+  utm_term: string | null
+  landing_page: string | null
+  landing_referrer: string | null
   email_notifications: boolean
   marketing_emails: boolean
+  // Nudge tracking (see 20260311_add_nudge_email_columns.sql)
+  registry_shared_at?: string | null
+  checklist_nudge_sent_at?: string | null
+  share_nudge_sent_at?: string | null
+  // Popup/toast state (see 20260417_engagement_retention_round1.sql)
+  dismissed_popups?: Record<string, boolean>
+  last_milestone_shown?: number
   created_at: string
   updated_at: string
 }
