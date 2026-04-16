@@ -122,6 +122,11 @@ export default function Checklist() {
     return preferences.find(p => p.category_id === categoryId && p.item_name === itemName)
   }
 
+  // Priority to use when the user has no explicit override. Mirrors ITEMS_DATA.type
+  // so that editing type in categories.ts actually drives the UI badge.
+  const getDefaultPriority = (itemName: string): PriorityLevel =>
+    ITEMS_DATA[itemName]?.type === 'treat' ? 'nice_to_have' : 'essential'
+
   const upsertPreference = async (
     categoryId: string,
     itemName: string,
@@ -148,7 +153,7 @@ export default function Checklist() {
             is_checked: updates.is_checked ?? false,
             is_hidden: updates.is_hidden ?? false,
             notes: '',
-            priority: updates.priority ?? 'essential',
+            priority: updates.priority ?? getDefaultPriority(itemName),
           })
           .select()
           .single()
@@ -172,7 +177,7 @@ export default function Checklist() {
         setPreferences(prev => prev.map(p => p.id === existing.id ? { ...p, notes } : p))
       } else {
         const { data } = await supabase.from('checklist_preferences')
-          .insert({ user_id: checklistUserId, category_id: categoryId, item_name: itemName, quantity: 1, is_checked: false, is_hidden: false, notes, priority: 'essential' as PriorityLevel })
+          .insert({ user_id: checklistUserId, category_id: categoryId, item_name: itemName, quantity: 1, is_checked: false, is_hidden: false, notes, priority: getDefaultPriority(itemName) })
           .select().single()
         if (data) setPreferences(prev => [...prev, data])
       }
@@ -217,7 +222,7 @@ export default function Checklist() {
   const addCustomItem = async () => {
     if (!customItemName.trim() || !customItemCategory) return
     await upsertPreference(customItemCategory, customItemName.trim(), {
-      is_checked: false, is_hidden: false, priority: 'essential', quantity: 1,
+      is_checked: false, is_hidden: false, priority: getDefaultPriority(customItemName.trim()), quantity: 1,
     })
     setCustomItemName('')
     setCustomItemCategory('')
@@ -250,7 +255,7 @@ export default function Checklist() {
   }
 
   const getPriority = (categoryId: string, itemName: string): PriorityLevel => {
-    return getPreference(categoryId, itemName)?.priority ?? 'essential'
+    return getPreference(categoryId, itemName)?.priority ?? getDefaultPriority(itemName)
   }
 
   const togglePriority = async (categoryId: string, itemName: string) => {
