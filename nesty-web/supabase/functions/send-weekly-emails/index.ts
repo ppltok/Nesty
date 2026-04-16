@@ -633,7 +633,7 @@ function generateWeeklyEmailHtml(
               </tr>
               <tr>
                 <td align="center">
-                  <a href="mailto:tom@ppltok.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
+                  <a href="mailto:hello@nestyil.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
                 </td>
               </tr>
             </table>
@@ -845,7 +845,7 @@ function generateCelebrationEmailHtml(firstName: string): string {
               </tr>
               <tr>
                 <td align="center">
-                  <a href="mailto:tom@ppltok.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
+                  <a href="mailto:hello@nestyil.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
                 </td>
               </tr>
             </table>
@@ -1047,7 +1047,7 @@ function generatePostpartumEmailHtml(
               </tr>
               <tr>
                 <td align="center">
-                  <a href="mailto:tom@ppltok.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
+                  <a href="mailto:hello@nestyil.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
                 </td>
               </tr>
             </table>
@@ -1194,7 +1194,7 @@ serve(async (req) => {
             'Authorization': `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: 'Nesty <noreply@nestyil.com>',
+            from: 'Nesty <hello@nestyil.com>',
             to: [profile.email],
             subject,
             html,

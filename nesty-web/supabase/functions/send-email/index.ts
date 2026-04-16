@@ -272,7 +272,7 @@ serve(async (req) => {
               </tr>
               <tr>
                 <td align="center">
-                  <a href="mailto:tom@ppltok.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
+                  <a href="mailto:hello@nestyil.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
                 </td>
               </tr>
             </table>
@@ -306,7 +306,7 @@ serve(async (req) => {
 </html>`
 
     } else if (type === 'contact') {
-      recipient = 'tom@ppltok.com'
+      recipient = 'hello@nestyil.com'
       emailSubject = `📩 פנייה חדשה מאתר Nesty: ${contactSubject}`
       html = `
         <!DOCTYPE html>
@@ -399,7 +399,7 @@ serve(async (req) => {
       `
     } else if (type === 'admin_new_user') {
       emailSubject = `🆕 משתמש חדש נרשם ל-Nesty: ${data?.userName || data?.userEmail || ''}`
-      recipient = 'tom@ppltok.com'
+      recipient = 'hello@nestyil.com'
       html = `
         <!DOCTYPE html>
         <html dir="rtl" lang="he">
@@ -624,7 +624,7 @@ serve(async (req) => {
               </tr>
               <tr>
                 <td align="center">
-                  <a href="mailto:tom@ppltok.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
+                  <a href="mailto:hello@nestyil.com" style="display:block;background:#f3edff;color:#7c4dbd;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;border:1.5px solid #e8daf5;text-align:center;">✉️ שלחי לנו מייל</a>
                 </td>
               </tr>
             </table>
@@ -669,7 +669,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Nesty <noreply@nestyil.com>',
+        from: 'Nesty <hello@nestyil.com>',
         to: [recipient],
         subject: emailSubject,
         html,

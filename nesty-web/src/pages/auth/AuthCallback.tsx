@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
-const ADMIN_EMAIL = 'tom@ppltok.com'
+const ADMIN_EMAIL = 'hello@nestyil.com'
 
 export default function AuthCallback() {
   const navigate = useNavigate()

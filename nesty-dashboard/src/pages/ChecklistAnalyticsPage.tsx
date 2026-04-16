@@ -96,7 +96,7 @@ function useProfiles() {
 }
 
 // Test accounts to exclude from analytics
-const TEST_EMAILS = ['tom@ppltok.com']
+const TEST_EMAILS = ['hello@nestyil.com', 'tom@ppltok.com']
 
 export default function ChecklistAnalyticsPage() {
   const checklistQuery = useChecklistData()

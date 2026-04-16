@@ -350,7 +350,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Nesty <noreply@nestyil.com>',
+        from: 'Nesty <hello@nestyil.com>',
         to: [email],
         subject: `${ownerName} הזמין/ה אותך לנהל יחד את רשימת התינוק ב-Nesty! 👶`,
         html: emailHtml,

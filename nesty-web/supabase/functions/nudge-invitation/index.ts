@@ -151,7 +151,7 @@ serve(async (req) => {
               'Authorization': `Bearer ${RESEND_API_KEY}`,
             },
             body: JSON.stringify({
-              from: 'Nesty <noreply@nestyil.com>',
+              from: 'Nesty <hello@nestyil.com>',
               to: [invitation.invited_email],
               subject: `תזכורת: ${ownerName} מחכה לך ב-Nesty! 👶`,
               html: nudgeHtml,
@@ -233,7 +233,7 @@ serve(async (req) => {
                 'Authorization': `Bearer ${RESEND_API_KEY}`,
               },
               body: JSON.stringify({
-                from: 'Nesty <noreply@nestyil.com>',
+                from: 'Nesty <hello@nestyil.com>',
                 to: [ownerProfile.email],
                 subject: `ההזמנה ל-${invitation.invited_email} עדיין ממתינה`,
                 html: ownerNotifyHtml,

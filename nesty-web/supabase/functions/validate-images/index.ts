@@ -130,8 +130,8 @@ serve(async (req) => {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'Nesty <noreply@nestyil.com>',
-          to: ['tom@ppltok.com'],
+          from: 'Nesty <hello@nestyil.com>',
+          to: ['hello@nestyil.com'],
           subject: `🖼️ ${brokenItems.length} broken images found and fixed`,
           html: `<div dir="rtl" style="font-family:sans-serif;">
             <h2>דוח תמונות שבורות</h2>
@@ -168,8 +168,8 @@ serve(async (req) => {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'Nesty <noreply@nestyil.com>',
-          to: ['tom@ppltok.com'],
+          from: 'Nesty <hello@nestyil.com>',
+          to: ['hello@nestyil.com'],
           subject: `📊 ${recentReports.length} extraction reports (last 24h)`,
           html: `<div dir="rtl" style="font-family:sans-serif;">
             <h2>דוח חילוצים כושלים — 24 שעות אחרונות</h2>
