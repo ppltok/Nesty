@@ -1,6 +1,13 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { buildUnsubscribeUrl } from '../_shared/unsubscribe-url.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+
+// Plain management link (no token) for emails where one-click unsubscribe
+// doesn't make sense — welcome emails, transactional-adjacent templates.
+// The user needs to be logged in to change preferences; since welcome is
+// sent right after signup, the session is fresh.
+const MANAGE_LINK = `<a href="https://nestyil.com/settings/emails" style="color:#9070b8;text-decoration:underline;">ניהול העדפות אימייל</a>`
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,6 +38,7 @@ interface EmailRequest {
     fruitEmoji?: string
     dueDate?: string
     // For price drop email
+    userId?: string  // needed to build the signed unsubscribe URL
     drops?: Array<{
       itemName: string
       imageUrl: string
@@ -73,6 +81,10 @@ serve(async (req) => {
       const fruitEmoji = data?.fruitEmoji || '🍈'
       recipient = to || data?.ownerEmail || ''
       emailSubject = `ברוכה הבאה ל-Nesty, ${firstName}! 💜`
+      // Welcome is onboarding-adjacent — send a plain "manage preferences"
+      // link instead of a one-click unsubscribe token. User just signed up
+      // and is logged in; /settings/emails will open fine for them.
+      const unsubscribeLink = MANAGE_LINK
       html = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -289,7 +301,7 @@ serve(async (req) => {
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
-              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              ${unsubscribeLink}
               &nbsp;·&nbsp;
               <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
               &nbsp;·&nbsp;
@@ -467,11 +479,18 @@ serve(async (req) => {
     } else if (type === 'price_drop') {
       const firstName = data?.firstName || 'את'
       const drops = data?.drops || []
+      const userId = data?.userId || ''
       recipient = to || data?.ownerEmail || ''
 
       if (drops.length === 0) {
         throw new Error('No price drops provided')
       }
+
+      // One-click token unsubscribe for the 'prices' category. If userId
+      // isn't provided (legacy callers), fall back to the plain manage link.
+      const unsubscribeLink = userId
+        ? `<a href="${await buildUnsubscribeUrl(userId, 'prices')}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>`
+        : MANAGE_LINK
 
       // Subject line
       if (drops.length === 1) {
@@ -641,7 +660,7 @@ serve(async (req) => {
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
-              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              ${unsubscribeLink}
               &nbsp;·&nbsp;
               <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
               &nbsp;·&nbsp;

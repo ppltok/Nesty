@@ -670,11 +670,19 @@ serve(async (req) => {
 
           const { data: profile } = await supabase
             .from('profiles')
-            .select('email, first_name')
+            .select('id, email, first_name, marketing_emails, email_price_alerts')
             .eq('id', registry.owner_id)
             .single()
 
           if (!profile?.email) continue
+
+          // Respect email preferences — both the master and per-category toggle.
+          // Added in 20260419_email_preferences.sql; defaults to true so
+          // existing users keep receiving price alerts unless they opt out.
+          if (profile.marketing_emails === false || profile.email_price_alerts === false) {
+            console.log(`[check-prices] skipping ${profile.email} — opted out of price alerts`)
+            continue
+          }
 
           // Sort by savings %, take top 5
           const topDrops = drops
@@ -706,6 +714,7 @@ serve(async (req) => {
                 to: profile.email,
                 data: {
                   firstName: profile.first_name || 'את',
+                  userId: profile.id,  // used to build signed unsubscribe URL
                   drops: emailDrops,
                 },
               }),

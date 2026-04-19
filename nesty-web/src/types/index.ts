@@ -19,6 +19,13 @@ export interface Profile {
   landing_referrer: string | null
   email_notifications: boolean
   marketing_emails: boolean
+  // Per-category email opt-ins (see 20260419_email_preferences.sql).
+  // Subordinate to marketing_emails — when master is off, all four below
+  // are effectively off regardless of their stored value.
+  email_weekly_pregnancy?: boolean
+  email_engagement_reminders?: boolean
+  email_feature_announcements?: boolean
+  email_price_alerts?: boolean
   // Nudge tracking (see 20260311_add_nudge_email_columns.sql)
   registry_shared_at?: string | null
   checklist_nudge_sent_at?: string | null

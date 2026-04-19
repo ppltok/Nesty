@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { buildUnsubscribeUrl } from '../_shared/unsubscribe-url.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 
@@ -491,6 +492,7 @@ function generateWeeklyEmailHtml(
   firstName: string,
   weekData: WeekData,
   actionHtml: string = '',
+  unsubscribeUrl: string = 'https://nestyil.com/settings/emails',
 ): string {
   const progressPercent = Math.round((weekData.week / 40) * 100)
   const weeksRemaining = 40 - weekData.week
@@ -761,7 +763,7 @@ function generateWeeklyEmailHtml(
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
-              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              <a href="${unsubscribeUrl}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
               &nbsp;·&nbsp;
               <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
               &nbsp;·&nbsp;
@@ -779,7 +781,7 @@ function generateWeeklyEmailHtml(
 }
 
 // ── Week 40 celebration email HTML ──────────────────────────────────
-function generateCelebrationEmailHtml(firstName: string): string {
+function generateCelebrationEmailHtml(firstName: string, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
   return `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -973,7 +975,7 @@ function generateCelebrationEmailHtml(firstName: string): string {
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
-              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              <a href="${unsubscribeUrl}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
               &nbsp;·&nbsp;
               <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
               &nbsp;·&nbsp;
@@ -994,6 +996,7 @@ function generateCelebrationEmailHtml(firstName: string): string {
 function generatePostpartumEmailHtml(
   firstName: string,
   weekData: PostpartumWeekData,
+  unsubscribeUrl: string = 'https://nestyil.com/settings/emails',
 ): string {
   const tips = weekData.tips.split('.').map(t => t.trim()).filter(t => t.length > 10)
   const tipsFormatted = tips.slice(0, 3)
@@ -1175,7 +1178,7 @@ function generatePostpartumEmailHtml(
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
-              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              <a href="${unsubscribeUrl}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
               &nbsp;·&nbsp;
               <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
               &nbsp;·&nbsp;
@@ -1226,9 +1229,12 @@ serve(async (req) => {
     if (targetUserId) {
       query = query.eq('id', targetUserId)
     } else {
-      // Only users who opted in to marketing emails and have a due date
+      // Respect both the master opt-out AND the per-category toggle.
+      // email_weekly_pregnancy was added in 20260419_email_preferences.sql
+      // with DEFAULT true — existing users keep receiving by default.
       query = query
         .eq('marketing_emails', true)
+        .eq('email_weekly_pregnancy', true)
         .not('due_date', 'is', null)
     }
 
@@ -1267,12 +1273,14 @@ serve(async (req) => {
         }
 
         const firstName = profile.first_name || profile.email.split('@')[0]
+        // Per-user signed unsubscribe URL — one click opts out of weekly email.
+        const unsubscribeUrl = await buildUnsubscribeUrl(profile.id, 'weekly')
         let html: string
         let subject: string
 
         if (currentWeek === 40) {
           // ── Week 40: Special celebration email ──
-          html = generateCelebrationEmailHtml(firstName)
+          html = generateCelebrationEmailHtml(firstName, unsubscribeUrl)
           subject = `🎉 ${firstName}, הגעת לשבוע 40! המסע המדהים שלך מגיע לשיא 💜`
 
         } else if (currentWeek > 40) {
@@ -1283,7 +1291,7 @@ serve(async (req) => {
             results.push({ email: profile.email, week: currentWeek, status: 'no_data' })
             continue
           }
-          html = generatePostpartumEmailHtml(firstName, ppData)
+          html = generatePostpartumEmailHtml(firstName, ppData, unsubscribeUrl)
           subject = `${ppData.milestoneEmoji} ${ppData.milestone} — ${firstName}, איך את והתינוק? 💜`
 
         } else {
@@ -1297,7 +1305,7 @@ serve(async (req) => {
           const registryState = await fetchRegistryState(supabaseAdmin, profile.id)
           const action = getWeeklyAction(currentWeek, registryState)
           const actionHtml = renderWeeklyActionHtml(action)
-          html = generateWeeklyEmailHtml(firstName, weekData, actionHtml)
+          html = generateWeeklyEmailHtml(firstName, weekData, actionHtml, unsubscribeUrl)
           subject = `🌿 שבוע ${currentWeek} — ${firstName}, התינוק שלך בגודל של ${weekData.fruit} ${weekData.fruitEmoji}`
         }
 

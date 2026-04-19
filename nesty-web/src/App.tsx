@@ -4,6 +4,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 import DashboardLayout from './components/layout/DashboardLayout'
 import ErrorBoundary from './components/ErrorBoundary'
 import ScrollToTop from './components/ScrollToTop'
+import WhatsAppButton from './components/WhatsAppButton'
 import { initializeStorageVersion } from './lib/storage-version'
 
 // Pages
@@ -18,6 +19,8 @@ import PublicRegistry from './pages/PublicRegistry'
 import Gifts from './pages/Gifts'
 import Statistics from './pages/Statistics'
 import Settings from './pages/Settings'
+import EmailPreferences from './pages/EmailPreferences'
+import Unsubscribed from './pages/Unsubscribed'
 import InviteAccept from './pages/InviteAccept'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
@@ -83,6 +86,10 @@ function AppRoutes() {
       {/* Invitation acceptance (works with or without auth) */}
       <Route path="/invite/:token" element={<InviteAccept />} />
 
+      {/* Unsubscribe confirmation — public on purpose; users may be logged
+          out when clicking a link from their email client. */}
+      <Route path="/unsubscribed" element={<Unsubscribed />} />
+
       {/* Protected routes */}
       <Route element={<ProtectedRoute />}>
         {/* Onboarding - no side nav */}
@@ -112,6 +119,10 @@ function AppRoutes() {
 
           {/* Settings page */}
           <Route path="/settings" element={<Settings />} />
+
+          {/* Granular email preferences — linked from every outbound email
+              and from Settings.tsx. */}
+          <Route path="/settings/emails" element={<EmailPreferences />} />
         </Route>
       </Route>
 
@@ -129,6 +140,7 @@ export default function App() {
         <AuthProvider>
           <div dir="rtl" className="font-sans min-h-screen bg-background">
             <AppRoutes />
+            <WhatsAppButton />
           </div>
         </AuthProvider>
       </BrowserRouter>

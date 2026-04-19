@@ -19,7 +19,9 @@ import {
   RefreshCw,
   XCircle,
   UserMinus,
+  ChevronLeft,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { RegistryInvitation, Profile } from '../types'
 
@@ -468,6 +470,24 @@ export default function Settings() {
         )}
 
         <div className="space-y-6">
+          {/* Email preferences quick-link — fixes the old email unsubscribe
+              dead-end where "הסרה מרשימת התפוצה" landed here with no UI. */}
+          <Link
+            to="/settings/emails"
+            className="flex items-center gap-4 bg-white rounded-2xl border border-border p-5 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
+          >
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Mail className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 text-right">
+              <p className="font-bold text-foreground mb-0.5">ניהול העדפות אימייל</p>
+              <p className="text-sm text-muted-foreground">
+                בחרי אילו אימיילים תרצי לקבל — עדכון שבועי, תזכורות, התראות מחיר ועוד
+              </p>
+            </div>
+            <ChevronLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+          </Link>
+
           {/* Profile Name Section */}
           <div className="bg-white rounded-2xl border border-border p-6">
             <div className="flex items-center gap-3 mb-4">
