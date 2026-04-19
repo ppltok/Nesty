@@ -9,7 +9,7 @@
 
   // Signal to website that extension is installed
   document.documentElement.setAttribute('data-nesty-extension-installed', 'true');
-  document.documentElement.setAttribute('data-nesty-extension-version', '1.3.0');
+  document.documentElement.setAttribute('data-nesty-extension-version', '1.4.5');
   console.log('✅ Extension detection markers set');
 
   // Remove any existing Nesty UI elements (modals, overlays, styles)
@@ -146,18 +146,20 @@
   async function fetchUserRegistry(userId) {
     try {
       const response = await fetch(
-        `${NESTY_CONFIG.SUPABASE_URL}/rest/v1/registries?owner_id=eq.${userId}&select=*`,
+        `${NESTY_CONFIG.SUPABASE_URL}/rest/v1/registries?or=(owner_id.eq.${userId},partner_id.eq.${userId})&select=*&limit=1`,
         {
           headers: {
             'apikey': NESTY_CONFIG.SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${supabaseSession.access_token}`,
-            'Content-Type': 'application/json'
+            'Accept': 'application/json'
           }
         }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch registry');
+        const body = await response.text().catch(() => '');
+        console.error('Registry fetch failed:', response.status, body);
+        throw new Error(`שגיאת שרת ${response.status} בטעינת הרשימה`);
       }
 
       const data = await response.json();
@@ -183,15 +185,15 @@
     modal.innerHTML = `
       <div style="padding: 32px;">
         <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
-        <h2 style="font-size: 24px; font-weight: 600; color: #1f2937; margin: 0 0 12px 0;">נדרשת התחברות</h2>
-        <p style="font-size: 14px; color: #6b7280; margin: 0 0 24px 0;">
+        <h2 style="font-size: 24px; font-weight: 600; color: #1a1a1a; margin: 0 0 12px 0;">נדרשת התחברות</h2>
+        <p style="font-size: 14px; color: #6b6b6b; margin: 0 0 24px 0;">
           כדי להוסיף מוצרים לרשימה שלך, עליך להתחבר ל-Nesty
         </p>
         <div style="display: flex; gap: 12px; justify-content: center;">
-          <button id="nesty-login-btn" style="padding: 12px 24px; background: #6d28d9; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+          <button id="nesty-login-btn" style="padding: 12px 24px; background: #86608e; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
             התחבר ל-Nesty
           </button>
-          <button id="nesty-close-login" style="padding: 12px 24px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+          <button id="nesty-close-login" style="padding: 12px 24px; background: #e8e4e9; color: #1a1a1a; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
             סגור
           </button>
         </div>
@@ -232,11 +234,11 @@
     modal.innerHTML = `
       <div style="padding: 32px;">
         <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-        <h2 style="font-size: 20px; font-weight: 600; color: #1f2937; margin: 0 0 12px 0;">שגיאה</h2>
-        <p style="font-size: 14px; color: #6b7280; margin: 0 0 24px 0; white-space: pre-wrap;">
+        <h2 style="font-size: 20px; font-weight: 600; color: #1a1a1a; margin: 0 0 12px 0;">שגיאה</h2>
+        <p style="font-size: 14px; color: #6b6b6b; margin: 0 0 24px 0; white-space: pre-wrap;">
           ${message}
         </p>
-        <button id="nesty-close-error" style="padding: 12px 24px; background: #6d28d9; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+        <button id="nesty-close-error" style="padding: 12px 24px; background: #86608e; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
           סגור
         </button>
       </div>
@@ -425,6 +427,13 @@
     const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]');
     console.log(`🔍 Found ${jsonLdScripts.length} JSON-LD scripts`);
 
+    const currentUrl = doc.URL || window.location.href;
+    const currentPath = new URL(currentUrl).pathname;
+    console.log(`📍 Current page path: ${currentPath}`);
+
+    // Collect all valid products first
+    const allProducts = [];
+
     for (let i = 0; i < jsonLdScripts.length; i++) {
       const scriptContent = jsonLdScripts[i].textContent.trim();
       console.log(`📄 Parsing JSON-LD script #${i + 1}...`);
@@ -440,22 +449,38 @@
 
       if (data['@type'] === 'Product') {
         console.log('✅ Found Product type, extracting...');
+        const offersData = data.offers || data.Offers;
+        const offerUrl = offersData?.url || '';
+
         console.log('📦 Product data:', {
           name: data.name,
-          hasOffers: !!data.offers,
-          offersIsArray: Array.isArray(data.offers),
-          offersLength: Array.isArray(data.offers) ? data.offers.length : 'N/A'
+          offerUrl: offerUrl,
+          hasOffers: !!offersData,
+          offersIsArray: Array.isArray(offersData),
+          offersLength: Array.isArray(offersData) ? offersData.length : 'N/A'
         });
+
         const result = extractFromProduct(data);
         console.log('✅ Extraction result:', result);
 
-        // Validate result before returning
+        // Check if this product matches the current URL
+        let isMatch = false;
+        if (offerUrl) {
+          try {
+            const offerPath = new URL(offerUrl).pathname;
+            isMatch = offerPath === currentPath;
+            console.log(`🔗 URL match check: ${isMatch ? '✅ MATCH' : '❌ NO MATCH'} (offer: ${offerPath})`);
+          } catch (e) {
+            console.log('⚠️ Could not parse offer URL');
+          }
+        }
+
+        // Validate result before adding to candidates
         if (isValidProductData(result)) {
-          console.log('✅ Valid product data, using JSON-LD extraction');
-          return result;
+          allProducts.push({ result, isMatch, index: i });
+          console.log(`✅ Valid product data found (match: ${isMatch})`);
         } else {
-          console.log('⚠️ JSON-LD data incomplete, will try fallback methods');
-          // Continue to next script or fallback
+          console.log('⚠️ JSON-LD data incomplete, will try next');
         }
       }
 
@@ -464,13 +489,11 @@
         const result = extractFromProductGroup(data);
         console.log('✅ Extraction result:', result);
 
-        // Validate result before returning
         if (isValidProductData(result)) {
-          console.log('✅ Valid product data, using JSON-LD extraction');
-          return result;
+          allProducts.push({ result, isMatch: false, index: i });
+          console.log('✅ Valid ProductGroup data found');
         } else {
-          console.log('⚠️ JSON-LD data incomplete, will try fallback methods');
-          // Continue to next script or fallback
+          console.log('⚠️ ProductGroup data incomplete, will try next');
         }
       }
 
@@ -484,21 +507,32 @@
           const result = product['@type'] === 'Product'
             ? extractFromProduct(product)
             : extractFromProductGroup(product);
-          console.log('✅ Extraction result:', result);
 
-          // Validate result before returning
           if (isValidProductData(result)) {
+            allProducts.push({ result, isMatch: false, index: i });
             console.log('✅ Valid product data from @graph');
-            return result;
-          } else {
-            console.log('⚠️ @graph data incomplete, will try fallback methods');
-            // Continue to fallback
           }
         }
       }
     }
 
-    console.log('⚠️ No product found in JSON-LD, trying Shopify fallback...');
+    // After collecting all products, check for URL match
+    if (allProducts.length > 0) {
+      console.log(`📊 Found ${allProducts.length} valid product(s) in JSON-LD`);
+
+      // Only return if we have a URL match
+      const matchedProduct = allProducts.find(p => p.isMatch);
+      if (matchedProduct) {
+        console.log(`✅ Using URL-matched product from script #${matchedProduct.index + 1}`);
+        return matchedProduct.result;
+      }
+
+      // No URL match - fall through to platform-specific extraction
+      console.log(`⚠️ No URL match found in ${allProducts.length} product(s), trying platform-specific fallback...`);
+    } else {
+      console.log('⚠️ No valid products found in JSON-LD, trying platform-specific fallback...');
+    }
+
     return await extractFromShopifyFallback(doc);
   }
 
@@ -553,9 +587,32 @@
    * @returns {string} - Platform name
    */
   function detectPlatform(doc = document) {
+    // Check for Wix (has wix-specific meta tags or scripts)
+    if (doc.querySelector('meta[name="generator"][content*="Wix"]') ||
+        doc.querySelector('script[src*="static.wixstatic.com"]') ||
+        doc.querySelector('meta[http-equiv="X-Wix-Meta-Site-Id"]')) {
+      return 'wix';
+    }
+
+    // Check for Amazon
+    if (window.location.hostname.includes('amazon.com') ||
+        window.location.hostname.includes('amazon.co.uk') ||
+        window.location.hostname.includes('amazon.de') ||
+        window.location.hostname.includes('amazon.fr') ||
+        window.location.hostname.includes('amazon.it') ||
+        window.location.hostname.includes('amazon.es') ||
+        window.location.hostname.includes('amazon.ca')) {
+      return 'amazon';
+    }
+
     // Check for AliExpress
     if (window.location.hostname.includes('aliexpress.com')) {
       return 'aliexpress';
+    }
+
+    // Check for KSP (ksp.co.il) - React/MUI SPA, no JSON-LD
+    if (window.location.hostname.includes('ksp.co.il')) {
+      return 'ksp';
     }
 
     // Check for Shopify
@@ -579,6 +636,157 @@
     }
 
     return 'unknown';
+  }
+
+  /**
+   * Extract product data from Amazon with USD to ILS conversion
+   * @param {Document} doc - Document object
+   * @returns {Promise<Object|null>} - Product data or null
+   */
+  async function extractFromAmazon(doc = document) {
+    console.log('🛍️ Attempting Amazon extraction...');
+
+    // USD to ILS exchange rate (updated December 2025)
+    const USD_TO_ILS = 3.19;
+
+    const productData = {
+      name: '',
+      price: '',
+      priceCurrency: 'ILS', // Always convert to ILS
+      brand: 'Amazon',
+      category: '',
+      imageUrls: []
+    };
+
+    // Extract title
+    const titleSelectors = [
+      '#productTitle',
+      '#title',
+      'h1.product-title',
+      'span#productTitle',
+      '[data-feature-name="title"] h1'
+    ];
+
+    for (const selector of titleSelectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        const title = element.textContent?.trim() || '';
+        if (title && title.length > 3) {
+          productData.name = title;
+          console.log(`   ✓ Found title: ${title.substring(0, 50)}...`);
+          break;
+        }
+      }
+    }
+
+    // Extract price (multiple formats and locations)
+    const priceSelectors = [
+      '.a-price .a-offscreen',           // Main price (hidden but accurate)
+      '#priceblock_ourprice',            // Our price
+      '#priceblock_dealprice',           // Deal price
+      '.a-price-whole',                  // Whole number part
+      '#corePrice_feature_div .a-price .a-offscreen', // Core price feature
+      '[data-a-color="price"] .a-offscreen',
+      '.priceToPay .a-offscreen',        // Price to pay
+      '#corePriceDisplay_desktop_feature_div .a-price .a-offscreen'
+    ];
+
+    let foundUsdPrice = null;
+
+    for (const selector of priceSelectors) {
+      const elements = doc.querySelectorAll(selector);
+      for (const element of elements) {
+        const priceText = element.textContent?.trim() || '';
+
+        // Extract USD price
+        const usdMatch = priceText.match(/\$\s*([\d,]+\.?\d*)/);
+        if (usdMatch && usdMatch[1]) {
+          const usdPrice = parseFloat(usdMatch[1].replace(',', ''));
+          if (usdPrice > 0) {
+            foundUsdPrice = usdPrice;
+            console.log(`   $ Found USD price: $${usdPrice}`);
+            break;
+          }
+        }
+      }
+      if (foundUsdPrice) break;
+    }
+
+    // Convert USD to ILS
+    if (foundUsdPrice) {
+      const ilsPrice = (foundUsdPrice * USD_TO_ILS).toFixed(2);
+      productData.price = ilsPrice;
+      productData.priceCurrency = 'ILS';
+      console.log(`   💱 Converted $${foundUsdPrice} USD → ₪${ilsPrice} ILS (rate: ${USD_TO_ILS})`);
+    }
+
+    // Extract images
+    const imageSelectors = [
+      '#landingImage',                    // Main product image
+      '#imgTagWrapperId img',             // Image wrapper
+      '#imageBlock img[data-old-hires]',  // High-res image
+      '#altImages img',                   // Alternative images
+      '.imgTagWrapper img',               // Wrapper images
+      '[data-a-dynamic-image] img'        // Dynamic images
+    ];
+
+    for (const selector of imageSelectors) {
+      const elements = doc.querySelectorAll(selector);
+      elements.forEach(element => {
+        const img = element;
+        const imageUrl = img.getAttribute('data-old-hires') ||
+                        img.getAttribute('data-a-hires') ||
+                        img.src ||
+                        '';
+
+        if (imageUrl && imageUrl.startsWith('http') &&
+            !imageUrl.includes('data:image') &&
+            !imageUrl.includes('spinner') &&
+            !imageUrl.includes('loading') &&
+            !productData.imageUrls.includes(imageUrl)) {
+          productData.imageUrls.push(imageUrl);
+        }
+      });
+    }
+
+    // Try to extract brand
+    const brandSelectors = [
+      '#bylineInfo',
+      '.a-size-base.po-brand',
+      '[data-feature-name="bylineInfo"]',
+      '#brand'
+    ];
+
+    for (const selector of brandSelectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        const brandText = element.textContent?.trim() || '';
+        const brandMatch = brandText.match(/(?:Brand:|Visit the|by)\s*(.+?)(?:\s+Store)?$/i);
+        if (brandMatch && brandMatch[1]) {
+          productData.brand = brandMatch[1].trim();
+          console.log(`   🏷️ Found brand: ${productData.brand}`);
+          break;
+        } else if (brandText && !brandText.includes('http')) {
+          productData.brand = brandText.replace(/^Visit the\s+/i, '').replace(/\s+Store$/i, '').trim();
+          console.log(`   🏷️ Found brand: ${productData.brand}`);
+          break;
+        }
+      }
+    }
+
+    console.log(`   📊 Amazon extraction summary:`);
+    console.log(`      Title: ${productData.name ? '✓' : '✗'}`);
+    console.log(`      Price: ${productData.price ? `₪${productData.price} ILS` : '✗'}`);
+    console.log(`      Images: ${productData.imageUrls.length}`);
+
+    // Validate minimum required data
+    if (productData.name && (productData.price || productData.imageUrls.length > 0)) {
+      console.log('✅ Amazon extraction successful');
+      return productData;
+    }
+
+    console.log('❌ Amazon extraction failed - insufficient data');
+    return null;
   }
 
   /**
@@ -1076,7 +1284,161 @@
   }
 
   /**
-   * Fallback extraction for Shopify stores when JSON-LD fails
+   * Extract product data from KSP (ksp.co.il) pages.
+   * KSP is a React/Material-UI SPA with no JSON-LD and no product:price meta tags.
+   * Price is rendered as <span>₪</span> + text node inside a div with class
+   * containing "current-d" (JSS-hashed). Title is in <h1>.
+   * @param {Document} doc - Document object
+   * @returns {Object|null} - Product data or null
+   */
+  function extractFromKsp(doc = document) {
+    try {
+      console.log('🛍️ Extracting from KSP...');
+
+      const productData = {
+        name: '',
+        price: '',
+        priceCurrency: 'ILS',
+        brand: '',
+        category: '',
+        imageUrls: []
+      };
+
+      // Title
+      const h1 = doc.querySelector('h1');
+      productData.name = (h1?.textContent || '').trim() ||
+                         doc.querySelector('meta[property="og:title"]')?.getAttribute('content') || '';
+
+      // Price: prefer elements with "current-d" class (display price)
+      const priceRegex = /₪\s*([\d,]+(?:\.\d+)?)/;
+      let priceText = '';
+      const currentEls = doc.querySelectorAll('[class*="current-d"]');
+      for (const el of currentEls) {
+        const m = (el.textContent || '').trim().match(priceRegex);
+        if (m) { priceText = m[1]; break; }
+      }
+
+      if (!priceText) {
+        // Fallback: any small element containing ₪NNN
+        const all = doc.querySelectorAll('div, span');
+        for (const el of all) {
+          const t = (el.textContent || '').trim();
+          if (t.length < 30) {
+            const m = t.match(priceRegex);
+            if (m) { priceText = m[1]; break; }
+          }
+        }
+      }
+
+      productData.price = priceText.replace(/,/g, '');
+
+      // Images: og:image + any img pointing to KSP item/product CDN
+      const ogImg = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
+      if (ogImg) productData.imageUrls.push(ogImg);
+
+      const productImgs = doc.querySelectorAll('img[src*="img.ksp.co.il/item/"], img[src*="ksp.co.il/shop/items/"]');
+      for (const img of productImgs) {
+        if (img.src && !productData.imageUrls.includes(img.src)) {
+          productData.imageUrls.push(img.src);
+          if (productData.imageUrls.length >= 5) break;
+        }
+      }
+
+      console.log(`   📊 KSP: name=${!!productData.name} price=${productData.price || '✗'} images=${productData.imageUrls.length}`);
+
+      if (productData.name && productData.price) {
+        return productData;
+      }
+      return null;
+    } catch (e) {
+      console.error('❌ KSP extraction failed:', e);
+      return null;
+    }
+  }
+
+  /**
+   * Extract product data from Wix sites using meta tags and DOM
+   * @param {Document} doc - Document object
+   * @returns {Object|null} - Product data or null
+   */
+  function extractFromWix(doc = document) {
+    try {
+      console.log('🎨 Extracting from Wix using DOM selectors and meta tags...');
+
+      // Priority 1: Extract from Wix-specific DOM element (most reliable)
+      const priceElement = doc.querySelector('[data-hook="formatted-primary-price"]');
+      let price = '';
+      let currency = 'ILS';
+
+      if (priceElement) {
+        // Try data-wix-price attribute first
+        const wixPrice = priceElement.getAttribute('data-wix-price');
+        if (wixPrice) {
+          console.log('💰 Found price in data-wix-price:', wixPrice);
+          // Parse "159.00 ₪" format
+          const priceMatch = wixPrice.match(/([0-9.,]+)/);
+          if (priceMatch) {
+            price = priceMatch[1];
+          }
+        } else {
+          // Fall back to text content
+          const priceText = priceElement.textContent?.trim() || '';
+          console.log('💰 Found price in element text:', priceText);
+          const priceMatch = priceText.match(/([0-9.,]+)/);
+          if (priceMatch) {
+            price = priceMatch[1];
+          }
+        }
+      }
+
+      // Priority 2: Fall back to meta tags if DOM extraction failed
+      if (!price) {
+        console.log('⚠️ DOM price not found, trying meta tags...');
+        const priceMetaElement = doc.querySelector('meta[property="product:price:amount"]');
+        price = priceMetaElement?.getAttribute('content') || '';
+      }
+
+      // Extract currency from meta tag
+      const currencyMetaElement = doc.querySelector('meta[property="product:price:currency"]');
+      if (currencyMetaElement) {
+        currency = currencyMetaElement.getAttribute('content') || 'ILS';
+      }
+
+      // Extract name and image from meta tags
+      const titleElement = doc.querySelector('meta[property="og:title"]') || doc.querySelector('title');
+      let name = titleElement?.getAttribute('content') || titleElement?.textContent || '';
+      const imageElement = doc.querySelector('meta[property="og:image"]');
+      const image = imageElement?.getAttribute('content') || '';
+
+      // Clean product name (remove site name)
+      if (name.includes('|')) {
+        name = name.split('|')[0].trim();
+      }
+
+      console.log('📦 Wix extraction result:', { name, price, currency, image, method: priceElement ? 'DOM' : 'meta' });
+
+      if (!name || !price) {
+        console.log('⚠️ Wix extraction incomplete - missing name or price');
+        return null;
+      }
+
+      return {
+        name: name,
+        price: price,
+        priceCurrency: currency,
+        brand: '',
+        category: '',
+        imageUrls: image ? [image] : []
+      };
+
+    } catch (error) {
+      console.error('❌ Wix extraction error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Fallback extraction for various platforms when JSON-LD fails
    * @param {Document} doc - Document object
    * @returns {Object|null} - Product data or null
    */
@@ -1085,6 +1447,26 @@
       const platform = detectPlatform(doc);
       console.log(`🏪 Detected platform: ${platform}`);
 
+      // For Wix, use meta tag extraction
+      if (platform === 'wix') {
+        console.log('🎨 Using Wix extractor...');
+        const wixResult = extractFromWix(doc);
+        if (wixResult) {
+          console.log('✅ Extracted from Wix meta tags');
+          return wixResult;
+        }
+      }
+
+      // For Amazon, use specialized extractor with USD→ILS conversion
+      if (platform === 'amazon') {
+        console.log('🛍️ Using Amazon extractor...');
+        const amazonResult = await extractFromAmazon(doc);
+        if (amazonResult) {
+          console.log('✅ Extracted from Amazon');
+          return amazonResult;
+        }
+      }
+
       // For AliExpress, use specialized extractor
       if (platform === 'aliexpress') {
         console.log('🛍️ Using AliExpress extractor...');
@@ -1092,6 +1474,16 @@
         if (aliexpressResult) {
           console.log('✅ Extracted from AliExpress');
           return aliexpressResult;
+        }
+      }
+
+      // For KSP, use specialized DOM extractor
+      if (platform === 'ksp') {
+        console.log('🛍️ Using KSP extractor...');
+        const kspResult = extractFromKsp(doc);
+        if (kspResult) {
+          console.log('✅ Extracted from KSP');
+          return kspResult;
         }
       }
 
@@ -1189,6 +1581,7 @@
   function extractPriceFromDOM(doc = document) {
     // Common Shopify price selectors
     const priceSelectors = [
+      '#tovel_initial_price',  // Elementor-based sites like mommyshop.co.il
       '.price--highlight .price-item--regular',
       '.price-item--regular',
       '.price__regular .price-item--regular',
@@ -1208,7 +1601,21 @@
         console.log(`Found price in ${selector}:`, priceText);
 
         // Extract numeric value from text (handles formats like "₪549.00", "549", "549.00 ILS")
-        const priceMatch = priceText.match(/[\d,]+\.?\d*/);
+        // Use a pattern that skips currency symbols and extracts the first number sequence
+        let priceMatch = priceText.match(/[\d,]+\.?\d*/);
+
+        // If regex doesn't match (possible encoding issue), try manual extraction
+        if (!priceMatch) {
+          // Filter for ASCII digits and common separators
+          const numericChars = Array.from(priceText)
+            .filter(ch => {
+              const code = ch.charCodeAt(0);
+              return (code >= 48 && code <= 57) || ch === ',' || ch === '.';  // 0-9, comma, dot
+            })
+            .join('');
+          priceMatch = numericChars ? [numericChars] : null;
+        }
+
         if (priceMatch) {
           const price = priceMatch[0].replace(',', '');
           console.log(`✅ Extracted price from DOM: ${price}`);
@@ -1311,24 +1718,27 @@
   }
 
   function extractFromProduct(data) {
+    // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
+    const offersData = data.offers || data.Offers;
+
     console.log('🔄 extractFromProduct called with:', {
       hasName: !!data.name,
-      hasOffers: !!data.offers,
-      offersType: Array.isArray(data.offers) ? 'array' : typeof data.offers,
+      hasOffers: !!offersData,
+      offersType: Array.isArray(offersData) ? 'array' : typeof offersData,
       hasImage: !!data.image
     });
 
     // Handle offers - can be array or single object
     let offer = null;
-    if (Array.isArray(data.offers)) {
+    if (Array.isArray(offersData)) {
       // If array, try to find in-stock offer first, otherwise take first
-      offer = data.offers.find(o => o.availability !== 'OutOfStock') || data.offers[0];
-      console.log(`📦 Using offer from array (${data.offers.length} total):`, {
+      offer = offersData.find(o => o.availability !== 'OutOfStock') || offersData[0];
+      console.log(`📦 Using offer from array (${offersData.length} total):`, {
         price: offer?.price,
         availability: offer?.availability
       });
-    } else if (data.offers) {
-      offer = data.offers;
+    } else if (offersData) {
+      offer = offersData;
       console.log('📦 Using single offer:', { price: offer?.price });
     }
 
@@ -1351,7 +1761,8 @@
   function extractFromProductGroup(data) {
     const variants = data.hasVariant || [];
     const firstVariant = Array.isArray(variants) ? variants[0] : variants;
-    const offer = firstVariant?.offers;
+    // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
+    const offer = firstVariant?.offers || firstVariant?.Offers;
 
     // Extract and normalize images from all variants
     const imageUrls = [];
@@ -1378,8 +1789,124 @@
    * @param {Object|null} product - Product data (null for paste mode)
    * @param {string} mode - Initial mode: 'current' or 'paste'
    */
+  /**
+   * Launch a subtle confetti burst inside the given container.
+   * Picks one of 5 variants at random. Self-cleans after the animation.
+   */
+  function launchConfetti(container) {
+    if (!container) return;
+    const variants = [
+      // 0 — pastel squares raining from top
+      { colors: ['#f9c6d9', '#d8b4e2', '#a7d7f9', '#fce38a', '#b5ead7'], shape: 'square', count: 28, durationMs: [1400, 2200], size: [6, 10], spread: 'top', gravity: true, spin: true },
+      // 1 — burst of circles from center
+      { colors: ['#86608e', '#c48fb5', '#ffd1dc', '#b28dff'], shape: 'circle', count: 22, durationMs: [900, 1500], size: [5, 9], spread: 'center', gravity: false, spin: false },
+      // 2 — golden sparkle stars drifting up
+      { colors: ['#ffd700', '#ffe58a', '#fff5b7', '#f7c948'], shape: 'star', count: 18, durationMs: [1600, 2400], size: [8, 14], spread: 'bottom', gravity: false, spin: true },
+      // 3 — rainbow streamers (tall rectangles) falling slowly
+      { colors: ['#ff6b6b', '#ffa36b', '#ffe66b', '#6bd46b', '#6b9bff', '#b36bff'], shape: 'streamer', count: 20, durationMs: [1800, 2600], size: [4, 6], spread: 'top', gravity: true, spin: true },
+      // 4 — soft hearts floating up
+      { colors: ['#ff8fa3', '#ffb3c1', '#ffc2d1', '#e2a3bf'], shape: 'heart', count: 14, durationMs: [1600, 2300], size: [12, 18], spread: 'bottom', gravity: false, spin: false }
+    ];
+    const v = variants[Math.floor(Math.random() * variants.length)];
+
+    // Ensure keyframes exist once per document.
+    if (!document.getElementById('nesty-confetti-styles')) {
+      const css = document.createElement('style');
+      css.id = 'nesty-confetti-styles';
+      css.textContent = `
+        @keyframes nesty-confetti-fall {
+          0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
+          100% { transform: translate(var(--nx,0px), var(--ny,200px)) rotate(var(--nr,720deg)); opacity: 0; }
+        }
+        @keyframes nesty-confetti-float {
+          0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
+          100% { transform: translate(var(--nx,0px), var(--ny,-220px)) rotate(var(--nr,0deg)); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(css);
+    }
+
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:9999;';
+    // container is the modal — ensure it's a positioning context
+    const prevPos = getComputedStyle(container).position;
+    if (prevPos === 'static') container.style.position = 'relative';
+    container.appendChild(host);
+
+    const rect = host.getBoundingClientRect();
+    const W = rect.width || 400;
+    const H = rect.height || 400;
+
+    function makeShape(color, size) {
+      const el = document.createElement('div');
+      const s = `${size}px`;
+      let base = `width:${s};height:${s};background:${color};`;
+      if (v.shape === 'circle')   base += 'border-radius:50%;';
+      if (v.shape === 'square')   base += 'border-radius:2px;';
+      if (v.shape === 'streamer') base = `width:${size}px;height:${size * 3}px;background:${color};border-radius:2px;`;
+      if (v.shape === 'star') {
+        base = `width:${size}px;height:${size}px;background:${color};clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);`;
+      }
+      if (v.shape === 'heart') {
+        // Emoji-based heart — avoids clip-path sizing quirks.
+        el.style.cssText = `position:absolute;font-size:${size + 6}px;line-height:1;color:${color};user-select:none;`;
+        el.textContent = '♥';
+        return el;
+      }
+      el.style.cssText = `position:absolute;${base}`;
+      return el;
+    }
+
+    const rand = (a, b) => a + Math.random() * (b - a);
+    for (let i = 0; i < v.count; i++) {
+      const color = v.colors[Math.floor(Math.random() * v.colors.length)];
+      const size = Math.round(rand(v.size[0], v.size[1]));
+      const el = makeShape(color, size);
+
+      let startX, startY, dx, dy;
+      if (v.spread === 'top')    { startX = rand(0, W);     startY = rand(-10, 10);    dx = rand(-40, 40);  dy = rand(H * 0.7, H + 40); }
+      if (v.spread === 'bottom') { startX = rand(0, W);     startY = rand(H - 10, H);  dx = rand(-60, 60);  dy = -rand(H * 0.7, H + 40); }
+      if (v.spread === 'center') { startX = W / 2;          startY = H / 2;            const a = rand(0, Math.PI * 2); const r = rand(W * 0.25, W * 0.45); dx = Math.cos(a) * r; dy = Math.sin(a) * r; }
+
+      el.style.left = `${startX}px`;
+      el.style.top = `${startY}px`;
+      el.style.setProperty('--nx', `${dx}px`);
+      el.style.setProperty('--ny', `${dy}px`);
+      el.style.setProperty('--nr', `${v.spin ? rand(-720, 720) : 0}deg`);
+      const dur = Math.round(rand(v.durationMs[0], v.durationMs[1]));
+      const anim = v.gravity ? 'nesty-confetti-fall' : 'nesty-confetti-float';
+      const delay = Math.round(rand(0, 250));
+      el.style.animation = `${anim} ${dur}ms cubic-bezier(.2,.6,.3,1) ${delay}ms forwards`;
+      host.appendChild(el);
+    }
+
+    // Clean up after the longest possible lifetime.
+    const cleanupMs = v.durationMs[1] + 400;
+    setTimeout(() => { host.remove(); }, cleanupMs);
+  }
+
   function showProductForm(product = null, mode = 'current') {
     console.log('🎨 Creating product form...');
+
+    // Defend against hostile host-site CSS that targets empty <div>s, visibility,
+    // or display on generic selectors. Example: motsesim.co.il has
+    // `div:empty:not(...) { display: none }` which hides our toggle knobs.
+    if (!document.getElementById('nesty-defense-styles')) {
+      const defense = document.createElement('style');
+      defense.id = 'nesty-defense-styles';
+      defense.textContent = `
+        .nesty-overlay div:empty { display: block !important; }
+        #toggle-wanted-switch,
+        #toggle-private-switch,
+        #toggle-secondhand-switch { display: block !important; }
+        @keyframes nesty-cta-pulse {
+          0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+          50%  { transform: scale(1.04); box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+          100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+      `;
+      document.head.appendChild(defense);
+    }
 
     const overlay = document.createElement('div');
     overlay.className = 'nesty-overlay';
@@ -1402,20 +1929,20 @@
     let isSecondhand = false;
 
     modal.innerHTML = `
-      <div class="nesty-modal-header" style="border-bottom: 1px solid #e5e7eb; padding: 16px 20px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+      <div class="nesty-modal-header" style="border-bottom: 1px solid #e8e4e9; padding: 16px 20px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, #faf8fb, #ffffff);">
         <!-- Tab interface -->
-        <div style="display: flex; gap: 8px; align-items: center;">
+        <div id="nesty-mode-tabs" style="display: flex; gap: 8px; align-items: center;">
           <button id="nesty-mode-current" class="nesty-mode-tab"
-                  style="padding: 8px 16px; background: ${currentMode === 'current' ? '#6d28d9' : '#f3f4f6'}; color: ${currentMode === 'current' ? 'white' : '#374151'}; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">
+                  style="padding: 8px 16px; background: ${currentMode === 'current' ? '#86608e' : '#e8e4e9'}; color: ${currentMode === 'current' ? 'white' : '#1a1a1a'}; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
             עמוד נוכחי
           </button>
           <button id="nesty-mode-paste" class="nesty-mode-tab"
-                  style="padding: 8px 16px; background: ${currentMode === 'paste' ? '#6d28d9' : '#f3f4f6'}; color: ${currentMode === 'paste' ? 'white' : '#374151'}; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;">
+                  style="padding: 8px 16px; background: ${currentMode === 'paste' ? '#86608e' : '#e8e4e9'}; color: ${currentMode === 'paste' ? 'white' : '#1a1a1a'}; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
             הדבק קישור
           </button>
         </div>
 
-        <button class="nesty-close-btn" id="nesty-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280; padding: 0;">×</button>
+        <button class="nesty-close-btn" id="nesty-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b6b6b; padding: 0;">×</button>
       </div>
 
       <div class="nesty-modal-body" style="padding: 20px; flex: 1; overflow-y: auto;">
@@ -1424,42 +1951,53 @@
           <!-- Left side - Image -->
           <div style="text-align: center;">
             <img src="${imageUrl}" alt="${product ? product.name : ''}"
-                 style="width: 160px; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 8px;"
-                 onerror="this.style.background='#f3f4f6'; this.alt='No Image'">
-            <div style="font-size: 11px; color: #6b7280;">תמונה שנבחרה</div>
+                 style="width: 160px; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid #e8e4e9; margin-bottom: 8px;"
+                 onerror="this.style.background='#e8e4e9'; this.alt='No Image'">
+            <div id="nesty-image-meta" style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 2px;">
+              <span style="font-size: 11px; color: #9a90a8; letter-spacing: 0.01em;">תמונה שנבחרה</span>
+              <span style="width: 1px; height: 10px; background: #ddd8e3; display: inline-block; flex-shrink: 0;"></span>
+              <button id="nesty-report-image"
+                style="padding: 0; background: none; border: none; font-size: 11px; color: #c4b8d1; cursor: pointer; font-family: 'Assistant', 'Heebo', sans-serif; display: inline-flex; align-items: center; gap: 3px; line-height: 1; transition: color 0.15s ease;"
+                onmouseover="this.style.color='#86608e'"
+                onmouseout="this.style.color='#c4b8d1'">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#c8a84b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                דווח תמונה שגויה/חסרה
+              </button>
+            </div>
+            <div id="nesty-report-image-status" style="font-size: 11px; color: #9a90a8; margin-top: 5px; min-height: 0;"></div>
           </div>
 
           <!-- Right side - Form -->
           <div style="display: flex; flex-direction: column; gap: 12px;">
             <!-- Title -->
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;">שם המוצר</label>
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">שם המוצר</label>
               <input type="text" id="nesty-title" value="${product ? product.name : ''}"
-                     style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                     style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px; font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
             </div>
 
             <!-- Price and Quantity -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
               <div>
-                <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;">מחיר</label>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">מחיר</label>
                 <input type="text" id="nesty-price" value="${product ? product.price : ''}"
-                       style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px;">
+                       style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px;">
               </div>
               <div>
-                <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;">כמות</label>
-                <div style="display: flex; align-items: center; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; background: white;">
-                  <button id="qty-minus" style="padding: 8px 14px; background: #f9fafb; border: none; border-right: 1px solid #d1d5db; cursor: pointer; font-size: 16px; color: #374151;">−</button>
+                <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">כמות</label>
+                <div style="display: flex; align-items: center; border: 1px solid #e8e4e9; border-radius: 6px; overflow: hidden; background: white;">
+                  <button id="qty-minus" style="padding: 8px 14px; background: #faf8fb; border: none; border-right: 1px solid #e8e4e9; cursor: pointer; font-size: 16px; color: #1a1a1a;">−</button>
                   <div id="qty-display" style="flex: 1; text-align: center; font-weight: 600; font-size: 14px;">1</div>
-                  <button id="qty-plus" style="padding: 8px 14px; background: #f9fafb; border: none; border-left: 1px solid #d1d5db; cursor: pointer; font-size: 16px; color: #374151;">+</button>
+                  <button id="qty-plus" style="padding: 8px 14px; background: #faf8fb; border: none; border-left: 1px solid #e8e4e9; cursor: pointer; font-size: 16px; color: #1a1a1a;">+</button>
                 </div>
               </div>
             </div>
 
             <!-- Category -->
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;">קטגוריה</label>
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">קטגוריה</label>
               <select id="nesty-category"
-                      style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: white;">
+                      style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px; background: white;">
                 <option value="">כללי</option>
                 ${CATEGORIES.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
               </select>
@@ -1467,28 +2005,29 @@
 
             <!-- Toggles -->
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-              <div id="toggle-wanted" style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                <div style="font-size: 11px; font-weight: 500; color: #374151;">הכי רציתי</div>
+              <div id="toggle-wanted" style="padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">הכי רציתי</div>
                 <div style="margin-top: 6px;">
-                  <div style="width: 40px; height: 20px; background: #e5e7eb; border-radius: 10px; margin: 0 auto; position: relative;">
+                  <div style="width: 40px; height: 20px; background: #e8e4e9; border-radius: 10px; margin: 0 auto; position: relative;">
                     <div id="toggle-wanted-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
                   </div>
                 </div>
               </div>
 
-              <div id="toggle-private" style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                <div style="font-size: 11px; font-weight: 500; color: #374151;">פרטי</div>
+              <div id="toggle-private" style="padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">פרטי</div>
                 <div style="margin-top: 6px;">
-                  <div style="width: 40px; height: 20px; background: #e5e7eb; border-radius: 10px; margin: 0 auto; position: relative;">
+                  <div style="width: 40px; height: 20px; background: #e8e4e9; border-radius: 10px; margin: 0 auto; position: relative;">
                     <div id="toggle-private-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
                   </div>
                 </div>
               </div>
 
-              <div id="toggle-secondhand" style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                <div style="font-size: 11px; font-weight: 500; color: #374151;">פתוח למשומש</div>
+              <!-- TEMPORARILY HIDDEN: "Open to secondhand" feature not yet available on site -->
+              <div id="toggle-secondhand" style="display: none; padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">פתוח למשומש</div>
                 <div style="margin-top: 6px;">
-                  <div style="width: 40px; height: 20px; background: #e5e7eb; border-radius: 10px; margin: 0 auto; position: relative;">
+                  <div style="width: 40px; height: 20px; background: #e8e4e9; border-radius: 10px; margin: 0 auto; position: relative;">
                     <div id="toggle-secondhand-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
                   </div>
                 </div>
@@ -1497,9 +2036,9 @@
 
             <!-- Notes -->
             <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px;">הערות</label>
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">הערות</label>
               <textarea id="nesty-notes" rows="2" placeholder="הערות למשפחה וחברים..."
-                        style="width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; resize: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"></textarea>
+                        style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 12px; resize: none; font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"></textarea>
             </div>
           </div>
         </div>
@@ -1509,28 +2048,32 @@
           <div style="width: 100%; max-width: 500px;">
             <div style="text-align: center; margin-bottom: 24px;">
               <div style="font-size: 48px; margin-bottom: 12px;">🔗</div>
-              <h3 style="font-size: 18px; font-weight: 600; color: #1f2937; margin: 0 0 8px 0;">הדבק קישור למוצר</h3>
-              <p style="font-size: 13px; color: #6b7280; margin: 0;">הדבק כתובת URL של מוצר מכל אתר מסחר אלקטרוני</p>
+              <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0 0 8px 0;">הדבק קישור למוצר</h3>
+              <p style="font-size: 13px; color: #6b6b6b; margin: 0;">הדבק כתובת URL של מוצר מכל אתר מסחר אלקטרוני</p>
             </div>
 
-            <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 8px;">
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
               כתובת URL
             </label>
             <input type="url" id="nesty-url-input" placeholder="https://example.com/product"
-                   style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 14px; margin-bottom: 16px; direction: ltr; text-align: left;">
+                   style="width: 100%; padding: 12px; border: 2px solid #e8e4e9; border-radius: 8px; font-size: 14px; margin-bottom: 16px; direction: ltr; text-align: left;">
 
             <button id="nesty-extract-btn"
-                    style="width: 100%; padding: 12px 32px; background: #6d28d9; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    style="width: 100%; padding: 12px 32px; background: #86608e; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
               הוספה מהירה מלינק
             </button>
 
-            <div id="nesty-extraction-status" style="margin-top: 16px; text-align: center; color: #6b7280; font-size: 13px; min-height: 20px;"></div>
+            <div id="nesty-extraction-status" style="margin-top: 16px; text-align: center; color: #6b6b6b; font-size: 13px; min-height: 20px;"></div>
           </div>
         </div>
       </div>
 
-      <div class="nesty-modal-footer" style="padding: 14px 20px; border-top: 1px solid #e5e7eb; background: #f9fafb; display: flex; justify-content: flex-end; flex-shrink: 0;">
-        <button id="nesty-submit" style="padding: 10px 28px; background: #6d28d9; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
+      <div class="nesty-modal-footer" id="nesty-footer" style="padding: 14px 20px; border-top: 1px solid #e8e4e9; background: #faf8fb; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-shrink: 0;">
+        <label id="nesty-autoclose-label" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b6b6b; cursor: pointer; user-select: none;">
+          <input type="checkbox" id="nesty-autoclose" style="width: 16px; height: 16px; cursor: pointer; accent-color: #86608e;">
+          סגור לאחר הוספה
+        </label>
+        <button id="nesty-submit" style="padding: 10px 28px; background: #86608e; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
           הוסף לרשימה
         </button>
       </div>
@@ -1576,7 +2119,7 @@
         toggleSwitch.style.left = '22px';
         toggleSwitch.style.background = '#ef4444';
       } else {
-        toggle.style.borderColor = '#e5e7eb';
+        toggle.style.borderColor = '#e8e4e9';
         toggle.style.background = 'white';
         toggleSwitch.style.left = '2px';
         toggleSwitch.style.background = 'white';
@@ -1588,12 +2131,12 @@
       const toggle = document.getElementById('toggle-private');
       const toggleSwitch = document.getElementById('toggle-private-switch');
       if (isPrivate) {
-        toggle.style.borderColor = '#8b5cf6';
+        toggle.style.borderColor = '#a891ad';
         toggle.style.background = '#f5f3ff';
         toggleSwitch.style.left = '22px';
-        toggleSwitch.style.background = '#8b5cf6';
+        toggleSwitch.style.background = '#a891ad';
       } else {
-        toggle.style.borderColor = '#e5e7eb';
+        toggle.style.borderColor = '#e8e4e9';
         toggle.style.background = 'white';
         toggleSwitch.style.left = '2px';
         toggleSwitch.style.background = 'white';
@@ -1605,17 +2148,52 @@
       const toggle = document.getElementById('toggle-secondhand');
       const toggleSwitch = document.getElementById('toggle-secondhand-switch');
       if (isSecondhand) {
-        toggle.style.borderColor = '#10b981';
+        toggle.style.borderColor = '#22c55e';
         toggle.style.background = '#f0fdf4';
         toggleSwitch.style.left = '22px';
-        toggleSwitch.style.background = '#10b981';
+        toggleSwitch.style.background = '#22c55e';
       } else {
-        toggle.style.borderColor = '#e5e7eb';
+        toggle.style.borderColor = '#e8e4e9';
         toggle.style.background = 'white';
         toggleSwitch.style.left = '2px';
         toggleSwitch.style.background = 'white';
       }
     });
+
+    // Report wrong image
+    const reportImageBtn = document.getElementById('nesty-report-image');
+    if (reportImageBtn) {
+      reportImageBtn.addEventListener('click', async () => {
+        const statusEl = document.getElementById('nesty-report-image-status');
+        const metaEl = document.getElementById('nesty-image-meta');
+        reportImageBtn.style.opacity = '0.45';
+        reportImageBtn.style.pointerEvents = 'none';
+        try {
+          await fetch(`${NESTY_CONFIG.SUPABASE_URL}/functions/v1/send-email`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${NESTY_CONFIG.SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              type: 'contact',
+              name: supabaseSession?.user?.email || 'Extension User',
+              email: supabaseSession?.user?.email || 'no-reply@nestyil.com',
+              subject: 'דיווח על תמונה שגויה',
+              message: `תמונה שגויה דווחה:\nURL: ${window.location.href}\nתמונה: ${imageUrl}`
+            })
+          });
+          if (metaEl) metaEl.style.display = 'none';
+          statusEl.style.color = '#86608e';
+          statusEl.textContent = 'תודה על הדיווח';
+        } catch {
+          statusEl.style.color = '#b55c5c';
+          statusEl.textContent = 'שגיאה בשליחה';
+          reportImageBtn.style.opacity = '1';
+          reportImageBtn.style.pointerEvents = '';
+        }
+      });
+    }
 
     // Tab switching
     document.getElementById('nesty-mode-current').addEventListener('click', () => {
@@ -1632,17 +2210,17 @@
       const pasteTab = document.getElementById('nesty-mode-paste');
 
       if (mode === 'current') {
-        currentTab.style.background = '#6d28d9';
+        currentTab.style.background = '#86608e';
         currentTab.style.color = 'white';
-        pasteTab.style.background = '#f3f4f6';
-        pasteTab.style.color = '#374151';
+        pasteTab.style.background = '#e8e4e9';
+        pasteTab.style.color = '#1a1a1a';
         document.getElementById('nesty-current-mode-content').style.display = 'grid';
         document.getElementById('nesty-paste-mode-content').style.display = 'none';
       } else {
-        pasteTab.style.background = '#6d28d9';
+        pasteTab.style.background = '#86608e';
         pasteTab.style.color = 'white';
-        currentTab.style.background = '#f3f4f6';
-        currentTab.style.color = '#374151';
+        currentTab.style.background = '#e8e4e9';
+        currentTab.style.color = '#1a1a1a';
         document.getElementById('nesty-current-mode-content').style.display = 'none';
         document.getElementById('nesty-paste-mode-content').style.display = 'flex';
       }
@@ -1671,13 +2249,13 @@
       extractBtn.disabled = true;
       extractBtn.textContent = 'מחלץ...';
       statusDiv.textContent = '🔄 שולח בקשה...';
-      statusDiv.style.color = '#6b7280';
+      statusDiv.style.color = '#6b6b6b';
 
       try {
         const productData = await extractProductFromUrl(url);
 
         statusDiv.textContent = '✅ מוצר חולץ בהצלחה!';
-        statusDiv.style.color = '#10b981';
+        statusDiv.style.color = '#22c55e';
 
         document.getElementById('nesty-title').value = productData.name || '';
         document.getElementById('nesty-price').value = productData.price || '';
@@ -1699,6 +2277,21 @@
         extractBtn.textContent = 'הוספה מהירה מלינק';
       }
     });
+
+    // Auto-close toggle: load preference and persist on change
+    const autoCloseCheckbox = document.getElementById('nesty-autoclose');
+    if (autoCloseCheckbox) {
+      try {
+        chrome.storage.local.get(['nesty_autoclose'], (res) => {
+          autoCloseCheckbox.checked = !!res.nesty_autoclose;
+        });
+      } catch (e) { /* ignore */ }
+      autoCloseCheckbox.addEventListener('change', () => {
+        try {
+          chrome.storage.local.set({ nesty_autoclose: autoCloseCheckbox.checked });
+        } catch (e) { /* ignore */ }
+      });
+    }
 
     // Submit handler
     const submitButton = document.getElementById('nesty-submit');
@@ -1762,12 +2355,61 @@
         const result = await response.json();
         console.log('✅ Item added successfully:', result);
 
-        submitBtn.textContent = 'נוסף! ✓';
-        submitBtn.style.background = '#10b981';
+        submitBtn.textContent = 'נוסף!';
+        submitBtn.style.background = '#22c55e';
 
-        setTimeout(() => {
-          overlay.remove();
-        }, 1500);
+        // Replace the mode tabs in the header with a success banner.
+        const tabsContainer = document.getElementById('nesty-mode-tabs');
+        if (tabsContainer) {
+          tabsContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; color: #22c55e; font-size: 16px; font-weight: 700;">
+              <span>נוסף לרשימה</span>
+              <span>✓</span>
+            </div>
+          `;
+        }
+
+        // Launch confetti (one of 5 randomly-picked variants).
+        launchConfetti(modal);
+
+        const shouldAutoClose = !!(autoCloseCheckbox && autoCloseCheckbox.checked);
+        if (shouldAutoClose) {
+          setTimeout(() => overlay.remove(), 1500);
+        } else {
+          // Replace footer with a persistent success state:
+          // two buttons — "לרשימה שלי" (open dashboard) and "סגור" (close overlay).
+          const footer = document.getElementById('nesty-footer');
+          if (footer) {
+            const prevChecked = !!(autoCloseCheckbox && autoCloseCheckbox.checked);
+            footer.innerHTML = `
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b6b6b; cursor: pointer; user-select: none;">
+                <input type="checkbox" id="nesty-autoclose" style="width: 16px; height: 16px; cursor: pointer; accent-color: #86608e;" ${prevChecked ? 'checked' : ''}>
+                סגור לאחר הוספה
+              </label>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button id="nesty-success-dashboard" style="padding: 10px 20px; background: #22c55e; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; animation: nesty-cta-pulse 1.6s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(34,197,94,0.5);">
+                  לרשימה שלי
+                </button>
+                <button id="nesty-success-close" style="padding: 10px 20px; background: #e8e4e9; color: #1a1a1a; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                  סגור
+                </button>
+              </div>
+            `;
+            const newAutoClose = document.getElementById('nesty-autoclose');
+            newAutoClose.addEventListener('change', () => {
+              try {
+                chrome.storage.local.set({ nesty_autoclose: newAutoClose.checked });
+              } catch (e) { /* ignore */ }
+            });
+            document.getElementById('nesty-success-dashboard').addEventListener('click', () => {
+              overlay.remove();
+              window.location.href = 'https://nestyil.com/dashboard';
+            });
+            document.getElementById('nesty-success-close').addEventListener('click', () => {
+              overlay.remove();
+            });
+          }
+        }
 
       } catch (error) {
         console.error('❌ Error adding item:', error);
@@ -1777,7 +2419,7 @@
 
         setTimeout(() => {
           submitBtn.textContent = 'הוסף לרשימה';
-          submitBtn.style.background = '#6d28d9';
+          submitBtn.style.background = '#86608e';
           submitBtn.style.opacity = '1';
         }, 2000);
       }
