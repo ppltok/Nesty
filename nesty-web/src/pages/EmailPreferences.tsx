@@ -11,7 +11,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Mail, ChevronRight, Gift, ArrowRight } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { EMAIL_CATEGORIES, CATEGORY_ORDER, type EmailCategoryKey } from '../lib/emailCategories'
+import { EMAIL_CATEGORIES, CATEGORY_ORDER } from '../lib/emailCategories'
 
 interface PrefsState {
   marketing_emails: boolean
