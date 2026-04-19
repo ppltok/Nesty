@@ -175,6 +175,10 @@ function detectPlatform(url?: string, doc?: Document): string | null {
     return 'aliexpress'
   }
 
+  if (hostname.includes('ksp.co.il')) {
+    return 'ksp'
+  }
+
   // Check for Amazon (all major domains)
   if (hostname.includes('amazon.com') ||
       hostname.includes('amazon.co.uk') ||
@@ -620,6 +624,78 @@ function extractFromWix(doc: Document): ExtractedProductData | null {
 }
 
 /**
+ * Extract product data from KSP (ksp.co.il) pages.
+ * KSP is a React/Material-UI SPA with no JSON-LD and no product:price meta tags.
+ * Price is rendered as `<span>₪</span>` + text node in a div with a class like
+ * `current-dN-...` (JSS-hashed). Title is in <h1>. Image is in og:image or
+ * img tags with src containing img.ksp.co.il/item/<id>/.
+ */
+function extractFromKsp(doc: Document, url?: string): ExtractedProductData | null {
+  console.log('🛍️ Attempting KSP extraction...')
+
+  const productData: ExtractedProductData = {
+    name: '',
+    price: '',
+    priceCurrency: 'ILS',
+    brand: '',
+    category: '',
+    imageUrls: []
+  }
+
+  // Title: H1 or og:title
+  const h1 = doc.querySelector('h1')
+  productData.name = h1?.textContent?.trim() ||
+                     doc.querySelector('meta[property="og:title"]')?.getAttribute('content') || ''
+
+  // Price: find a div whose class contains "current-d" (display price) with ₪.
+  // Falls back to scanning any node with ₪NNN text pattern.
+  const priceRegex = /₪\s*([\d,]+(?:\.\d+)?)/
+  let priceText = ''
+
+  const currentEls = doc.querySelectorAll('[class*="current-d"]')
+  for (const el of Array.from(currentEls)) {
+    const t = (el.textContent || '').trim()
+    const m = t.match(priceRegex)
+    if (m) { priceText = m[1]; break }
+  }
+
+  if (!priceText) {
+    // Fallback: any element whose text is exactly ₪NNN (e.g. discounted main price)
+    const all = doc.querySelectorAll('div, span')
+    for (const el of Array.from(all)) {
+      const t = (el.textContent || '').trim()
+      if (t.length < 30 && priceRegex.test(t)) {
+        const m = t.match(priceRegex)
+        if (m) { priceText = m[1]; break }
+      }
+    }
+  }
+
+  productData.price = priceText.replace(/,/g, '')
+
+  // Image: og:image, or the first large product image
+  const ogImg = doc.querySelector('meta[property="og:image"]')?.getAttribute('content')
+  if (ogImg) {
+    productData.imageUrls.push(resolveUrl(ogImg, url))
+  }
+
+  const productImgs = doc.querySelectorAll('img[src*="img.ksp.co.il/item/"], img[src*="ksp.co.il/shop/items/"]')
+  for (const img of Array.from(productImgs) as HTMLImageElement[]) {
+    if (img.src && !productData.imageUrls.includes(img.src)) {
+      productData.imageUrls.push(img.src)
+      if (productData.imageUrls.length >= 5) break
+    }
+  }
+
+  console.log(`   📊 KSP extraction: name=${!!productData.name} price=${productData.price || '✗'} images=${productData.imageUrls.length}`)
+
+  if (productData.name && productData.price) {
+    return productData
+  }
+  return null
+}
+
+/**
  * Extract product data from a DOM document by finding JSON-LD structured data
  * or using platform-specific extraction methods
  * @param doc - The parsed HTML document
@@ -654,6 +730,15 @@ function extractProductDataFromDocument(doc: Document, url?: string): ExtractedP
       return wixResult
     }
     console.log('⚠️ Wix extraction failed, falling back to JSON-LD')
+  }
+
+  if (platform === 'ksp') {
+    console.log('🏪 Detected platform: ksp')
+    const kspResult = extractFromKsp(doc, url)
+    if (kspResult) {
+      return kspResult
+    }
+    console.log('⚠️ KSP extraction failed, falling back to JSON-LD')
   }
 
   // Fall back to JSON-LD extraction for all other sites

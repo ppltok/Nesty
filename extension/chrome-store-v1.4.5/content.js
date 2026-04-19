@@ -608,6 +608,11 @@
       return 'aliexpress';
     }
 
+    // Check for KSP (ksp.co.il) - React/MUI SPA, no JSON-LD
+    if (window.location.hostname.includes('ksp.co.il')) {
+      return 'ksp';
+    }
+
     // Check for Shopify
     if (doc.querySelector('[data-shopify]') ||
         doc.querySelector('script[src*="shopify"]') ||
@@ -1277,6 +1282,79 @@
   }
 
   /**
+   * Extract product data from KSP (ksp.co.il) pages.
+   * KSP is a React/Material-UI SPA with no JSON-LD and no product:price meta tags.
+   * Price is rendered as <span>₪</span> + text node inside a div with class
+   * containing "current-d" (JSS-hashed). Title is in <h1>.
+   * @param {Document} doc - Document object
+   * @returns {Object|null} - Product data or null
+   */
+  function extractFromKsp(doc = document) {
+    try {
+      console.log('🛍️ Extracting from KSP...');
+
+      const productData = {
+        name: '',
+        price: '',
+        priceCurrency: 'ILS',
+        brand: '',
+        category: '',
+        imageUrls: []
+      };
+
+      // Title
+      const h1 = doc.querySelector('h1');
+      productData.name = (h1?.textContent || '').trim() ||
+                         doc.querySelector('meta[property="og:title"]')?.getAttribute('content') || '';
+
+      // Price: prefer elements with "current-d" class (display price)
+      const priceRegex = /₪\s*([\d,]+(?:\.\d+)?)/;
+      let priceText = '';
+      const currentEls = doc.querySelectorAll('[class*="current-d"]');
+      for (const el of currentEls) {
+        const m = (el.textContent || '').trim().match(priceRegex);
+        if (m) { priceText = m[1]; break; }
+      }
+
+      if (!priceText) {
+        // Fallback: any small element containing ₪NNN
+        const all = doc.querySelectorAll('div, span');
+        for (const el of all) {
+          const t = (el.textContent || '').trim();
+          if (t.length < 30) {
+            const m = t.match(priceRegex);
+            if (m) { priceText = m[1]; break; }
+          }
+        }
+      }
+
+      productData.price = priceText.replace(/,/g, '');
+
+      // Images: og:image + any img pointing to KSP item/product CDN
+      const ogImg = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
+      if (ogImg) productData.imageUrls.push(ogImg);
+
+      const productImgs = doc.querySelectorAll('img[src*="img.ksp.co.il/item/"], img[src*="ksp.co.il/shop/items/"]');
+      for (const img of productImgs) {
+        if (img.src && !productData.imageUrls.includes(img.src)) {
+          productData.imageUrls.push(img.src);
+          if (productData.imageUrls.length >= 5) break;
+        }
+      }
+
+      console.log(`   📊 KSP: name=${!!productData.name} price=${productData.price || '✗'} images=${productData.imageUrls.length}`);
+
+      if (productData.name && productData.price) {
+        return productData;
+      }
+      return null;
+    } catch (e) {
+      console.error('❌ KSP extraction failed:', e);
+      return null;
+    }
+  }
+
+  /**
    * Extract product data from Wix sites using meta tags and DOM
    * @param {Document} doc - Document object
    * @returns {Object|null} - Product data or null
@@ -1394,6 +1472,16 @@
         if (aliexpressResult) {
           console.log('✅ Extracted from AliExpress');
           return aliexpressResult;
+        }
+      }
+
+      // For KSP, use specialized DOM extractor
+      if (platform === 'ksp') {
+        console.log('🛍️ Using KSP extractor...');
+        const kspResult = extractFromKsp(doc);
+        if (kspResult) {
+          console.log('✅ Extracted from KSP');
+          return kspResult;
         }
       }
 
