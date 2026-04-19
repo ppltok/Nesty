@@ -1787,8 +1787,124 @@
    * @param {Object|null} product - Product data (null for paste mode)
    * @param {string} mode - Initial mode: 'current' or 'paste'
    */
+  /**
+   * Launch a subtle confetti burst inside the given container.
+   * Picks one of 5 variants at random. Self-cleans after the animation.
+   */
+  function launchConfetti(container) {
+    if (!container) return;
+    const variants = [
+      // 0 — pastel squares raining from top
+      { colors: ['#f9c6d9', '#d8b4e2', '#a7d7f9', '#fce38a', '#b5ead7'], shape: 'square', count: 28, durationMs: [1400, 2200], size: [6, 10], spread: 'top', gravity: true, spin: true },
+      // 1 — burst of circles from center
+      { colors: ['#86608e', '#c48fb5', '#ffd1dc', '#b28dff'], shape: 'circle', count: 22, durationMs: [900, 1500], size: [5, 9], spread: 'center', gravity: false, spin: false },
+      // 2 — golden sparkle stars drifting up
+      { colors: ['#ffd700', '#ffe58a', '#fff5b7', '#f7c948'], shape: 'star', count: 18, durationMs: [1600, 2400], size: [8, 14], spread: 'bottom', gravity: false, spin: true },
+      // 3 — rainbow streamers (tall rectangles) falling slowly
+      { colors: ['#ff6b6b', '#ffa36b', '#ffe66b', '#6bd46b', '#6b9bff', '#b36bff'], shape: 'streamer', count: 20, durationMs: [1800, 2600], size: [4, 6], spread: 'top', gravity: true, spin: true },
+      // 4 — soft hearts floating up
+      { colors: ['#ff8fa3', '#ffb3c1', '#ffc2d1', '#e2a3bf'], shape: 'heart', count: 14, durationMs: [1600, 2300], size: [12, 18], spread: 'bottom', gravity: false, spin: false }
+    ];
+    const v = variants[Math.floor(Math.random() * variants.length)];
+
+    // Ensure keyframes exist once per document.
+    if (!document.getElementById('nesty-confetti-styles')) {
+      const css = document.createElement('style');
+      css.id = 'nesty-confetti-styles';
+      css.textContent = `
+        @keyframes nesty-confetti-fall {
+          0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
+          100% { transform: translate(var(--nx,0px), var(--ny,200px)) rotate(var(--nr,720deg)); opacity: 0; }
+        }
+        @keyframes nesty-confetti-float {
+          0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
+          100% { transform: translate(var(--nx,0px), var(--ny,-220px)) rotate(var(--nr,0deg)); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(css);
+    }
+
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:9999;';
+    // container is the modal — ensure it's a positioning context
+    const prevPos = getComputedStyle(container).position;
+    if (prevPos === 'static') container.style.position = 'relative';
+    container.appendChild(host);
+
+    const rect = host.getBoundingClientRect();
+    const W = rect.width || 400;
+    const H = rect.height || 400;
+
+    function makeShape(color, size) {
+      const el = document.createElement('div');
+      const s = `${size}px`;
+      let base = `width:${s};height:${s};background:${color};`;
+      if (v.shape === 'circle')   base += 'border-radius:50%;';
+      if (v.shape === 'square')   base += 'border-radius:2px;';
+      if (v.shape === 'streamer') base = `width:${size}px;height:${size * 3}px;background:${color};border-radius:2px;`;
+      if (v.shape === 'star') {
+        base = `width:${size}px;height:${size}px;background:${color};clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);`;
+      }
+      if (v.shape === 'heart') {
+        // Emoji-based heart — avoids clip-path sizing quirks.
+        el.style.cssText = `position:absolute;font-size:${size + 6}px;line-height:1;color:${color};user-select:none;`;
+        el.textContent = '♥';
+        return el;
+      }
+      el.style.cssText = `position:absolute;${base}`;
+      return el;
+    }
+
+    const rand = (a, b) => a + Math.random() * (b - a);
+    for (let i = 0; i < v.count; i++) {
+      const color = v.colors[Math.floor(Math.random() * v.colors.length)];
+      const size = Math.round(rand(v.size[0], v.size[1]));
+      const el = makeShape(color, size);
+
+      let startX, startY, dx, dy;
+      if (v.spread === 'top')    { startX = rand(0, W);     startY = rand(-10, 10);    dx = rand(-40, 40);  dy = rand(H * 0.7, H + 40); }
+      if (v.spread === 'bottom') { startX = rand(0, W);     startY = rand(H - 10, H);  dx = rand(-60, 60);  dy = -rand(H * 0.7, H + 40); }
+      if (v.spread === 'center') { startX = W / 2;          startY = H / 2;            const a = rand(0, Math.PI * 2); const r = rand(W * 0.25, W * 0.45); dx = Math.cos(a) * r; dy = Math.sin(a) * r; }
+
+      el.style.left = `${startX}px`;
+      el.style.top = `${startY}px`;
+      el.style.setProperty('--nx', `${dx}px`);
+      el.style.setProperty('--ny', `${dy}px`);
+      el.style.setProperty('--nr', `${v.spin ? rand(-720, 720) : 0}deg`);
+      const dur = Math.round(rand(v.durationMs[0], v.durationMs[1]));
+      const anim = v.gravity ? 'nesty-confetti-fall' : 'nesty-confetti-float';
+      const delay = Math.round(rand(0, 250));
+      el.style.animation = `${anim} ${dur}ms cubic-bezier(.2,.6,.3,1) ${delay}ms forwards`;
+      host.appendChild(el);
+    }
+
+    // Clean up after the longest possible lifetime.
+    const cleanupMs = v.durationMs[1] + 400;
+    setTimeout(() => { host.remove(); }, cleanupMs);
+  }
+
   function showProductForm(product = null, mode = 'current') {
     console.log('🎨 Creating product form...');
+
+    // Defend against hostile host-site CSS that targets empty <div>s, visibility,
+    // or display on generic selectors. Example: motsesim.co.il has
+    // `div:empty:not(...) { display: none }` which hides our toggle knobs.
+    if (!document.getElementById('nesty-defense-styles')) {
+      const defense = document.createElement('style');
+      defense.id = 'nesty-defense-styles';
+      defense.textContent = `
+        .nesty-overlay div:empty { display: block !important; }
+        #toggle-wanted-switch,
+        #toggle-private-switch,
+        #toggle-secondhand-switch { display: block !important; }
+        @keyframes nesty-cta-pulse {
+          0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+          50%  { transform: scale(1.04); box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+          100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+      `;
+      document.head.appendChild(defense);
+    }
 
     const overlay = document.createElement('div');
     overlay.className = 'nesty-overlay';
@@ -1813,7 +1929,7 @@
     modal.innerHTML = `
       <div class="nesty-modal-header" style="border-bottom: 1px solid #e8e4e9; padding: 16px 20px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, #faf8fb, #ffffff);">
         <!-- Tab interface -->
-        <div style="display: flex; gap: 8px; align-items: center;">
+        <div id="nesty-mode-tabs" style="display: flex; gap: 8px; align-items: center;">
           <button id="nesty-mode-current" class="nesty-mode-tab"
                   style="padding: 8px 16px; background: ${currentMode === 'current' ? '#86608e' : '#e8e4e9'}; color: ${currentMode === 'current' ? 'white' : '#1a1a1a'}; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
             עמוד נוכחי
@@ -1939,7 +2055,11 @@
         </div>
       </div>
 
-      <div class="nesty-modal-footer" style="padding: 14px 20px; border-top: 1px solid #e8e4e9; background: #faf8fb; display: flex; justify-content: flex-end; flex-shrink: 0;">
+      <div class="nesty-modal-footer" id="nesty-footer" style="padding: 14px 20px; border-top: 1px solid #e8e4e9; background: #faf8fb; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-shrink: 0;">
+        <label id="nesty-autoclose-label" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b6b6b; cursor: pointer; user-select: none;">
+          <input type="checkbox" id="nesty-autoclose" style="width: 16px; height: 16px; cursor: pointer; accent-color: #86608e;">
+          סגור לאחר הוספה
+        </label>
         <button id="nesty-submit" style="padding: 10px 28px; background: #86608e; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
           הוסף לרשימה
         </button>
@@ -2110,6 +2230,21 @@
       }
     });
 
+    // Auto-close toggle: load preference and persist on change
+    const autoCloseCheckbox = document.getElementById('nesty-autoclose');
+    if (autoCloseCheckbox) {
+      try {
+        chrome.storage.local.get(['nesty_autoclose'], (res) => {
+          autoCloseCheckbox.checked = !!res.nesty_autoclose;
+        });
+      } catch (e) { /* ignore */ }
+      autoCloseCheckbox.addEventListener('change', () => {
+        try {
+          chrome.storage.local.set({ nesty_autoclose: autoCloseCheckbox.checked });
+        } catch (e) { /* ignore */ }
+      });
+    }
+
     // Submit handler
     const submitButton = document.getElementById('nesty-submit');
     console.log('🔘 Submit button found:', submitButton ? 'Yes' : 'No');
@@ -2172,12 +2307,61 @@
         const result = await response.json();
         console.log('✅ Item added successfully:', result);
 
-        submitBtn.textContent = 'נוסף! ✓';
+        submitBtn.textContent = 'נוסף!';
         submitBtn.style.background = '#22c55e';
 
-        setTimeout(() => {
-          overlay.remove();
-        }, 1500);
+        // Replace the mode tabs in the header with a success banner.
+        const tabsContainer = document.getElementById('nesty-mode-tabs');
+        if (tabsContainer) {
+          tabsContainer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px; color: #22c55e; font-size: 16px; font-weight: 700;">
+              <span>נוסף לרשימה</span>
+              <span>✓</span>
+            </div>
+          `;
+        }
+
+        // Launch confetti (one of 5 randomly-picked variants).
+        launchConfetti(modal);
+
+        const shouldAutoClose = !!(autoCloseCheckbox && autoCloseCheckbox.checked);
+        if (shouldAutoClose) {
+          setTimeout(() => overlay.remove(), 1500);
+        } else {
+          // Replace footer with a persistent success state:
+          // two buttons — "לרשימה שלי" (open dashboard) and "סגור" (close overlay).
+          const footer = document.getElementById('nesty-footer');
+          if (footer) {
+            const prevChecked = !!(autoCloseCheckbox && autoCloseCheckbox.checked);
+            footer.innerHTML = `
+              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b6b6b; cursor: pointer; user-select: none;">
+                <input type="checkbox" id="nesty-autoclose" style="width: 16px; height: 16px; cursor: pointer; accent-color: #86608e;" ${prevChecked ? 'checked' : ''}>
+                סגור לאחר הוספה
+              </label>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button id="nesty-success-dashboard" style="padding: 10px 20px; background: #22c55e; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; animation: nesty-cta-pulse 1.6s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(34,197,94,0.5);">
+                  לרשימה שלי
+                </button>
+                <button id="nesty-success-close" style="padding: 10px 20px; background: #e8e4e9; color: #1a1a1a; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                  סגור
+                </button>
+              </div>
+            `;
+            const newAutoClose = document.getElementById('nesty-autoclose');
+            newAutoClose.addEventListener('change', () => {
+              try {
+                chrome.storage.local.set({ nesty_autoclose: newAutoClose.checked });
+              } catch (e) { /* ignore */ }
+            });
+            document.getElementById('nesty-success-dashboard').addEventListener('click', () => {
+              overlay.remove();
+              window.location.href = 'https://nestyil.com/dashboard';
+            });
+            document.getElementById('nesty-success-close').addEventListener('click', () => {
+              overlay.remove();
+            });
+          }
+        }
 
       } catch (error) {
         console.error('❌ Error adding item:', error);
