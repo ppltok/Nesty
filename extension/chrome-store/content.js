@@ -615,6 +615,16 @@
       return 'ksp';
     }
 
+    // Check for H&M product pages
+    if (window.location.hostname.includes('hm.com')) {
+      return 'hm';
+    }
+
+    // Check for Next Israel product pages
+    if (window.location.hostname.includes('next.co.il')) {
+      return 'next';
+    }
+
     // Check for Shopify
     if (doc.querySelector('[data-shopify]') ||
         doc.querySelector('script[src*="shopify"]') ||
@@ -1487,6 +1497,25 @@
         }
       }
 
+      // For H&M, use their product-page test ids before JSON-LD fallback
+      if (platform === 'hm') {
+        console.log('🛍️ Using H&M extractor...');
+        const hmResult = extractFromHm(doc);
+        if (hmResult) {
+          console.log('✅ Extracted from H&M');
+          return hmResult;
+        }
+      }
+
+      if (platform === 'next') {
+        console.log('🛍️ Using Next extractor...');
+        const nextResult = extractFromNext(doc);
+        if (nextResult) {
+          console.log('✅ Extracted from Next');
+          return nextResult;
+        }
+      }
+
       // For Shopify, try the JSON API first (most reliable)
       if (platform === 'shopify' && doc === document) {
         const apiResult = await tryShopifyJsonApi();
@@ -1660,6 +1689,151 @@
       category: product.type || '',
       imageUrls: filterAndPrioritizeImages(imageUrls)
     };
+  }
+
+  /**
+   * Extract from H&M product pages.
+   * H&M exposes stable data-testid hooks for the title and main price.
+   */
+  function extractFromHm(doc = document) {
+    console.log('🛍️ Attempting H&M extraction...');
+
+    const productData = {
+      name: '',
+      price: '',
+      priceCurrency: 'ILS',
+      brand: 'H&M',
+      category: '',
+      imageUrls: []
+    };
+
+    const titleElement = doc.querySelector('[data-testid="product-name"], h1[data-testid="product-name"], h1');
+    if (titleElement) {
+      const title = titleElement.textContent?.trim() || '';
+      if (title.length > 2) {
+        productData.name = title;
+      }
+    }
+
+    const priceSelectors = [
+      '[data-testid="white-price"]',
+      '[data-testid="red-price"]',
+      '[data-testid*="price"]'
+    ];
+
+    for (const selector of priceSelectors) {
+      const element = doc.querySelector(selector);
+      if (!element) continue;
+
+      const priceText = element.textContent?.trim() || '';
+      const priceMatch = priceText.match(/([\d,]+(?:\.\d+)?)\s*₪|₪\s*([\d,]+(?:\.\d+)?)/);
+      const rawPrice = priceMatch?.[1] || priceMatch?.[2] || '';
+      if (rawPrice) {
+        productData.price = rawPrice.replace(/,/g, '');
+        console.log(`💰 Found H&M price in ${selector}: ${productData.price}`);
+        break;
+      }
+    }
+
+    if (!productData.price && titleElement) {
+      const detailsContainer = titleElement.closest('section, article, main, div');
+      const candidateElements = Array.from((detailsContainer || doc).querySelectorAll('*'));
+
+      for (const element of candidateElements) {
+        const text = element.textContent?.trim() || '';
+        if (!text || text.length > 40) continue;
+
+        const priceMatch = text.match(/([\d,]+(?:\.\d+)?)\s*₪|₪\s*([\d,]+(?:\.\d+)?)/);
+        const rawPrice = priceMatch?.[1] || priceMatch?.[2] || '';
+        if (rawPrice) {
+          productData.price = rawPrice.replace(/,/g, '');
+          console.log(`💰 Found H&M nearby price: ${productData.price}`);
+          break;
+        }
+      }
+    }
+
+    const imageElement = doc.querySelector('meta[property="og:image"], meta[name="og:image"]');
+    const imageUrl = imageElement?.getAttribute('content') || '';
+    if (imageUrl) {
+      productData.imageUrls = [imageUrl];
+    }
+
+    console.log('📦 H&M extraction result:', productData);
+
+    if (productData.name && productData.price) {
+      return productData;
+    }
+
+    console.log('⚠️ H&M extraction incomplete');
+    return null;
+  }
+
+  /**
+   * Extract from Next Israel product pages.
+   * Uses stable data-testid hooks for the title and current price.
+   */
+  function extractFromNext(doc = document) {
+    console.log('🛍️ Attempting Next extraction...');
+
+    const productData = {
+      name: '',
+      price: '',
+      priceCurrency: 'ILS',
+      brand: 'Next',
+      category: '',
+      imageUrls: []
+    };
+
+    const titleElement = doc.querySelector('[data-testid="product-title"], h1[data-testid="product-title"], h1');
+    if (titleElement) {
+      const title = titleElement.textContent?.trim() || '';
+      if (title.length > 2) {
+        productData.name = title;
+      }
+    }
+
+    const priceSelectors = [
+      '[data-testid="product-now-price"]',
+      '[data-testid="price"]',
+      '[data-testid*="price"]'
+    ];
+
+    for (const selector of priceSelectors) {
+      const element = doc.querySelector(selector);
+      if (!element) continue;
+
+      const priceText = element.textContent?.trim() || '';
+      const rangeMatch = priceText.match(/₪\s*([\d,]+(?:\.\d+)?)\s*-\s*₪\s*([\d,]+(?:\.\d+)?)/);
+      if (rangeMatch) {
+        productData.price = rangeMatch[1].replace(/,/g, '');
+        console.log(`💰 Found Next price range in ${selector}: ${priceText} -> using ${productData.price}`);
+        break;
+      }
+
+      const priceMatch = priceText.match(/([\d,]+(?:\.\d+)?)\s*₪|₪\s*([\d,]+(?:\.\d+)?)/);
+      const rawPrice = priceMatch?.[1] || priceMatch?.[2] || '';
+      if (rawPrice) {
+        productData.price = rawPrice.replace(/,/g, '');
+        console.log(`💰 Found Next price in ${selector}: ${productData.price}`);
+        break;
+      }
+    }
+
+    const imageMeta = doc.querySelector('meta[property="og:image"], meta[name="og:image"]');
+    const imageUrl = imageMeta?.getAttribute('content') || '';
+    if (imageUrl) {
+      productData.imageUrls = [imageUrl];
+    }
+
+    console.log('📦 Next extraction result:', productData);
+
+    if (productData.name && productData.price) {
+      return productData;
+    }
+
+    console.log('⚠️ Next extraction incomplete');
+    return null;
   }
 
   /**

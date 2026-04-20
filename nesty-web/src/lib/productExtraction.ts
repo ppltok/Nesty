@@ -179,6 +179,14 @@ function detectPlatform(url?: string, doc?: Document): string | null {
     return 'ksp'
   }
 
+  if (hostname.includes('hm.com')) {
+    return 'hm'
+  }
+
+  if (hostname.includes('next.co.il')) {
+    return 'next'
+  }
+
   // Check for Amazon (all major domains)
   if (hostname.includes('amazon.com') ||
       hostname.includes('amazon.co.uk') ||
@@ -371,6 +379,149 @@ function extractFromAliExpress(doc: Document): ExtractedProductData | null {
   }
 
   console.log('❌ AliExpress extraction failed - insufficient data')
+  return null
+}
+
+/**
+ * Extract product data from H&M product pages.
+ * H&M exposes stable data-testid hooks for the title and main price.
+ */
+function extractFromHm(doc: Document, baseUrl?: string): ExtractedProductData | null {
+  console.log('🛍️ Attempting H&M extraction...')
+
+  const productData: ExtractedProductData = {
+    name: '',
+    price: '',
+    priceCurrency: 'ILS',
+    brand: 'H&M',
+    category: '',
+    imageUrls: []
+  }
+
+  const titleElement = doc.querySelector('[data-testid="product-name"], h1[data-testid="product-name"], h1')
+  if (titleElement) {
+    const title = titleElement.textContent?.trim() || ''
+    if (title.length > 2) {
+      productData.name = title
+    }
+  }
+
+  const priceSelectors = [
+    '[data-testid="white-price"]',
+    '[data-testid="red-price"]',
+    '[data-testid*="price"]'
+  ]
+
+  for (const selector of priceSelectors) {
+    const element = doc.querySelector(selector)
+    if (!element) continue
+
+    const priceText = element.textContent?.trim() || ''
+    const priceMatch = priceText.match(/([\d,]+(?:\.\d+)?)\s*₪|₪\s*([\d,]+(?:\.\d+)?)/)
+    const rawPrice = priceMatch?.[1] || priceMatch?.[2] || ''
+    if (rawPrice) {
+      productData.price = rawPrice.replace(/,/g, '')
+      console.log(`   💰 Found H&M price in ${selector}: ${productData.price}`)
+      break
+    }
+  }
+
+  if (!productData.price && titleElement) {
+    const detailsContainer = titleElement.closest('section, article, main, div')
+    const candidateElements = Array.from((detailsContainer || doc).querySelectorAll('*'))
+
+    for (const element of candidateElements) {
+      const text = element.textContent?.trim() || ''
+      if (!text || text.length > 40) continue
+
+      const priceMatch = text.match(/([\d,]+(?:\.\d+)?)\s*₪|₪\s*([\d,]+(?:\.\d+)?)/)
+      const rawPrice = priceMatch?.[1] || priceMatch?.[2] || ''
+      if (rawPrice) {
+        productData.price = rawPrice.replace(/,/g, '')
+        console.log(`   💰 Found H&M nearby price: ${productData.price}`)
+        break
+      }
+    }
+  }
+
+  const imageElement = doc.querySelector('meta[property="og:image"], meta[name="og:image"]')
+  const imageUrl = imageElement?.getAttribute('content') || ''
+  if (imageUrl) {
+    productData.imageUrls = [resolveUrl(imageUrl, baseUrl)]
+  }
+
+  console.log(`   📊 H&M extraction: name=${!!productData.name} price=${productData.price || '✗'} images=${productData.imageUrls.length}`)
+
+  if (productData.name && productData.price) {
+    return productData
+  }
+
+  return null
+}
+
+/**
+ * Extract product data from Next Israel product pages.
+ * Uses stable data-testid hooks for the title and current price.
+ */
+function extractFromNext(doc: Document, baseUrl?: string): ExtractedProductData | null {
+  console.log('🛍️ Attempting Next extraction...')
+
+  const productData: ExtractedProductData = {
+    name: '',
+    price: '',
+    priceCurrency: 'ILS',
+    brand: 'Next',
+    category: '',
+    imageUrls: []
+  }
+
+  const titleElement = doc.querySelector('[data-testid="product-title"], h1[data-testid="product-title"], h1')
+  if (titleElement) {
+    const title = titleElement.textContent?.trim() || ''
+    if (title.length > 2) {
+      productData.name = title
+    }
+  }
+
+  const priceSelectors = [
+    '[data-testid="product-now-price"]',
+    '[data-testid="price"]',
+    '[data-testid*="price"]'
+  ]
+
+  for (const selector of priceSelectors) {
+    const element = doc.querySelector(selector)
+    if (!element) continue
+
+    const priceText = element.textContent?.trim() || ''
+    const rangeMatch = priceText.match(/₪\s*([\d,]+(?:\.\d+)?)\s*-\s*₪\s*([\d,]+(?:\.\d+)?)/)
+    if (rangeMatch) {
+      productData.price = rangeMatch[1].replace(/,/g, '')
+      console.log(`   💰 Found Next price range in ${selector}: ${priceText} -> using ${productData.price}`)
+      break
+    }
+
+    const priceMatch = priceText.match(/([\d,]+(?:\.\d+)?)\s*₪|₪\s*([\d,]+(?:\.\d+)?)/)
+    const rawPrice = priceMatch?.[1] || priceMatch?.[2] || ''
+    if (rawPrice) {
+      productData.price = rawPrice.replace(/,/g, '')
+      console.log(`   💰 Found Next price in ${selector}: ${productData.price}`)
+      break
+    }
+  }
+
+  const imageMeta = doc.querySelector('meta[property="og:image"], meta[name="og:image"]')
+  const imageUrl = imageMeta?.getAttribute('content') || ''
+  if (imageUrl) {
+    productData.imageUrls = [resolveUrl(imageUrl, baseUrl)]
+  }
+
+  console.log(`   📊 Next extraction: name=${!!productData.name} price=${productData.price || '✗'} images=${productData.imageUrls.length}`)
+
+  if (productData.name && productData.price) {
+    return productData
+  }
+
   return null
 }
 
@@ -739,6 +890,24 @@ function extractProductDataFromDocument(doc: Document, url?: string): ExtractedP
       return kspResult
     }
     console.log('⚠️ KSP extraction failed, falling back to JSON-LD')
+  }
+
+  if (platform === 'hm') {
+    console.log('🏪 Detected platform: hm')
+    const hmResult = extractFromHm(doc, url)
+    if (hmResult) {
+      return hmResult
+    }
+    console.log('⚠️ H&M extraction failed, falling back to JSON-LD')
+  }
+
+  if (platform === 'next') {
+    console.log('🏪 Detected platform: next')
+    const nextResult = extractFromNext(doc, url)
+    if (nextResult) {
+      return nextResult
+    }
+    console.log('⚠️ Next extraction failed, falling back to JSON-LD')
   }
 
   // Fall back to JSON-LD extraction for all other sites
