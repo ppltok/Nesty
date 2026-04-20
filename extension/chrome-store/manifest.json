@@ -14,7 +14,8 @@
     "storage"
   ],
   "host_permissions": [
-    "https://nestyil.com/*"
+    "https://nestyil.com/*",
+    "https://www.shilav.co.il/*"
   ],
   "background": {
     "service_worker": "background.js",

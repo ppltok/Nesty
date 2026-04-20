@@ -5,28 +5,108 @@
 
 import { config } from './config.js';
 
+const THANK_YOU_PAGE_URL = chrome.runtime.getURL('thank-you.html');
+const PRODUCT_DEMO_URL = 'https://www.shilav.co.il/collections/new-born-carts/products/%D7%A2%D7%A8%D7%99%D7%A1%D7%94-%D7%90%D7%91%D7%9F-%D7%99%D7%95%D7%99%D7%95-2';
+
+chrome.runtime.onInstalled.addListener(async (details) => {
+  if (details.reason !== 'install') {
+    return;
+  }
+
+  try {
+    await chrome.tabs.create({
+      url: chrome.runtime.getURL('thank-you.html'),
+      active: true
+    });
+    await chrome.tabs.create({
+      url: 'https://nestyil.com/',
+      active: false
+    });
+  } catch (error) {
+    console.error('❌ Failed to open install tabs:', error);
+  }
+});
+
 chrome.action.onClicked.addListener(async (tab) => {
   console.log('🎯 Nesty Extension - Icon clicked!');
   console.log('📍 Current tab URL:', tab.url);
 
-  // Only work on http/https pages
+  if (tab.url === THANK_YOU_PAGE_URL) {
+    console.log('✨ Thank-you page detected, opening demo product flow');
+    await openExtensionOnDemoProductPage();
+    return;
+  }
+
+  // Extension pages cannot receive injected content scripts.
   if (!tab.url.startsWith('http')) {
     console.warn('⚠️ Extension only works on web pages');
     return;
   }
 
   try {
-    // Inject the content script into the current page
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['content.js']
-    });
-
-    console.log('✅ Content script injected successfully');
+    await injectContentScript(tab.id);
   } catch (error) {
     console.error('❌ Failed to inject content script:', error);
   }
 });
+
+async function injectContentScript(tabId) {
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: ['content.js']
+  });
+
+  console.log('✅ Content script injected successfully');
+}
+
+async function openExtensionOnDemoProductPage() {
+  try {
+    const existingTabs = await chrome.tabs.query({ url: PRODUCT_DEMO_URL });
+
+    if (existingTabs.length > 0) {
+      const demoTab = existingTabs[0];
+      await chrome.tabs.update(demoTab.id, { active: true });
+      await waitForTabComplete(demoTab.id);
+      await injectContentScript(demoTab.id);
+      return;
+    }
+
+    const createdTab = await chrome.tabs.create({
+      url: PRODUCT_DEMO_URL,
+      active: true
+    });
+
+    await waitForTabComplete(createdTab.id);
+    await injectContentScript(createdTab.id);
+  } catch (error) {
+    console.error('❌ Failed demo product launch flow:', error);
+  }
+}
+
+function waitForTabComplete(tabId) {
+  return new Promise((resolve) => {
+    chrome.tabs.get(tabId, (tab) => {
+      if (chrome.runtime.lastError || !tab) {
+        resolve();
+        return;
+      }
+
+      if (tab.status === 'complete') {
+        resolve();
+        return;
+      }
+
+      const listener = (updatedTabId, changeInfo) => {
+        if (updatedTabId === tabId && changeInfo.status === 'complete') {
+          chrome.tabs.onUpdated.removeListener(listener);
+          resolve();
+        }
+      };
+
+      chrome.tabs.onUpdated.addListener(listener);
+    });
+  });
+}
 
 /**
  * Handle messages from content script
