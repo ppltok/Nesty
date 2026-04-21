@@ -334,7 +334,7 @@ export function usePeopleList() {
       if (error) throw error
       if (!data) return {
         summary: {
-          total_users: 0, users_with_items: 0, users_with_gifts: 0,
+          total_users: 0, users_with_items: 0, users_with_gifts: 0, co_parent_count: 0,
           avg_registry_value: 0, avg_items: 0, avg_completion: 0,
         },
         users: [],

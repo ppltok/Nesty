@@ -6,7 +6,7 @@ import { PageSkeleton } from '@/components/shared/LoadingSkeleton'
 import { formatNumber, formatCurrency, formatPercent } from '@/lib/formatters'
 import { downloadCSV } from '@/lib/csv'
 import {
-  Users, ShoppingBag, Target, TrendingUp,
+  Users, ShoppingBag, Target, TrendingUp, Handshake,
   ArrowUpDown, Download, ChevronDown, ChevronRight,
   Copy, ExternalLink, Search, Check,
 } from 'lucide-react'
@@ -90,12 +90,12 @@ export default function PeoplePage() {
   return (
     <div className="space-y-6">
       {/* KPI Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <KPICard
           title="Total Users"
           value={formatNumber(s.total_users)}
           icon={<Users className="h-5 w-5 text-blue-500" />}
-          tooltip="All registered users excluding test accounts."
+          tooltip="All registered primary users (co-parent-only profiles excluded — they appear nested under their primary)."
         />
         <KPICard
           title="Users with Items"
@@ -103,6 +103,13 @@ export default function PeoplePage() {
           icon={<ShoppingBag className="h-5 w-5 text-green-500" />}
           subtitle={`${s.total_users > 0 ? Math.round((s.users_with_items / s.total_users) * 100) : 0}% activation`}
           tooltip="Users who added at least one item to their registry."
+        />
+        <KPICard
+          title="With Co-parent"
+          value={formatNumber(s.co_parent_count ?? 0)}
+          icon={<Handshake className="h-5 w-5 text-rose-500" />}
+          subtitle={`${s.total_users > 0 ? Math.round(((s.co_parent_count ?? 0) / s.total_users) * 100) : 0}% of primaries`}
+          tooltip="Primary users who have linked a co-parent to their registry."
         />
         <KPICard
           title="Avg Registry Value"
@@ -126,6 +133,12 @@ export default function PeoplePage() {
         <span className="flex items-center gap-1.5 text-xs text-gray-600"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" /> Has Gifts</span>
         <span className="flex items-center gap-1.5 text-xs text-gray-600"><span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" /> Email Opt-in</span>
         <span className="flex items-center gap-1.5 text-xs text-gray-600"><span className="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block" /> Not active</span>
+        <span className="flex items-center gap-1.5 text-xs text-gray-600">
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 text-[10px] font-medium">
+            <Handshake className="h-2.5 w-2.5" /> Co-parent
+          </span>
+          Has linked partner
+        </span>
       </div>
 
       {/* Search + Table */}
@@ -158,6 +171,11 @@ export default function PeoplePage() {
                     'Due Date': u.due_date ? new Date(u.due_date).toLocaleDateString('en-GB') : '',
                     'Onboarded': u.onboarding_completed ? 'Yes' : 'No',
                     'Email Opt-in': u.email_notifications ? 'Yes' : 'No',
+                    'Co-parent Name': u.co_parent?.display_name ?? '',
+                    'Co-parent Email': u.co_parent?.email ?? '',
+                    'Co-parent Signed Up': u.co_parent
+                      ? new Date(u.co_parent.signed_up_at).toLocaleDateString('en-GB')
+                      : '',
                   })),
                   'nesty-users'
                 )
@@ -205,7 +223,17 @@ export default function PeoplePage() {
                         <StatusDots user={user} />
                       </td>
                       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
-                        {user.display_name}
+                        <span className="flex items-center gap-2">
+                          {user.display_name}
+                          {user.co_parent && (
+                            <span
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 text-[10px] font-medium"
+                              title={`Co-parent: ${user.co_parent.display_name} (${user.co_parent.email})`}
+                            >
+                              <Handshake className="h-2.5 w-2.5" /> Co-parent
+                            </span>
+                          )}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-gray-600 max-w-[180px] truncate">
                         <span className="flex items-center gap-1.5">
@@ -278,6 +306,34 @@ function ExpandedRow({ user }: { user: PersonRow }) {
 
   return (
     <div className="space-y-4">
+      {/* Co-parent panel — only shown when a partner is linked */}
+      {user.co_parent && (
+        <div className="bg-rose-50/60 border border-rose-200 rounded-lg p-4">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center">
+                <Handshake className="h-4 w-4 text-rose-600" />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold text-rose-700 uppercase tracking-wide">Co-parent</p>
+                <p className="text-sm font-medium text-gray-900 mt-0.5">{user.co_parent.display_name}</p>
+                <p className="text-xs text-gray-600 mt-0.5 flex items-center gap-1">
+                  <span>{user.co_parent.email}</span>
+                  <span className="text-gray-300">·</span>
+                  <span>
+                    Signed up {new Date(user.co_parent.signed_up_at).toLocaleDateString('en-GB', {
+                      day: '2-digit', month: 'short', year: 'numeric',
+                    })}
+                  </span>
+                  <span className="text-gray-300">·</span>
+                  <span>Onboarded: {user.co_parent.onboarding_completed ? 'Yes' : 'No'}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
         <StatBadge label="Due Date" value={user.due_date ? new Date(user.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '--'} />

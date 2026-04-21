@@ -94,25 +94,46 @@ export default function AuthCallback() {
 
         console.log('AuthCallback: Profile result:', { profile, profileError })
 
-        // If profile doesn't have onboarding_completed, this is a new user
-        // Send admin notification
-        if (!profile?.onboarding_completed) {
-          // Send admin notification for new signup (don't await, let it run in background)
-          // Silently fail if edge function doesn't exist - don't block login
+        // If profile doesn't have onboarding_completed, this is a new user.
+        // Send admin notification — BUT skip it when this user is signing up
+        // through a co-parent invitation. In that case the accept-invitation
+        // edge function fires the `admin_co_parent_joined` email instead, so
+        // we avoid double-notifying hello@nestyil.com.
+        if (!profile?.onboarding_completed && session.user.email) {
+          // Check for a pending or recently-accepted co-parent invitation for
+          // this email. `registry_invitations` has RLS that allows the
+          // invitee to read their own row — anon read policy may not exist,
+          // so we scope the lookup to this user's authenticated session.
+          let hasCoParentInvite = false
           try {
-            supabase.functions.invoke('send-email', {
-              body: {
-                type: 'admin_new_user',
-                to: ADMIN_EMAIL,
-                data: {
-                  userEmail: session.user.email,
-                  userName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
-                  signupDate: new Date().toLocaleDateString('he-IL'),
-                },
-              },
-            }).catch((err) => console.warn('Failed to send admin notification (non-critical):', err))
+            const { data: invites } = await supabase
+              .from('registry_invitations')
+              .select('id, status')
+              .eq('invited_email', session.user.email)
+              .in('status', ['pending', 'accepted'])
+              .limit(1)
+            hasCoParentInvite = !!(invites && invites.length > 0)
           } catch (err) {
-            console.warn('Edge function not available (non-critical):', err)
+            // Read failure is non-critical — fall back to sending regular email.
+            console.warn('Failed to check co-parent invitation (non-critical):', err)
+          }
+
+          if (!hasCoParentInvite) {
+            try {
+              supabase.functions.invoke('send-email', {
+                body: {
+                  type: 'admin_new_user',
+                  to: ADMIN_EMAIL,
+                  data: {
+                    userEmail: session.user.email,
+                    userName: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
+                    signupDate: new Date().toLocaleDateString('he-IL'),
+                  },
+                },
+              }).catch((err) => console.warn('Failed to send admin notification (non-critical):', err))
+            } catch (err) {
+              console.warn('Edge function not available (non-critical):', err)
+            }
           }
         }
 

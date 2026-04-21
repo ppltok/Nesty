@@ -9,12 +9,14 @@ import { formatNumber, formatCurrency, formatPercent } from '@/lib/formatters'
 import {
   Gift,
   Users,
+  UserPlus,
   ClipboardList,
   DollarSign,
   BarChart3,
   Package,
   CheckCircle,
   Puzzle,
+  Handshake,
 } from 'lucide-react'
 
 /** Compute % change and formatted label */
@@ -48,7 +50,7 @@ export default function OverviewPage() {
       : 0
 
   // Trend calculations
-  const usersTrend = trend(data.total_users, data.prev_total_users ?? data.total_users)
+  const newUsersTrend = trend(data.new_users, data.prev_new_users ?? 0)
   const registriesTrend = trend(data.active_registries, data.prev_active_registries ?? data.active_registries)
   const gmvTrend = trend(data.platform_gmv, data.prev_platform_gmv ?? data.platform_gmv)
 
@@ -67,7 +69,7 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      {/* KPI Row 1 */}
+      {/* KPI Row 1 — period-filtered headline metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="North Star (Gifted 30d)"
@@ -76,12 +78,12 @@ export default function OverviewPage() {
           tooltip="Registries that received at least one confirmed gift in the last 30 days. This is our primary success metric."
         />
         <KPICard
-          title="Total Users"
-          value={formatNumber(data.total_users)}
-          icon={<Users className="h-5 w-5 text-blue-500" />}
-          tooltip="Total number of signed-up users across all time, including those who haven't completed onboarding."
-          change={usersTrend.change}
-          changePositive={usersTrend.changePositive}
+          title="New Signups (period)"
+          value={formatNumber(data.new_users)}
+          icon={<UserPlus className="h-5 w-5 text-blue-500" />}
+          tooltip="Users who signed up during the selected date range. Updates with the date filter."
+          change={newUsersTrend.change}
+          changePositive={newUsersTrend.changePositive}
           subtitle="vs prev period"
         />
         <KPICard
@@ -104,25 +106,39 @@ export default function OverviewPage() {
         />
       </div>
 
-      {/* KPI Row 2 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Row 2 — all-time / structural metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <KPICard
+          title="Total Users"
+          value={formatNumber(data.total_users)}
+          icon={<Users className="h-5 w-5 text-blue-500" />}
+          tooltip="All signed-up users across all time (cumulative, not filtered by date range)."
+          subtitle="all-time"
+        />
+        <KPICard
+          title="Co-parents"
+          value={formatNumber(data.co_parents_count)}
+          icon={<Handshake className="h-5 w-5 text-rose-500" />}
+          tooltip="Registries with an accepted co-parent invitation. Counts distinct registries with a linked partner."
+          subtitle="registries w/ partner"
+        />
         <KPICard
           title="Avg Registry Value"
           value={formatCurrency(data.avg_registry_value)}
           icon={<BarChart3 className="h-5 w-5 text-indigo-500" />}
-          tooltip="Average total wishlist value (price x quantity) per registry. Should equal Platform GMV / number of registries with items."
+          tooltip="Average total wishlist value (price x quantity) per registry."
         />
         <KPICard
           title="Avg Items/Registry"
           value={formatNumber(data.avg_items_per_registry)}
           icon={<Package className="h-5 w-5 text-teal-500" />}
-          tooltip="Average number of items added per active registry. Higher means more engaged users."
+          tooltip="Average number of items added per active registry."
         />
         <KPICard
           title="Completion Rate"
           value={formatPercent(data.completion_rate)}
           icon={<CheckCircle className="h-5 w-5 text-emerald-500" />}
-          tooltip="Percentage of wanted items that have been purchased (quantity_received / quantity). Measures how well registries convert to actual gifts."
+          tooltip="Percentage of wanted items that have been purchased (quantity_received / quantity)."
         />
         <KPICard
           title="Extension Adoption"
