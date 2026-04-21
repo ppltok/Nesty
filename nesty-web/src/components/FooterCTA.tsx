@@ -24,7 +24,7 @@ export default function FooterCTA() {
           הצטרפו לאלפי הורים שכבר בונים את הרשימה החכמה שלהם.
         </p>
 
-        <Link to="/auth/signin">
+        <Link to="/auth/signup">
           <Button
             size="lg"
             className="bg-white text-primary hover:bg-white/90 shadow-lg text-sm sm:text-base"

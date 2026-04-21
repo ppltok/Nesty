@@ -106,7 +106,7 @@ function buildAdminBrandedEmail(opts: {
         <!-- CTA -->
         <tr>
           <td align="center">
-            <a href="https://nesty-dashboard.vercel.app/people" style="display:inline-block;background:#7c4dbd;color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;">
+            <a href="https://dashboard.nestyil.com/people" style="display:inline-block;background:#7c4dbd;color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;">
               פתחי ב-Dashboard →
             </a>
           </td>

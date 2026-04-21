@@ -12,6 +12,8 @@ import Home from './pages/HomeNew'
 import SignIn from './pages/auth/SignIn'
 import SignUp from './pages/auth/SignUp'
 import AuthCallback from './pages/auth/AuthCallback'
+import ResetPasswordRequest from './pages/auth/ResetPasswordRequest'
+import UpdatePassword from './pages/auth/UpdatePassword'
 import Onboarding from './pages/onboarding/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Checklist from './pages/Checklist'
@@ -79,6 +81,8 @@ function AppRoutes() {
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/auth/reset-password" element={<ResetPasswordRequest />} />
+      <Route path="/auth/update-password" element={<UpdatePassword />} />
 
       {/* Public registry view */}
       <Route path="/registry/:slug" element={<PublicRegistry />} />

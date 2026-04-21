@@ -61,7 +61,7 @@ export default function HomeNew() {
                         ) : (
                             <>
                                 <Link to="/auth/signin" className="px-5 py-2.5 rounded-full bg-[#f3edff] text-[#21005d] font-medium hover:bg-[#eaddff] transition-colors">כניסה</Link>
-                                <Link to="/auth/signin" className="px-6 py-2.5 rounded-full bg-[#6750a4] text-white font-medium hover:bg-[#5a4690] transition-colors shadow-[0_4px_12px_rgba(103,80,164,0.25)]">יצירת רשימה חינם</Link>
+                                <Link to="/auth/signup" className="px-6 py-2.5 rounded-full bg-[#6750a4] text-white font-medium hover:bg-[#5a4690] transition-colors shadow-[0_4px_12px_rgba(103,80,164,0.25)]">יצירת רשימה חינם</Link>
                             </>
                         )}
                     </div>
@@ -82,7 +82,7 @@ export default function HomeNew() {
                                 ) : (
                                     <>
                                         <Link to="/auth/signin" className="block w-full text-center px-6 py-3 rounded-full bg-[#f3edff] text-[#21005d] font-medium">כניסה</Link>
-                                        <Link to="/auth/signin" className="block w-full text-center px-6 py-3 rounded-full bg-[#6750a4] text-white font-medium">יצירת רשימה חינם</Link>
+                                        <Link to="/auth/signup" className="block w-full text-center px-6 py-3 rounded-full bg-[#6750a4] text-white font-medium">יצירת רשימה חינם</Link>
                                     </>
                                 )}
                             </div>
@@ -125,7 +125,7 @@ export default function HomeNew() {
 
                                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
                                     <Link
-                                        to={isAuthenticated ? "/dashboard" : "/auth/signin"}
+                                        to={isAuthenticated ? "/dashboard" : "/auth/signup"}
                                         className="group px-10 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg flex gap-3 items-center justify-center shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300"
                                     >
                                         <Sparkles className="w-5 h-5 group-hover:animate-spin-slow" />
@@ -264,7 +264,7 @@ export default function HomeNew() {
                                     <h3 className="text-3xl md:text-4xl font-medium text-[#1d192b] mb-4">לא לפספס שום דבר</h3>
                                     <p className="text-lg text-[#49454f] mb-8 max-w-xl mx-auto">הצ'קליסט המקיף שלנו מכיל את כל מה שתינוק צריך - מהדברים ההכרחיים ועד הפינוקים הקטנים. בנינו אותו עם מומחים כדי שתגיעו מוכנים.</p>
                                     <Link
-                                        to={isAuthenticated ? "/checklist" : "/auth/signin"}
+                                        to={isAuthenticated ? "/checklist" : "/auth/signup"}
                                         className="inline-flex items-center gap-3 px-8 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300"
                                     >
                                         <ListChecks className="w-5 h-5" />
@@ -446,7 +446,7 @@ export default function HomeNew() {
 
                         <ScrollReveal delay={200}>
                             <div className="text-center">
-                                <Link to={isAuthenticated ? "/dashboard" : "/auth/signin"} className="inline-flex items-center gap-3 px-8 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300">
+                                <Link to={isAuthenticated ? "/dashboard" : "/auth/signup"} className="inline-flex items-center gap-3 px-8 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300">
                                     <Sparkles className="w-5 h-5" />
                                     <span>{isAuthenticated ? "לקן שלי" : "יצירת הרשימה הראשונה שלי"}</span>
                                 </Link>
@@ -778,7 +778,7 @@ export default function HomeNew() {
                         <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium text-white mb-6 tracking-tight">הקן שלכם מחכה.</h2>
                         <p className="text-xl md:text-2xl text-white/80 mb-10 max-w-2xl mx-auto">את לא צריכה עוד רשימה בוואטסאפ. את צריכה מקום אחד, חכם, שעובד בשבילך. <bdi>Nesty</bdi> פה.</p>
                         <Link
-                            to={isAuthenticated ? "/dashboard" : "/auth/signin"}
+                            to={isAuthenticated ? "/dashboard" : "/auth/signup"}
                             className="inline-flex items-center gap-3 px-10 py-4 rounded-[28px] bg-white text-[#6750a4] font-medium text-lg shadow-[0_8px_24px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 transition-all duration-300 animate-cta-glow"
                         >
                             <Sparkles className="w-5 h-5" />
