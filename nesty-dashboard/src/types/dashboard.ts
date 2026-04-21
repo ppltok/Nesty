@@ -124,6 +124,11 @@ export interface DailyItems {
   via_manual: number
 }
 
+export interface DailyActiveRegistries {
+  day: string
+  active_registries: number
+}
+
 export interface DailyGifts {
   day: string
   gifts_confirmed: number

@@ -1,4 +1,4 @@
-import { useOverview, useFunnel, useStores, useCategories, useDailySignups } from '@/hooks/useDashboardData'
+import { useOverview, useFunnel, useStores, useCategories, useDailySignups, useDailyActiveRegistries } from '@/hooks/useDashboardData'
 import { useDateRange } from '@/contexts/DateRangeContext'
 import { KPICard } from '@/components/shared/KPICard'
 import { PageSkeleton } from '@/components/shared/LoadingSkeleton'
@@ -38,6 +38,7 @@ export default function OverviewPage() {
   const stores = useStores()
   const categories = useCategories()
   const signups = useDailySignups()
+  const dailyActive = useDailyActiveRegistries()
 
   if (overview.isLoading) return <PageSkeleton />
   if (overview.error) return <div className="p-6 text-red-600">Failed to load overview: {overview.error.message}</div>
@@ -53,6 +54,17 @@ export default function OverviewPage() {
   const newUsersTrend = trend(data.new_users, data.prev_new_users ?? 0)
   const registriesTrend = trend(data.active_registries, data.prev_active_registries ?? data.active_registries)
   const gmvTrend = trend(data.platform_gmv, data.prev_platform_gmv ?? data.platform_gmv)
+
+  // Active-registry rate: of the new signups this period, how many have an
+  // active registry? Literal ratio `active_registries / new_users` — can
+  // exceed 100% when existing users are active too (we surface that as-is;
+  // it's informative signal that older cohorts stay engaged).
+  const activeRate = data.new_users > 0 ? (data.active_registries / data.new_users) * 100 : 0
+  const prevActiveRate =
+    (data.prev_new_users ?? 0) > 0
+      ? ((data.prev_active_registries ?? 0) / (data.prev_new_users ?? 1)) * 100
+      : 0
+  const activeRateTrend = trend(activeRate, prevActiveRate)
 
   const CATEGORY_LABELS: Record<string, string> = {
     strollers: 'Strollers', car_safety: 'Car Safety', furniture: 'Furniture',
@@ -135,10 +147,13 @@ export default function OverviewPage() {
           tooltip="Average number of items added per active registry."
         />
         <KPICard
-          title="Completion Rate"
-          value={formatPercent(data.completion_rate)}
+          title="Active Registry Rate"
+          value={formatPercent(activeRate)}
           icon={<CheckCircle className="h-5 w-5 text-emerald-500" />}
-          tooltip="Percentage of wanted items that have been purchased (quantity_received / quantity)."
+          tooltip="Active registries ÷ new signups (this period). Can exceed 100% when older cohorts stay active alongside fresh signups."
+          change={activeRateTrend.change}
+          changePositive={activeRateTrend.changePositive}
+          subtitle="vs prev period"
         />
         <KPICard
           title="Extension Adoption"
@@ -148,18 +163,40 @@ export default function OverviewPage() {
         />
       </div>
 
-      {/* Signups Trend */}
+      {/* Signups Trend + Active Registries overlay */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Daily Signups</h2>
-        {signups.isLoading ? (
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Daily Signups &amp; Active Registries</h2>
+        {(signups.isLoading || dailyActive.isLoading) ? (
           <div className="h-64 flex items-center justify-center text-gray-400">Loading...</div>
         ) : (
           <TrendChart
-            data={(signups.data ?? []).filter(d => {
-              const date = new Date(d.day)
-              return date >= dateRange.start && date <= dateRange.end
-            }).map((d) => ({ day: d.day, signups: d.signups }))}
-            lines={[{ key: 'signups', color: '#6366f1', label: 'Signups' }]}
+            data={(() => {
+              // Merge the two series into one row-per-day so the chart can
+              // render both lines on a shared x-axis. Days present in either
+              // series become a row; missing values become 0 so the line
+              // still draws across the range.
+              const activeByDay = new Map<string, number>()
+              for (const d of dailyActive.data ?? []) activeByDay.set(d.day, d.active_registries)
+              const signupByDay = new Map<string, number>()
+              for (const d of signups.data ?? []) signupByDay.set(d.day, d.signups)
+
+              const allDays = new Set<string>([...activeByDay.keys(), ...signupByDay.keys()])
+              return Array.from(allDays)
+                .sort()
+                .filter((day) => {
+                  const date = new Date(day)
+                  return date >= dateRange.start && date <= dateRange.end
+                })
+                .map((day) => ({
+                  day,
+                  signups: signupByDay.get(day) ?? 0,
+                  active_registries: activeByDay.get(day) ?? 0,
+                }))
+            })()}
+            lines={[
+              { key: 'signups', color: '#6366f1', label: 'Signups' },
+              { key: 'active_registries', color: '#10b981', label: 'Active Registries' },
+            ]}
             height={280}
             xAxisLabel="Date"
             yAxisLabel="Count"
