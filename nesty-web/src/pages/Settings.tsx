@@ -534,7 +534,7 @@ export default function Settings() {
                 setDueDate(e.target.value)
                 setShowDueDateWarning(false)
               }}
-              className="w-full rounded-xl border border-border bg-white px-4 py-3 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+              className="block w-full min-w-0 max-w-full box-border appearance-none rounded-xl border border-border bg-white px-4 py-3 text-foreground text-center focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors [&::-webkit-date-and-time-value]:text-center [&::-webkit-date-and-time-value]:min-h-[1.5em]"
               dir="ltr"
             />
 

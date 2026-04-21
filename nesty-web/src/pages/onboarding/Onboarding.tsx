@@ -8,6 +8,7 @@ import { ArrowRight, ArrowLeft, Calendar, Sparkles, Baby, Mail } from 'lucide-re
 import OnboardingCelebration from '../../components/OnboardingCelebration'
 import FadedIconsBackground from '../../components/animations/FadedIconsBackground'
 import { trackOnboardingStep, trackOnboardingCompleted, trackRegistryCreated } from '../../utils/tracking'
+import { getAttributionForProfile } from '../../utils/utmTracking'
 
 // ── Fruit mapping for welcome email (weeks 12-40) ──
 const FRUIT_BY_WEEK: Record<number, { name: string; emoji: string }> = {
@@ -172,6 +173,9 @@ export default function Onboarding() {
       if (data.referralSource) {
         profileData.referral_source = data.referralSource
       }
+
+      // Include UTM attribution captured on landing (first-touch)
+      Object.assign(profileData, getAttributionForProfile())
 
       // Upsert profile (insert if not exists, update if exists)
       const { error: profileError } = await supabase
