@@ -12,6 +12,201 @@ Nesty is a baby registry platform with two main components:
 
 ---
 
+## Brand, Voice & Design System
+
+**Read this before writing any UI code or user-facing copy.** Canonical brand docs live in Obsidian at `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Nesty-Obsidian/Brand/` (Brand-Kit, Brand-Voice-Guide, Design-System, Ad-Copy-Bank). This section mirrors them for in-repo reference — **if they drift, the Obsidian files win**.
+
+### Brand in One Line
+
+Nesty sounds and feels like **your cool older sister who already had a baby** — warm, funny, Israeli to the core, knows what actually matters, and would never try to sell you something you don't need.
+
+- **Tagline:** בונים קן, לא מחסן (Building a nest, not a warehouse)
+- **Promise:** The trusted, smart companion for Israeli expecting parents — freedom of choice, honest guidance, zero pressure.
+
+### Voice & Tone
+
+**Four voice attributes — every string should pass all four:**
+
+1. **Warm (חמה)** — Like a WhatsApp message from a friend, not corporate copy.
+2. **Relatable (קרובה)** — Reference real Israeli life: WhatsApp chaos, דודה בלה, duplicate onesies.
+3. **Empowering (מעצימה)** — "You choose, we organize." Never "we recommend."
+4. **Slightly funny (עם קריצה)** — Humor that acknowledges the chaos. Never tries too hard, never self-deprecating about the product.
+
+**Tone by surface:**
+
+| Surface | Tone | Example |
+|---|---|---|
+| Onboarding | Supportive, exciting | "בואי נבנה את הקן המושלם" |
+| Empty states | Gentle, inviting | "הרשימה שלך מחכה לפריט הראשון" |
+| Success / confirmations | Warm, a little celebratory | "הרשימה שלך מתחילה להיראות מדהים 🪺" |
+| Error messages | Reassuring, never blaming | "משהו השתבש, אבל אנחנו על זה" |
+| Push / in-app nudges | Brief, exciting | "מישהו קנה מהרשימה שלך! 🎁" |
+| Destructive confirmations | Clear, calm, no drama | Plain question + clear action verbs |
+| Support / legal | Warm, helpful, direct | Human first, formal second |
+
+**Hebrew copy rules:**
+1. **Default to feminine singular (את)** — primary audience is expecting mothers. Switch to plural (אתם) only when explicitly addressing couples.
+2. **"Nesty" is always English**, even inside Hebrew sentences.
+3. **Short sentences** — max ~15 words per UI string.
+4. **Everyday Hebrew, not literary.** No corporate register.
+5. **RTL always** — `dir="rtl"` on the root. Use logical properties (`ms-`, `me-`) not `ml-`/`mr-`.
+
+**Words we use ✅:** רשימה · קן · חינם · בקליק · פשוט · שלחי · שתפי · מתנות שתאהבי
+**Words we avoid ❌:** רכישה / קנייה / הזמנה (we're not a store) · מבצע / הנחה (not our business) · חובה / דחוף (no pressure) · "האפליקציה שלנו" (just say "Nesty") · aggressive CTAs ("קני עכשיו!", "מוגבל בזמן!")
+
+**Emoji rules:**
+- Max 1–2 per screen.
+- **Preferred:** 🪺 🎁 😉 ✨ 💜 🤍
+- **Never:** 🔥 💰 ⚡ 🚨 (too salesy / aggressive)
+- An emoji can replace the period at the end of a headline.
+
+**The voice test — run before shipping any copy:**
+1. Would a cool older sister say this? If not — rewrite.
+2. Does it sound Israeli or translated from English? If translated — rewrite.
+3. Is there a real emotion behind it, or just functional? If functional — add warmth.
+4. Would I be annoyed seeing this? If yes — dial it back.
+
+### Color System
+
+**All colors are already wired into `nesty-web/tailwind.config.js`.** Use Tailwind tokens — never hardcode hex in components.
+
+**Primary — Vintage Lavender 🟣**
+| Token | Hex | Usage |
+|---|---|---|
+| `primary` | `#86608e` | Main brand color. Buttons, CTAs, headers, links, logo |
+| `primary-dark` | `#6d4e74` | Hover/active states, emphasis |
+| `primary-light` | `#a891ad` | Subtle accents |
+| `primary-foreground` | `#ffffff` | Text on primary backgrounds |
+
+**Secondary — Lilac Ash**
+| Token | Hex | Usage |
+|---|---|---|
+| `secondary` | `#a891ad` | Supporting color |
+| `secondary-dark` | `#917a96` | Hover |
+| `secondary-light` | `#b9a4bd` | Soft backgrounds |
+
+**Accents — Soft Rose & Peach**
+| Token | Hex | Usage |
+|---|---|---|
+| `accent-pink` | `#f4acb7` | Highlights, badges, celebrations, warmth |
+| `accent-pink-light` | `#ffcad4` | Soft backgrounds, cards, gentle emphasis |
+| `accent-peach` | `#ffd8d7` | Warm accents, friendly alerts |
+
+**Neutrals**
+| Token | Hex | Usage |
+|---|---|---|
+| `background` | `#faf8fb` | Page background |
+| `card` | `#ffffff` | Cards, modals, content surfaces |
+| `border` | `#e8e4e9` | Borders, dividers |
+| `muted` | `#c9c2cb` | Disabled states, placeholders |
+| `muted-foreground` | `#6b6b6b` | Secondary text, captions, metadata |
+| `foreground` | `#1a1a1a` | Primary text, headings |
+
+**Status**
+| Token | Hex | Usage |
+|---|---|---|
+| `success` | `#22c55e` | Confirmations, positive actions |
+| `destructive` | `#ef4444` | Errors, warnings, destructive actions |
+
+**Color combinations:**
+
+| Combo | Background | Text | Accent | Use for |
+|---|---|---|---|---|
+| Classic | `background` | `foreground` | `primary` | Default surfaces, trust-building |
+| Warm | `accent-pink-light` | `foreground` | `primary` | Emotional / gift-giving moments |
+| Bold | `primary` | `white` | `accent-pink` | Primary CTAs, hero sections |
+| Soft | `white` | `primary-dark` | `accent-peach` | Testimonials, gentle messaging |
+
+**Color rules ❌:**
+- **No baby blue or baby pink as primary** — we're not a gender-reveal brand.
+- **No cold/blue tones** — they break the warm palette and feel clinical.
+- **Don't invent colors** — add to `tailwind.config.js` and this file if truly needed.
+
+### Typography
+
+- **Primary font:** `Assistant` (Google Fonts, Hebrew-optimized sans-serif)
+- **Fallback:** `Heebo` → system sans-serif
+- Already set as `font-sans` in `tailwind.config.js`. Just use `font-sans` (or nothing — it's default).
+
+| Element | Weight | Size |
+|---|---|---|
+| Headline (H1/hero) | Bold (700) | `text-3xl` to `text-5xl`, line-height 1.2 |
+| Subheadline (H2) | SemiBold (600) | `text-2xl` to `text-3xl` |
+| Section heading (H3) | SemiBold (600) | `text-xl` to `text-2xl` |
+| Body | Regular (400) | `text-base` (16px), line-height 1.5–1.6 |
+| Small / caption | Regular (400) | `text-sm` (14px), `muted-foreground` |
+| Button label | Bold (700) | `text-base` to `text-lg` |
+
+**Typography rules:**
+- Never more than 2 font weights in one view.
+- Headlines tight line-height (1.2), body loose (1.5).
+- "Nesty" is always English, same casing, even inside Hebrew paragraphs.
+
+### Spacing, Radius, Shadow
+
+- **Border radius:** generous and soft — `rounded-xl` (1rem) for cards, `rounded-2xl` (1.5rem) for modals, `rounded-3xl` (2rem) for hero elements. Buttons/inputs: `rounded-xl` minimum.
+- **Spacing:** Tailwind 4px base. Cards and modals get generous padding — `p-6` minimum, `p-8` for modals.
+- **Shadows:** subtle, never heavy. Use `shadow-sm` or `shadow-md`. Avoid dramatic drop shadows.
+
+### Component Patterns
+
+Visual defaults — deviate only with reason.
+
+- **Cards** — `bg-card`, `border border-border`, `rounded-xl`, `shadow-sm`, `p-6`.
+- **Primary buttons** — `bg-primary text-primary-foreground hover:bg-primary-dark rounded-xl px-6 py-3 font-bold`.
+- **Secondary buttons** — outline variant, `border-primary text-primary hover:bg-primary/5`.
+- **Destructive buttons** — `bg-destructive text-destructive-foreground`, confirm before any irreversible action.
+- **Modals** — centered overlay, `bg-card rounded-2xl p-8`, dim backdrop, close on Esc + click-outside.
+- **Forms** — full-width inputs, Hebrew labels **above** the field, error message below in `text-destructive text-sm`.
+- **Empty states** — soft illustration or emoji + warm Hebrew line + clear CTA. Never a bare "No data."
+- **Inputs** — `rounded-xl`, `border-border`, `focus:border-primary focus:ring-primary/20`.
+
+### RTL Rules (non-negotiable)
+
+1. Root container: `<div dir="rtl" className="font-sans">`.
+2. Use **logical properties**: `ms-*` over `ml-*`, `pe-*` over `pr-*`.
+3. Flex layouts mirror automatically — don't manually reverse unless there's a reason.
+4. **Directional icons** (arrows, chevrons, back buttons) **must flip** in RTL. Use `rtl:scale-x-[-1]` or RTL icon variants.
+5. Numbers and Latin text inside Hebrew remain LTR — browsers handle this, don't override.
+
+### Imagery
+
+- **Warm, real, Israeli.** Natural light, soft focus, genuine moments.
+- **Reflect Israeli society** — Ashkenazi, Mizrahi, Ethiopian, Arab, Russian families.
+- **Never:** generic Western stock photos, clinical hospital settings, blue/pink gender stereotypes, competitor screenshots.
+- **Illustrations:** minimal, line-based, soft curves, brand colors only.
+
+### Brand Do's and Don'ts (quick reference)
+
+**Do ✅**
+- Hebrew first, every surface.
+- Warm, slightly humorous, relatable tone.
+- Reference real Israeli parenting life.
+- One clear CTA per screen.
+- Visual consistency — same radius, shadows, palette everywhere.
+
+**Don't ❌**
+- Aggressive sales language ("BUY NOW!", "LIMITED TIME!").
+- Baby blue / baby pink as primary colors.
+- Frame Nesty as a store — we're a guide, not a retailer.
+- Formal / corporate Hebrew.
+- Compromise trust for conversion.
+
+### Before Shipping a Feature — UI checklist
+
+- [ ] All copy passes the **4-question voice test**.
+- [ ] Colors use Tailwind tokens — no hardcoded hex.
+- [ ] Fonts use `font-sans` (Assistant/Heebo), no custom font imports.
+- [ ] `dir="rtl"` respected; directional icons flipped; logical spacing props used.
+- [ ] Border radius is `rounded-xl` or softer.
+- [ ] Empty states have a warm Hebrew message + CTA.
+- [ ] Error messages are reassuring, not blaming.
+- [ ] Max 1–2 emoji per screen, from the approved list.
+- [ ] Feminine-singular Hebrew by default.
+- [ ] No forbidden words (רכישה, מבצע, חובה, etc.).
+
+---
+
 ## Development Commands
 
 ### Web Application
