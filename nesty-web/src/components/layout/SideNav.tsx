@@ -99,10 +99,10 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
             return (
               <Link
                 to={dashboardItem.path}
-                data-tutorial="nav-dashboard-mobile"
                 className="flex flex-col items-center -mt-5 relative z-10"
               >
                 <div
+                  data-tutorial="nav-dashboard-mobile"
                   className={`
                     w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 active:scale-90
                     ${dashActive

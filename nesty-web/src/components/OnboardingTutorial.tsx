@@ -196,7 +196,7 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
     if (mobile && step.highlightNav && targetRect) {
       return {
         position: 'fixed',
-        bottom: `${window.innerHeight - targetRect.top + padding + 8}px`,
+        bottom: `${window.innerHeight - targetRect.top + padding + 24}px`,
         left: '50%',
         transform: 'translateX(-50%)',
         maxWidth: `calc(100vw - ${padding * 2}px)`,
