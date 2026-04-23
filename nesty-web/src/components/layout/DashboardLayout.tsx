@@ -14,6 +14,7 @@ export default function DashboardLayout() {
   const location = useLocation()
   const [giftsCount, setGiftsCount] = useState(0)
   const [showTutorial, setShowTutorial] = useState(false)
+  const [tutorialStepId, setTutorialStepId] = useState<string | null>(null)
   // Track if tutorial check is complete (so address modal knows when it's safe to show)
   const [tutorialCheckComplete, setTutorialCheckComplete] = useState(false)
 
@@ -136,6 +137,7 @@ export default function DashboardLayout() {
         <OnboardingTutorial
           onComplete={handleTutorialComplete}
           onSkip={handleTutorialSkip}
+          onStepChange={setTutorialStepId}
         />
       )}
 
@@ -150,6 +152,7 @@ export default function DashboardLayout() {
           giftsCount,
           refreshGiftsCount: fetchGiftsCount,
           tutorialActive: showTutorial,
+          tutorialStepId,
           // tutorialCheckComplete is false until we've decided whether to show tutorial or not
           tutorialCheckComplete
         }} />
@@ -165,6 +168,7 @@ interface DashboardLayoutContext {
   giftsCount: number
   refreshGiftsCount: () => Promise<void>
   tutorialActive: boolean
+  tutorialStepId: string | null
   tutorialCheckComplete: boolean
 }
 

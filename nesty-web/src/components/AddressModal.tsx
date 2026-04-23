@@ -14,7 +14,7 @@ interface AddressModalProps {
 export default function AddressModal({ isOpen, onClose, registryId, onSave }: AddressModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [hideAddress, setHideAddress] = useState(true)
+  const [hideAddress, setHideAddress] = useState(false)
   const [address, setAddress] = useState({
     city: '',
     street: '',
@@ -24,6 +24,11 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
   })
 
   const handleSave = async () => {
+    if (!address.city.trim() || !address.street.trim()) {
+      setError('יש למלא עיר ורחוב לפני השמירה')
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -45,7 +50,7 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
       onSave()
       onClose()
     } catch (err) {
-      setError('שגיאה בשמירת הכתובת. נסו שוב.')
+      setError('שגיאה בשמירת הכתובת. נסי שוב.')
       console.error('Error saving address:', err)
     } finally {
       setIsLoading(false)
@@ -86,7 +91,7 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
               לאן לשלוח את המתנות?
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base">
-              הוסיפו כתובת כדי שחברים ומשפחה ידעו לאן לשלוח
+              הוסיפי כתובת כדי שחברים ומשפחה ידעו לאן לשלוח
             </p>
           </div>
 
@@ -132,21 +137,22 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
             />
           </div>
 
-          {/* Hide Address Toggle */}
+          {/* Show Address Toggle — ON by default (visible); turn OFF to hide */}
           <div className="mt-6 p-4 bg-muted-light/50 rounded-xl">
             <button
+              type="button"
               onClick={() => setHideAddress(!hideAddress)}
               className="w-full flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
                 {hideAddress ? (
-                  <EyeOff className="w-5 h-5 text-primary" />
+                  <EyeOff className="w-5 h-5 text-muted-foreground" />
                 ) : (
-                  <Eye className="w-5 h-5 text-muted-foreground" />
+                  <Eye className="w-5 h-5 text-primary" />
                 )}
                 <div className="text-right">
                   <p className="font-medium text-foreground">
-                    {hideAddress ? 'הכתובת מוסתרת' : 'הכתובת גלויה'}
+                    {hideAddress ? 'הכתובת מוסתרת' : 'הצג את הכתובת'}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {hideAddress
@@ -157,12 +163,12 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
               </div>
               <div
                 className={`w-12 h-7 rounded-full transition-colors relative ${
-                  hideAddress ? 'bg-primary' : 'bg-muted'
+                  hideAddress ? 'bg-muted' : 'bg-primary'
                 }`}
               >
                 <div
-                  className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    hideAddress ? 'right-1' : 'left-1'
+                  className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all ${
+                    hideAddress ? 'left-1' : 'right-1'
                   }`}
                 />
               </div>
@@ -176,7 +182,7 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
               isLoading={isLoading}
               className="w-full"
             >
-              שמור כתובת
+              שמרי כתובת
             </Button>
             <button
               onClick={handleSkip}

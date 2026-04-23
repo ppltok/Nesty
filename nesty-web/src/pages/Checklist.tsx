@@ -8,6 +8,7 @@ import {
 import AddItemModal from '../components/AddItemModal'
 import { CATEGORIES, ITEMS_DATA } from '../data/categories'
 import { supabase } from '../lib/supabase'
+import { useDashboardLayout } from '../components/layout/DashboardLayout'
 import type { ChecklistPreference, PriorityLevel } from '../types'
 
 // Category accent colors for left border + header tint
@@ -29,6 +30,7 @@ const CATEGORY_COLORS: Record<string, { border: string; bg: string; text: string
 
 export default function Checklist() {
   const { user, registry, isLoading: authLoading } = useAuth()
+  const { tutorialActive, tutorialStepId } = useDashboardLayout()
 
   // For co-parent support: checklist data is stored under the registry owner's user_id
   // Both owner and partner read/write the same checklist
@@ -106,6 +108,28 @@ export default function Checklist() {
   useEffect(() => {
     if (checklistUserId) fetchPreferences()
   }, [checklistUserId, fetchPreferences])
+
+  // Tutorial: when the "recommended-products" step becomes active, auto-expand
+  // the strollers category and open the products popover for the first item
+  // that has recommendations, so the spotlight has something to point at.
+  useEffect(() => {
+    if (!tutorialActive || tutorialStepId !== 'recommended-products') return
+
+    setCollapsedCategories(prev => {
+      if (!prev.has('strollers')) return prev
+      const next = new Set(prev)
+      next.delete('strollers')
+      return next
+    })
+
+    const strollers = CATEGORIES.find(c => c.id === 'strollers')
+    const firstWithProducts = strollers?.suggestedItems.find(
+      name => !!ITEMS_DATA[name]?.products?.length
+    )
+    if (firstWithProducts) {
+      setActiveProductsPopover(firstWithProducts)
+    }
+  }, [tutorialActive, tutorialStepId])
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -647,12 +671,12 @@ export default function Checklist() {
               key={category.id}
               ref={el => { categoryRefs.current[category.id] = el }}
               data-category-id={category.id}
-              data-tutorial={category.id === 'strollers' ? 'checklist-category' : undefined}
               className="bg-white rounded-2xl border border-[#e7e0ec]/80 overflow-hidden shadow-sm"
               style={{ borderRight: `4px solid ${colors.border}` }}
             >
               {/* Category Header */}
               <button
+                data-tutorial={category.id === 'strollers' ? 'checklist-category' : undefined}
                 onClick={() => toggleCategoryCollapse(category.id)}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f9f9f9] transition-colors"
                 style={{ backgroundColor: isCollapsed ? 'transparent' : colors.bg + '40' }}
@@ -838,6 +862,7 @@ export default function Checklist() {
                         {hasProducts && (
                           <div className="mx-2 sm:mx-3 mb-2 mr-8 sm:mr-10">
                             <button
+                              data-tutorial={category.id === 'strollers' ? 'recommended-products' : undefined}
                               onClick={() => setActiveProductsPopover(activeProductsPopover === item ? null : item)}
                               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
                                 activeProductsPopover === item
