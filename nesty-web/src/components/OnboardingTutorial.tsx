@@ -192,14 +192,15 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
     const tooltipWidth = mobile ? Math.min(340, window.innerWidth - 32) : 360
     const tooltipHeight = 300
 
-    // For mobile with nav items at bottom, always position tooltip above the nav
-    if (mobile && step.highlightNav && targetRect) {
+    // For nav highlight steps, always center the tooltip so it never overlaps
+    // with the spotlight on the nav button (works on both mobile and desktop)
+    if (step.highlightNav && targetRect) {
       return {
         position: 'fixed',
-        bottom: `${window.innerHeight - targetRect.top + padding + 24}px`,
+        top: mobile ? '35%' : '50%',
         left: '50%',
-        transform: 'translateX(-50%)',
-        maxWidth: `calc(100vw - ${padding * 2}px)`,
+        transform: 'translate(-50%, -50%)',
+        maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
       }
     }
 
@@ -268,7 +269,7 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
                   y={targetRect.top - 8}
                   width={targetRect.width + 16}
                   height={targetRect.height + 16}
-                  rx="16"
+                  rx={Math.abs(targetRect.width - targetRect.height) < 4 ? (targetRect.width + 16) / 2 : 16}
                   fill="black"
                 />
               </mask>
@@ -290,7 +291,9 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
       {/* Spotlight ring around target */}
       {targetRect && (
         <div
-          className="absolute border-2 border-[#d0bcff] rounded-2xl pointer-events-none animate-pulse"
+          className={`absolute border-2 border-[#d0bcff] pointer-events-none animate-pulse ${
+            Math.abs(targetRect.width - targetRect.height) < 4 ? 'rounded-full' : 'rounded-2xl'
+          }`}
           style={{
             left: targetRect.left - 8,
             top: targetRect.top - 8,

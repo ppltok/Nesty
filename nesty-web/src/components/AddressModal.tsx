@@ -14,7 +14,7 @@ interface AddressModalProps {
 export default function AddressModal({ isOpen, onClose, registryId, onSave }: AddressModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [hideAddress, setHideAddress] = useState(true)
+  const [hideAddress, setHideAddress] = useState(false)
   const [address, setAddress] = useState({
     city: '',
     street: '',
@@ -24,6 +24,11 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
   })
 
   const handleSave = async () => {
+    if (!address.city.trim() || !address.street.trim()) {
+      setError('יש למלא עיר ורחוב כדי לשמור את הכתובת')
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
