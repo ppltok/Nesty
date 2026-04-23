@@ -6,7 +6,7 @@ import type { Item } from '../types'
 import { extractProductFromUrl } from '../lib/productExtraction'
 import { useAuth } from '../contexts/AuthContext'
 import { useExtensionDetection } from '../hooks/useExtensionDetection'
-import { trackItemAdded, trackItemEdited } from '../utils/tracking'
+import { trackItemAdded, trackItemEdited, trackGoogleAdsFirstProductConversion } from '../utils/tracking'
 
 interface AddItemModalProps {
   isOpen: boolean
@@ -310,6 +310,11 @@ export default function AddItemModal({
             source,
             has_extension: extensionInstalled,
           })
+
+          // Google Ads first-product conversion (deduped per-user via localStorage)
+          if (session?.user?.id) {
+            trackGoogleAdsFirstProductConversion(session.user.id)
+          }
         }
       }
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { isSafeRedirect } from '../../lib/authRedirect'
+import { trackGoogleAdsSignupConversion } from '../../utils/tracking'
 
 const ADMIN_EMAIL = 'hello@nestyil.com'
 
@@ -157,6 +158,9 @@ export default function AuthCallback() {
         session.user.email_confirmed_at &&
         normalizedEmail
       ) {
+        // Google Ads signup conversion (deduped per-user via localStorage)
+        trackGoogleAdsSignupConversion(session.user.id)
+
         let hasCoParentInvite = false
         try {
           const { data: invites } = await supabase
