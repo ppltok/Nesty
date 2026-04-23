@@ -137,7 +137,7 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
             />
           </div>
 
-          {/* Hide Address Toggle */}
+          {/* Address Visibility Toggle */}
           <div className="mt-6 p-4 bg-muted-light/50 rounded-xl">
             <button
               onClick={() => setHideAddress(!hideAddress)}
@@ -145,13 +145,13 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
             >
               <div className="flex items-center gap-3">
                 {hideAddress ? (
-                  <EyeOff className="w-5 h-5 text-primary" />
+                  <EyeOff className="w-5 h-5 text-destructive" />
                 ) : (
-                  <Eye className="w-5 h-5 text-muted-foreground" />
+                  <Eye className="w-5 h-5 text-primary" />
                 )}
                 <div className="text-right">
-                  <p className="font-medium text-foreground">
-                    {hideAddress ? 'הכתובת מוסתרת' : 'הכתובת גלויה'}
+                  <p className={`font-medium ${hideAddress ? 'text-destructive' : 'text-foreground'}`}>
+                    {hideAddress ? 'הכתובת מוסתרת' : 'הכתובת גלויה לחברים ומשפחה ✓'}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {hideAddress
@@ -162,12 +162,12 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
               </div>
               <div
                 className={`w-12 h-7 rounded-full transition-colors relative ${
-                  hideAddress ? 'bg-primary' : 'bg-muted'
+                  hideAddress ? 'bg-muted' : 'bg-primary'
                 }`}
               >
                 <div
                   className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    hideAddress ? 'right-1' : 'left-1'
+                    hideAddress ? 'left-1' : 'right-1'
                   }`}
                 />
               </div>
