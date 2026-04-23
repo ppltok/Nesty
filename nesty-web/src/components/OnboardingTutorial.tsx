@@ -96,7 +96,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'settings',
     title: 'הגדרות',
-    description: 'הוסיפו כתובת למשלוח כדי שקונים ידעו לאן לשלוח.\nאפשר גם לערוך את שם הרשימה, לנהל פרטיות, ולהתנתק.',
+    description: 'הוסיפו כתובת למשלוח כדי שקונים ידעו לאן לשלוח.\nאפשר גם להוסיף הורה שני לניהול הרשימה, לערוך את שם הרשימה, לנהל פרטיות, ולהתנתק.',
     navItemId: 'settings',
     route: '/settings',
     position: 'center',
