@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import {
   ChevronDown, Check, Plus, Trash2, Sparkles,
@@ -6,6 +7,10 @@ import {
   EyeOff, ShoppingBag, ExternalLink, Search
 } from 'lucide-react'
 import AddItemModal from '../components/AddItemModal'
+import ShareModal from '../components/ShareModal'
+import CheckoutRegistryPromptModal from '../components/popups/CheckoutRegistryPromptModal'
+import ShareChecklistPromptModal from '../components/popups/ShareChecklistPromptModal'
+import { usePopupState } from '../hooks/usePopups'
 import { CATEGORIES, ITEMS_DATA } from '../data/categories'
 import { supabase } from '../lib/supabase'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
@@ -29,8 +34,10 @@ const CATEGORY_COLORS: Record<string, { border: string; bg: string; text: string
 }
 
 export default function Checklist() {
-  const { user, registry, isLoading: authLoading } = useAuth()
+  const { user, profile, registry, isLoading: authLoading } = useAuth()
   const { tutorialActive, tutorialStepId } = useDashboardLayout()
+  const navigate = useNavigate()
+  const popups = usePopupState(user?.id)
 
   // For co-parent support: checklist data is stored under the registry owner's user_id
   // Both owner and partner read/write the same checklist
@@ -72,6 +79,12 @@ export default function Checklist() {
   const [savingNotes, setSavingNotes] = useState<Set<string>>(new Set())
   const [savedNotes, setSavedNotes] = useState<Set<string>>(new Set())
   const [activeCategory, setActiveCategory] = useState<string>(CATEGORIES[0]?.id || '')
+
+  // Engagement popups
+  const [registryItemsCount, setRegistryItemsCount] = useState<number | null>(null)
+  const [showCheckoutPrompt, setShowCheckoutPrompt] = useState(false)
+  const [showSharePrompt, setShowSharePrompt] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   // Refs
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -140,6 +153,21 @@ export default function Checklist() {
       Object.values(svdTimers).forEach(clearTimeout)
     }
   }, [])
+
+  // Fetch registry items count for engagement popups + refetch when modal closes
+  // (item added via "הוסף לרשימה" creates a row in items table)
+  const fetchItemsCount = useCallback(async () => {
+    if (!registry) return
+    const { count, error } = await supabase
+      .from('items')
+      .select('id', { count: 'exact', head: true })
+      .eq('registry_id', registry.id)
+    if (!error && typeof count === 'number') setRegistryItemsCount(count)
+  }, [registry])
+
+  useEffect(() => {
+    if (registry) fetchItemsCount()
+  }, [registry, fetchItemsCount])
 
   // === DB helpers (unchanged) ===
   const getPreference = (categoryId: string, itemName: string): ChecklistPreference | undefined => {
@@ -361,6 +389,9 @@ export default function Checklist() {
   const checkedEssential = essentialItems.filter(i => isSuggestionChecked(i.categoryId, i.name)).length
   const nestingScore = essentialItems.length > 0 ? Math.round((checkedEssential / essentialItems.length) * 100) : 0
   const remainingEssential = essentialItems.length - checkedEssential
+  const treatItems = allItems.filter(i => getPriority(i.categoryId, i.name) === 'nice_to_have')
+  const checkedTreats = treatItems.filter(i => isSuggestionChecked(i.categoryId, i.name)).length
+  const treatScore = treatItems.length > 0 ? Math.round((checkedTreats / treatItems.length) * 100) : 0
 
   // === NEW: Category collapse toggle ===
   const toggleCategoryCollapse = (categoryId: string) => {
@@ -429,6 +460,30 @@ export default function Checklist() {
     return () => observer.disconnect()
   }, [isLoading])
 
+  // === Engagement popup triggers ===
+  // Fire 5-item "check out your nest" once registry hits 5 items
+  useEffect(() => {
+    if (!popups.loaded || !user) return
+    if (registryItemsCount === null) return
+    if (registryItemsCount < 5) return
+    if (popups.dismissed.checkout_registry_5) return
+    setShowCheckoutPrompt(true)
+  }, [popups.loaded, popups.dismissed.checkout_registry_5, registryItemsCount, user])
+
+  // Fire 60% checklist completion share prompt
+  const checklistCompletionPct = useMemo(() => {
+    return totalItems > 0 ? (checkedItems / totalItems) * 100 : 0
+  }, [totalItems, checkedItems])
+
+  useEffect(() => {
+    if (!popups.loaded || !user) return
+    if (checklistCompletionPct < 60) return
+    if (popups.dismissed.share_prompt_checklist_60) return
+    if (profile?.registry_shared_at) return
+    if (showCheckoutPrompt) return
+    setShowSharePrompt(true)
+  }, [popups.loaded, popups.dismissed.share_prompt_checklist_60, checklistCompletionPct, profile?.registry_shared_at, showCheckoutPrompt, user])
+
   // Has any active filters?
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || priorityFilter !== 'all'
 
@@ -465,10 +520,39 @@ export default function Checklist() {
           isOpen={showAddItemModal}
           onClose={() => { handleCloseModal(); setPrefilledProductData(undefined); setIsFromRecommendedProduct(false) }}
           registryId={registry.id}
-          onSave={() => { handleCloseModal(); setPrefilledProductData(undefined); setIsFromRecommendedProduct(false) }}
+          onSave={() => { handleCloseModal(); setPrefilledProductData(undefined); setIsFromRecommendedProduct(false); fetchItemsCount() }}
           prefilledData={prefilledProductData || (prefilledCategory ? { category: prefilledCategory } : undefined)}
           forceManualTab={isFromRecommendedProduct}
           highlightColor={isFromRecommendedProduct}
+        />
+      )}
+
+      {/* Share Modal */}
+      {registry && (
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          registrySlug={registry.slug}
+          ownerName={profile?.first_name || 'משתמש'}
+          registryId={registry.id}
+          userId={user?.id}
+          itemsCount={registryItemsCount ?? 0}
+        />
+      )}
+
+      {/* Engagement popups */}
+      {showCheckoutPrompt && user && registry && (
+        <CheckoutRegistryPromptModal
+          userId={user.id}
+          onClose={() => setShowCheckoutPrompt(false)}
+          onView={() => window.open(`/registry/${registry.slug}`, '_blank')}
+        />
+      )}
+      {showSharePrompt && user && (
+        <ShareChecklistPromptModal
+          userId={user.id}
+          onClose={() => setShowSharePrompt(false)}
+          onShare={() => setShowShareModal(true)}
         />
       )}
 
@@ -519,13 +603,55 @@ export default function Checklist() {
                 </svg>
                 <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#6750a4]">{nestingScore}%</span>
               </div>
-              <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl font-bold text-[#1d192b] truncate">צ'קליסט ההכנה</h1>
-                <p className="text-xs text-[#49454f] truncate">
-                  <span className="font-semibold text-[#6750a4]">{checkedItems}</span>/{totalItems} פריטים
-                  {remainingEssential > 0 && <span className="text-[#b3261e]"> · {remainingEssential} חובה נותרו</span>}
-                  {remainingEssential === 0 && checkedItems > 0 && <span className="text-[#00c875]"> · כל החובה הושלמו! 🎉</span>}
-                </p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-lg sm:text-xl font-bold text-[#1d192b] truncate">צ'קליסט ההכנה</h1>
+                  {essentialItems.length > 0 && nestingScore === 100 && (
+                    <span className="inline-flex items-center gap-1 bg-[#e8f5e9] text-[#2e7d32] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      כל החובה הושלמו 🪺
+                    </span>
+                  )}
+                </div>
+                {totalItems === 0 ? (
+                  <p className="text-xs text-[#49454f] mt-1">בואי נתחיל לבנות את הקן 🪺</p>
+                ) : (
+                  <div className="mt-1 space-y-1 max-w-[260px]">
+                    {essentialItems.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-[#92400e] w-10 flex-shrink-0">חובה</span>
+                        <div className="flex-1 h-1.5 bg-[#fef3c7] rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{
+                              width: `${nestingScore}%`,
+                              backgroundColor: nestingScore === 100 ? '#00c875' : '#f59e0b',
+                            }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-medium text-[#49454f] tabular-nums w-9 text-left flex-shrink-0">
+                          {checkedEssential}/{essentialItems.length}
+                        </span>
+                      </div>
+                    )}
+                    {treatItems.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold text-[#86608e] w-10 flex-shrink-0">פינוקים</span>
+                        <div className="flex-1 h-1.5 bg-[#f3edff] rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{
+                              width: `${treatScore}%`,
+                              backgroundColor: treatScore === 100 ? '#00c875' : '#a891ad',
+                            }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-medium text-[#49454f] tabular-nums w-9 text-left flex-shrink-0">
+                          {checkedTreats}/{treatItems.length}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -678,11 +804,18 @@ export default function Checklist() {
               <button
                 data-tutorial={category.id === 'strollers' ? 'checklist-category' : undefined}
                 onClick={() => toggleCategoryCollapse(category.id)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f9f9f9] transition-colors"
+                className="w-full flex items-center gap-4 px-4 py-4 hover:bg-[#f9f9f9] transition-colors"
                 style={{ backgroundColor: isCollapsed ? 'transparent' : colors.bg + '40' }}
               >
-                <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: colors.bg, color: colors.text }}>
-                  <CategoryIcon className="w-5 h-5" />
+                <div
+                  className="w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center transition-transform"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.bg} 0%, ${colors.bg}cc 100%)`,
+                    color: colors.text,
+                    boxShadow: `inset 0 0 0 1px ${colors.border}25`,
+                  }}
+                >
+                  <CategoryIcon className="w-9 h-9" />
                 </div>
                 <div className="flex-1 min-w-0 text-right">
                   <div className="flex items-center gap-2">

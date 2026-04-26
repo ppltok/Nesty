@@ -15,6 +15,8 @@ export type PopupKey =
   | 'share_prompt_5'
   | 'partner_invite_card'
   | 'extension_banner'
+  | 'checkout_registry_5'
+  | 'share_prompt_checklist_60'
 
 export interface PopupState {
   dismissed: Record<string, boolean>
