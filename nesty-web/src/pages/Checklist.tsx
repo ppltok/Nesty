@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import {
   ChevronDown, Check, Plus, Trash2, Sparkles,
@@ -36,7 +35,6 @@ const CATEGORY_COLORS: Record<string, { border: string; bg: string; text: string
 export default function Checklist() {
   const { user, profile, registry, isLoading: authLoading } = useAuth()
   const { tutorialActive, tutorialStepId } = useDashboardLayout()
-  const navigate = useNavigate()
   const popups = usePopupState(user?.id)
 
   // For co-parent support: checklist data is stored under the registry owner's user_id
@@ -388,7 +386,6 @@ export default function Checklist() {
   const essentialItems = allItems.filter(i => getPriority(i.categoryId, i.name) === 'essential')
   const checkedEssential = essentialItems.filter(i => isSuggestionChecked(i.categoryId, i.name)).length
   const nestingScore = essentialItems.length > 0 ? Math.round((checkedEssential / essentialItems.length) * 100) : 0
-  const remainingEssential = essentialItems.length - checkedEssential
   const treatItems = allItems.filter(i => getPriority(i.categoryId, i.name) === 'nice_to_have')
   const checkedTreats = treatItems.filter(i => isSuggestionChecked(i.categoryId, i.name)).length
   const treatScore = treatItems.length > 0 ? Math.round((checkedTreats / treatItems.length) * 100) : 0

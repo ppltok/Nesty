@@ -110,6 +110,7 @@ export default function PurchaseModal({
             buyerEmail: purchaseData.buyerEmail,
             itemName: purchaseData.itemName,
             itemPrice: purchaseData.itemPrice,
+            itemImage: item?.image_url || '',
             storeName: purchaseData.storeName,
             giftMessage: purchaseData.giftMessage,
           },
