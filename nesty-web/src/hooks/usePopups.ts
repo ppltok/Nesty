@@ -19,12 +19,23 @@ export type PopupKey =
   | 'share_prompt_checklist_60'
 
 export interface PopupState {
-  dismissed: Record<string, boolean>
+  // Values are either `true` (permanently dismissed) or an ISO timestamp
+  // string (nudge-style: last time the popup was shown/snoozed).
+  dismissed: Record<string, boolean | string>
   lastMilestoneShown: number
   loaded: boolean
 }
 
 const EMPTY: PopupState = { dismissed: {}, lastMilestoneShown: 0, loaded: false }
+
+/** True if the snooze timestamp is fresh (within `days`). */
+export function isNudgeFresh(value: boolean | string | undefined, days: number): boolean {
+  if (value === true) return true
+  if (typeof value !== 'string') return false
+  const ts = Date.parse(value)
+  if (Number.isNaN(ts)) return false
+  return Date.now() - ts < days * 24 * 60 * 60 * 1000
+}
 
 export function usePopupState(userId: string | undefined): PopupState {
   const [state, setState] = useState<PopupState>(EMPTY)
@@ -49,7 +60,7 @@ export function usePopupState(userId: string | undefined): PopupState {
         return
       }
       setState({
-        dismissed: (data.dismissed_popups as Record<string, boolean> | null) ?? {},
+        dismissed: (data.dismissed_popups as Record<string, boolean | string> | null) ?? {},
         lastMilestoneShown: (data.last_milestone_shown as number | null) ?? 0,
         loaded: true,
       })
@@ -62,7 +73,11 @@ export function usePopupState(userId: string | undefined): PopupState {
   return state
 }
 
-export async function dismissPopup(userId: string, key: PopupKey): Promise<void> {
+export async function dismissPopup(
+  userId: string,
+  key: PopupKey,
+  mode: 'permanent' | 'snooze' = 'permanent',
+): Promise<void> {
   // Read-modify-write the JSONB so we don't clobber other keys. This is a
   // single-user flow so the race window is negligible.
   const { data } = await supabase
@@ -70,8 +85,9 @@ export async function dismissPopup(userId: string, key: PopupKey): Promise<void>
     .select('dismissed_popups')
     .eq('id', userId)
     .maybeSingle()
-  const current = (data?.dismissed_popups as Record<string, boolean> | null) ?? {}
-  const next = { ...current, [key]: true }
+  const current = (data?.dismissed_popups as Record<string, boolean | string> | null) ?? {}
+  const value: boolean | string = mode === 'snooze' ? new Date().toISOString() : true
+  const next = { ...current, [key]: value }
   const { error } = await supabase
     .from('profiles')
     .update({ dismissed_popups: next })

@@ -21,15 +21,31 @@ import {
   UserMinus,
   ChevronLeft,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { RegistryInvitation, Profile } from '../types'
 
 export default function Settings() {
   const { registry, profile, refreshProfile, signOut, isRegistryOwner, user } = useAuth()
+  const location = useLocation()
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Hash navigation: scroll-into-view + temporary highlight when arriving via
+  // #co-parent (e.g. from PartnerInviteCard). Delay slightly so the section
+  // is mounted before scrolling.
+  useEffect(() => {
+    if (location.hash !== '#co-parent') return
+    const t = setTimeout(() => {
+      const el = document.getElementById('co-parent-section')
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      el.classList.add('highlight')
+      setTimeout(() => el.classList.remove('highlight'), 2400)
+    }, 200)
+    return () => clearTimeout(t)
+  }, [location.hash])
 
   // Profile name form
   const [nameForm, setNameForm] = useState({
@@ -761,7 +777,7 @@ export default function Settings() {
           </div>
 
           {/* Co-Parent Sharing Section */}
-          <div className="bg-white rounded-2xl border border-border p-6">
+          <div id="co-parent-section" className="bg-white rounded-2xl border border-border p-6 scroll-mt-24 transition-shadow [&.highlight]:ring-4 [&.highlight]:ring-primary/40 [&.highlight]:shadow-xl">
             <div className="flex items-center gap-3 mb-4">
               <Users className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-bold text-foreground">שיתוף הורה נוסף</h2>

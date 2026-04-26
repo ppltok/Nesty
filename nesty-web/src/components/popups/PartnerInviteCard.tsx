@@ -1,23 +1,23 @@
-import { Sparkles, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Users, X } from 'lucide-react'
 import { dismissPopup } from '../../hooks/usePopups'
 
 interface Props {
   userId: string
   onClose: () => void
-  onView: () => void
 }
 
-export default function CheckoutRegistryPromptModal({ userId, onClose, onView }: Props) {
-  const handleView = async () => {
-    // User actually viewed the registry — dismiss permanently.
-    await dismissPopup(userId, 'checkout_registry_5', 'permanent')
+export default function PartnerInviteCard({ userId, onClose }: Props) {
+  const navigate = useNavigate()
+
+  const handleInvite = async () => {
+    await dismissPopup(userId, 'partner_invite_card')
     onClose()
-    onView()
+    navigate('/settings#co-parent')
   }
 
   const handleDismiss = async () => {
-    // "Not now" — snooze for a few days, then nudge again.
-    await dismissPopup(userId, 'checkout_registry_5', 'snooze')
+    await dismissPopup(userId, 'partner_invite_card')
     onClose()
   }
 
@@ -33,19 +33,22 @@ export default function CheckoutRegistryPromptModal({ userId, onClose, onView }:
         </button>
 
         <div className="text-center">
-          <p className="text-5xl mb-3">🪺</p>
-          <h2 className="text-2xl font-bold text-[#1d192b] mb-2">הקן שלך מתחיל להיראות מדהים</h2>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#7c4dbd] to-[#9b62d4] flex items-center justify-center shadow-lg">
+            <Users className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-[#1d192b] mb-2">בונים את הקן ביחד</h2>
           <p className="text-sm text-[#49454f] mb-6 leading-relaxed">
-            כבר 5 פריטים ברשימה!<br />
-            תראי איך היא תיראה למשפחה ולחברים שתשתפי איתם.
+            תוסיפי את בן/בת הזוג לרשימה כדי שתוכלו לערוך, להוסיף ולעקוב יחד.
+            <br />
+            הקן הזה לא צריך להיות פרויקט של בן אדם אחד.
           </p>
 
           <button
-            onClick={handleView}
+            onClick={handleInvite}
             className="w-full flex items-center justify-center gap-2 bg-gradient-to-l from-[#7c4dbd] to-[#9b62d4] text-white font-bold py-3.5 px-6 rounded-2xl hover:opacity-90 transition-opacity mb-3"
           >
-            <Sparkles className="w-5 h-5" />
-            תראי איך זה נראה לאורחים
+            <Users className="w-5 h-5" />
+            הזמיני את בן/בת הזוג
           </button>
 
           <button

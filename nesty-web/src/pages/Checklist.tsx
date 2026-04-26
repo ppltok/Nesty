@@ -10,7 +10,7 @@ import AddItemModal from '../components/AddItemModal'
 import ShareModal from '../components/ShareModal'
 import CheckoutRegistryPromptModal from '../components/popups/CheckoutRegistryPromptModal'
 import ShareChecklistPromptModal from '../components/popups/ShareChecklistPromptModal'
-import { usePopupState } from '../hooks/usePopups'
+import { usePopupState, isNudgeFresh } from '../hooks/usePopups'
 import { CATEGORIES, ITEMS_DATA } from '../data/categories'
 import { supabase } from '../lib/supabase'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
@@ -461,12 +461,14 @@ export default function Checklist() {
   }, [isLoading])
 
   // === Engagement popup triggers ===
-  // Fire 5-item "check out your nest" once registry hits 5 items
+  // Fire 5-item "check out your nest" once registry hits 5 items.
+  // Behavior: "תראי איך זה נראה לאורחים" → permanent dismiss (true).
+  // "לא עכשיו" / X → snoozed (ISO timestamp), re-fires after 3 days.
   useEffect(() => {
     if (!popups.loaded || !user) return
     if (registryItemsCount === null) return
     if (registryItemsCount < 5) return
-    if (popups.dismissed.checkout_registry_5) return
+    if (isNudgeFresh(popups.dismissed.checkout_registry_5, 3)) return
     setShowCheckoutPrompt(true)
   }, [popups.loaded, popups.dismissed.checkout_registry_5, registryItemsCount, user])
 
