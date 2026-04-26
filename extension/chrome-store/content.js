@@ -450,7 +450,8 @@
       if (data['@type'] === 'Product') {
         console.log('✅ Found Product type, extracting...');
         const offersData = data.offers || data.Offers;
-        const offerUrl = offersData?.url || '';
+        const firstOffer = Array.isArray(offersData) ? offersData[0] : offersData;
+        const offerUrl = firstOffer?.url || data.url || data['@id'] || '';
 
         console.log('📦 Product data:', {
           name: data.name,
@@ -1824,6 +1825,20 @@
     const imageUrl = imageMeta?.getAttribute('content') || '';
     if (imageUrl) {
       productData.imageUrls = [imageUrl];
+    }
+
+    // Fallback: pull image from Product JSON-LD if no og:image
+    if (productData.imageUrls.length === 0) {
+      const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+      for (const s of scripts) {
+        try {
+          const d = JSON.parse(s.textContent);
+          if (d && d['@type'] === 'Product' && d.image) {
+            productData.imageUrls = normalizeImageUrls(d.image);
+            break;
+          }
+        } catch (e) {}
+      }
     }
 
     console.log('📦 Next extraction result:', productData);
