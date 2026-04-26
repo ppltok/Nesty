@@ -23,6 +23,15 @@
   }
 }
 
+@keyframes nesty-gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-nesty-gradient {
+  animation: nesty-gradient 14s ease infinite;
+}
+
 /* Custom scrollbar for webkit browsers */
 ::-webkit-scrollbar {
   width: 8px;

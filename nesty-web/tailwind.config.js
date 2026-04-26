@@ -48,6 +48,15 @@ export default {
         "2xl": "1.5rem",
         "3xl": "2rem",
       },
+      keyframes: {
+        'nesty-gradient': {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+      },
+      animation: {
+        'nesty-gradient': 'nesty-gradient 14s ease infinite',
+      },
     },
   },
   plugins: [],
