@@ -109,7 +109,7 @@ function waitForTabComplete(tabId) {
 }
 
 /**
- * Handle messages from content script
+ * Handle messages from content script and button-injector
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('📨 Background received message:', message.type);
@@ -123,6 +123,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ session: null });
     });
 
+    return true;
+  }
+
+  // Triggered by the in-page floating/inline button
+  if (message.type === 'OPEN_PRODUCT_FORM') {
+    (async () => {
+      const session = await getSupabaseSession().catch(() => null);
+      if (!session) {
+        sendResponse({ needsLogin: true });
+        return;
+      }
+      try {
+        await injectContentScript(sender.tab.id);
+        sendResponse({ ok: true });
+      } catch (error) {
+        console.error('❌ Failed to inject content script from button:', error);
+        sendResponse({ error: error.message });
+      }
+    })();
+    return true;
+  }
+
+  if (message.type === 'OPEN_LOGIN_TAB') {
+    chrome.tabs.create({ url: message.url, active: true });
+    sendResponse({ ok: true });
     return true;
   }
 });

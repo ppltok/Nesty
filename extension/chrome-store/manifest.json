@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Add to Nesty Button",
-  "version": "1.4.8",
+  "version": "1.5.0",
   "description": "הוסיפי מוצרים מכל אתר מסחר אלקטרוני לרשימת הלידה שלך בהקלקה אחת על התוסף",
   "icons": {
     "16": "icon16.png",
@@ -11,11 +11,22 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
     "https://nestyil.com/*",
-    "https://www.shilav.co.il/*"
+    "https://www.shilav.co.il/*",
+    "https://www.motsesim.co.il/*",
+    "https://www.baby-shark.co.il/*",
+    "https://www.next.co.il/*",
+    "https://www2.hm.com/*",
+    "https://www.mothercare.co.il/*",
+    "https://www.babysafe.co.il/*",
+    "https://*.aliexpress.com/*",
+    "https://www.zara.com/*",
+    "https://www.babyshome.co.il/*",
+    "http://localhost:5173/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -28,6 +39,24 @@
       ],
       "js": ["detector.js"],
       "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.shilav.co.il/*",
+        "https://www.motsesim.co.il/*",
+        "https://www.baby-shark.co.il/*",
+        "https://www.next.co.il/*",
+        "https://www2.hm.com/*",
+        "https://www.mothercare.co.il/*",
+        "https://www.babysafe.co.il/*",
+        "https://*.aliexpress.com/*",
+        "https://www.zara.com/*",
+        "https://www.babyshome.co.il/*"
+      ],
+      "js": ["button-injector.js"],
+      "css": ["button-styles.css"],
+      "run_at": "document_idle",
+      "type": "module"
     }
   ],
   "action": {
