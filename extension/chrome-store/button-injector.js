@@ -13,10 +13,10 @@
 
   const WHITELIST = [
     // ── Inline + floating ────────────────────────────────────────────
-    // Anchor on the CONTAINER (not the button inside a flex row) so our button appears below
     { hostname: 'shilav.co.il',     hasInline: true, anchorSelectors: ['.shopify-payment-button', '[name="add"]'] },
-    { hostname: 'motsesim.co.il',   hasInline: true, anchorSelectors: ['.product-form__buttons', '.product-form__buttons-inner'] },
-    { hostname: 'baby-shark.co.il', hasInline: true, anchorSelectors: ['form.cart', '.single_add_to_cart_button'] },
+    { hostname: 'motsesim.co.il',   hasInline: true, anchorSelectors: ['.product-form__buttons', '[name="add"]'] },
+    // baby-shark: form.cart is flex — insert after its block-level parent instead
+    { hostname: 'baby-shark.co.il', hasInline: true, anchorSelectors: ['.elementor-add-to-cart', 'form.cart'] },
     // ── Floating only ────────────────────────────────────────────────
     { hostname: 'next.co.il',             hasInline: false, anchorSelectors: [] },
     { hostname: 'cartersoshkosh.co.il',   hasInline: false, anchorSelectors: [] },
@@ -263,6 +263,9 @@
     injectFloatingPill();
     if (siteConfig.hasInline) {
       injectInlineButton(siteConfig);
+      // Retry for JS-rendered pages (Elementor, Shopify) that finish after document_idle
+      setTimeout(function() { injectInlineButton(siteConfig); }, 1500);
+      setTimeout(function() { injectInlineButton(siteConfig); }, 3500);
     }
     observer.observe(document.body, { childList: true, subtree: true });
   }
