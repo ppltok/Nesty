@@ -6,6 +6,31 @@ overrides) the root-level `CLAUDE.md`.
 
 ---
 
+## QA Runs Are Opt-In Only
+
+**Never run multi-site QA (`nesty-qa-orchestrator`, `nesty-site-qa`, or any
+sweep across the `baby-shopping-sites.md` list) unless the user explicitly
+asks for it.** A full sweep takes ~5+ minutes and burns significant tokens.
+
+Triggers that count as explicit requests:
+- "run qa", "qa audit", "qa sweep", "smoke test", "test all sites",
+  "full qa", "/nesty-qa", or naming a specific site list
+- Direct mention of the orchestrator by name
+
+Triggers that do **not** authorize a QA run:
+- The user asks you to fix or add support for a single site
+- The user asks "is this working?" about one feature or one site
+- You think QA "would be a good idea" after a change — say so and let
+  the user decide
+
+When unsure: ask. One sentence ("Want me to run the QA sweep to verify?")
+is the right move. Do not invoke the QA agents speculatively.
+
+For verifying a single change on 1–3 sites, use `nesty-qa` (the focused
+investigator) or test directly in the browser — not the orchestrator.
+
+---
+
 ## Active Extension Folder
 
 **`extension/chrome-store/`** — this is the only folder you should read or

@@ -1,6 +1,6 @@
 ---
 name: nesty-qa-orchestrator
-description: Coordinator for parallel Nesty extension QA. Reads the site list, spawns nesty-site-qa workers in batches of 5 in parallel, collects their mini-reports, performs one final registry-verification pass against the user's Nesty registry, and returns a single aggregated report. Use this for any multi-site QA run (full sweep, smoke test, post-change verification).
+description: Coordinator for parallel Nesty extension QA. Reads the site list, spawns nesty-site-qa workers in batches of 5 in parallel, collects their mini-reports, performs one final registry-verification pass against the user's Nesty registry, and returns a single aggregated report. EXPENSIVE — only invoke when the user explicitly asks for a QA sweep / smoke test / full QA / "run qa". Do NOT invoke speculatively after changes; ask the user first if unsure. For verifying a single site or a 1–3 site change, use nesty-qa instead.
 model: sonnet
 ---
 
