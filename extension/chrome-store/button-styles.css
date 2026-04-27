@@ -1,44 +1,40 @@
 /* Nesty In-Page Button Styles */
 
-/* All selectors scoped under .nesty-injected-root to avoid conflicts */
-
-.nesty-injected-root {
-  font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  direction: ltr; /* Keep pill LTR even on RTL sites */
-}
-
 /* ── Floating pill ──────────────────────────────────────────────── */
 
 .nesty-floating-pill {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 100px;
+  left: 20px;
   z-index: 2147483600;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 0 18px;
   height: 44px;
-  background: linear-gradient(135deg, #c06090, #a040a0);
+  background: #6750a4;
   color: #fff;
   border: none;
   border-radius: 22px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(160, 64, 160, 0.4);
+  box-shadow: 0 4px 16px rgba(103, 80, 164, 0.45);
   font-size: 15px;
   font-weight: 600;
+  font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   white-space: nowrap;
   opacity: 0;
   animation: nesty-pill-fadein 0.4s ease 0.8s forwards;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   text-decoration: none;
   outline: none;
   -webkit-font-smoothing: antialiased;
+  direction: ltr;
 }
 
 .nesty-floating-pill:hover {
+  background: #5a4690;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(160, 64, 160, 0.5);
+  box-shadow: 0 6px 20px rgba(103, 80, 164, 0.5);
 }
 
 .nesty-floating-pill:active {
@@ -90,6 +86,7 @@
   justify-content: center;
   padding: 0;
   z-index: 1;
+  font-family: Arial, sans-serif;
 }
 
 .nesty-pill-dismiss:hover {
@@ -112,31 +109,31 @@
 /* ── Inline button ──────────────────────────────────────────────── */
 
 .nesty-inline-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   padding: 0 20px;
   height: 44px;
-  background: linear-gradient(135deg, #c06090, #a040a0);
+  background: #6750a4;
   color: #fff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 15px;
   font-weight: 600;
-  font-family: inherit;
+  font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   white-space: nowrap;
   margin-top: 10px;
   width: 100%;
   box-sizing: border-box;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
   -webkit-font-smoothing: antialiased;
 }
 
 .nesty-inline-btn:hover {
+  background: #5a4690;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(160, 64, 160, 0.4);
 }
 
 .nesty-inline-btn:active {
@@ -147,17 +144,19 @@
 
 .nesty-toast {
   position: fixed;
-  bottom: 80px;
-  right: 20px;
+  bottom: 160px;
+  left: 20px;
   z-index: 2147483601;
   background: #333;
   color: #fff;
   padding: 10px 16px;
   border-radius: 8px;
   font-size: 14px;
+  font-family: 'Assistant', 'Heebo', sans-serif;
   max-width: 280px;
   text-align: center;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   animation: nesty-pill-fadein 0.3s ease forwards;
   pointer-events: none;
+  direction: rtl;
 }
