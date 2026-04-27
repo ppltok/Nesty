@@ -4,7 +4,7 @@
 
 .nesty-floating-pill {
   position: fixed;
-  bottom: 100px;
+  bottom: 160px;
   left: 20px;
   z-index: 2147483600;
   display: flex;
@@ -144,7 +144,7 @@
 
 .nesty-toast {
   position: fixed;
-  bottom: 160px;
+  bottom: 220px;
   left: 20px;
   z-index: 2147483601;
   background: #333;
