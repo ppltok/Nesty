@@ -17,6 +17,8 @@
     { hostname: 'motsesim.co.il',   hasInline: true, anchorSelectors: ['.product-form__buttons', '[name="add"]'] },
     // baby-shark: Elementor renders late — only use block-level parent, never form.cart (flex)
     { hostname: 'baby-shark.co.il', hasInline: true, anchorSelectors: ['.elementor-add-to-cart'] },
+    // agalease-baby: standard WooCommerce — form.cart is a block-level form
+    { hostname: 'agalease-baby.co.il', hasInline: true, anchorSelectors: ['form.cart'] },
     // ── Floating only ────────────────────────────────────────────────
     { hostname: 'next.co.il',             hasInline: false, anchorSelectors: [] },
     { hostname: 'cartersoshkosh.co.il',   hasInline: false, anchorSelectors: [] },

@@ -45,3 +45,4 @@ tovli-latinok.co.il | https://www.tovli-latinok.co.il/items/5522869-%D7%91%D7%95
 monbebe.co.il | https://www.monbebe.co.il/items/3116740--%D7%91%D7%A7%D7%91%D7%95%D7%A7-%D7%9C%D7%AA%D7%99%D7%A0%D7%95%D7%A7-%D7%A1%D7%A8%D7%91%D7%9F-%D7%94%D7%9E%D7%A7%D7%95%D7%A8%D7%99-%D7%A9%D7%9C-Bebe-%D7%91%D7%91%D7%94
 babymichel.com | https://www.babymichel.com/index.php?dir=site&page=catalog&op=item&cs=5442&langpage=heb&category=3040
 rainbowbaby.co.il | https://www.rainbowbaby.co.il/products/balios-ts5-white
+agalease-baby.co.il | https://agalease-baby.co.il/product/%d7%94%d7%9c%d7%99%d7%9b%d7%95%d7%9f-%d7%a2%d7%92%d7%9c%d7%aa-%d7%a7%d7%95%d7%91%d7%99%d7%95%d7%aa-%d7%9e%d7%a2%d7%a5-%d7%93%d7%99%d7%99%d7%a0%d7%99%d7%96-dainy/

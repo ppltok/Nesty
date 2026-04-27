@@ -522,17 +522,31 @@
     if (allProducts.length > 0) {
       console.log(`📊 Found ${allProducts.length} valid product(s) in JSON-LD`);
 
+      // Enrich missing price from the DOM. Some sites (e.g. agalease-baby.co.il)
+      // emit Product JSON-LD with an empty offers array, leaving price = ''.
+      const enrichPriceIfMissing = (result) => {
+        if (result && (!result.price || result.price === '')) {
+          const domPrice = extractPriceFromDOM(doc);
+          if (domPrice) {
+            console.log(`💰 Enriched JSON-LD result with DOM price: ${domPrice}`);
+            result.price = domPrice;
+            if (!result.priceCurrency) result.priceCurrency = 'ILS';
+          }
+        }
+        return result;
+      };
+
       // Only return if we have a URL match
       const matchedProduct = allProducts.find(p => p.isMatch);
       if (matchedProduct) {
         console.log(`✅ Using URL-matched product from script #${matchedProduct.index + 1}`);
-        return matchedProduct.result;
+        return enrichPriceIfMissing(matchedProduct.result);
       }
 
       // Single product with no URL match — use it directly (e.g. babyshome slug suffix)
       if (allProducts.length === 1) {
         console.log(`✅ Single product in JSON-LD, using it directly`);
-        return allProducts[0].result;
+        return enrichPriceIfMissing(allProducts[0].result);
       }
 
       // No URL match - fall through to platform-specific extraction
@@ -1617,7 +1631,15 @@
    */
   function extractPriceFromDOM(doc = document) {
     // Common Shopify price selectors
+    // WooCommerce sale-price selectors come first so we pick the discounted price
+    // (e.g. ins .woocommerce-Price-amount = current sale price; .price alone may
+    // contain both old and new prices concatenated like "₪249.00₪199.20").
     const priceSelectors = [
+      '.summary p.price ins .woocommerce-Price-amount',  // WC sale price (scoped)
+      'p.price ins .woocommerce-Price-amount',           // WC sale price
+      'ins .woocommerce-Price-amount',                   // WC sale price (loose)
+      '.summary p.price .woocommerce-Price-amount',      // WC regular price (scoped)
+      'p.price > .woocommerce-Price-amount',             // WC regular (no sale)
       '#tovel_initial_price',  // Elementor-based sites like mommyshop.co.il
       '.price--highlight .price-item--regular',
       '.price-item--regular',
