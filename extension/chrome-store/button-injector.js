@@ -15,8 +15,8 @@
     // ── Inline + floating ────────────────────────────────────────────
     { hostname: 'shilav.co.il',     hasInline: true, anchorSelectors: ['.shopify-payment-button', '[name="add"]'] },
     { hostname: 'motsesim.co.il',   hasInline: true, anchorSelectors: ['.product-form__buttons', '[name="add"]'] },
-    // baby-shark: form.cart is flex — insert after its block-level parent instead
-    { hostname: 'baby-shark.co.il', hasInline: true, anchorSelectors: ['.elementor-add-to-cart', 'form.cart'] },
+    // baby-shark: Elementor renders late — only use block-level parent, never form.cart (flex)
+    { hostname: 'baby-shark.co.il', hasInline: true, anchorSelectors: ['.elementor-add-to-cart'] },
     // ── Floating only ────────────────────────────────────────────────
     { hostname: 'next.co.il',             hasInline: false, anchorSelectors: [] },
     { hostname: 'cartersoshkosh.co.il',   hasInline: false, anchorSelectors: [] },
@@ -206,7 +206,6 @@
 
   function injectInlineButton(config) {
     if (!config.hasInline || !config.anchorSelectors.length) return;
-    if (document.querySelector('.nesty-inline-btn')) return;
 
     let anchor = null;
     for (const sel of config.anchorSelectors) {
@@ -214,6 +213,13 @@
       if (anchor) break;
     }
     if (!anchor) return;
+
+    // Remove existing button if it's not a sibling of this anchor (wrong placement)
+    var existing = document.querySelector('.nesty-inline-btn');
+    if (existing) {
+      if (existing.parentElement === anchor.parentElement) return; // already correct
+      existing.remove(); // wrong placement — re-inject at correct anchor
+    }
 
     const btn = document.createElement('button');
     btn.className = 'nesty-inline-btn';
