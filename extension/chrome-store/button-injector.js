@@ -216,9 +216,29 @@
     if (!anchor) return;
 
     const btn = document.createElement('button');
-    btn.className = 'nesty-inline-btn nesty-injected-root';
+    btn.className = 'nesty-inline-btn';
     btn.setAttribute('type', 'button');
     btn.textContent = LABEL;
+    // Apply inline styles with !important via setProperty to defeat any site CSS overrides
+    var inlineStyles = {
+      'display': 'block', 'width': '100%', 'box-sizing': 'border-box',
+      'padding': '12px 20px', 'margin': '10px 0 0 0',
+      'min-height': '44px', 'height': 'auto',
+      'background': '#674FA1', 'background-image': 'none',
+      'color': '#ffffff', 'border': 'none', 'outline': 'none',
+      'border-radius': '6px', 'cursor': 'pointer',
+      'font-size': '15px', 'font-weight': '600',
+      'font-family': "'Assistant','Heebo',sans-serif",
+      'text-align': 'center', 'white-space': 'nowrap',
+      'text-decoration': 'none', 'text-transform': 'none',
+      'line-height': '1.4', 'float': 'none', 'clear': 'both',
+      'opacity': '1', 'visibility': 'visible', 'position': 'static',
+    };
+    Object.keys(inlineStyles).forEach(function(p) {
+      btn.style.setProperty(p, inlineStyles[p], 'important');
+    });
+    btn.addEventListener('mouseover', function() { btn.style.setProperty('background', '#5a4490', 'important'); });
+    btn.addEventListener('mouseout',  function() { btn.style.setProperty('background', '#674FA1', 'important'); });
     btn.addEventListener('click', function () {
       triggerProductForm(floatingPill);
     });
