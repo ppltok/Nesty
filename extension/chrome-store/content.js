@@ -469,7 +469,8 @@
         if (offerUrl) {
           try {
             const offerPath = new URL(offerUrl).pathname;
-            isMatch = offerPath === currentPath;
+            // Exact match OR current path starts with offer path (handles slug suffixes like /items/6724131-name)
+            isMatch = offerPath === currentPath || currentPath.startsWith(offerPath + '-') || currentPath.startsWith(offerPath + '/');
             console.log(`🔗 URL match check: ${isMatch ? '✅ MATCH' : '❌ NO MATCH'} (offer: ${offerPath})`);
           } catch (e) {
             console.log('⚠️ Could not parse offer URL');
@@ -526,6 +527,12 @@
       if (matchedProduct) {
         console.log(`✅ Using URL-matched product from script #${matchedProduct.index + 1}`);
         return matchedProduct.result;
+      }
+
+      // Single product with no URL match — use it directly (e.g. babyshome slug suffix)
+      if (allProducts.length === 1) {
+        console.log(`✅ Single product in JSON-LD, using it directly`);
+        return allProducts[0].result;
       }
 
       // No URL match - fall through to platform-specific extraction
