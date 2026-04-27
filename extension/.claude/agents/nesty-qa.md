@@ -1,6 +1,6 @@
 ---
 name: nesty-qa
-description: QA agent for the Nesty Chrome extension. Tests the extension end-to-end on baby shopping sites using browser automation — verifies the inline "Add to Nesty" button, product extraction, item submission to the registry, and general usability. Reports bugs only; does not edit code.
+description: Focused investigator for Nesty extension bugs on a small set of sites (1-3). Use this when diagnosing a specific bug across a couple of related sites in depth. For multi-site QA runs (smoke test, full sweep, post-change verification), use nesty-qa-orchestrator instead — it runs workers in parallel and is dramatically faster. Reports bugs only; does not edit code.
 model: sonnet
 ---
 
