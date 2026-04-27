@@ -4,7 +4,7 @@
 
 .nesty-floating-pill {
   position: fixed;
-  bottom: 160px;
+  bottom: 220px;
   left: 20px;
   z-index: 2147483600;
   display: flex;
@@ -12,12 +12,12 @@
   gap: 8px;
   padding: 0 18px;
   height: 44px;
-  background: #6750a4;
+  background: #674FA1;
   color: #fff;
   border: none;
   border-radius: 22px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(103, 80, 164, 0.45);
+  box-shadow: 0 4px 16px rgba(103, 79, 161, 0.45);
   font-size: 15px;
   font-weight: 600;
   font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -32,9 +32,9 @@
 }
 
 .nesty-floating-pill:hover {
-  background: #5a4690;
+  background: #5a4490;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(103, 80, 164, 0.5);
+  box-shadow: 0 6px 20px rgba(103, 79, 161, 0.5);
 }
 
 .nesty-floating-pill:active {
@@ -115,7 +115,7 @@
   gap: 6px;
   padding: 0 20px;
   height: 44px;
-  background: #6750a4;
+  background: #674FA1;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -132,7 +132,7 @@
 }
 
 .nesty-inline-btn:hover {
-  background: #5a4690;
+  background: #5a4490;
   transform: translateY(-1px);
 }
 
@@ -144,7 +144,7 @@
 
 .nesty-toast {
   position: fixed;
-  bottom: 220px;
+  bottom: 280px;
   left: 20px;
   z-index: 2147483601;
   background: #333;

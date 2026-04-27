@@ -13,9 +13,10 @@
 
   const WHITELIST = [
     // ── Inline + floating ────────────────────────────────────────────
-    { hostname: 'shilav.co.il',     hasInline: true, anchorSelectors: ['[name="add"]', 'button.add-to-cart'] },
-    { hostname: 'motsesim.co.il',   hasInline: true, anchorSelectors: ['[name="add"]', '.product-form__submit', '.btn--eilat'] },
-    { hostname: 'baby-shark.co.il', hasInline: true, anchorSelectors: ['.single_add_to_cart_button', 'button[name="add-to-cart"]'] },
+    // Anchor on the CONTAINER (not the button inside a flex row) so our button appears below
+    { hostname: 'shilav.co.il',     hasInline: true, anchorSelectors: ['.shopify-payment-button', '[name="add"]'] },
+    { hostname: 'motsesim.co.il',   hasInline: true, anchorSelectors: ['.product-form__buttons', '.product-form__buttons-inner'] },
+    { hostname: 'baby-shark.co.il', hasInline: true, anchorSelectors: ['form.cart', '.single_add_to_cart_button'] },
     // ── Floating only ────────────────────────────────────────────────
     { hostname: 'next.co.il',             hasInline: false, anchorSelectors: [] },
     { hostname: 'cartersoshkosh.co.il',   hasInline: false, anchorSelectors: [] },
@@ -92,11 +93,10 @@
 
   async function shouldShowButton() {
     const prefs = await getButtonPrefs();
-    if (prefs.globalSilenced) return false;
     const site = prefs.sites[hostname];
     if (!site) return true;
-    if (site.dismissCount >= 2) return false;
-    if (site.mutedUntil && Date.now() < site.mutedUntil) return false;
+    if (site.dismissCount >= 2) return false;          // permanently silenced on this site
+    if (site.mutedUntil && Date.now() < site.mutedUntil) return false; // 30-day mute
     return true;
   }
 
@@ -105,16 +105,13 @@
     const site = prefs.sites[hostname] || { dismissCount: 0, mutedUntil: null };
     site.dismissCount += 1;
     if (site.dismissCount === 1) {
+      // First dismiss: hide for 30 days
       site.mutedUntil = Date.now() + THIRTY_DAYS_MS;
     } else {
-      site.mutedUntil = null;
+      // Second dismiss: permanently silence on this site only
+      site.mutedUntil = null; // null + dismissCount>=2 = permanent
     }
     prefs.sites[hostname] = site;
-    const dismissedCount = Object.values(prefs.sites).filter(s => s.dismissCount >= 1).length;
-    if (dismissedCount >= 3) {
-      prefs.globalSilenced = true;
-      showToast('כפתור Nesty הושתק. ניתן להפעיל מחדש מהגדרות התוסף.');
-    }
     await saveButtonPrefs(prefs);
   }
 
