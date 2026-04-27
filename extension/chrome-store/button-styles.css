@@ -64,7 +64,27 @@
   font-size: inherit !important;
   font-weight: inherit !important;
   background: none !important;
+  position: relative !important;
+  top: -3px !important;
 }
+
+/* Variation C logo image in floating pill */
+.nesty-pill-logo {
+  height: 20px !important;
+  width: 36px !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  filter: brightness(0) invert(1) !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.nesty-floating-pill.loading .nesty-pill-logo { display: none !important; }
 
 .nesty-pill-spinner {
   width: 16px !important;
@@ -131,7 +151,11 @@
 /* ── Inline button ──────────────────────────────────────────────── */
 
 .nesty-inline-btn {
-  display: block !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  direction: ltr !important;
   width: 100% !important;
   box-sizing: border-box !important;
   padding: 12px 20px !important;

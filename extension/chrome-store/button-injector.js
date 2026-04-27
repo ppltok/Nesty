@@ -118,7 +118,7 @@
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   const isHebrew = hostname.endsWith('.co.il') || hostname.endsWith('.il');
-  const LABEL = isHebrew ? 'הוסף לנסטי 💗' : 'Add to Nesty 💗';
+  const LABEL = isHebrew ? 'הוסף לנסטי' : 'Add to Nesty';
 
   function showToast(msg) {
     const toast = document.createElement('div');
@@ -172,6 +172,11 @@
     label.className = 'nesty-pill-label';
     label.textContent = LABEL;
 
+    const logo = document.createElement('img');
+    logo.className = 'nesty-pill-logo';
+    logo.src = 'https://nestyil.com/Nesty_logo.png';
+    logo.alt = 'Nesty';
+
     const spinner = document.createElement('span');
     spinner.className = 'nesty-pill-spinner';
 
@@ -182,6 +187,7 @@
     dismiss.textContent = '×';
 
     pill.appendChild(label);
+    pill.appendChild(logo);
     pill.appendChild(spinner);
     pill.appendChild(dismiss);
     document.body.appendChild(pill);
@@ -224,10 +230,11 @@
     const btn = document.createElement('button');
     btn.className = 'nesty-inline-btn';
     btn.setAttribute('type', 'button');
-    btn.textContent = LABEL;
     // Apply inline styles with !important via setProperty to defeat any site CSS overrides
     var inlineStyles = {
-      'display': 'block', 'width': '100%', 'box-sizing': 'border-box',
+      'display': 'flex', 'align-items': 'center', 'justify-content': 'center',
+      'gap': '8px', 'direction': 'ltr',
+      'width': '100%', 'box-sizing': 'border-box',
       'padding': '12px 20px', 'margin': '10px 0 0 0',
       'min-height': '44px', 'height': 'auto',
       'background': '#674FA1', 'background-image': 'none',
@@ -235,7 +242,7 @@
       'border-radius': '6px', 'cursor': 'pointer',
       'font-size': '15px', 'font-weight': '600',
       'font-family': "'Assistant','Heebo',sans-serif",
-      'text-align': 'center', 'white-space': 'nowrap',
+      'white-space': 'nowrap',
       'text-decoration': 'none', 'text-transform': 'none',
       'line-height': '1.4', 'float': 'none', 'clear': 'both',
       'opacity': '1', 'visibility': 'visible', 'position': 'static',
@@ -243,6 +250,28 @@
     Object.keys(inlineStyles).forEach(function(p) {
       btn.style.setProperty(p, inlineStyles[p], 'important');
     });
+
+    // Label span (with -3px nudge to align with logo visual center)
+    var labelEl = document.createElement('span');
+    labelEl.textContent = LABEL;
+    ['position:relative', 'top:-3px', 'color:inherit', 'font-size:inherit',
+     'font-weight:inherit', 'background:none', 'border:none', 'padding:0', 'margin:0'].forEach(function(s) {
+      var parts = s.split(':'); btn; labelEl.style.setProperty(parts[0], parts[1], 'important');
+    });
+
+    // Logo image
+    var logoImg = document.createElement('img');
+    logoImg.src = 'https://nestyil.com/Nesty_logo.png';
+    logoImg.alt = 'Nesty';
+    ['height:20px', 'width:36px', 'object-fit:contain', 'object-position:center',
+     'filter:brightness(0) invert(1)', 'flex-shrink:0', 'display:block',
+     'border:none', 'padding:0', 'margin:0', 'background:none'].forEach(function(s) {
+      var parts = s.split(':'); logoImg.style.setProperty(parts[0], parts.slice(1).join(':'), 'important');
+    });
+
+    btn.appendChild(labelEl);
+    btn.appendChild(logoImg);
+
     btn.addEventListener('mouseover', function() { btn.style.setProperty('background', '#5a4490', 'important'); });
     btn.addEventListener('mouseout',  function() { btn.style.setProperty('background', '#674FA1', 'important'); });
     btn.addEventListener('click', function () {
