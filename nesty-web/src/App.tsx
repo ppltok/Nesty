@@ -4,6 +4,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 import DashboardLayout from './components/layout/DashboardLayout'
 import ErrorBoundary from './components/ErrorBoundary'
 import ScrollToTop from './components/ScrollToTop'
+import WhatsAppButton from './components/WhatsAppButton'
 import { initializeStorageVersion } from './lib/storage-version'
 
 // Pages
@@ -11,6 +12,8 @@ import Home from './pages/HomeNew'
 import SignIn from './pages/auth/SignIn'
 import SignUp from './pages/auth/SignUp'
 import AuthCallback from './pages/auth/AuthCallback'
+import ResetPasswordRequest from './pages/auth/ResetPasswordRequest'
+import UpdatePassword from './pages/auth/UpdatePassword'
 import Onboarding from './pages/onboarding/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Checklist from './pages/Checklist'
@@ -18,6 +21,8 @@ import PublicRegistry from './pages/PublicRegistry'
 import Gifts from './pages/Gifts'
 import Statistics from './pages/Statistics'
 import Settings from './pages/Settings'
+import EmailPreferences from './pages/EmailPreferences'
+import Unsubscribed from './pages/Unsubscribed'
 import InviteAccept from './pages/InviteAccept'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
@@ -76,12 +81,18 @@ function AppRoutes() {
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/auth/reset-password" element={<ResetPasswordRequest />} />
+      <Route path="/auth/update-password" element={<UpdatePassword />} />
 
       {/* Public registry view */}
       <Route path="/registry/:slug" element={<PublicRegistry />} />
 
       {/* Invitation acceptance (works with or without auth) */}
       <Route path="/invite/:token" element={<InviteAccept />} />
+
+      {/* Unsubscribe confirmation — public on purpose; users may be logged
+          out when clicking a link from their email client. */}
+      <Route path="/unsubscribed" element={<Unsubscribed />} />
 
       {/* Protected routes */}
       <Route element={<ProtectedRoute />}>
@@ -112,6 +123,10 @@ function AppRoutes() {
 
           {/* Settings page */}
           <Route path="/settings" element={<Settings />} />
+
+          {/* Granular email preferences — linked from every outbound email
+              and from Settings.tsx. */}
+          <Route path="/settings/emails" element={<EmailPreferences />} />
         </Route>
       </Route>
 
@@ -129,6 +144,7 @@ export default function App() {
         <AuthProvider>
           <div dir="rtl" className="font-sans min-h-screen bg-background">
             <AppRoutes />
+            <WhatsAppButton />
           </div>
         </AuthProvider>
       </BrowserRouter>

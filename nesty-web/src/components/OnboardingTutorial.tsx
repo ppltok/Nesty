@@ -9,7 +9,6 @@ interface TutorialStep {
   targetSelector?: string
   navItemId?: string // ID of the nav item to highlight (e.g., 'dashboard', 'checklist', 'gifts', 'settings')
   route: string
-  position: 'top' | 'bottom' | 'left' | 'right' | 'center'
   icon?: React.ComponentType<{ className?: string }>
   highlightNav?: boolean
   special?: boolean
@@ -21,94 +20,85 @@ const isMobile = () => window.innerWidth < 1024
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'welcome',
-    title: 'ברוכים הבאים ל-Nesty! 🪺',
-    description: 'Nesty עוזרת לכם לדעת מה באמת צריך לתינוק, לבנות רשימה חכמה ולשתף אותה עם כולם.\nבואו נכיר את הכלים.',
+    title: 'ברוכה הבאה ל-Nesty! 🪺',
+    description: 'Nesty עוזרת לך לדעת מה באמת צריך לתינוק, לבנות רשימה חכמה ולשתף אותה עם כולם.\nבואי נכיר את הכלים.',
     route: '/checklist',
-    position: 'center',
     icon: Sparkles,
     special: true,
   },
   {
     id: 'checklist',
-    title: 'הצ׳קליסט - מפה מתחילים',
-    description: 'רשימת כל מה שתינוק צריך, מסודרת לפי קטגוריות.\nעברו על הפריטים, סמנו מה כבר יש לכם, ובחרו מה חשוב.',
+    title: 'הצ׳קליסט - מפה מתחילה',
+    description: 'רשימת כל מה שתינוק צריך, מסודרת לפי קטגוריות.\nעברי על הפריטים, סמני מה כבר יש לך, ובחרי מה חשוב.',
     navItemId: 'checklist',
     route: '/checklist',
-    position: 'top',
     icon: ClipboardList,
     highlightNav: true,
   },
   {
     id: 'checklist-categories',
     title: 'קטגוריות וניהול',
-    description: 'לחצו על קטגוריה כדי לפתוח אותה.\nאפשר להוסיף פריטים, למחוק מה שלא רלוונטי, ולהוסיף הערות.',
+    description: 'לחצי על קטגוריה כדי לפתוח אותה.\nאפשר להוסיף פריטים, למחוק מה שלא רלוונטי, ולהוסיף הערות.',
     targetSelector: '[data-tutorial="checklist-category"]',
     route: '/checklist',
-    position: 'bottom',
   },
   {
     id: 'recommended-products',
     title: 'המלצות מוצרים',
-    description: 'לא יודעים מאיפה להתחיל?\nלכל פריט יש המלצות מבוססות חוות דעת הורים. לחצו על פריט כדי לראות ולהוסיף.',
+    description: 'לא יודעת מאיפה להתחיל?\nלכל פריט יש המלצות מבוססות חוות דעת הורים. לחצי על פריט כדי לראות ולהוסיף.',
+    targetSelector: '[data-tutorial="recommended-products"]',
     route: '/checklist',
-    position: 'center',
     icon: Star,
   },
   {
     id: 'dashboard',
     title: 'הרשימה שלי',
-    description: 'כאן נמצאים כל הפריטים שהוספתם.\nשתפו את הרשימה עם חברים ומשפחה כדי שידעו מה לקנות.',
+    description: 'כאן נמצאים כל הפריטים שהוספת.\nשתפי את הרשימה עם חברים ומשפחה כדי שידעו מה לקנות.',
     navItemId: 'dashboard',
     route: '/dashboard',
-    position: 'bottom',
     icon: Heart,
     highlightNav: true,
   },
   {
     id: 'add-item',
     title: 'הוספת פריטים',
-    description: 'לחצו כאן כדי להוסיף מוצר לרשימה.\nאפשר להדביק לינק מכל חנות או להוסיף ידנית.',
+    description: 'לחצי כאן כדי להוסיף מוצר לרשימה.\nאפשר להדביק לינק מכל חנות או להוסיף ידנית.',
     targetSelector: '[data-tutorial="add-item-button"]',
     route: '/dashboard',
-    position: 'bottom',
     icon: Plus,
   },
   {
     id: 'gifts',
     title: 'מתנות',
-    description: 'כשמישהו ירכוש פריט מהרשימה, תראו את זה כאן.\nתוכלו לראות מי קנה, מה הכמות, ולשלוח הודעת תודה אישית.',
+    description: 'כשמישהו ירכוש פריט מהרשימה, תראי את זה כאן.\nתוכלי לראות מי קנה, מה הכמות, ולשלוח הודעת תודה אישית.',
     navItemId: 'gifts',
     route: '/gifts',
-    position: 'center',
     icon: Gift,
     highlightNav: true,
   },
   {
     id: 'statistics',
     title: 'מבט על',
-    description: 'תמונה מלאה של ההתקדמות שלכם:\nכמה פריטים הושלמו, מה נשאר לרכישה, התקציב הכולל, והתפלגות לפי קטגוריות.',
+    description: 'תמונה מלאה של ההתקדמות שלך:\nכמה פריטים הושלמו, מה נשאר לרכישה, התקציב הכולל, והתפלגות לפי קטגוריות.',
     navItemId: 'statistics',
     route: '/statistics',
-    position: 'center',
     icon: BarChart3,
     highlightNav: true,
   },
   {
     id: 'settings',
     title: 'הגדרות',
-    description: 'הוסיפו כתובת למשלוח כדי שקונים ידעו לאן לשלוח.\nאפשר גם לערוך את שם הרשימה, לנהל פרטיות, ולהתנתק.',
+    description: 'כאן תוכלי להוסיף הורה שני לניהול הרשימה, להוסיף כתובת למשלוח, לערוך את שם הרשימה, לנהל פרטיות, ולהתנתק.',
     navItemId: 'settings',
     route: '/settings',
-    position: 'center',
     icon: Settings,
     highlightNav: true,
   },
   {
     id: 'complete',
     title: 'הכל מוכן! 🎉',
-    description: 'עכשיו אתם יודעים הכל!\nהתחילו מהצ׳קליסט, בחרו מוצרים, ושתפו את הרשימה.\nבהצלחה!',
+    description: 'עכשיו את יודעת הכל!\nהתחילי מהצ׳קליסט, בחרי מוצרים, ושתפי את הרשימה.\nבהצלחה!',
     route: '/dashboard',
-    position: 'center',
     special: true,
   },
 ]
@@ -116,9 +106,10 @@ const TUTORIAL_STEPS: TutorialStep[] = [
 interface OnboardingTutorialProps {
   onComplete: () => void
   onSkip: () => void
+  onStepChange?: (stepId: string) => void
 }
 
-export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTutorialProps) {
+export default function OnboardingTutorial({ onComplete, onSkip, onStepChange }: OnboardingTutorialProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
   const navigate = useNavigate()
@@ -126,6 +117,11 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
 
   const step = TUTORIAL_STEPS[currentStep]
   const isLastStep = currentStep === TUTORIAL_STEPS.length - 1
+
+  // Notify parent about step changes so pages can react (e.g., auto-open a popover)
+  useEffect(() => {
+    onStepChange?.(step.id)
+  }, [step.id, onStepChange])
 
   // Navigate to the correct route for the current step
   useEffect(() => {
@@ -171,6 +167,52 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
     }
   }, [updateTargetPosition, currentStep])
 
+  // When the step changes, scroll the spotlighted element into the visible zone
+  // under the fixed tooltip. On mobile, the tooltip can occupy most of the upper
+  // viewport, so we measure its actual bottom and place the spotlight beneath it.
+  // On desktop, we just center the target vertically.
+  useEffect(() => {
+    let selector = step.targetSelector
+    if (step.highlightNav && step.navItemId) {
+      const suffix = isMobile() ? '-mobile' : ''
+      selector = `[data-tutorial="nav-${step.navItemId}${suffix}"]`
+    }
+    if (!selector) return
+
+    // Wait for route change + expand animations
+    const timer = setTimeout(() => {
+      const element = document.querySelector(selector) as HTMLElement | null
+      if (!element) return
+      const rect = element.getBoundingClientRect()
+      const currentCenter = rect.top + rect.height / 2
+      const mobile = isMobile()
+
+      let desiredCenter: number
+      if (mobile) {
+        const tooltipEl = document.querySelector('[data-tutorial-tooltip]') as HTMLElement | null
+        const tooltipTop = tooltipEl
+          ? tooltipEl.getBoundingClientRect().top
+          : window.innerHeight * 0.5
+        const gap = 32
+        // Tooltip lives at the bottom on mobile — place the spotlight ABOVE it,
+        // but never so high that it gets cut off at the top of the viewport.
+        desiredCenter = Math.max(
+          40 + rect.height / 2,
+          tooltipTop - gap - rect.height / 2
+        )
+      } else {
+        desiredCenter = window.innerHeight * 0.5
+      }
+
+      const delta = currentCenter - desiredCenter
+      if (Math.abs(delta) > 24) {
+        window.scrollBy({ top: delta, behavior: 'smooth' })
+      }
+    }, 450)
+
+    return () => clearTimeout(timer)
+  }, [step.id, step.targetSelector, step.highlightNav, step.navItemId])
+
   const handleNext = () => {
     if (isLastStep) {
       onComplete()
@@ -185,70 +227,30 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
     }
   }
 
-  // Calculate tooltip position
+  // Tooltip position is FIXED across all steps — only the spotlight moves.
+  // - Desktop: centered on viewport.
+  // - Mobile: pinned above the bottom nav (~96px from the bottom). This keeps
+  //   the upper half of the viewport free for the spotlight, so targets near
+  //   the top of the page (e.g. the first category row) stay visible.
   const getTooltipStyle = (): React.CSSProperties => {
     const mobile = isMobile()
     const padding = 16
-    const tooltipWidth = mobile ? Math.min(340, window.innerWidth - 32) : 360
-    const tooltipHeight = 300
 
-    // For mobile with nav items at bottom, always position tooltip above the nav
-    if (mobile && step.highlightNav && targetRect) {
+    if (mobile) {
       return {
         position: 'fixed',
-        bottom: `${window.innerHeight - targetRect.top + padding + 8}px`,
+        bottom: '96px',
         left: '50%',
         transform: 'translateX(-50%)',
         maxWidth: `calc(100vw - ${padding * 2}px)`,
       }
     }
 
-    if (step.position === 'center' || !targetRect) {
-      // On mobile, position slightly higher to avoid bottom nav overlap
-      return {
-        position: 'fixed',
-        top: mobile ? '40%' : '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
-      }
-    }
-
-    switch (step.position) {
-      case 'bottom':
-        return {
-          position: 'fixed',
-          top: `${targetRect.bottom + padding}px`,
-          // On mobile, always center horizontally
-          left: mobile ? '50%' : `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
-          transform: mobile ? 'translateX(-50%)' : undefined,
-          maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
-        }
-      case 'top':
-        return {
-          position: 'fixed',
-          top: `${Math.max(padding, targetRect.top - tooltipHeight - padding)}px`,
-          // On mobile, always center horizontally
-          left: mobile ? '50%' : `${Math.max(padding, Math.min(targetRect.left + targetRect.width / 2 - tooltipWidth / 2, window.innerWidth - tooltipWidth - padding))}px`,
-          transform: mobile ? 'translateX(-50%)' : undefined,
-          maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
-        }
-      case 'left':
-        return {
-          position: 'fixed',
-          top: `${targetRect.top + targetRect.height / 2 - tooltipHeight / 2}px`,
-          left: mobile ? padding : `${targetRect.left - tooltipWidth - padding}px`,
-          maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
-        }
-      case 'right':
-        return {
-          position: 'fixed',
-          top: `${targetRect.top + targetRect.height / 2 - tooltipHeight / 2}px`,
-          left: mobile ? padding : `${targetRect.right + padding}px`,
-          maxWidth: mobile ? `calc(100vw - ${padding * 2}px)` : undefined,
-        }
-      default:
-        return {}
+    return {
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
     }
   }
 
@@ -303,6 +305,7 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
 
       {/* Tooltip card */}
       <div
+        data-tutorial-tooltip
         className={`rounded-[24px] p-5 sm:p-6 w-full sm:w-[380px] max-w-[calc(100vw-32px)] border border-[#e7e0ec]/60 shadow-[0_20px_60px_-15px_rgba(103,80,164,0.15)] ${step.special ? 'bg-gradient-to-br from-white via-[#faf7ff] to-[#f3edff]' : 'bg-white'}`}
         style={getTooltipStyle()}
       >
@@ -377,7 +380,7 @@ export default function OnboardingTutorial({ onComplete, onSkip }: OnboardingTut
           onClick={onSkip}
           className="w-full text-center text-sm text-[#49454f] hover:text-[#6750a4] mt-4 transition-colors"
         >
-          דלג על ההדרכה
+          דלגי על ההדרכה
         </button>
       </div>
     </div>

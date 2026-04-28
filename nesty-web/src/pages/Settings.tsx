@@ -19,15 +19,33 @@ import {
   RefreshCw,
   XCircle,
   UserMinus,
+  ChevronLeft,
 } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { RegistryInvitation, Profile } from '../types'
 
 export default function Settings() {
   const { registry, profile, refreshProfile, signOut, isRegistryOwner, user } = useAuth()
+  const location = useLocation()
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Hash navigation: scroll-into-view + temporary highlight when arriving via
+  // #co-parent (e.g. from PartnerInviteCard). Delay slightly so the section
+  // is mounted before scrolling.
+  useEffect(() => {
+    if (location.hash !== '#co-parent') return
+    const t = setTimeout(() => {
+      const el = document.getElementById('co-parent-section')
+      if (!el) return
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      el.classList.add('highlight')
+      setTimeout(() => el.classList.remove('highlight'), 2400)
+    }, 200)
+    return () => clearTimeout(t)
+  }, [location.hash])
 
   // Profile name form
   const [nameForm, setNameForm] = useState({
@@ -468,6 +486,24 @@ export default function Settings() {
         )}
 
         <div className="space-y-6">
+          {/* Email preferences quick-link — fixes the old email unsubscribe
+              dead-end where "הסרה מרשימת התפוצה" landed here with no UI. */}
+          <Link
+            to="/settings/emails"
+            className="flex items-center gap-4 bg-white rounded-2xl border border-border p-5 hover:border-primary/40 hover:bg-primary/5 transition-colors group"
+          >
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Mail className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 text-right">
+              <p className="font-bold text-foreground mb-0.5">ניהול העדפות אימייל</p>
+              <p className="text-sm text-muted-foreground">
+                בחרי אילו אימיילים תרצי לקבל — עדכון שבועי, תזכורות, התראות מחיר ועוד
+              </p>
+            </div>
+            <ChevronLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+          </Link>
+
           {/* Profile Name Section */}
           <div className="bg-white rounded-2xl border border-border p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -514,7 +550,7 @@ export default function Settings() {
                 setDueDate(e.target.value)
                 setShowDueDateWarning(false)
               }}
-              className="w-full rounded-xl border border-border bg-white px-4 py-3 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+              className="block w-full min-w-0 max-w-full box-border appearance-none rounded-xl border border-border bg-white px-4 py-3 text-foreground text-center focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors [&::-webkit-date-and-time-value]:text-center [&::-webkit-date-and-time-value]:min-h-[1.5em]"
               dir="ltr"
             />
 
@@ -741,7 +777,7 @@ export default function Settings() {
           </div>
 
           {/* Co-Parent Sharing Section */}
-          <div className="bg-white rounded-2xl border border-border p-6">
+          <div id="co-parent-section" className="bg-white rounded-2xl border border-border p-6 scroll-mt-24 transition-shadow [&.highlight]:ring-4 [&.highlight]:ring-primary/40 [&.highlight]:shadow-xl">
             <div className="flex items-center gap-3 mb-4">
               <Users className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-bold text-foreground">שיתוף הורה נוסף</h2>

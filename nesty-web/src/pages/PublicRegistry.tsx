@@ -43,6 +43,7 @@ export default function PublicRegistry() {
   const [filterMostWanted, setFilterMostWanted] = useState(false)
   const [filterPriceRange, setFilterPriceRange] = useState<'all' | '0-200' | '200-500' | '500-1000' | '1000+'>('all')
   const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [purchaseStats, setPurchaseStats] = useState<{ count: number; buyers: number }>({ count: 0, buyers: 0 })
   const hasTrackedView = useRef(false)
 
   const priceRangeOptions = [
@@ -177,6 +178,20 @@ export default function PublicRegistry() {
         }
         setItems(itemsData || [])
 
+        // Fetch purchase stats for social proof (distinct buyers + total purchases)
+        if (itemsData && itemsData.length > 0) {
+          const { data: purchasesData } = await supabase
+            .from('purchases')
+            .select('buyer_name')
+            .in('item_id', itemsData.map(i => i.id))
+          if (purchasesData) {
+            const buyers = new Set(
+              purchasesData.map(p => (p.buyer_name || '').trim().toLowerCase()).filter(Boolean)
+            )
+            setPurchaseStats({ count: purchasesData.length, buyers: buyers.size })
+          }
+        }
+
         // Track registry view (only once per session)
         if (!hasTrackedView.current && registryId) {
           hasTrackedView.current = true
@@ -266,6 +281,13 @@ export default function PublicRegistry() {
 
   const owner = registry.profiles
   const daysUntilDue = owner.due_date ? getDaysUntilDueDate(owner.due_date) : null
+  const totalRemaining = availableItems.reduce((sum, i) => sum + remainingQuantity(i), 0)
+  const showUrgency = purchaseStats.count >= 1 && totalRemaining > 0 && totalRemaining < 10
+  const urgencyText = totalRemaining === 1
+    ? 'פריט אחד אחרון ברשימה!'
+    : totalRemaining === 2
+      ? '2 פריטים אחרונים ברשימה!'
+      : `מהרי, נשארו רק ${totalRemaining} פריטים`
 
   const handlePurchaseClick = (item: Item) => {
     setSelectedItem(item)
@@ -312,20 +334,23 @@ export default function PublicRegistry() {
         </div>
       </header>
 
-      {/* Fun Hero Section with Gradient */}
+      {/* Fun Hero Section with Animated Gradient */}
       <div className="relative overflow-hidden">
-        {/* The Fun Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#FF9A9E] via-[#FECFEF] to-[#E0C3FC] opacity-90" />
+        {/* Animated colorful gradient background */}
+        <div
+          className="absolute inset-0 opacity-90 animate-nesty-gradient"
+          style={{
+            backgroundImage:
+              'linear-gradient(120deg, #FF9A9E, #FECFEF, #E0C3FC, #C7D2FE, #FBC2EB, #FF9A9E)',
+            backgroundSize: '400% 400%',
+          }}
+        />
 
         {/* Decorative Shapes */}
         <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-white/30 rounded-full blur-3xl mix-blend-overlay" />
         <div className="absolute bottom-[-20px] left-[-20px] w-48 h-48 bg-[#fffbff]/40 rounded-full blur-2xl" />
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-16 sm:py-20 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/40 backdrop-blur-md rounded-full px-5 py-1.5 text-[#1d192b] font-bold text-sm mb-6 shadow-sm border border-white/50">
-            <span className="text-xl">👶</span> חוגגים את התינוק שבדרך!
-          </div>
-
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#1d192b] mb-6 tracking-tight drop-shadow-sm leading-[1.1]">
             הרשימה של {owner.first_name} {owner.last_name}
           </h1>
@@ -333,7 +358,31 @@ export default function PublicRegistry() {
           {daysUntilDue !== null && daysUntilDue > 0 && (
             <div className="inline-flex items-center justify-center gap-2 text-[#1d192b] font-bold text-lg bg-white/60 backdrop-blur-md px-8 py-3 rounded-2xl shadow-sm border border-white/50">
               <Calendar className="w-5 h-5 text-[#6750a4]" />
-              <span>עוד {daysUntilDue} ימים עד התאריך המשוער</span>
+              <span>{daysUntilDue} ימים למועד המשוער</span>
+            </div>
+          )}
+
+          {(purchaseStats.count > 0 || purchaseStats.buyers > 0) && (
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+              {purchaseStats.count > 0 && (
+                <div className="inline-flex items-center gap-1.5 bg-white/70 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-bold text-[#1d192b] border border-white/60 shadow-sm">
+                  <Gift className="w-4 h-4 text-[#86608e]" />
+                  <span>{purchaseStats.count} {purchaseStats.count === 1 ? 'פריט נחטף' : 'פריטים נחטפו'}</span>
+                </div>
+              )}
+              {purchaseStats.buyers > 1 && (
+                <div className="inline-flex items-center gap-1.5 bg-white/70 backdrop-blur-md px-4 py-1.5 rounded-full text-sm font-bold text-[#1d192b] border border-white/60 shadow-sm">
+                  <Heart className="w-4 h-4 text-[#f4acb7] fill-current" />
+                  <span>{purchaseStats.buyers} אנשים תרמו</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {showUrgency && (
+            <div className="mt-5 inline-flex items-center justify-center gap-2 bg-[#b3261e] text-white font-bold text-sm sm:text-base px-5 py-2.5 rounded-full shadow-lg shadow-red-300/40 animate-pulse">
+              <Sparkles className="w-4 h-4" />
+              <span>{urgencyText}</span>
             </div>
           )}
         </div>
@@ -570,15 +619,15 @@ export default function PublicRegistry() {
               <Sparkles className="w-8 h-8" />
             </div>
           </div>
-          <h3 className="font-bold text-2xl text-[#1d192b] mb-3">רוצים גם רשימה כזו?</h3>
+          <h3 className="font-bold text-2xl text-[#1d192b] mb-3">גם את בהיריון?</h3>
           <p className="text-[#49454f] mb-8 max-w-sm mx-auto text-lg">
-            פתחו רשימת מתנות חכמה, מעוצבת וחינמית עם Nesty.
+            בני את הקן שלך ב-2 דקות. רשימה חכמה, מעוצבת וחינמית.
           </p>
           <Link
-            to="/"
+            to="/auth/signup"
             className="inline-flex items-center gap-2 border-2 border-[#6750a4] text-[#6750a4] px-10 py-4 rounded-2xl font-black text-lg hover:bg-[#f3edff] hover:scale-105 transition-all shadow-lg"
           >
-            התחילו בחינם
+            התחילי בחינם
           </Link>
           <p className="text-[#49454f]/40 text-sm mt-12">
             © 2024 Nesty - לבנות את הקן שלכם, חכם יותר.

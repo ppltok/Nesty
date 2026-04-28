@@ -23,7 +23,7 @@ export default function Hero() {
               הרשימה היחידה שמאפשרת לכם לאסוף מוצרים מכל חנות בעולם, לשתף עם המשפחה והחברים, ולקבל התראות על מחירים טובים יותר.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
-              <Link to="/auth/signin" className="w-full sm:w-auto">
+              <Link to="/auth/signup" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto text-sm sm:text-base">
                   מתחילים להתארגן
                 </Button>

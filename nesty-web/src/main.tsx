@@ -1,6 +1,10 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { captureAttributionOnLanding } from './utils/utmTracking'
+
+// Capture UTM params + referrer on first landing (before React renders)
+captureAttributionOnLanding()
 
 // Global error handler for uncaught errors
 window.onerror = (message, source, lineno, colno, error) => {

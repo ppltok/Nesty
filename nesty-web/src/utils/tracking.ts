@@ -5,8 +5,45 @@ declare global {
   interface Window {
     dataLayer: Record<string, unknown>[];
     fbq?: (...args: unknown[]) => void;
+    gtag?: (...args: unknown[]) => void;
   }
 }
+
+// ===================
+// GOOGLE ADS CONVERSIONS (AW-1006081641)
+// ===================
+
+const GOOGLE_ADS_ID = 'AW-1006081641';
+
+export const trackGoogleAdsSignupConversion = (userId: string) => {
+  if (typeof window === 'undefined' || !window.gtag) return;
+  // Dedupe per-user across AuthCallback revisits
+  const key = `nesty_gads_signup_${userId}`;
+  try {
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+  } catch { /* ignore storage errors */ }
+  window.gtag('event', 'conversion', {
+    send_to: `${GOOGLE_ADS_ID}/tYpvCNu25J8cEOms3t8D`,
+    value: 1.0,
+    currency: 'USD',
+  });
+};
+
+export const trackGoogleAdsFirstProductConversion = (userId: string) => {
+  if (typeof window === 'undefined' || !window.gtag) return;
+  const key = `nesty_gads_first_product_${userId}`;
+  try {
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+  } catch { /* ignore storage errors */ }
+  window.gtag('event', 'conversion', {
+    send_to: `${GOOGLE_ADS_ID}/MT0ICIDl5J8cEOms3t8D`,
+    value: 1.0,
+    currency: 'USD',
+    transaction_id: '',
+  });
+};
 
 // Ensure dataLayer exists
 if (typeof window !== 'undefined') {

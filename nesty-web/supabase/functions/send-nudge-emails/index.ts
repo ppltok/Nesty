@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { calculatePregnancyWeek } from '../_shared/pregnancy.ts'
 import { canSendNudge, logNudge, type NudgeVariant } from '../_shared/nudge-log.ts'
+import { buildUnsubscribeUrl } from '../_shared/unsubscribe-url.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 
@@ -11,7 +12,7 @@ const corsHeaders = {
 }
 
 // ── Shared email wrapper ──────────────────────────────────────────────
-function emailWrapper(content: string): string {
+function emailWrapper(content: string, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
   return `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -90,7 +91,7 @@ ${content}
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
-              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              <a href="${unsubscribeUrl}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
               &nbsp;·&nbsp;
               <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
               &nbsp;·&nbsp;
@@ -108,7 +109,7 @@ ${content}
 }
 
 // ── Checklist nudge email (1 week after onboarding, no checklist activity) ──
-function checklistNudgeHtml(firstName: string): string {
+function checklistNudgeHtml(firstName: string, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
   const content = `
         <!-- HERO -->
         <tr>
@@ -193,11 +194,11 @@ function checklistNudgeHtml(firstName: string): string {
           </td>
         </tr>`
 
-  return emailWrapper(content)
+  return emailWrapper(content, unsubscribeUrl)
 }
 
 // ── Share registry nudge email (3+ items, not shared yet) ──
-function shareNudgeHtml(firstName: string, itemsCount: number): string {
+function shareNudgeHtml(firstName: string, itemsCount: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
   const content = `
         <!-- HERO -->
         <tr>
@@ -297,7 +298,7 @@ function shareNudgeHtml(firstName: string, itemsCount: number): string {
           </td>
         </tr>`
 
-  return emailWrapper(content)
+  return emailWrapper(content, unsubscribeUrl)
 }
 
 // ── First Item Nudge (repeatable, pregnancy-week-aware) ───────────────
@@ -338,7 +339,7 @@ function pickFirstItemVariant(week: number): { variant: NudgeVariant; subject: (
   }
 }
 
-function firstItemNudgeHtml(firstName: string, week: number): string {
+function firstItemNudgeHtml(firstName: string, week: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
   const { body, cta } = pickFirstItemVariant(week)
   const content = `
         <tr>
@@ -349,7 +350,7 @@ function firstItemNudgeHtml(firstName: string, week: number): string {
             <a href="https://nestyil.com/checklist" style="display:inline-block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;">${cta} ←</a>
           </td>
         </tr>`
-  return emailWrapper(content)
+  return emailWrapper(content, unsubscribeUrl)
 }
 
 // ── Registry Stalled Nudge (repeatable, pregnancy-week-aware) ─────────
@@ -382,7 +383,7 @@ function pickStalledVariant(week: number, itemsCount: number): { variant: NudgeV
   }
 }
 
-function stalledNudgeHtml(firstName: string, week: number, itemsCount: number): string {
+function stalledNudgeHtml(firstName: string, week: number, itemsCount: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
   const { body, cta } = pickStalledVariant(week, itemsCount)
   const content = `
         <tr>
@@ -393,7 +394,7 @@ function stalledNudgeHtml(firstName: string, week: number, itemsCount: number): 
             <a href="https://nestyil.com/checklist" style="display:inline-block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;">${cta} ←</a>
           </td>
         </tr>`
-  return emailWrapper(content)
+  return emailWrapper(content, unsubscribeUrl)
 }
 
 // ── Main handler ──────────────────────────────────────────────────────
@@ -436,6 +437,7 @@ serve(async (req) => {
       .select('id, email, first_name')
       .eq('onboarding_completed', true)
       .eq('marketing_emails', true)
+      .eq('email_engagement_reminders', true)
       .is('checklist_nudge_sent_at', null)
       .lt('updated_at', sevenDaysAgo.toISOString())
 
@@ -473,7 +475,7 @@ serve(async (req) => {
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
               subject: `${user.first_name}, הצ'קליסט מחכה לך! ✅`,
-              html: checklistNudgeHtml(user.first_name || 'את'),
+              html: checklistNudgeHtml(user.first_name || 'את', await buildUnsubscribeUrl(user.id, 'reminders')),
             }),
           })
 
@@ -513,6 +515,7 @@ serve(async (req) => {
       .select('id, email, first_name')
       .eq('onboarding_completed', true)
       .eq('marketing_emails', true)
+      .eq('email_engagement_reminders', true)
       .is('share_nudge_sent_at', null)
       .is('registry_shared_at', null)
 
@@ -570,7 +573,7 @@ serve(async (req) => {
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
               subject: `${user.first_name}, הרשימה שלך מוכנה לשיתוף! 🎁`,
-              html: shareNudgeHtml(user.first_name || 'את', itemsCount),
+              html: shareNudgeHtml(user.first_name || 'את', itemsCount, await buildUnsubscribeUrl(user.id, 'reminders')),
             }),
           })
 
@@ -611,6 +614,7 @@ serve(async (req) => {
       .select('id, email, first_name, due_date')
       .eq('onboarding_completed', true)
       .eq('marketing_emails', true)
+      .eq('email_engagement_reminders', true)
       .not('due_date', 'is', null)
       .lt('updated_at', fiveDaysAgo.toISOString())
 
@@ -658,7 +662,7 @@ serve(async (req) => {
             from: 'Nesty <hello@nestyil.com>',
             to: [user.email],
             subject: subject(user.first_name || 'את'),
-            html: firstItemNudgeHtml(user.first_name || 'את', week),
+            html: firstItemNudgeHtml(user.first_name || 'את', week, await buildUnsubscribeUrl(user.id, 'reminders')),
           }),
         })
         if (res.ok) {
@@ -693,6 +697,7 @@ serve(async (req) => {
       .select('id, email, first_name, due_date')
       .eq('onboarding_completed', true)
       .eq('marketing_emails', true)
+      .eq('email_engagement_reminders', true)
       .not('due_date', 'is', null)
 
     for (const user of stalledCandidates ?? []) {
@@ -746,7 +751,7 @@ serve(async (req) => {
             from: 'Nesty <hello@nestyil.com>',
             to: [user.email],
             subject: subject(user.first_name || 'את'),
-            html: stalledNudgeHtml(user.first_name || 'את', week, itemsCount),
+            html: stalledNudgeHtml(user.first_name || 'את', week, itemsCount, await buildUnsubscribeUrl(user.id, 'reminders')),
           }),
         })
         if (res.ok) {

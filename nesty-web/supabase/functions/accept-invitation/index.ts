@@ -206,6 +206,45 @@ serve(async (req) => {
       .eq('id', user.id)
       .eq('onboarding_completed', false)
 
+    // ─── Notify admin (hello@nestyil.com) ──────────────────
+    // Fire-and-forget: we've already persisted the partner link; email
+    // delivery failures should not fail the acceptance flow.
+    try {
+      const { data: partnerProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('first_name, last_name, email')
+        .eq('id', user.id)
+        .single()
+
+      const coParentName = partnerProfile
+        ? `${partnerProfile.first_name || ''} ${partnerProfile.last_name || ''}`.trim()
+        : ''
+
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({
+          type: 'admin_co_parent_joined',
+          to: 'hello@nestyil.com',
+          data: {
+            coParentName: coParentName || partnerProfile?.email || user.email,
+            coParentEmail: partnerProfile?.email || user.email,
+            primaryOwnerName: ownerName,
+            primaryOwnerEmail: ownerProfile?.email || '',
+            registryTitle: registry?.title || '',
+            joinedDate: new Date().toLocaleDateString('he-IL'),
+          },
+        }),
+      }).catch((err) => console.warn('admin_co_parent_joined email failed:', err?.message))
+    } catch (notifyErr) {
+      console.warn('admin_co_parent_joined notification error:', notifyErr)
+    }
+
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

@@ -1,6 +1,138 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { buildUnsubscribeUrl } from '../_shared/unsubscribe-url.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+
+// Plain management link (no token) for emails where one-click unsubscribe
+// doesn't make sense — welcome emails, transactional-adjacent templates.
+// The user needs to be logged in to change preferences; since welcome is
+// sent right after signup, the session is fresh.
+const MANAGE_LINK = `<a href="https://nestyil.com/settings/emails" style="color:#9070b8;text-decoration:underline;">ניהול העדפות אימייל</a>`
+
+/**
+ * Shared HTML shell for internal admin emails going to hello@nestyil.com.
+ * Mirrors the welcome / price_drop design language (Heebo, purple gradient
+ * hero, rounded cards, light purple footer) so the admin inbox reads
+ * consistently. Caller passes the emoji/title/subtitle + a list of rows to
+ * render in the details card, plus an accent color for the role chip.
+ */
+function buildAdminBrandedEmail(opts: {
+  heroEmoji: string
+  heroTitle: string
+  heroSubtitle: string
+  accentLabel: string
+  accentColor: string
+  accentBg: string
+  rows: Array<{ label: string; value: string }>
+}): string {
+  const { heroEmoji, heroTitle, heroSubtitle, accentLabel, accentColor, accentBg, rows } = opts
+  const rowsHtml = rows.map((r, i) => `
+    <tr>
+      <td style="padding:${i === 0 ? '0' : '12'}px 0 12px;border-top:${i === 0 ? '0' : '1px solid #f0e8ff'};">
+        <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.06em;color:#a087c0;text-transform:uppercase;">${r.label}</p>
+        <p style="margin:0;font-size:15px;color:#3b1f6b;font-weight:500;line-height:1.5;word-break:break-word;">${r.value}</p>
+      </td>
+    </tr>
+  `).join('')
+
+  return `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only"/>
+  <meta name="supported-color-modes" content="light"/>
+  <title>${heroTitle} — Nesty</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>:root { color-scheme: light only; }</style>
+</head>
+<body style="margin:0;padding:0;background:#f5f0fa;font-family:'Heebo',sans-serif;direction:rtl;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0fa;direction:rtl;">
+  <tr>
+    <td align="center" style="padding:40px 16px 64px;">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;direction:rtl;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="padding-bottom:28px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <a href="https://nestyil.com" style="text-decoration:none;">
+                    <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:40px;width:auto;display:block;" />
+                  </a>
+                </td>
+                <td align="left">
+                  <span style="font-size:12px;color:#a087c0;font-weight:600;letter-spacing:0.04em;">Internal Ops</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- HERO -->
+        <tr>
+          <td style="background:linear-gradient(145deg,#6a35b0 0%,#9b62d4 60%,#c4a0e8 100%);border-radius:24px;padding:48px 40px 44px;text-align:center;">
+            <div style="display:inline-block;background:#ffffff;border-radius:50%;padding:18px 22px;margin-bottom:20px;line-height:0;">
+              <span style="font-size:34px;line-height:1;">${heroEmoji}</span>
+            </div>
+            <h1 style="margin:0 0 10px;font-size:30px;font-weight:800;color:#ffffff;line-height:1.25;">
+              ${heroTitle}
+            </h1>
+            <p style="margin:0;font-size:15px;color:#ffffffd9;line-height:1.6;font-weight:400;">
+              ${heroSubtitle}
+            </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- ROLE CHIP + DETAILS CARD -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:28px 32px;border:1.5px solid #e8daf5;">
+            <div style="margin:0 0 18px;">
+              <span style="display:inline-block;background:${accentBg};color:${accentColor};border-radius:100px;padding:6px 14px;font-size:12px;font-weight:700;letter-spacing:0.02em;">
+                ${accentLabel}
+              </span>
+            </div>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              ${rowsHtml}
+            </table>
+          </td>
+        </tr>
+
+        <tr><td style="height:20px;"></td></tr>
+
+        <!-- CTA -->
+        <tr>
+          <td align="center">
+            <a href="https://dashboard.nestyil.com/people" style="display:inline-block;background:#7c4dbd;color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;">
+              פתחי ב-Dashboard →
+            </a>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="padding:30px 0 0;text-align:center;">
+            <a href="https://nestyil.com" style="text-decoration:none;">
+              <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:24px;width:auto;margin-bottom:10px;" />
+            </a>
+            <p style="margin:0;font-size:12px;color:#bca8d4;">
+              התראה אוטומטית מ-<strong style="color:#9070b8;">Nesty</strong>
+              &nbsp;·&nbsp;
+              <a href="https://nestyil.com" style="color:#9070b8;text-decoration:underline;">nestyil.com</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,7 +140,7 @@ const corsHeaders = {
 }
 
 interface EmailRequest {
-  type: 'purchase_notification' | 'thank_you' | 'admin_new_user' | 'contact' | 'welcome' | 'price_drop'
+  type: 'purchase_notification' | 'thank_you' | 'admin_new_user' | 'admin_co_parent_joined' | 'contact' | 'welcome' | 'price_drop'
   to?: string
   data?: {
     ownerName?: string
@@ -24,6 +156,13 @@ interface EmailRequest {
     userEmail?: string
     userName?: string
     signupDate?: string
+    // For admin_co_parent_joined specifically
+    coParentName?: string
+    coParentEmail?: string
+    primaryOwnerName?: string
+    primaryOwnerEmail?: string
+    registryTitle?: string
+    joinedDate?: string
     // For welcome email
     firstName?: string
     currentWeek?: number
@@ -31,6 +170,7 @@ interface EmailRequest {
     fruitEmoji?: string
     dueDate?: string
     // For price drop email
+    userId?: string  // needed to build the signed unsubscribe URL
     drops?: Array<{
       itemName: string
       imageUrl: string
@@ -73,6 +213,10 @@ serve(async (req) => {
       const fruitEmoji = data?.fruitEmoji || '🍈'
       recipient = to || data?.ownerEmail || ''
       emailSubject = `ברוכה הבאה ל-Nesty, ${firstName}! 💜`
+      // Welcome is onboarding-adjacent — send a plain "manage preferences"
+      // link instead of a one-click unsubscribe token. User just signed up
+      // and is logged in; /settings/emails will open fine for them.
+      const unsubscribeLink = MANAGE_LINK
       html = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -289,7 +433,7 @@ serve(async (req) => {
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
-              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              ${unsubscribeLink}
               &nbsp;·&nbsp;
               <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
               &nbsp;·&nbsp;
@@ -349,85 +493,212 @@ serve(async (req) => {
         </html>
       `
     } else if (type === 'purchase_notification') {
-      emailSubject = `🎁 ${data?.buyerName || 'מישהו'} רכש/ה מתנה מהרשימה שלך!`
-      html = `
-        <!DOCTYPE html>
-        <html dir="rtl" lang="he">
-        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-        <body style="font-family: Arial, sans-serif; background-color: #faf8fb; margin: 0; padding: 20px;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <div style="background: linear-gradient(to left, #86608e, #6d4e74); padding: 32px; text-align: center;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">🎁 קיבלת מתנה!</h1>
+      const ownerName = data?.ownerName || ''
+      const buyerName = data?.buyerName || 'מישהו'
+      const buyerEmail = data?.buyerEmail || ''
+      const itemName = data?.itemName || ''
+      const itemPrice = data?.itemPrice
+      const itemImage = data?.itemImage || ''
+      const storeName = data?.storeName && data.storeName !== 'ידני' ? data.storeName : ''
+      const giftMessage = data?.giftMessage || ''
+      emailSubject = `🎁 ${buyerName} רכש/ה מתנה מהרשימה שלך!`
+
+      html = `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only"/>
+  <meta name="supported-color-modes" content="light"/>
+  <title>קיבלת מתנה!</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root { color-scheme: light only; }
+    @media (prefers-color-scheme: dark) {
+      .hero-bg { background:linear-gradient(145deg,#6a35b0 0%,#9b62d4 60%,#c4a0e8 100%) !important; }
+      .dark-bg { background:linear-gradient(145deg,#3b1f6b 0%,#5c3490 100%) !important; }
+      .white-card { background:#ffffff !important; }
+      h1, h2, h3, p, span, a, td, div { color: inherit !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f5f0fa;font-family:'Heebo',sans-serif;direction:rtl;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0fa;direction:rtl;">
+  <tr>
+    <td align="center" style="padding:40px 16px 64px;">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;direction:rtl;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="padding-bottom:28px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <a href="https://nestyil.com" style="text-decoration:none;">
+                    <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:40px;width:auto;display:block;" />
+                  </a>
+                </td>
+                <td align="left">
+                  <span style="font-size:12px;color:#a087c0;font-weight:600;letter-spacing:0.04em;">קיבלת מתנה 🎁</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- HERO -->
+        <tr>
+          <td class="hero-bg" style="background:linear-gradient(145deg,#6a35b0 0%,#9b62d4 60%,#c4a0e8 100%);border-radius:24px;padding:52px 40px 48px;text-align:center;">
+            <div style="display:inline-block;background:#ffffff;border-radius:50%;padding:2px;margin-bottom:24px;line-height:0;">
+              <img src="https://nestyil.com/Circle_logo.png" alt="Nesty" style="height:64px;width:64px;display:block;border-radius:50%;" />
             </div>
-            <div style="padding: 32px;">
-              <p style="font-size: 18px; color: #1a1a1a; margin-bottom: 24px;">
-                היי ${data?.ownerName || ''},
-              </p>
-              <p style="font-size: 16px; color: #6b6b6b; line-height: 1.6;">
-                <strong style="color: #86608e;">${data?.buyerName || 'מישהו'}</strong> רכש/ה עבורך את הפריט:
-              </p>
-              <div style="background-color: #faf8fb; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                <h3 style="margin: 0 0 8px 0; color: #1a1a1a;">${data?.itemName || ''}</h3>
-                ${data?.itemPrice ? `<p style="margin: 0; color: #86608e; font-weight: bold;">₪${data.itemPrice}</p>` : ''}
-                ${data?.storeName && data.storeName !== 'ידני' ? `<p style="margin: 8px 0 0 0; color: #6b6b6b; font-size: 14px;">נרכש ב: ${data.storeName}</p>` : ''}
-              </div>
-              ${data?.giftMessage ? `
-                <div style="background-color: rgba(244, 172, 183, 0.2); border-radius: 12px; padding: 20px; margin: 24px 0;">
-                  <p style="margin: 0 0 8px 0; color: #6b6b6b; font-size: 14px;">הודעה מ${data.buyerName}:</p>
-                  <p style="margin: 0; color: #1a1a1a; font-style: italic;">"${data.giftMessage}"</p>
-                </div>
-              ` : ''}
-              <p style="font-size: 14px; color: #6b6b6b; margin-top: 24px;">
-                פרטי הקונה ליצירת קשר:<br>
-                <strong>${data?.buyerName || ''}</strong><br>
-                ${data?.buyerEmail || ''}
-              </p>
-              <div style="text-align: center; margin-top: 32px;">
-                <a href="https://nestyil.com/gifts" style="display: inline-block; background: linear-gradient(to left, #86608e, #6d4e74); color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px;">
-                  צפו בכל המתנות
-                </a>
-              </div>
-            </div>
-            <div style="background-color: #faf8fb; padding: 24px; text-align: center; border-top: 1px solid #e8e4e9;">
-              <p style="margin: 0; color: #6b6b6b; font-size: 14px;">
-                נשלח מ-<a href="https://nestyil.com" style="color: #86608e; text-decoration: none;">Nesty</a>
-              </p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `
+            <h1 style="margin:0 0 14px;font-size:34px;font-weight:800;color:#ffffff;line-height:1.2;">
+              קיבלת מתנה! 🎁<br/>
+              <span style="font-size:22px;font-weight:400;color:#e4c8ff;">מישהו חשב עלייך</span>
+            </h1>
+            <p style="margin:0;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:420px;margin-left:auto;margin-right:auto;">
+              היי ${ownerName}, <strong style="color:#fff;">${buyerName}</strong> רכש/ה עבורך פריט מהרשימה. 💜
+            </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- GIFT CARD -->
+        <tr>
+          <td class="white-card" style="background:#fff;border-radius:20px;padding:28px 32px;border:1.5px solid #e8daf5;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                ${itemImage ? `
+                <td width="90" style="vertical-align:top;padding-left:20px;">
+                  <img src="${itemImage}" alt="${itemName}" style="width:80px;height:80px;object-fit:cover;border-radius:14px;border:1px solid #f0e8ff;" />
+                </td>
+                ` : ''}
+                <td style="vertical-align:top;">
+                  <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.06em;color:#a087c0;text-transform:uppercase;">המתנה שלך</p>
+                  <p style="margin:0 0 10px;font-size:17px;font-weight:700;color:#3b1f6b;line-height:1.4;">${itemName}</p>
+                  ${itemPrice ? `<p style="margin:0 0 10px;font-size:18px;font-weight:800;color:#7c4dbd;">₪${itemPrice}</p>` : ''}
+                  ${storeName ? `<div style="display:inline-block;background:#f0e8ff;border-radius:100px;padding:4px 12px;"><span style="font-size:12px;font-weight:700;color:#7c4dbd;">🛒 נרכש ב-${storeName}</span></div>` : ''}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        ${giftMessage ? `
+        <tr><td style="height:10px;"></td></tr>
+        <tr>
+          <td style="background:#fff7fa;border-radius:20px;padding:28px 32px;border:1.5px solid #ffd1e0;">
+            <p style="margin:0 0 8px;font-size:11px;font-weight:700;letter-spacing:0.06em;color:#c2185b;text-transform:uppercase;">💌 הודעה מ${buyerName}</p>
+            <p style="margin:0;font-size:15px;line-height:1.7;color:#3b1f6b;font-style:italic;">"${giftMessage}"</p>
+          </td>
+        </tr>
+        ` : ''}
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- BUYER CONTACT -->
+        <tr>
+          <td class="white-card" style="background:#fff;border-radius:20px;padding:28px 32px;border:1.5px solid #e8daf5;">
+            <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.06em;color:#a087c0;text-transform:uppercase;">פרטי הקונה</p>
+            <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#3b1f6b;">${buyerName}</p>
+            ${buyerEmail ? `<p style="margin:0;font-size:14px;color:#7a6090;"><a href="mailto:${buyerEmail}" style="color:#7c4dbd;text-decoration:none;">${buyerEmail}</a></p>` : ''}
+            <p style="margin:12px 0 0;font-size:13px;line-height:1.7;color:#a087c0;">המשפחה תיצור איתך קשר בנוגע למשלוח. אל תשכחי לשלוח תודה 💜</p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- THANK YOU CTA -->
+        <tr>
+          <td class="dark-bg" style="background:linear-gradient(145deg,#3b1f6b 0%,#5c3490 100%);border-radius:20px;padding:40px 40px;text-align:center;">
+            <p style="margin:0 0 12px;font-size:40px;">💝</p>
+            <h3 style="margin:0 0 12px;font-size:22px;font-weight:700;color:#f5eeff;line-height:1.5;">צפי בכל המתנות שקיבלת</h3>
+            <p style="margin:0 0 28px;font-size:14px;line-height:1.8;color:#ffffffa6;">
+              עקבי אחרי מי קנה מה, סמני מה הגיע,<br/>ושלחי תודה בלחיצה אחת.
+            </p>
+            <a href="https://nestyil.com/gifts" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">לדף המתנות</a>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="padding:30px 0 0;text-align:center;">
+            <a href="https://nestyil.com" style="text-decoration:none;">
+              <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" />
+            </a>
+            <p style="margin:0 0 8px;font-size:13px;color:#a087c0;">
+              נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
+            </p>
+            <p style="margin:0;font-size:12px;color:#bca8d4;">
+              ${MANAGE_LINK}
+              &nbsp;·&nbsp;
+              <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
+              &nbsp;·&nbsp;
+              <a href="https://nestyil.com" style="color:#9070b8;text-decoration:underline;">nestyil.com</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`
     } else if (type === 'admin_new_user') {
-      emailSubject = `🆕 משתמש חדש נרשם ל-Nesty: ${data?.userName || data?.userEmail || ''}`
+      // Internal ops email to hello@nestyil.com whenever a fresh user signs up
+      // (no pending co-parent invite). Uses the same branded shell as welcome/
+      // price_drop so admin mailbox reads consistently.
+      const userName = data?.userName || ''
+      const userEmail = data?.userEmail || ''
+      const signupDate = data?.signupDate || new Date().toLocaleDateString('he-IL')
+      emailSubject = `🆕 משתמש חדש נרשם ל-Nesty${userName ? `: ${userName}` : userEmail ? `: ${userEmail}` : ''}`
       recipient = 'hello@nestyil.com'
-      html = `
-        <!DOCTYPE html>
-        <html dir="rtl" lang="he">
-        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-        <body style="font-family: Arial, sans-serif; background-color: #faf8fb; margin: 0; padding: 20px;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <div style="background: linear-gradient(to left, #86608e, #6d4e74); padding: 32px; text-align: center;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">🆕 משתמש חדש!</h1>
-            </div>
-            <div style="padding: 32px;">
-              <p style="font-size: 18px; color: #1a1a1a; margin-bottom: 24px;">היי Tom,</p>
-              <p style="font-size: 16px; color: #6b6b6b; line-height: 1.6;">משתמש חדש נרשם ל-Nesty!</p>
-              <div style="background-color: #faf8fb; border-radius: 12px; padding: 20px; margin: 24px 0;">
-                <p style="margin: 0 0 8px 0; color: #6b6b6b; font-size: 14px;">פרטי המשתמש:</p>
-                ${data?.userName ? `<p style="margin: 0 0 4px 0; color: #1a1a1a;"><strong>שם:</strong> ${data.userName}</p>` : ''}
-                <p style="margin: 0 0 4px 0; color: #1a1a1a;"><strong>אימייל:</strong> ${data?.userEmail || ''}</p>
-                <p style="margin: 0; color: #1a1a1a;"><strong>תאריך הרשמה:</strong> ${data?.signupDate || new Date().toLocaleDateString('he-IL')}</p>
-              </div>
-            </div>
-            <div style="background-color: #faf8fb; padding: 24px; text-align: center; border-top: 1px solid #e8e4e9;">
-              <p style="margin: 0; color: #6b6b6b; font-size: 14px;">
-                התראה מערכת מ-<a href="https://nestyil.com" style="color: #86608e; text-decoration: none;">Nesty</a>
-              </p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `
+      html = buildAdminBrandedEmail({
+        heroEmoji: '🆕',
+        heroTitle: 'משתמש חדש נרשם',
+        heroSubtitle: 'חשבון חדש נפתח זה עתה',
+        accentLabel: 'Primary user',
+        accentColor: '#7c4dbd',
+        accentBg: '#f3edff',
+        rows: [
+          { label: 'שם', value: userName || '—' },
+          { label: 'אימייל', value: userEmail || '—' },
+          { label: 'תאריך הרשמה', value: signupDate },
+          { label: 'סוג חשבון', value: 'הורה ראשי (Primary)' },
+        ],
+      })
+    } else if (type === 'admin_co_parent_joined') {
+      // Internal ops email fired from accept-invitation right after partner_id
+      // is persisted. Replaces admin_new_user for users who signed up through
+      // (or accepted) a co-parent invitation.
+      const coParentName = data?.coParentName || data?.userName || ''
+      const coParentEmail = data?.coParentEmail || data?.userEmail || ''
+      const primaryOwnerName = data?.primaryOwnerName || ''
+      const primaryOwnerEmail = data?.primaryOwnerEmail || ''
+      const registryTitle = data?.registryTitle || ''
+      const joinedDate = data?.joinedDate || new Date().toLocaleDateString('he-IL')
+      emailSubject = `🤝 Co-parent חדש הצטרף${coParentName ? `: ${coParentName}` : coParentEmail ? `: ${coParentEmail}` : ''}`
+      recipient = 'hello@nestyil.com'
+      html = buildAdminBrandedEmail({
+        heroEmoji: '🤝',
+        heroTitle: 'Co-parent חדש הצטרף',
+        heroSubtitle: 'הורה שותף קיבל הזמנה ומחובר לרשימה',
+        accentLabel: 'Co-parent',
+        accentColor: '#be185d',
+        accentBg: '#fde6ef',
+        rows: [
+          { label: 'שם Co-parent', value: coParentName || '—' },
+          { label: 'אימייל Co-parent', value: coParentEmail || '—' },
+          { label: 'הורה ראשי', value: primaryOwnerName || primaryOwnerEmail || '—' },
+          ...(primaryOwnerName && primaryOwnerEmail
+            ? [{ label: 'אימייל הורה ראשי', value: primaryOwnerEmail }]
+            : []),
+          ...(registryTitle ? [{ label: 'רשימה', value: registryTitle }] : []),
+          { label: 'תאריך הצטרפות', value: joinedDate },
+        ],
+      })
     } else if (type === 'thank_you') {
       emailSubject = `תודה על המתנה ל${data?.ownerName || ''}! 💝`
       html = `
@@ -467,11 +738,18 @@ serve(async (req) => {
     } else if (type === 'price_drop') {
       const firstName = data?.firstName || 'את'
       const drops = data?.drops || []
+      const userId = data?.userId || ''
       recipient = to || data?.ownerEmail || ''
 
       if (drops.length === 0) {
         throw new Error('No price drops provided')
       }
+
+      // One-click token unsubscribe for the 'prices' category. If userId
+      // isn't provided (legacy callers), fall back to the plain manage link.
+      const unsubscribeLink = userId
+        ? `<a href="${await buildUnsubscribeUrl(userId, 'prices')}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>`
+        : MANAGE_LINK
 
       // Subject line
       if (drops.length === 1) {
@@ -641,7 +919,7 @@ serve(async (req) => {
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
-              <a href="https://nestyil.com/settings" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
+              ${unsubscribeLink}
               &nbsp;·&nbsp;
               <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
               &nbsp;·&nbsp;

@@ -78,15 +78,19 @@ export default function Gifts() {
     }
   }, [refreshGiftsCount])
 
-  // Mark a gift as received
+  // Mark a gift as received. Toggling back to "not received" also re-marks
+  // the purchase as unseen — same UX as WhatsApp's "mark as unread", so the
+  // gifts nav badge reappears until the user revisits the page.
   const handleMarkReceived = async (purchaseId: string) => {
     try {
       const purchase = purchases.find(p => p.id === purchaseId)
       const newValue = !purchase?.is_received
+      const update: { is_received: boolean; is_seen?: boolean } = { is_received: newValue }
+      if (!newValue) update.is_seen = false
 
       const { error } = await supabase
         .from('purchases')
-        .update({ is_received: newValue })
+        .update(update)
         .eq('id', purchaseId)
 
       if (error) {
@@ -95,8 +99,15 @@ export default function Gifts() {
       }
 
       setPurchases(prev =>
-        prev.map(p => p.id === purchaseId ? { ...p, is_received: newValue } : p)
+        prev.map(p => p.id === purchaseId
+          ? { ...p, is_received: newValue, ...(newValue ? {} : { is_seen: false }) }
+          : p
+        )
       )
+      if (!newValue) {
+        hasMarkedSeen.current = false
+        refreshGiftsCount()
+      }
     } catch (err) {
       console.error('Error marking purchase as received:', err)
     }

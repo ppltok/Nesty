@@ -35,6 +35,66 @@ interface AcquisitionData {
   with_items: number
 }
 
+interface UtmRow {
+  key: string
+  count: number
+}
+
+interface UtmBreakdown {
+  bySource: UtmRow[]
+  byMedium: UtmRow[]
+  byCampaign: UtmRow[]
+  totalTracked: number
+  totalUntracked: number
+}
+
+function useUtmBreakdown() {
+  return useQuery<UtmBreakdown>({
+    queryKey: ['utm-breakdown'],
+    queryFn: async () => {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('utm_source, utm_medium, utm_campaign')
+
+      if (error) throw error
+
+      const bySourceMap = new Map<string, number>()
+      const byMediumMap = new Map<string, number>()
+      const byCampaignMap = new Map<string, number>()
+      let totalTracked = 0
+      let totalUntracked = 0
+
+      for (const p of profiles || []) {
+        const src = p.utm_source
+        const med = p.utm_medium
+        const cmp = p.utm_campaign
+
+        if (src || med || cmp) {
+          totalTracked++
+          if (src) bySourceMap.set(src, (bySourceMap.get(src) || 0) + 1)
+          if (med) byMediumMap.set(med, (byMediumMap.get(med) || 0) + 1)
+          if (cmp) byCampaignMap.set(cmp, (byCampaignMap.get(cmp) || 0) + 1)
+        } else {
+          totalUntracked++
+        }
+      }
+
+      const toSorted = (m: Map<string, number>): UtmRow[] =>
+        Array.from(m.entries())
+          .map(([key, count]) => ({ key, count }))
+          .sort((a, b) => b.count - a.count)
+
+      return {
+        bySource: toSorted(bySourceMap),
+        byMedium: toSorted(byMediumMap),
+        byCampaign: toSorted(byCampaignMap),
+        totalTracked,
+        totalUntracked,
+      }
+    },
+  })
+}
+
 function useAcquisitionData() {
   return useQuery<AcquisitionData[]>({
     queryKey: ['acquisition-data'],
@@ -85,6 +145,7 @@ function useAcquisitionData() {
 
 export default function AcquisitionPage() {
   const acquisition = useAcquisitionData()
+  const utm = useUtmBreakdown()
   const data = acquisition.data ?? []
 
   const totalUsers = data.reduce((sum, d) => sum + d.count, 0)
@@ -197,6 +258,91 @@ export default function AcquisitionPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* UTM Attribution (from ad links) */}
+      <div className="space-y-4 pt-4">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">UTM Attribution</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Paid &amp; organic campaign tracking from UTM-tagged links (Meta Ads, Google Ads, newsletters, etc.)
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KPICard
+            title="UTM-Tracked Users"
+            value={formatNumber(utm.data?.totalTracked ?? 0)}
+            subtitle="Arrived via tagged link"
+            icon={<Megaphone size={20} />}
+          />
+          <KPICard
+            title="Untracked Users"
+            value={formatNumber(utm.data?.totalUntracked ?? 0)}
+            subtitle="Direct / untagged"
+            icon={<Users size={20} />}
+          />
+          <KPICard
+            title="Top UTM Source"
+            value={utm.data?.bySource[0]?.key || '-'}
+            subtitle={utm.data?.bySource[0] ? `${utm.data.bySource[0].count} users` : ''}
+            icon={<TrendingUp size={20} />}
+          />
+          <KPICard
+            title="Top Campaign"
+            value={utm.data?.byCampaign[0]?.key || '-'}
+            subtitle={utm.data?.byCampaign[0] ? `${utm.data.byCampaign[0].count} users` : ''}
+            icon={<Megaphone size={20} />}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <UtmTable title="By Source" rows={utm.data?.bySource ?? []} total={utm.data?.totalTracked ?? 0} />
+          <UtmTable title="By Medium" rows={utm.data?.byMedium ?? []} total={utm.data?.totalTracked ?? 0} />
+          <UtmTable title="By Campaign" rows={utm.data?.byCampaign ?? []} total={utm.data?.totalTracked ?? 0} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function UtmTable({ title, rows, total }: { title: string; rows: UtmRow[]; total: number }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="px-5 py-4 border-b">
+        <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
+      </div>
+      <div className="overflow-x-auto max-h-80 overflow-y-auto">
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 bg-gray-50">
+            <tr className="border-b">
+              <th className="px-4 py-2 text-left font-medium text-gray-500">Value</th>
+              <th className="px-4 py-2 text-right font-medium text-gray-500">Users</th>
+              <th className="px-4 py-2 text-right font-medium text-gray-500">%</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="px-4 py-6 text-center text-gray-400">
+                  No data yet
+                </td>
+              </tr>
+            ) : (
+              rows.map(r => (
+                <tr key={r.key} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="px-4 py-2 text-gray-900 font-medium truncate max-w-[200px]" title={r.key}>
+                    {r.key}
+                  </td>
+                  <td className="px-4 py-2 text-right text-gray-700">{formatNumber(r.count)}</td>
+                  <td className="px-4 py-2 text-right text-gray-500">
+                    {total > 0 ? formatPercent(r.count / total) : '0%'}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   )

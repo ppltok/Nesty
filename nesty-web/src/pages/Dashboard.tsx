@@ -30,6 +30,7 @@ import FadedIconsBackground from '../components/animations/FadedIconsBackground'
 import PostOnboardingWizard from '../components/popups/PostOnboardingWizard'
 import SharePromptModal from '../components/popups/SharePromptModal'
 import MilestoneToast, { type MilestoneKind } from '../components/popups/MilestoneToast'
+import PartnerInviteCard from '../components/popups/PartnerInviteCard'
 import { useExtensionDetection } from '../hooks/useExtensionDetection'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
 import { usePopupState, advanceMilestone, milestoneForCount } from '../hooks/usePopups'
@@ -104,6 +105,7 @@ export default function Dashboard() {
   const popups = usePopupState(user?.id)
   const [showPostOnboarding, setShowPostOnboarding] = useState(false)
   const [showSharePrompt, setShowSharePrompt] = useState(false)
+  const [showPartnerInvite, setShowPartnerInvite] = useState(false)
   const [activeToast, setActiveToast] = useState<MilestoneKind | null>(null)
   // Snapshot of items.length before the latest add, so handleItemSave can
   // detect milestone crossings without re-fetching state mid-flow.
@@ -153,6 +155,45 @@ export default function Dashboard() {
     if (showAddressModal) return
     setShowPostOnboarding(true)
   }, [popups.loaded, popups.dismissed.post_onboarding, user, isLoadingItems, items.length, tutorialActive, showAddressModal])
+
+  // Partner invite card — fires once for solo registries (no partner_id).
+  // Only when the user has at least 3 items so it doesn't ambush brand-new
+  // accounts on their first session. Dismissed key persists in profiles.
+  useEffect(() => {
+    if (!popups.loaded || !user || !registry) return
+    if (popups.dismissed.partner_invite_card) return
+    if (registry.partner_id) return
+    if (isLoadingItems || items.length < 3) return
+    if (showPostOnboarding || showAddressModal || showSharePrompt) return
+    setShowPartnerInvite(true)
+  }, [popups.loaded, popups.dismissed.partner_invite_card, user, registry, isLoadingItems, items.length, showPostOnboarding, showAddressModal, showSharePrompt])
+
+  // First-gift celebration toast — fires once when the registry receives its
+  // very first purchase. Uses milestone integer 100 (reserved for first_gift)
+  // to persist via last_milestone_shown without colliding with item-count
+  // milestones (1, 5, 10).
+  useEffect(() => {
+    if (!popups.loaded || !user || !registry) return
+    if (popups.lastMilestoneShown >= 100) return
+    let cancelled = false
+    void (async () => {
+      const { data: itemRows } = await supabase
+        .from('items')
+        .select('id')
+        .eq('registry_id', registry.id)
+      if (cancelled || !itemRows || itemRows.length === 0) return
+      const { count } = await supabase
+        .from('purchases')
+        .select('*', { count: 'exact', head: true })
+        .in('item_id', itemRows.map(i => i.id))
+      if (cancelled) return
+      if ((count ?? 0) >= 1) {
+        setActiveToast({ kind: 'first_gift' })
+        void advanceMilestone(user.id, 100)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [popups.loaded, popups.lastMilestoneShown, user, registry])
 
   // Fetch partner name for shared registry indicator
   useEffect(() => {
@@ -1035,6 +1076,13 @@ export default function Dashboard() {
           userId={user.id}
           onClose={() => setShowSharePrompt(false)}
           onShare={() => setShowShareModal(true)}
+        />
+      )}
+
+      {showPartnerInvite && user && (
+        <PartnerInviteCard
+          userId={user.id}
+          onClose={() => setShowPartnerInvite(false)}
         />
       )}
 

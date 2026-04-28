@@ -39,7 +39,7 @@ export default function Header() {
                 <Link to="/auth/signin">
                   <Button variant="outline">כניסה</Button>
                 </Link>
-                <Link to="/auth/signin">
+                <Link to="/auth/signup">
                   <Button>יצירת רשימה חינם</Button>
                 </Link>
               </>
@@ -84,7 +84,7 @@ export default function Header() {
                   <Link to="/auth/signin" className="block">
                     <Button variant="outline" className="w-full">כניסה</Button>
                   </Link>
-                  <Link to="/auth/signin" className="block">
+                  <Link to="/auth/signup" className="block">
                     <Button className="w-full">יצירת רשימה חינם</Button>
                   </Link>
                 </>
