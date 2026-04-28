@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Nesty Button Variations — בחר עיצוב</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0eef8; color: #333; }
+
+  h1 { text-align: center; padding: 36px 16px 6px; font-size: 22px; color: #3b2f6e; }
+  .subtitle { text-align: center; color: #777; margin-bottom: 36px; font-size: 13px; }
+
+  .section-title {
+    text-align: center; font-size: 16px; font-weight: 700;
+    color: #6750A4; margin: 36px 0 20px;
+    padding-bottom: 8px; border-bottom: 2px solid #d4cce8;
+    max-width: 960px; margin-left: auto; margin-right: auto;
+  }
+
+  /* ── Grid of 3 variations ─── */
+  .variations-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 960px;
+    margin: 0 auto 48px;
+    padding: 0 20px;
+  }
+
+  .variation-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 14px rgba(103,80,164,0.1);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+  }
+  .variation-card:hover { border-color: #6750A4; }
+
+  .variation-label {
+    font-size: 12px; font-weight: 700; color: #999;
+    letter-spacing: 0.8px; text-transform: uppercase;
+  }
+
+  /* ── Mock shopping page ─── */
+  .mock-page {
+    width: 100%; background: #fafafa;
+    border: 1px solid #eaeaea; border-radius: 10px;
+    padding: 14px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .mock-product-title { font-size: 13px; font-weight: 700; color: #222; text-align: right; }
+  .mock-price { font-size: 12px; color: #666; text-align: right; }
+  .mock-add-to-cart {
+    width: 100%; padding: 9px;
+    background: #b0d8d8; color: #fff; border: none;
+    border-radius: 6px; font-size: 13px; font-weight: 600;
+    text-align: center; cursor: default;
+  }
+
+  /* ── Floating pill mock area ─── */
+  .pill-wrapper {
+    position: relative; width: 100%; height: 64px;
+    background: repeating-linear-gradient(
+      45deg, #ede9f8, #ede9f8 8px, #f7f5fc 8px, #f7f5fc 16px
+    );
+    border-radius: 8px; border: 1px dashed #c8beed; overflow: visible;
+  }
+  .pill-label-ctx {
+    position: absolute; top: 6px; right: 8px;
+    font-size: 10px; color: #b0a0d0;
+  }
+
+  /* ═══════════════════════════════════════
+     SHARED BUTTON BASE
+  ═══════════════════════════════════════ */
+  .nesty-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 8px; background: #6750A4; color: #fff;
+    border: none; cursor: pointer;
+    font-family: 'Assistant','Heebo','Segoe UI',sans-serif;
+    font-weight: 600; transition: background 0.15s;
+    direction: rtl; text-decoration: none;
+  }
+  .nesty-btn:hover { background: #5a4490; }
+  .nesty-btn img { flex-shrink: 0; object-fit: contain; display: block; }
+
+  /* ── Floating pill shape ─── */
+  .nesty-pill {
+    position: absolute; bottom: 10px; left: 10px;
+    height: 42px; padding: 0 16px;
+    border-radius: 21px; font-size: 14px;
+    box-shadow: 0 4px 14px rgba(103,80,164,0.4);
+    white-space: nowrap;
+  }
+
+  /* ── Inline button shape ─── */
+  .nesty-inline {
+    width: 100%; padding: 11px 16px;
+    border-radius: 6px; font-size: 14px;
+  }
+
+  /* dismiss × */
+  .dismiss-x {
+    position: absolute; top: -7px; right: -7px;
+    width: 20px; height: 20px;
+    background: #555; color: #fff;
+    border: 2px solid #fff; border-radius: 50%;
+    font-size: 10px; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer; font-family: Arial; font-weight: 700;
+  }
+
+  /* ────────────────────────────────────────
+     VARIATION A  —  Circle mark + Hebrew
+     The classic: small circular logo on left, Hebrew label
+  ──────────────────────────────────────── */
+  .var-a .nesty-btn img {
+    width: 24px; height: 24px; border-radius: 50%;
+    filter: brightness(0) invert(1);
+  }
+
+  /* ────────────────────────────────────────
+     VARIATION B  —  Full logo (nest mark + "Nesty" wordmark)
+     The brand-forward: the full Nesty_logo.png rendered white
+     No additional text — the logo IS the label
+  ──────────────────────────────────────── */
+  .var-b .nesty-pill { gap: 0; padding: 0 18px; }
+  .var-b .nesty-pill img {
+    height: 22px; width: auto;
+    filter: brightness(0) invert(1);
+  }
+  .var-b .nesty-inline { gap: 0; }
+  .var-b .nesty-inline img {
+    height: 20px; width: auto;
+    filter: brightness(0) invert(1);
+  }
+
+  /* ────────────────────────────────────────
+     VARIATION C  —  Nesty_logo.png (same as B) + Hebrew text
+     Use explicit w+h + object-fit:contain so the browser centers
+     the logo content within the box, fixing vertical alignment.
+  ──────────────────────────────────────── */
+  .var-c .nesty-btn { gap: 8px; }
+  .var-c .nesty-btn .c-text { position: relative; top: -3px; }
+  .var-c .nesty-pill img {
+    height: 22px;
+    width: 39px; /* 22 × (1920/1080) */
+    object-fit: contain;
+    object-position: center center;
+    filter: brightness(0) invert(1);
+  }
+  .var-c .nesty-inline img {
+    height: 20px;
+    width: 36px; /* 20 × (1920/1080) */
+    object-fit: contain;
+    object-position: center center;
+    filter: brightness(0) invert(1);
+  }
+
+  /* choose button */
+  .choose-btn {
+    margin-top: auto; padding: 8px 22px;
+    background: #6750A4; color: #fff;
+    border: none; border-radius: 20px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .choose-btn:hover { background: #5a4490; }
+
+  .description { font-size: 11px; color: #777; text-align: center; line-height: 1.5; }
+
+  hr.divider { max-width: 960px; margin: 0 auto; border: none; border-top: 1px solid #d4cce8; }
+
+  /* selection banner */
+  #selection-banner {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0;
+    background: #6750A4; color: #fff;
+    text-align: center; padding: 16px;
+    font-size: 16px; font-weight: 600; z-index: 999;
+  }
+</style>
+</head>
+<body>
+
+<h1>Nesty Button Variations</h1>
+<p class="subtitle">בחר את הגרסה המועדפת לכפתור הצף ולכפתור המוטמע</p>
+
+<!-- ═══════════════════════
+     FLOATING PILL
+═══════════════════════ -->
+<div class="section-title">כפתור צף (Floating Pill)</div>
+
+<div class="variations-grid">
+
+  <!-- A: Circle mark + Hebrew -->
+  <div class="variation-card var-a">
+    <div class="variation-label">A — לוגו עיגול + עברית</div>
+    <div class="pill-wrapper">
+      <span class="pill-label-ctx">bottom-left</span>
+      <button class="nesty-btn nesty-pill">
+        <img src="https://nestyil.com/Circle_logo.png" alt="Nesty">
+        הוסף לנסטי
+        <span class="dismiss-x" style="position:absolute;top:-7px;right:-7px;">×</span>
+      </button>
+    </div>
+    <p class="description">לוגו עיגול קטן משמאל<br>+ טקסט עברי בולד<br><em>ברור ומוכר</em></p>
+    <button class="choose-btn" onclick="choose('A')">בחר A ✓</button>
+  </div>
+
+  <!-- B: Full Nesty_logo.png only -->
+  <div class="variation-card var-b">
+    <div class="variation-label">B — לוגו מלא בלבד</div>
+    <div class="pill-wrapper">
+      <span class="pill-label-ctx">bottom-left</span>
+      <button class="nesty-btn nesty-pill">
+        <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty">
+        <span class="dismiss-x" style="position:absolute;top:-7px;right:-7px;">×</span>
+      </button>
+    </div>
+    <p class="description">לוגו Nesty המלא (לבן)<br>ללא טקסט נוסף<br><em>חזק מבחינת ברנד</em></p>
+    <button class="choose-btn" onclick="choose('B')">בחר B ✓</button>
+  </div>
+
+  <!-- C: Nesty_logo.png + Hebrew -->
+  <div class="variation-card var-c">
+    <div class="variation-label">C — לוגו מלא + עברית</div>
+    <div class="pill-wrapper">
+      <span class="pill-label-ctx">bottom-left</span>
+      <button class="nesty-btn nesty-pill">
+        <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty">
+        <span class="c-text">הוסף לנסטי</span>
+        <span class="dismiss-x" style="position:absolute;top:-7px;right:-7px;">×</span>
+      </button>
+    </div>
+    <p class="description">לוגו Nesty (לבן) + טקסט עברי<br><em>שניהם יחד</em></p>
+    <button class="choose-btn" onclick="choose('C')">בחר C ✓</button>
+  </div>
+
+</div>
+
+<hr class="divider">
+
+<!-- ═══════════════════════
+     INLINE BUTTON
+═══════════════════════ -->
+<div class="section-title">כפתור מוטמע (Inline — ליד כפתור הוספה לסל)</div>
+
+<div class="variations-grid">
+
+  <!-- A inline -->
+  <div class="variation-card var-a">
+    <div class="variation-label">A — לוגו עיגול + עברית</div>
+    <div class="mock-page">
+      <div class="mock-product-title">בלוס T5 צבע ירוק – סייבקס</div>
+      <div class="mock-price">₪2,590.00</div>
+      <button class="mock-add-to-cart">הוספה לסל</button>
+      <button class="nesty-btn nesty-inline">
+        <img src="https://nestyil.com/Circle_logo.png" alt="Nesty" style="width:22px;height:22px;border-radius:50%;filter:brightness(0) invert(1);">
+        הוסף לנסטי
+      </button>
+    </div>
+    <p class="description">לוגו עיגול + טקסט עברי<br>נקי ואחיד</p>
+    <button class="choose-btn" onclick="choose('A')">בחר A ✓</button>
+  </div>
+
+  <!-- B inline -->
+  <div class="variation-card var-b">
+    <div class="variation-label">B — לוגו מלא בלבד</div>
+    <div class="mock-page">
+      <div class="mock-product-title">בלוס T5 צבע ירוק – סייבקס</div>
+      <div class="mock-price">₪2,590.00</div>
+      <button class="mock-add-to-cart">הוספה לסל</button>
+      <button class="nesty-btn nesty-inline">
+        <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty">
+      </button>
+    </div>
+    <p class="description">לוגו Nesty המלא (לבן)<br>ללא טקסט נוסף</p>
+    <button class="choose-btn" onclick="choose('B')">בחר B ✓</button>
+  </div>
+
+  <!-- C inline -->
+  <div class="variation-card var-c">
+    <div class="variation-label">C — לוגו מלא + עברית</div>
+    <div class="mock-page">
+      <div class="mock-product-title">בלוס T5 צבע ירוק – סייבקס</div>
+      <div class="mock-price">₪2,590.00</div>
+      <button class="mock-add-to-cart">הוספה לסל</button>
+      <button class="nesty-btn nesty-inline">
+        <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty">
+        <span class="c-text">הוסף לנסטי</span>
+      </button>
+    </div>
+    <p class="description">לוגו Nesty (לבן) + טקסט עברי<br><em>שניהם יחד</em></p>
+    <button class="choose-btn" onclick="choose('C')">בחר C ✓</button>
+  </div>
+
+</div>
+
+<div id="selection-banner">
+  בחרת גרסה <span id="selection-letter"></span> — ספר לי ואיישם!
+</div>
+
+<script>
+function choose(v) {
+  document.getElementById('selection-letter').textContent = v;
+  document.getElementById('selection-banner').style.display = 'block';
+}
+</script>
+</body>
+</html>

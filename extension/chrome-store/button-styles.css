@@ -1,0 +1,215 @@
+/* Nesty In-Page Button Styles
+   All color/layout properties use !important to defeat site-level button{} overrides */
+
+/* ── Floating pill ──────────────────────────────────────────────── */
+
+.nesty-floating-pill {
+  position: fixed !important;
+  bottom: 220px !important;
+  left: 20px !important;
+  right: auto !important;
+  z-index: 2147483600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 18px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  width: auto !important;
+  background: #674FA1 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 22px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 16px rgba(103, 79, 161, 0.45) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  white-space: nowrap !important;
+  opacity: 0;
+  animation: nesty-pill-fadein 0.4s ease 0.8s forwards !important;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease !important;
+  text-decoration: none !important;
+  outline: none !important;
+  -webkit-font-smoothing: antialiased !important;
+  direction: ltr !important;
+  line-height: 1 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  margin: 0 !important;
+  float: none !important;
+}
+
+.nesty-floating-pill:hover {
+  background: #5a4490 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(103, 79, 161, 0.5) !important;
+  color: #ffffff !important;
+}
+
+.nesty-floating-pill:active {
+  transform: translateY(0) !important;
+}
+
+@keyframes nesty-pill-fadein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.nesty-pill-label {
+  pointer-events: none !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  background: none !important;
+  position: relative !important;
+  top: 0px !important;
+}
+
+/* Variation C logo image in floating pill */
+.nesty-pill-logo {
+  height: 20px !important;
+  width: 36px !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  filter: brightness(0) invert(1) !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.nesty-floating-pill.loading .nesty-pill-logo { display: none !important; }
+
+.nesty-pill-spinner {
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid rgba(255,255,255,0.4) !important;
+  border-top-color: #fff !important;
+  border-radius: 50% !important;
+  animation: nesty-spin 0.7s linear infinite !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.nesty-floating-pill.loading .nesty-pill-label { display: none !important; }
+.nesty-floating-pill.loading .nesty-pill-spinner { display: block !important; }
+
+@keyframes nesty-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Dismiss × button */
+.nesty-pill-dismiss {
+  position: absolute !important;
+  top: -7px !important;
+  right: -7px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  background: #555 !important;
+  background-image: none !important;
+  color: #fff !important;
+  border: 2px solid #fff !important;
+  border-radius: 50% !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  z-index: 1 !important;
+  font-family: Arial, sans-serif !important;
+  box-shadow: none !important;
+}
+
+.nesty-pill-dismiss:hover {
+  background: #333 !important;
+  color: #fff !important;
+}
+
+/* Narrow viewport: icon-only */
+@media (max-width: 480px) {
+  .nesty-floating-pill {
+    width: 44px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+  }
+  .nesty-pill-label {
+    display: none !important;
+  }
+}
+
+/* ── Inline button ──────────────────────────────────────────────── */
+
+.nesty-inline-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  direction: ltr !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 12px 20px !important;
+  margin: 10px 0 0 0 !important;
+  height: auto !important;
+  min-height: 44px !important;
+  background: #674FA1 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  transition: background 0.15s ease !important;
+  -webkit-font-smoothing: antialiased !important;
+  text-decoration: none !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  line-height: 1.4 !important;
+  float: none !important;
+  clear: both !important;
+}
+
+.nesty-inline-btn:hover {
+  background: #5a4490 !important;
+  color: #ffffff !important;
+}
+
+.nesty-inline-btn:active {
+  background: #4e3c80 !important;
+}
+
+/* ── Toast notification ─────────────────────────────────────────── */
+
+.nesty-toast {
+  position: fixed !important;
+  bottom: 280px !important;
+  left: 20px !important;
+  right: auto !important;
+  z-index: 2147483601 !important;
+  background: #333 !important;
+  color: #fff !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-family: 'Assistant', 'Heebo', sans-serif !important;
+  max-width: 280px !important;
+  text-align: center !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+  animation: nesty-pill-fadein 0.3s ease forwards !important;
+  pointer-events: none !important;
+  direction: rtl !important;
+}
