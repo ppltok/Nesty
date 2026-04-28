@@ -9,7 +9,7 @@
 
   // Signal to website that extension is installed
   document.documentElement.setAttribute('data-nesty-extension-installed', 'true');
-  document.documentElement.setAttribute('data-nesty-extension-version', '1.4.5');
+  document.documentElement.setAttribute('data-nesty-extension-version', '1.5.1');
   console.log('✅ Extension detection markers set');
 
   // Remove any existing Nesty UI elements (modals, overlays, styles)
