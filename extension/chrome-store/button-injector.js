@@ -19,6 +19,7 @@
     { hostname: 'baby-shark.co.il', hasInline: true, anchorSelectors: ['.elementor-add-to-cart'] },
     // agalease-baby: standard WooCommerce — form.cart is a block-level form
     { hostname: 'agalease-baby.co.il', hasInline: true, anchorSelectors: ['form.cart'] },
+    { hostname: 'baby-star.co.il', hasInline: true, anchorSelectors: ['.add_to_cart_holder'] },
     // ── Floating only ────────────────────────────────────────────────
     { hostname: 'next.co.il',             hasInline: false, anchorSelectors: [] },
     { hostname: 'cartersoshkosh.co.il',   hasInline: false, anchorSelectors: [] },
@@ -42,7 +43,6 @@
     { hostname: 'roly.co.il',             hasInline: false, anchorSelectors: [] },
     { hostname: 'maxbaby.co.il',          hasInline: false, anchorSelectors: [] },
     { hostname: 'mamo-israel.co.il',      hasInline: false, anchorSelectors: [] },
-    { hostname: 'baby-star.co.il',        hasInline: false, anchorSelectors: [] },
     { hostname: 'mommyshop.co.il',        hasInline: false, anchorSelectors: [] },
     { hostname: '2mybaby.co.il',          hasInline: false, anchorSelectors: [] },
     { hostname: 'babysrus.co.il',         hasInline: false, anchorSelectors: [] },
@@ -256,7 +256,7 @@
     // Label span (with -3px nudge to align with logo visual center)
     var labelEl = document.createElement('span');
     labelEl.textContent = LABEL;
-    ['position:relative', 'top:-3px', 'color:inherit', 'font-size:inherit',
+    ['position:relative', 'top:1px', 'color:inherit', 'font-size:inherit',
      'font-weight:inherit', 'background:none', 'border:none', 'padding:0', 'margin:0'].forEach(function(s) {
       var parts = s.split(':'); btn; labelEl.style.setProperty(parts[0], parts[1], 'important');
     });
