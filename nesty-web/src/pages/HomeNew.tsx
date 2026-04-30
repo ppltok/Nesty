@@ -9,11 +9,13 @@ import ParticleBackground from '../components/animations/ParticleBackground'
 import ScrollReveal from '../components/animations/ScrollReveal'
 import {
     Menu, X, Heart, Sparkles, ArrowLeft,
-    ClipboardList, Star, Send, TrendingDown,
+    Star, Send, TrendingDown,
     Bell, CheckCircle, Users, Shield, Lock, EyeOff, Gift,
     Chrome, MousePointerClick, Zap, ShoppingBag, ExternalLink,
-    ListChecks, Baby
+    ListChecks, BookOpen, Compass, Sprout
 } from 'lucide-react'
+import CategoryMarquee from '../components/animations/CategoryMarquee'
+import AnnouncementBar from '../components/animations/AnnouncementBar'
 
 export default function HomeNew() {
     const { isAuthenticated } = useAuth()
@@ -42,14 +44,23 @@ export default function HomeNew() {
     }, [])
 
     return (
-        <div className="min-h-screen bg-[#fffbff] text-[#1d192b] overflow-x-hidden" dir="rtl">
-            {/* Header */}
-            <header className="sticky top-0 z-50 bg-[#fffbff]/70 backdrop-blur-2xl border-b border-[#e7e0ec]/50 px-6 py-4">
+        <div className="min-h-screen bg-[#fffbff] text-[#1d192b] overflow-x-clip" dir="rtl">
+            {/* Sticky stack — announcement bar + header travel together so there's never a gap */}
+            <div className="sticky top-0 z-[60]">
+                <AnnouncementBar />
+                <header className="bg-[#fffbff]/85 backdrop-blur-2xl border-b border-[#e7e0ec]/50 px-6 py-4">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-3">
                         <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-16 w-auto" />
                     </Link>
                     <nav className="hidden md:flex items-center gap-8">
+                        <Link
+                            to="/guides"
+                            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#f3edff] text-[#6750a4] hover:bg-[#eaddff] transition-colors font-bold border border-[#eaddff]"
+                        >
+                            <BookOpen className="w-4 h-4" />
+                            מדריכים
+                        </Link>
                         <a href="#how-it-works" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">איך זה עובד</a>
                         <a href="#example-registry" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">דוגמה לרשימה</a>
                         <a href="#chrome-extension" className="text-[#49454f] hover:text-[#6750a4] transition-colors font-medium">תוסף לכרום</a>
@@ -76,6 +87,14 @@ export default function HomeNew() {
                             <a href="#example-registry" className="block text-[#49454f] hover:text-[#6750a4] font-medium" onClick={() => setIsMobileMenuOpen(false)}>דוגמה לרשימה</a>
                             <a href="#chrome-extension" className="block text-[#49454f] hover:text-[#6750a4] font-medium" onClick={() => setIsMobileMenuOpen(false)}>תוסף לכרום</a>
                             <a href="#smart-engine" className="block text-[#49454f] hover:text-[#6750a4] font-medium" onClick={() => setIsMobileMenuOpen(false)}>המנוע החכם</a>
+                            <Link
+                                to="/guides"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#f3edff] text-[#6750a4] hover:bg-[#eaddff] font-bold border border-[#eaddff] w-fit"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <BookOpen className="w-4 h-4" />
+                                מדריכים
+                            </Link>
                             <div className="pt-4 border-t border-[#e7e0ec] space-y-3">
                                 {isAuthenticated ? (
                                     <Link to="/dashboard" className="block w-full text-center px-6 py-3 rounded-full bg-[#6750a4] text-white font-medium">לקן שלי</Link>
@@ -89,7 +108,8 @@ export default function HomeNew() {
                         </div>
                     </div>
                 )}
-            </header>
+                </header>
+            </div>
 
             <main>
                 {/* ══════════ HERO SECTION ══════════ */}
@@ -128,7 +148,7 @@ export default function HomeNew() {
                                         to={isAuthenticated ? "/dashboard" : "/auth/signup"}
                                         className="group px-10 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg flex gap-3 items-center justify-center shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300"
                                     >
-                                        <Sparkles className="w-5 h-5 group-hover:animate-spin-slow" />
+                                        <Sprout className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                                         <span>{isAuthenticated ? "לקן שלי" : "התחילי לבנות את הקן"}</span>
                                     </Link>
                                     <a href="#how-it-works" className="px-10 py-4 rounded-[28px] bg-[#f3edff] text-[#21005d] font-medium text-lg flex gap-3 items-center justify-center hover:bg-[#eaddff] transition-colors">
@@ -138,65 +158,14 @@ export default function HomeNew() {
                                 </div>
                             </div>
 
-                            {/* Hero Image — original mom+baby photo with orbiting icons */}
+                            {/* Hero Image — clean photo, brand headline burned in */}
                             <div className="relative mt-8 lg:mt-0 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                                 <div className="relative mx-auto max-w-lg">
-                                    {/* Main image container */}
-                                    <div className="bg-[#f3edff] p-4 rounded-[48px] rounded-tl-[16px] shadow-[0_20px_60px_-15px_rgba(103,80,164,0.2)]">
-                                        <img
-                                            src={asset('Landing_Page_photo.png')}
-                                            alt="אמא עם תינוק"
-                                            className="w-full h-auto rounded-[36px] rounded-tl-[12px]"
-                                        />
-                                    </div>
-
-                                    {/* Orbiting icons container — oversized so icons orbit OUTSIDE the image edges */}
-                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none scale-75 md:scale-100" style={{ overflow: 'visible' }}>
-                                        {/* Orbit ring 1 — Heart */}
-                                        <div className="absolute animate-orbit-1" style={{ width: '160%', height: '155%' }}>
-                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                                <div className="animate-orbit-counter-1 w-20 h-20 bg-white/85 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center border border-[#ffd8e4]/60">
-                                                    <Heart className="w-10 h-10 text-[#f4acb7] fill-[#ffd8e4]" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Orbit ring 2 — Gift */}
-                                        <div className="absolute animate-orbit-2" style={{ width: '170%', height: '165%' }}>
-                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                                <div className="animate-orbit-counter-2 w-18 h-18 bg-white/85 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center border border-[#eaddff]/60" style={{ width: '4.5rem', height: '4.5rem' }}>
-                                                    <Gift className="w-9 h-9 text-[#6750a4]" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Orbit ring 3 — Star */}
-                                        <div className="absolute animate-orbit-3" style={{ width: '155%', height: '150%' }}>
-                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                                <div className="animate-orbit-counter-3 bg-white/85 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center border border-[#ffd8e4]/60" style={{ width: '4.5rem', height: '4.5rem' }}>
-                                                    <Star className="w-9 h-9 text-[#6750a4] fill-[#eaddff]" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Orbit ring 4 — Baby */}
-                                        <div className="absolute animate-orbit-4" style={{ width: '175%', height: '170%' }}>
-                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                                <div className="animate-orbit-counter-4 w-20 h-20 bg-white/85 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center border border-[#ffd8e4]/60">
-                                                    <Baby className="w-10 h-10 text-[#f4acb7]" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Orbit ring 5 — Sparkles */}
-                                        <div className="absolute animate-orbit-5" style={{ width: '162%', height: '158%' }}>
-                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                                <div className="animate-orbit-counter-5 w-16 h-16 bg-white/85 backdrop-blur-md rounded-full shadow-lg flex items-center justify-center border border-[#eaddff]/60">
-                                                    <Sparkles className="w-8 h-8 text-[#6750a4]" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <img
+                                        src={asset('home/landing-hero.png')}
+                                        alt="בונים קן, לא מחסן — רשימת לידה אחת מכל החנויות בעולם"
+                                        className="w-full h-auto rounded-[36px] shadow-[0_20px_60px_-15px_rgba(103,80,164,0.2)]"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -207,49 +176,217 @@ export default function HomeNew() {
                 <WaveDivider color="#ffffff" bgColor="transparent" />
 
                 {/* ══════════ HOW IT WORKS ══════════ */}
-                <section id="how-it-works" className="py-10 md:py-14 bg-white relative">
-                    <div className="max-w-6xl mx-auto px-6">
+                <section id="how-it-works" className="pt-2 pb-16 md:pt-4 md:pb-24 bg-gradient-to-b from-white via-[#fffbff] to-white relative overflow-hidden">
+                    {/* Soft brand-color blobs in the background for depth */}
+                    <div aria-hidden className="absolute -top-24 -end-24 w-96 h-96 rounded-full bg-[#f3edff]/50 blur-3xl pointer-events-none" />
+                    <div aria-hidden className="absolute top-1/2 -start-32 w-96 h-96 rounded-full bg-[#ffd8e4]/40 blur-3xl pointer-events-none" />
+
+                    <div className="max-w-6xl mx-auto px-6 relative">
                         <ScrollReveal>
-                            <div className="text-center mb-16">
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-[24px] mb-6 bg-[#ffd8e4] text-[#31111d]">
-                                    <ClipboardList className="w-8 h-8" />
-                                </div>
-                                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">פשוט ככה, בשלושה צעדים</h2>
-                                <p className="text-xl text-[#49454f] max-w-2xl mx-auto">בלי מדריכים ארוכים, בלי סיבוכים. פשוט מתחילים ו-<bdi>Nesty</bdi> דואגת לשאר.</p>
+                            <div className="text-center mb-12 md:mb-16">
+                                <span className="inline-flex items-center gap-2 bg-[#f3edff] text-[#6750a4] px-4 py-1.5 rounded-full font-bold text-sm mb-5">
+                                    <Compass className="w-4 h-4" />
+                                    איך זה עובד
+                                </span>
+                                <h2 className="text-4xl md:text-6xl font-medium text-[#1d192b] tracking-tight mb-4 leading-[1.05]">
+                                    ככה בונים את הקן —
+                                    <br />
+                                    <span className="text-[#6750a4]">בשלושה צעדים</span>
+                                </h2>
+                                <p className="text-xl md:text-2xl text-[#49454f] max-w-2xl mx-auto leading-relaxed">
+                                    בלי מדריכים ארוכים, בלי לחץ. שלוש דקות לכל צעד.
+                                </p>
                             </div>
                         </ScrollReveal>
 
-                        <div className="grid md:grid-cols-3 gap-8">
+                        {/* Step cards — equal size, real component mockups (checklist row, recommended product card, registry item card) */}
+                        <div className="relative space-y-8 md:space-y-0 md:grid md:grid-cols-3 md:gap-8">
+
+                            {/* Step 1 — RIGHT (Hebrew first) — Real Checklist row mockup */}
                             <ScrollReveal delay={0}>
-                                <div className="bg-[#f3edff] p-8 rounded-[40px] rounded-tl-[12px] hover:shadow-[0_20px_40px_-12px_rgba(103,80,164,0.15)] hover:-translate-y-1 transition-all duration-500 group">
-                                    <div className="w-16 h-16 bg-[#6750a4] rounded-[20px] flex items-center justify-center mb-6 shadow-lg group-hover:scale-105 transition-transform">
-                                        <ClipboardList className="w-8 h-8 text-white" />
+                                <div className="group relative bg-white rounded-[36px] border border-[#eaddff] shadow-[0_12px_32px_-12px_rgba(103,80,164,0.12)] hover:shadow-[0_24px_48px_-16px_rgba(103,80,164,0.25)] hover:-translate-y-1.5 transition-all duration-500 overflow-hidden h-full flex flex-col">
+                                    {/* Floating number badge */}
+                                    <div className="absolute top-5 left-5 z-10">
+                                        <div className="relative w-14 h-14 bg-gradient-to-br from-[#6750a4] to-[#5a4690] rounded-2xl flex items-center justify-center shadow-lg shadow-[#6750a4]/30 group-hover:rotate-[-6deg] transition-transform">
+                                            <span className="text-2xl font-bold text-white">1</span>
+                                        </div>
                                     </div>
-                                    <div className="text-sm font-bold text-[#6750a4] uppercase tracking-wider mb-2">שלב 1</div>
-                                    <h3 className="text-2xl font-medium text-[#1d192b] mb-3">אוספים מכל מקום</h3>
-                                    <p className="text-[#49454f] text-lg leading-relaxed">השתמשו בצ'קליסט המובנה שלנו או הוסיפו מוצרים מכל חנות באינטרנט עם תוסף הכרום שלנו.</p>
+
+                                    {/* Real Checklist mockup — same row design as the actual /checklist page */}
+                                    <div className="bg-gradient-to-b from-[#f3edff]/50 to-transparent px-6 pt-8 pb-5 min-h-[280px] flex items-center justify-center" dir="rtl">
+                                        <div className="bg-white rounded-2xl shadow-sm border border-[#e7e0ec] w-full max-w-[280px] overflow-hidden">
+                                            {/* Category header (matches Checklist.tsx category collapse button) */}
+                                            <div className="px-3 py-2.5 border-b border-[#e7e0ec]/60 bg-[#f9f8fc]">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-bold text-sm text-[#1d192b]">עגלות וטיולים</span>
+                                                    <span className="text-[10px] bg-[#e8f5e9] text-[#2e7d32] px-1.5 py-0.5 rounded-full font-semibold">2/3</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <div className="flex-1 h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden max-w-[200px]">
+                                                        <div className="h-full rounded-full bg-[#6750a4]" style={{ width: '66%' }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {/* Item rows — exact replica of Checklist row layout */}
+                                            <div className="divide-y divide-[#e7e0ec]/40">
+                                                <div className="flex items-center gap-2 px-3 py-2.5 bg-[#f9f8fc]">
+                                                    <div className="w-6 h-6 rounded-lg border-2 border-[#6750a4] bg-[#6750a4] text-white flex items-center justify-center flex-shrink-0">
+                                                        <CheckCircle className="w-3.5 h-3.5" strokeWidth={3} />
+                                                    </div>
+                                                    <span className="flex-1 text-sm font-medium text-[#49454f]/60 line-through truncate">עגלה לתינוק</span>
+                                                    <span className="bg-[#fef3c7] text-[#92400e] border border-[#fde68a] px-2 py-0.5 rounded-full text-[10px] font-bold">חובה</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 px-3 py-2.5 bg-[#f9f8fc]">
+                                                    <div className="w-6 h-6 rounded-lg border-2 border-[#6750a4] bg-[#6750a4] text-white flex items-center justify-center flex-shrink-0">
+                                                        <CheckCircle className="w-3.5 h-3.5" strokeWidth={3} />
+                                                    </div>
+                                                    <span className="flex-1 text-sm font-medium text-[#49454f]/60 line-through truncate">מנשא לתינוק</span>
+                                                    <span className="bg-[#f5f5f5] text-[#9e9e9e] border border-[#e0e0e0] px-2 py-0.5 rounded-full text-[10px] font-bold">פינוק</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 px-3 py-2.5">
+                                                    <div className="w-6 h-6 rounded-lg border-2 border-[#d0d0d0] bg-white flex-shrink-0" />
+                                                    <span className="flex-1 text-sm font-medium text-[#1d192b] truncate">תיק החתלה</span>
+                                                    <span className="bg-[#fef3c7] text-[#92400e] border border-[#fde68a] px-2 py-0.5 rounded-full text-[10px] font-bold">חובה</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="px-7 pb-8 pt-2 flex-1 flex flex-col justify-end">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <ListChecks className="w-5 h-5 text-[#6750a4]" />
+                                            <h3 className="text-xl md:text-2xl font-bold text-[#1d192b]">מתחילות מהצ'קליסט</h3>
+                                        </div>
+                                        <p className="text-[#49454f] leading-relaxed">
+                                            מסמנות ✓ על מה שצריך, מסירות מה שלא, מעדכנות כמויות. הצ'קליסט בנוי עם מומחים — את לא בונה אותו מאפס.
+                                        </p>
+                                    </div>
                                 </div>
                             </ScrollReveal>
 
+                            {/* Step 2 — CENTER — Real recommended product card (Anex IQ Pro) */}
                             <ScrollReveal delay={150}>
-                                <div className="bg-[#ffd8e4] p-8 rounded-[12px] rounded-tl-[40px] rounded-br-[40px] hover:shadow-[0_20px_40px_-12px_rgba(255,216,228,0.5)] hover:-translate-y-1 transition-all duration-500 group">
-                                    <div className="w-16 h-16 bg-[#31111d]/10 rounded-[20px] flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
-                                        <Star className="w-8 h-8 text-[#31111d]" />
+                                <div className="group relative bg-gradient-to-br from-[#ffd8e4]/40 via-white to-[#f3edff]/40 rounded-[36px] border-2 border-[#f4acb7]/60 shadow-[0_12px_32px_-12px_rgba(244,172,183,0.3)] hover:shadow-[0_24px_48px_-16px_rgba(244,172,183,0.5)] hover:-translate-y-1.5 transition-all duration-500 overflow-hidden h-full flex flex-col">
+                                    {/* Highlighted ribbon */}
+                                    <div className="absolute top-5 right-5 z-10">
+                                        <span className="inline-flex items-center gap-1 bg-[#1d192b] text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                            <Sparkles className="w-3 h-3 text-[#ffd600]" />
+                                            הקסם
+                                        </span>
                                     </div>
-                                    <div className="text-sm font-bold text-[#31111d]/60 uppercase tracking-wider mb-2">שלב 2</div>
-                                    <h3 className="text-2xl font-medium text-[#31111d] mb-3">מסמנים את ה-Most Wanted</h3>
-                                    <p className="text-[#31111d]/70 text-lg leading-relaxed">סמנו את הפריטים שאתם באמת חייבים כדי שהמשפחה והחברים ידעו מה הכי חשוב לכם.</p>
+                                    {/* Floating number badge */}
+                                    <div className="absolute top-5 left-5 z-10">
+                                        <div className="relative w-14 h-14 bg-gradient-to-br from-[#f4acb7] to-[#e89aa6] rounded-2xl flex items-center justify-center shadow-lg shadow-[#f4acb7]/40 group-hover:rotate-[6deg] transition-transform">
+                                            <span className="text-2xl font-bold text-white">2</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Real "מוצרים מומלצים" card from the actual Checklist */}
+                                    <div className="px-6 pt-8 pb-5 min-h-[280px] flex flex-col items-center justify-center" dir="rtl">
+                                        {/* "מוצרים מומלצים" green banner — exact match to Checklist.tsx line 994 */}
+                                        <div className="w-full max-w-[280px] flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-l from-[#e8f5e9] to-[#f1f8e9] ring-1 ring-[#a5d6a7]/60 mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded-lg bg-[#2e7d32] text-white flex items-center justify-center">
+                                                    <ShoppingBag className="w-3.5 h-3.5" />
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs font-bold text-[#2e7d32]">מוצרים מומלצים</p>
+                                                    <p className="text-[10px] text-[#66bb6a]">3 מוצרים נבחרו עבורך</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {/* Real product card — matches Checklist.tsx line 1023 */}
+                                        <div className="w-full max-w-[200px] bg-white rounded-xl border border-[#e7e0ec] p-2.5 shadow-sm">
+                                            <img
+                                                src="https://www.baby-star.co.il/cdn/shop/files/medium-AnexIQ_Darke_2.webp?v=1768127011&width=600"
+                                                alt="Anex IQ Pro"
+                                                className="w-full h-28 object-contain rounded-lg mb-2 bg-[#f5f5f5]"
+                                                loading="lazy"
+                                            />
+                                            <p className="text-xs font-semibold text-[#1d192b] mb-0.5 leading-tight line-clamp-2">Anex IQ Pro</p>
+                                            <p className="text-[10px] text-[#49454f] mb-1">בייבי סטאר</p>
+                                            <p className="text-sm font-bold text-[#2e7d32] mb-2">₪6,099</p>
+                                            <div className="flex gap-1.5">
+                                                <span className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-[#f5f5f5] text-[#49454f] text-[10px] font-medium">
+                                                    <ExternalLink className="w-3 h-3" />
+                                                    לחנות
+                                                </span>
+                                                <span className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-[#6750a4] text-white text-[10px] font-medium">
+                                                    <Sparkles className="w-3 h-3" />
+                                                    הוסף
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="px-7 pb-8 pt-2 flex-1 flex flex-col justify-end">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <ShoppingBag className="w-5 h-5 text-[#6750a4]" />
+                                            <h3 className="text-xl md:text-2xl font-bold text-[#1d192b]">מוסיפות פריטים בקליק</h3>
+                                        </div>
+                                        <p className="text-[#49454f] leading-relaxed">
+                                            לכל פריט בצ'קליסט יש מוצרים מומלצים — בוחרים, לוחצים "הוסף", והוא ברשימה. או גוררים קישור מכל חנות אחרת.
+                                        </p>
+                                    </div>
                                 </div>
                             </ScrollReveal>
 
+                            {/* Step 3 — LEFT — Real Registry public-view item card */}
                             <ScrollReveal delay={300}>
-                                <div className="bg-[#f2f0f4] p-8 rounded-[48px] hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-500 group border border-white">
-                                    <div className="w-16 h-16 bg-white rounded-[20px] flex items-center justify-center mb-6 shadow-sm group-hover:scale-105 transition-transform">
-                                        <Send className="w-8 h-8 text-[#6750a4]" />
+                                <div className="group relative bg-white rounded-[36px] border border-[#eaddff] shadow-[0_12px_32px_-12px_rgba(103,80,164,0.12)] hover:shadow-[0_24px_48px_-16px_rgba(103,80,164,0.25)] hover:-translate-y-1.5 transition-all duration-500 overflow-hidden h-full flex flex-col">
+                                    {/* Floating number badge */}
+                                    <div className="absolute top-5 left-5 z-10">
+                                        <div className="relative w-14 h-14 bg-gradient-to-br from-[#6750a4] to-[#5a4690] rounded-2xl flex items-center justify-center shadow-lg shadow-[#6750a4]/30 group-hover:rotate-[-6deg] transition-transform">
+                                            <span className="text-2xl font-bold text-white">3</span>
+                                        </div>
                                     </div>
-                                    <div className="text-sm font-bold text-[#6750a4] uppercase tracking-wider mb-2">שלב 3</div>
-                                    <h3 className="text-2xl font-medium text-[#1d192b] mb-3">נותנים להם לעזור</h3>
-                                    <p className="text-[#49454f] text-lg leading-relaxed">שתפו את הרשימה בוואטסאפ, במייל או בכל מקום אחר. קבלו התראות כשמישהו קונה מתנה.</p>
+
+                                    {/* Real Registry ItemCard — what guests see at the shared URL */}
+                                    <div className="bg-gradient-to-b from-[#d1fae5]/20 to-transparent px-6 pt-8 pb-5 min-h-[280px] flex items-center justify-center" dir="rtl">
+                                        <div className="w-full max-w-[240px] bg-white rounded-[24px] rounded-tr-[4px] border border-[#e7e0ec] overflow-hidden shadow-sm">
+                                            {/* Image */}
+                                            <div className="aspect-[4/3] bg-[#f5f5f5] relative overflow-hidden">
+                                                <img
+                                                    src="https://www.baby-star.co.il/cdn/shop/files/medium-AnexIQ_Darke_2.webp?v=1768127011&width=600"
+                                                    alt="Anex IQ Pro"
+                                                    className="w-full h-full object-cover"
+                                                    loading="lazy"
+                                                />
+                                                <div className="absolute top-2 right-2 bg-[#b3261e] text-white px-2 py-1 rounded-full text-[9px] font-bold flex items-center gap-1 shadow-sm">
+                                                    <Star className="w-2.5 h-2.5 fill-current" />
+                                                    הכי רוצה!
+                                                </div>
+                                            </div>
+                                            {/* Content */}
+                                            <div className="p-3">
+                                                <p className="text-[9px] font-bold text-[#6750a4] uppercase mb-1 tracking-wide">עגלות וטיולים</p>
+                                                <h4 className="font-bold text-[#1d192b] text-sm leading-snug mb-2 line-clamp-1">Anex IQ Pro</h4>
+                                                <div className="flex items-end justify-between pt-2 border-t border-[#e7e0ec]/60">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[9px] text-[#49454f]">מחיר משוער</span>
+                                                        <span className="font-bold text-[#1d192b] text-sm">₪6,099</span>
+                                                    </div>
+                                                    <span className="bg-[#6750a4] text-white px-2.5 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1">
+                                                        <Gift className="w-3 h-3" />
+                                                        קנה מתנה
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="px-7 pb-8 pt-2 flex-1 flex flex-col justify-end">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Send className="w-5 h-5 text-[#6750a4]" />
+                                            <h3 className="text-xl md:text-2xl font-bold text-[#1d192b]">משתפות עם המשפחה</h3>
+                                        </div>
+                                        <p className="text-[#49454f] leading-relaxed">
+                                            קישור אחד בוואטסאפ — והם רואים בדיוק את זה. ככה הם בוחרים מתנה ומסמנים שקנו, בלי כפילויות.
+                                        </p>
+                                    </div>
                                 </div>
                             </ScrollReveal>
                         </div>
@@ -276,8 +413,142 @@ export default function HomeNew() {
                     </div>
                 </section>
 
-                {/* Wave Divider */}
-                <WaveDivider color="#f3edff" bgColor="#ffffff" />
+                {/* Category marquee — narrow scrolling divider */}
+                <CategoryMarquee />
+
+                {/* ══════════ REGISTRY EXAMPLE ══════════ */}
+                <section id="example-registry" className="py-10 md:py-14 bg-white relative">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <ScrollReveal>
+                            <div className="text-center mb-12">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-[24px] mb-6 bg-[#f3edff] text-[#6750a4]">
+                                    <Gift className="w-8 h-8" />
+                                </div>
+                                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">איך זה באמת נראה?</h2>
+                                <p className="text-xl text-[#49454f] max-w-2xl mx-auto">הציצו ברשימה אמיתית - כמה קל וכיף לשתף את מה שאתם צריכים עם החברים והמשפחה</p>
+                            </div>
+                        </ScrollReveal>
+
+                        <ScrollReveal delay={100}>
+                            <div className="flex justify-center h-[580px] sm:h-[670px] md:h-[760px] relative overflow-hidden">
+                                <FadedIconsBackground count={30} />
+                                <div className="relative scale-[0.65] sm:scale-[0.75] md:scale-[0.85] origin-top">
+                                    <div className="relative bg-[#1d192b] rounded-[55px] p-3 shadow-2xl">
+                                        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[126px] h-[37px] bg-[#1d192b] rounded-full z-20" />
+                                        <div className="relative bg-white rounded-[47px] overflow-hidden" style={{ width: '390px', height: '844px' }}>
+                                            <div className="bg-white px-8 pt-14 pb-2 flex justify-between items-center text-sm font-semibold text-[#1d192b]">
+                                                <span>9:41</span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-6 h-3 border-2 border-[#1d192b] rounded-sm relative">
+                                                        <div className="absolute inset-0.5 bg-[#1d192b] rounded-sm" style={{ width: '70%' }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="bg-[#f5f5f5] mx-4 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2 mb-2">
+                                                <div className="w-3 h-3 rounded-full bg-green-500" />
+                                                <span className="text-sm text-[#49454f] font-medium">www.NestyIL.com</span>
+                                            </div>
+                                            <div className="overflow-y-auto overflow-x-hidden" style={{ height: '700px' }}>
+                                                <img src={asset('IMG_80F37FA15505-1.jpeg')} alt="דוגמה לרשימת מתנות" className="w-full" style={{ width: '390px' }} loading="lazy" />
+                                            </div>
+                                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2"><div className="w-32 h-1 bg-[#1d192b] rounded-full" /></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </ScrollReveal>
+
+                        <ScrollReveal delay={200}>
+                            <div className="text-center">
+                                <Link to={isAuthenticated ? "/dashboard" : "/auth/signup"} className="inline-flex items-center gap-3 px-8 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300">
+                                    <Heart className="w-5 h-5 fill-current" />
+                                    <span>{isAuthenticated ? "לקן שלי" : "יצירת הרשימה הראשונה שלי"}</span>
+                                </Link>
+                                <p className="mt-4 text-xl text-[#49454f]">זה בדיוק מה שהאורחים שלכם יראו 🎁</p>
+                            </div>
+                        </ScrollReveal>
+                    </div>
+                </section>
+
+                {/* ══════════ PRICE ALERTS (LIVE!) ══════════ */}
+                <section className="py-10 md:py-14 bg-white">
+                    <div className="max-w-6xl mx-auto px-6">
+                        <ScrollReveal>
+                            <div className="text-center mb-12">
+                                <span className="inline-block bg-[#d1fae5] text-[#065f46] px-5 py-2 rounded-full mb-6 font-bold text-sm tracking-wide">חדש! ✨</span>
+                                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">חוסכים לכם כסף, אוטומטית</h2>
+                                <p className="text-xl text-[#49454f] max-w-2xl mx-auto"><bdi>Nesty</bdi> עוקבת אחרי המחירים של המוצרים ברשימה שלכם ומתריעה כשיש ירידת מחיר</p>
+                            </div>
+                        </ScrollReveal>
+                    </div>
+                </section>
+
+                {/* ══════════ SMART ENGINE ══════════ */}
+                <section id="smart-engine" className="py-10 md:py-14 bg-[#fffbff] relative overflow-hidden">
+                    <FadedIconsBackground count={40} />
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                            <ScrollReveal>
+                                <div className="text-center lg:text-right">
+                                    <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">אנחנו עוקבות אחרי המחירים בשבילכם</h2>
+                                    <p className="text-xl text-[#49454f] mb-8 leading-relaxed">הוסיפו מוצר לרשימה ותשכחו מזה. <bdi>Nesty</bdi> בודקת כל יום אם המחיר ירד — ואם כן, שולחת לכם הודעה. ככה חוסכים בלי מאמץ.</p>
+                                    <div className="flex justify-center lg:justify-start">
+                                        <ul className="space-y-4 text-right">
+                                            <li className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-[#f3edff] rounded-[14px] flex items-center justify-center flex-shrink-0"><Bell className="w-6 h-6 text-[#6750a4]" /></div>
+                                                <span className="text-lg text-[#1d192b]">התראות מחיר בזמן אמת</span>
+                                            </li>
+                                            <li className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-[#d1fae5] rounded-[14px] flex items-center justify-center flex-shrink-0"><CheckCircle className="w-6 h-6 text-[#059669]" /></div>
+                                                <span className="text-lg text-[#1d192b]">השוואת מחירים אוטומטית</span>
+                                            </li>
+                                            <li className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center flex-shrink-0"><TrendingDown className="w-6 h-6 text-[#31111d]" /></div>
+                                                <span className="text-lg text-[#1d192b]">חיסכון ממוצע של 15-30%</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </ScrollReveal>
+
+                            <ScrollReveal delay={200}>
+                                <div className="relative">
+                                    <div className="bg-white rounded-[40px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] p-8 max-w-md mx-auto border border-[#e7e0ec]">
+                                        <div className="flex items-start gap-4 mb-6">
+                                            <img src={asset('anex IQ Image.webp')} alt="עגלת Anex IQ" className="w-20 h-20 rounded-[20px] object-cover flex-shrink-0" />
+                                            <div>
+                                                <h4 className="font-bold text-[#1d192b] text-lg mb-1">עגלת Anex IQ</h4>
+                                                <p className="text-[#49454f]">מצאנו מחיר טוב יותר!</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between p-4 bg-red-50 rounded-[16px] mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center"><X className="w-5 h-5 text-red-500" /></div>
+                                                <div><p className="text-sm text-[#49454f]">המחיר שלך</p><p className="font-bold text-[#1d192b] line-through">₪6,099</p></div>
+                                            </div>
+                                            <p className="text-sm text-[#49454f]">Baby Store IL</p>
+                                        </div>
+                                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-[16px] border-2 border-green-400">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center"><CheckCircle className="w-5 h-5 text-green-600" /></div>
+                                                <div><p className="text-sm text-[#49454f]">מחיר שמצאנו</p><p className="font-bold text-[#1d192b]">₪5,500</p></div>
+                                            </div>
+                                            <p className="text-sm text-[#49454f]">BabyShop</p>
+                                        </div>
+                                        <div className="mt-6 text-center">
+                                            <span className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-5 py-2.5 rounded-full font-bold">
+                                                <TrendingDown className="w-5 h-5" />חיסכון של ₪599 (10%)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ScrollReveal>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Wave Divider — smart engine fffbff → chrome-ext lavender */}
+                <WaveDivider color="#f3edff" bgColor="#fffbff" />
 
                 {/* ══════════ CHROME EXTENSION ══════════ */}
                 <section id="chrome-extension" className="py-10 md:py-14 bg-[#f3edff] relative overflow-hidden">
@@ -399,77 +670,19 @@ export default function HomeNew() {
                     </div>
                 </section>
 
-                {/* Wave Divider */}
-                <WaveDivider color="#ffffff" bgColor="#f3edff" />
-
-                {/* ══════════ REGISTRY EXAMPLE ══════════ */}
-                <section id="example-registry" className="py-10 md:py-14 bg-white relative">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <ScrollReveal>
-                            <div className="text-center mb-12">
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-[24px] mb-6 bg-[#f3edff] text-[#6750a4]">
-                                    <Gift className="w-8 h-8" />
-                                </div>
-                                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">איך זה באמת נראה?</h2>
-                                <p className="text-xl text-[#49454f] max-w-2xl mx-auto">הציצו ברשימה אמיתית - כמה קל וכיף לשתף את מה שאתם צריכים עם החברים והמשפחה</p>
-                            </div>
-                        </ScrollReveal>
-
-                        <ScrollReveal delay={100}>
-                            <div className="flex justify-center h-[580px] sm:h-[670px] md:h-[760px] relative overflow-hidden">
-                                <FadedIconsBackground count={30} />
-                                <div className="relative scale-[0.65] sm:scale-[0.75] md:scale-[0.85] origin-top">
-                                    <div className="relative bg-[#1d192b] rounded-[55px] p-3 shadow-2xl">
-                                        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[126px] h-[37px] bg-[#1d192b] rounded-full z-20" />
-                                        <div className="relative bg-white rounded-[47px] overflow-hidden" style={{ width: '390px', height: '844px' }}>
-                                            <div className="bg-white px-8 pt-14 pb-2 flex justify-between items-center text-sm font-semibold text-[#1d192b]">
-                                                <span>9:41</span>
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="w-6 h-3 border-2 border-[#1d192b] rounded-sm relative">
-                                                        <div className="absolute inset-0.5 bg-[#1d192b] rounded-sm" style={{ width: '70%' }} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="bg-[#f5f5f5] mx-4 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2 mb-2">
-                                                <div className="w-3 h-3 rounded-full bg-green-500" />
-                                                <span className="text-sm text-[#49454f] font-medium">www.NestyIL.com</span>
-                                            </div>
-                                            <div className="overflow-y-auto overflow-x-hidden" style={{ height: '700px' }}>
-                                                <img src={asset('IMG_80F37FA15505-1.jpeg')} alt="דוגמה לרשימת מתנות" className="w-full" style={{ width: '390px' }} loading="lazy" />
-                                            </div>
-                                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2"><div className="w-32 h-1 bg-[#1d192b] rounded-full" /></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </ScrollReveal>
-
-                        <ScrollReveal delay={200}>
-                            <div className="text-center">
-                                <Link to={isAuthenticated ? "/dashboard" : "/auth/signup"} className="inline-flex items-center gap-3 px-8 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg shadow-[0_8px_16px_rgba(103,80,164,0.25)] hover:shadow-[0_12px_24px_rgba(103,80,164,0.3)] hover:-translate-y-0.5 transition-all duration-300">
-                                    <Sparkles className="w-5 h-5" />
-                                    <span>{isAuthenticated ? "לקן שלי" : "יצירת הרשימה הראשונה שלי"}</span>
-                                </Link>
-                                <p className="mt-4 text-xl text-[#49454f]">זה בדיוק מה שהאורחים שלכם יראו 🎁</p>
-                            </div>
-                        </ScrollReveal>
-                    </div>
-                </section>
-
-                {/* Wave Divider */}
-                <WaveDivider color="#f2f0f4" bgColor="#ffffff" />
+                {/* Wave Divider — chrome-ext lavender → privacy grey */}
+                <WaveDivider color="#f2f0f4" bgColor="#f3edff" />
 
                 {/* ══════════ PRIVACY ══════════ */}
                 <section className="py-10 md:py-14 bg-[#f2f0f4] relative">
                     <div className="max-w-6xl mx-auto px-6">
                         <ScrollReveal>
-                            <div className="text-center mb-16">
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-[24px] mb-6 bg-white text-[#6750a4] shadow-sm">
-                                    <Shield className="w-8 h-8" />
-                                </div>
-                                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">הקן שלכם, החוקים שלכם.</h2>
-                                <p className="text-xl text-[#49454f] max-w-2xl mx-auto">אתם שולטים במה שמשתפים ומה נשאר פרטי</p>
-                            </div>
+                            <img
+                                src={asset('home/privacy-hero.png')}
+                                alt="הקן שלכם, החוקים שלכם — את שולטת במה שמשותף ומה נשאר רק שלך"
+                                className="w-full h-auto rounded-[32px] shadow-[0_20px_60px_-15px_rgba(103,80,164,0.18)] mb-12"
+                                loading="lazy"
+                            />
                         </ScrollReveal>
 
                         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -573,89 +786,6 @@ export default function HomeNew() {
                         </div>
                     </div>
                 </section>
-
-                {/* Wave Divider */}
-                <WaveDivider color="#fffbff" bgColor="#ffffff" />
-
-                {/* ══════════ PRICE ALERTS (LIVE!) ══════════ */}
-                <section className="py-10 md:py-14 bg-white">
-                    <div className="max-w-6xl mx-auto px-6">
-                        <ScrollReveal>
-                            <div className="text-center mb-12">
-                                <span className="inline-block bg-[#d1fae5] text-[#065f46] px-5 py-2 rounded-full mb-6 font-bold text-sm tracking-wide">חדש! ✨</span>
-                                <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-4">חוסכים לכם כסף, אוטומטית</h2>
-                                <p className="text-xl text-[#49454f] max-w-2xl mx-auto"><bdi>Nesty</bdi> עוקבת אחרי המחירים של המוצרים ברשימה שלכם ומתריעה כשיש ירידת מחיר</p>
-                            </div>
-                        </ScrollReveal>
-                    </div>
-                </section>
-
-                {/* ══════════ SMART ENGINE ══════════ */}
-                <section id="smart-engine" className="py-10 md:py-14 bg-[#fffbff] relative overflow-hidden">
-                    <FadedIconsBackground count={40} />
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                            <ScrollReveal>
-                                <div className="text-center lg:text-right">
-                                    <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">אנחנו עוקבות אחרי המחירים בשבילכם</h2>
-                                    <p className="text-xl text-[#49454f] mb-8 leading-relaxed">הוסיפו מוצר לרשימה ותשכחו מזה. <bdi>Nesty</bdi> בודקת כל יום אם המחיר ירד — ואם כן, שולחת לכם הודעה. ככה חוסכים בלי מאמץ.</p>
-                                    <div className="flex justify-center lg:justify-start">
-                                        <ul className="space-y-4 text-right">
-                                            <li className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-[#f3edff] rounded-[14px] flex items-center justify-center flex-shrink-0"><Bell className="w-6 h-6 text-[#6750a4]" /></div>
-                                                <span className="text-lg text-[#1d192b]">התראות מחיר בזמן אמת</span>
-                                            </li>
-                                            <li className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-[#d1fae5] rounded-[14px] flex items-center justify-center flex-shrink-0"><CheckCircle className="w-6 h-6 text-[#059669]" /></div>
-                                                <span className="text-lg text-[#1d192b]">השוואת מחירים אוטומטית</span>
-                                            </li>
-                                            <li className="flex items-center gap-4">
-                                                <div className="w-12 h-12 bg-[#ffd8e4] rounded-[14px] flex items-center justify-center flex-shrink-0"><TrendingDown className="w-6 h-6 text-[#31111d]" /></div>
-                                                <span className="text-lg text-[#1d192b]">חיסכון ממוצע של 15-30%</span>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </ScrollReveal>
-
-                            <ScrollReveal delay={200}>
-                                <div className="relative">
-                                    <div className="bg-white rounded-[40px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] p-8 max-w-md mx-auto border border-[#e7e0ec]">
-                                        <div className="flex items-start gap-4 mb-6">
-                                            <img src={asset('anex IQ Image.webp')} alt="עגלת Anex IQ" className="w-20 h-20 rounded-[20px] object-cover flex-shrink-0" />
-                                            <div>
-                                                <h4 className="font-bold text-[#1d192b] text-lg mb-1">עגלת Anex IQ</h4>
-                                                <p className="text-[#49454f]">מצאנו מחיר טוב יותר!</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between p-4 bg-red-50 rounded-[16px] mb-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center"><X className="w-5 h-5 text-red-500" /></div>
-                                                <div><p className="text-sm text-[#49454f]">המחיר שלך</p><p className="font-bold text-[#1d192b] line-through">₪6,099</p></div>
-                                            </div>
-                                            <p className="text-sm text-[#49454f]">Baby Store IL</p>
-                                        </div>
-                                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-[16px] border-2 border-green-400">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center"><CheckCircle className="w-5 h-5 text-green-600" /></div>
-                                                <div><p className="text-sm text-[#49454f]">מחיר שמצאנו</p><p className="font-bold text-[#1d192b]">₪5,500</p></div>
-                                            </div>
-                                            <p className="text-sm text-[#49454f]">BabyShop</p>
-                                        </div>
-                                        <div className="mt-6 text-center">
-                                            <span className="inline-flex items-center gap-2 bg-green-100 text-green-700 px-5 py-2.5 rounded-full font-bold">
-                                                <TrendingDown className="w-5 h-5" />חיסכון של ₪599 (10%)
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </ScrollReveal>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Wave Divider */}
-                <WaveDivider color="#ffffff" bgColor="#fffbff" />
 
                 {/* ══════════ SOCIAL PROOF ══════════ */}
                 <section className="py-12 md:py-16 bg-white">
@@ -773,15 +903,15 @@ export default function HomeNew() {
                     </div>
                     <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
                         <div className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full mb-6 font-medium backdrop-blur-sm">
-                            <Sparkles className="w-5 h-5" /><span>חינם לגמרי</span>
+                            <Gift className="w-5 h-5" /><span>חינם לגמרי</span>
                         </div>
                         <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium text-white mb-6 tracking-tight">הקן שלכם מחכה.</h2>
                         <p className="text-xl md:text-2xl text-white/80 mb-10 max-w-2xl mx-auto">את לא צריכה עוד רשימה בוואטסאפ. את צריכה מקום אחד, חכם, שעובד בשבילך. <bdi>Nesty</bdi> פה.</p>
                         <Link
                             to={isAuthenticated ? "/dashboard" : "/auth/signup"}
-                            className="inline-flex items-center gap-3 px-10 py-4 rounded-[28px] bg-white text-[#6750a4] font-medium text-lg shadow-[0_8px_24px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 transition-all duration-300 animate-cta-glow"
+                            className="group inline-flex items-center gap-3 px-10 py-4 rounded-[28px] bg-white text-[#6750a4] font-medium text-lg shadow-[0_8px_24px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 transition-all duration-300 animate-cta-glow"
                         >
-                            <Sparkles className="w-5 h-5" />
+                            <Sprout className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                             <span>{isAuthenticated ? "לקן שלי" : "יצירת הרשימה הראשונה שלי"}</span>
                         </Link>
                     </div>

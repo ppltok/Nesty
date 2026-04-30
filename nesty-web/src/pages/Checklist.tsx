@@ -878,9 +878,9 @@ export default function Checklist() {
                               {item}
                             </span>
                             {hasItemData && (
-                              <div className="hidden sm:flex items-center gap-0.5 flex-shrink-0">
+                              <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
                                 <div className="relative group/info">
-                                  <span className="p-0.5 rounded text-[#90a4ae] hover:text-[#1976d2] transition-colors cursor-help">
+                                  <span className="flex items-center justify-center w-6 h-6 rounded-md bg-[#e3f2fd]/60 text-[#1976d2] hover:bg-[#e3f2fd] transition-colors cursor-help">
                                     <Info className="w-3.5 h-3.5" />
                                   </span>
                                   <div className="absolute z-[100] top-full right-0 mt-2 w-64 p-3 bg-white rounded-xl shadow-xl border border-[#e7e0ec] opacity-0 invisible group-hover/info:opacity-100 group-hover/info:visible transition-all duration-200 pointer-events-none group-hover/info:pointer-events-auto">
@@ -890,7 +890,7 @@ export default function Checklist() {
                                   </div>
                                 </div>
                                 <div className="relative group/tip">
-                                  <span className="p-0.5 rounded text-[#90a4ae] hover:text-[#f9a825] transition-colors cursor-help">
+                                  <span className="flex items-center justify-center w-6 h-6 rounded-md bg-[#fff8e1]/70 text-[#f9a825] hover:bg-[#fff8e1] transition-colors cursor-help">
                                     <Lightbulb className="w-3.5 h-3.5" />
                                   </span>
                                   <div className="absolute z-[100] top-full right-0 mt-2 w-72 p-3 bg-white rounded-xl shadow-xl border border-[#e7e0ec] opacity-0 invisible group-hover/tip:opacity-100 group-hover/tip:visible transition-all duration-200 pointer-events-none group-hover/tip:pointer-events-auto">
