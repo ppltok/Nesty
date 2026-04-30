@@ -21,7 +21,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'welcome',
     title: 'ברוכה הבאה ל-Nesty! 🪺',
-    description: 'Nesty עוזרת לך לדעת מה באמת צריך לתינוק, לבנות רשימה חכמה ולשתף אותה עם כולם.\nבואי נכיר את הכלים.',
+    description: 'אם הוספת כבר פריט ראשון — מעולה, הקן שלך כבר מתחיל!\nאת מוזמנת לסיור קצר על הכלים, או לדלג ולהמשיך לבד.',
     route: '/checklist',
     icon: Sparkles,
     special: true,
@@ -98,7 +98,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'complete',
     title: 'הכל מוכן! 🎉',
     description: 'עכשיו את יודעת הכל!\nהתחילי מהצ׳קליסט, בחרי מוצרים, ושתפי את הרשימה.\nבהצלחה!',
-    route: '/dashboard',
+    route: '/checklist',
     special: true,
   },
 ]

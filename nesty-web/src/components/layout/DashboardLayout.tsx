@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import SideNav from './SideNav'
@@ -12,6 +12,7 @@ const getTutorialKey = (userId: string) => `nesty_tutorial_completed_${userId}`
 export default function DashboardLayout() {
   const { registry, user } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const [giftsCount, setGiftsCount] = useState(0)
   const [showTutorial, setShowTutorial] = useState(false)
   const [tutorialStepId, setTutorialStepId] = useState<string | null>(null)
@@ -85,6 +86,9 @@ export default function DashboardLayout() {
       // localStorage error - continue anyway
     }
     setShowTutorial(false)
+    // Land on /checklist after the tutorial — that's where the user starts
+    // engaging with the product (browsing categories, picking items).
+    navigate('/checklist')
   }
 
   const handleTutorialSkip = () => {
@@ -94,6 +98,7 @@ export default function DashboardLayout() {
       // localStorage error - continue anyway
     }
     setShowTutorial(false)
+    navigate('/checklist')
   }
 
   const fetchGiftsCount = useCallback(async () => {
