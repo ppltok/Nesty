@@ -212,34 +212,47 @@ export default function Dashboard() {
       })
   }, [registry, user])
 
-  // Show address modal if registry exists but has no address (and user hasn't skipped)
-  // Wait until tutorial check is complete AND tutorial is not active before showing
+  // Address modal trigger — gated by signup vintage so the change only
+  // affects users who came through the new onboarding (Apr 30, 2026 onward).
+  //
+  // - NEW users: deferred until they have 3+ items (engagement signal). The
+  //   first-item step in onboarding already gives them the wow moment, so
+  //   nagging for an address right after is friction at the worst time.
+  // - EXISTING users: original behavior preserved — modal shows immediately
+  //   on Dashboard load if registry has no address (and they haven't skipped
+  //   it). They never went through the new flow, so flipping the rule mid-
+  //   account-life would feel inconsistent.
+  const NEW_FLOW_CUTOFF = new Date('2026-04-30T00:00:00Z').getTime()
+  const isNewFlowUser = profile?.created_at
+    ? new Date(profile.created_at).getTime() >= NEW_FLOW_CUTOFF
+    : false
+
   const addressModalChecked = useRef(false)
   useEffect(() => {
-    // Wait for tutorial check to complete first
     if (!tutorialCheckComplete) return
-    // Don't show address modal while tutorial is active
     if (tutorialActive) return
-    // Guard against double execution
     if (addressModalChecked.current) return
     if (!registry) return
+    // Defer until 3+ items only for new-flow users; old users keep the
+    // immediate prompt they're used to.
+    if (isNewFlowUser && items.length < 3) return
 
     addressModalChecked.current = true
 
     if (!registry.address_city && !registry.address_street) {
-      // Check if user has already skipped the address modal
       try {
         const addressSkipped = user ? localStorage.getItem(getAddressSkippedKey(user.id)) : null
         if (!addressSkipped) {
-          // Mark that this address modal is shown right after onboarding/tutorial
-          addressModalFromOnboarding.current = true
+          // Pre-existing users that hit this on first dashboard load still
+          // need the "from onboarding" close-redirect; new-flow users don't.
+          addressModalFromOnboarding.current = !isNewFlowUser
           setShowAddressModal(true)
         }
       } catch {
-        // localStorage error - skip showing modal
+        // localStorage error — skip showing modal
       }
     }
-  }, [registry, user, tutorialActive, tutorialCheckComplete])
+  }, [registry, user, tutorialActive, tutorialCheckComplete, items.length, isNewFlowUser])
 
   // Handle highlight parameter for scrolling to specific item
   useEffect(() => {

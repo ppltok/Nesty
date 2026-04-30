@@ -24,7 +24,9 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/Google_favicon.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/Google_favicon.png" />
     <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/Circle_logo.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/Circle_logo.webp" />
+    <!-- Preload LCP hero so the image starts downloading in parallel with the JS bundle. -->
+    <link rel="preload" as="image" href="/home/landing-hero.webp" fetchpriority="high" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#6750a4" />

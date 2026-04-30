@@ -4,11 +4,30 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { generateSlug } from '../../lib/utils'
 import { asset } from '../../lib/assets'
-import { ArrowRight, ArrowLeft, Calendar, Sparkles, Baby, Mail } from 'lucide-react'
+import {
+  ArrowRight,
+  ArrowLeft,
+  Calendar,
+  Sparkles,
+  Baby,
+  Link2,
+  ExternalLink,
+  CheckCircle,
+  Loader2,
+  Plus,
+} from 'lucide-react'
 import OnboardingCelebration from '../../components/OnboardingCelebration'
 import FadedIconsBackground from '../../components/animations/FadedIconsBackground'
-import { trackOnboardingStep, trackOnboardingCompleted, trackRegistryCreated } from '../../utils/tracking'
+import {
+  trackOnboardingStep,
+  trackOnboardingCompleted,
+  trackRegistryCreated,
+  trackItemAdded,
+} from '../../utils/tracking'
 import { getAttributionForProfile } from '../../utils/utmTracking'
+import { extractProductFromUrl } from '../../lib/productExtraction'
+import { ITEMS_DATA, CATEGORIES } from '../../data/categories'
+import { categoryGradient } from '../../lib/categoryColors'
 
 // ── Fruit mapping for welcome email (weeks 12-40) ──
 const FRUIT_BY_WEEK: Record<number, { name: string; emoji: string }> = {
@@ -51,7 +70,56 @@ function calculatePregnancyWeek(dueDateStr: string): number {
   return Math.max(1, Math.min(40, 40 - weeksRemaining))
 }
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6 | 'celebration'
+// ── First-item curated grid: real essentials from the live checklist ──
+// Each row is a "must-have" item from ITEMS_DATA, with the same recommended
+// products users will see later in /checklist. We pull image+url+price+store
+// directly from the source data so onboarding always matches the rest of
+// the app — no parallel hardcoded list to maintain.
+interface CuratedItem {
+  name: string         // product name
+  price: number
+  store: string
+  url: string
+  image: string
+  category: string     // items.category enum value
+  parentItem: string   // the essential ITEMS_DATA key (for grouping)
+}
+
+// 4 high-impact essentials → category enum value for items table.
+// The icon comes from the live CATEGORIES table (same icon shown in /checklist
+// and the home page category strip), not from a separate emoji mapping.
+const ESSENTIAL_GROUPS: { key: string; categoryEnum: string }[] = [
+  { key: 'עגלה לתינוק מגיל לידה', categoryEnum: 'strollers' },
+  { key: 'כיסא בטיחות', categoryEnum: 'car_safety' },
+  { key: 'תיק החתלה', categoryEnum: 'strollers' },
+  { key: 'אמבטיות ומעמדים', categoryEnum: 'bath' },
+]
+
+// Map a category enum → its CATEGORIES record (for icon).
+function categoryFor(enumValue: string) {
+  return CATEGORIES.find((c) => c.id === enumValue)
+}
+
+function buildCuratedRows(): { group: typeof ESSENTIAL_GROUPS[number]; products: CuratedItem[] }[] {
+  return ESSENTIAL_GROUPS.flatMap((group) => {
+    const data = ITEMS_DATA[group.key]
+    if (!data?.products?.length) return []
+    return [{
+      group,
+      products: data.products.map((p) => ({
+        name: p.name,
+        price: p.price,
+        store: p.store,
+        url: p.url,
+        image: p.image,
+        category: group.categoryEnum,
+        parentItem: group.key,
+      })),
+    }]
+  })
+}
+
+type Step = 1 | 2 | 3 | 4 | 5 | 'celebration'
 
 type ReferralSource = 'facebook' | 'instagram' | 'google' | 'tiktok' | 'friend' | 'other' | null
 
@@ -75,14 +143,34 @@ const referralSources = [
 ]
 
 const feelings = [
-  { value: 'excited' as const, emoji: '🎉', title: 'מתרגשים!', description: 'אנחנו כל כך שמחים' },
-  { value: 'overwhelmed' as const, emoji: '❓', title: 'קצת המומים', description: 'יש כל כך הרבה לחשוב עליו' },
-  { value: 'exploring' as const, emoji: '❤️', title: 'סתם בודקים', description: 'רוצים לראות מה יש פה' },
+  { value: 'excited' as const, emoji: '🎉', title: 'מתרגשת!', description: 'אני כל כך שמחה' },
+  { value: 'overwhelmed' as const, emoji: '❓', title: 'קצת המומה', description: 'יש כל כך הרבה לחשוב עליו' },
+  { value: 'exploring' as const, emoji: '❤️', title: 'סתם בודקת', description: 'רוצה לראות מה יש פה' },
 ]
+
+// Subtitle for the first-item step adapts to the user's emotional state —
+// same grid for everyone, but the framing matches where she is.
+function firstItemSubtitle(feeling: OnboardingData['feeling']) {
+  if (feeling === 'overwhelmed') {
+    return 'בלי לחשוב הרבה — נתחיל בקטן. בחרי פריט אחד שזה הוא בטח יהיה ברשימה שלך.'
+  }
+  if (feeling === 'excited') {
+    return 'בואי נראה את הקסם — בחרי פריט שתאהבי בכיף לראות ברשימה שלך.'
+  }
+  if (feeling === 'exploring') {
+    return 'הנה דוגמה לאיך זה עובד — בחרי משהו ותראי איך הרשימה מתחילה להיראות.'
+  }
+  return 'בחרי משהו אחד — או הדביקי קישור מכל חנות שאת אוהבת.'
+}
 
 export default function Onboarding() {
   const navigate = useNavigate()
   const { user, refreshProfile } = useAuth()
+  // ?preview=1 → render the UI but skip every DB/network side-effect.
+  // Used by __nesty.previewOnboarding() to preview the screens safely.
+  const isPreview =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('preview') === '1'
   const [step, setStep] = useState<Step>(1)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -93,21 +181,29 @@ export default function Onboarding() {
     feeling: null,
     isFirstTimeParent: null,
     referralSource: null,
-    marketingEmails: true,
+    marketingEmails: true, // default ON, disclosure on the final button
   })
+
+  // First-item-step state
+  const [pickedItem, setPickedItem] = useState<CuratedItem | null>(null)
+  const [pasteUrl, setPasteUrl] = useState('')
+  const [extractStatus, setExtractStatus] = useState<
+    | { state: 'idle' }
+    | { state: 'loading' }
+    | { state: 'success'; product: CuratedItem }
+    | { state: 'error'; message: string }
+  >({ state: 'idle' })
 
   const stepNames: Record<number, string> = {
     1: 'name',
     2: 'due_date',
-    3: 'feeling',
-    4: 'first_time_parent',
-    5: 'referral_source',
-    6: 'marketing_emails',
+    3: 'feeling_and_first_time_parent',
+    4: 'referral_source',
+    5: 'first_item',
   }
 
   const handleNext = () => {
-    if (typeof step === 'number' && step < 6) {
-      // Track step completion
+    if (typeof step === 'number' && step < 5) {
       if (user) {
         trackOnboardingStep({
           user_id: user.id,
@@ -127,57 +223,88 @@ export default function Onboarding() {
   }
 
   const handleSkip = () => {
-    if (step === 2) {
-      setStep(3)
-    } else if (step === 3) {
-      setStep(4)
-    } else if (step === 4) {
-      setStep(5)
+    if (typeof step === 'number' && step < 5) {
+      setStep((step + 1) as Step)
     } else if (step === 5) {
-      setStep(6)
-    } else if (step === 6) {
       handleComplete()
     }
   }
 
+  const handlePickItem = (item: CuratedItem) => {
+    setPickedItem(item === pickedItem ? null : item)
+    setPasteUrl('') // clear URL field when picking from grid
+    setExtractStatus({ state: 'idle' })
+  }
+
+  const handleExtractUrl = async () => {
+    const trimmed = pasteUrl.trim()
+    if (!trimmed) return
+    try {
+      new URL(trimmed)
+    } catch {
+      setExtractStatus({ state: 'error', message: 'הקישור לא תקין. בדקי שהוא מתחיל ב־https://' })
+      return
+    }
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
+    if (!token) {
+      setExtractStatus({ state: 'error', message: 'נדרשת התחברות' })
+      return
+    }
+    setExtractStatus({ state: 'loading' })
+    try {
+      const product = await extractProductFromUrl(trimmed, token)
+      const extracted: CuratedItem = {
+        name: product.name || 'פריט מהאתר',
+        price: parseFloat(product.price) || 0,
+        store: new URL(trimmed).hostname.replace(/^www\./, ''),
+        url: trimmed,
+        image: product.imageUrls[0] || '',
+        category: 'general',
+        parentItem: 'pasted',
+      }
+      setExtractStatus({ state: 'success', product: extracted })
+      setPickedItem(extracted)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'לא הצלחנו לחלץ — אפשר להוסיף ידנית בהמשך'
+      setExtractStatus({ state: 'error', message: msg })
+    }
+  }
+
+  // "Skip without an item" — explicitly clears any picked item before completing
+  const handleSkipFirstItem = () => {
+    setPickedItem(null)
+    handleComplete()
+  }
+
   const handleComplete = async () => {
+    // Preview mode: short-circuit to celebration without any DB writes
+    if (isPreview) {
+      console.log('[__nesty preview] would have saved:', { data, pickedItem })
+      setStep('celebration')
+      return
+    }
     if (!user) return
     setIsLoading(true)
     setError(null)
 
     try {
-      // Build profile object - use upsert to handle case where profile wasn't created by trigger
-      // NOTE: We set onboarding_completed to FALSE here initially
-      // It will be set to TRUE after the celebration screen
       const profileData: Record<string, unknown> = {
         id: user.id,
         email: user.email || '',
         first_name: data.firstName || user.email?.split('@')[0] || 'משתמש',
         last_name: data.lastName || null,
         due_date: data.dueDate || null,
-        onboarding_completed: false, // Keep false until celebration is done
+        onboarding_completed: false,
         marketing_emails: data.marketingEmails,
       }
 
-      // Only include feeling if user selected one (database has CHECK constraint)
-      if (data.feeling) {
-        profileData.feeling = data.feeling
-      }
+      if (data.feeling) profileData.feeling = data.feeling
+      if (data.isFirstTimeParent !== null) profileData.is_first_time_parent = data.isFirstTimeParent
+      if (data.referralSource) profileData.referral_source = data.referralSource
 
-      // Only include is_first_time_parent if user selected an option
-      if (data.isFirstTimeParent !== null) {
-        profileData.is_first_time_parent = data.isFirstTimeParent
-      }
-
-      // Include referral source if selected
-      if (data.referralSource) {
-        profileData.referral_source = data.referralSource
-      }
-
-      // Include UTM attribution captured on landing (first-touch)
       Object.assign(profileData, getAttributionForProfile())
 
-      // Upsert profile (insert if not exists, update if exists)
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert(profileData, { onConflict: 'id' })
@@ -204,7 +331,43 @@ export default function Onboarding() {
         throw new Error(`שגיאה ביצירת הרשימה: ${registryError.message}`)
       }
 
-      // Track registry creation and onboarding completion
+      // Phase 1: insert the first item if picked — the wow moment
+      if (registryData && pickedItem) {
+        const itemPayload = {
+          registry_id: registryData.id,
+          name: pickedItem.name,
+          price: pickedItem.price,
+          image_url: pickedItem.image || null,
+          original_url: pickedItem.url || null,
+          store_name: pickedItem.store || 'ידני',
+          category: pickedItem.category,
+          quantity: 1,
+          is_most_wanted: true, // first item is "most-wanted" by default — shines on dashboard
+        }
+        console.log('[onboarding] Inserting first item:', itemPayload)
+        const { data: insertedItem, error: itemError } = await supabase
+          .from('items')
+          .insert(itemPayload)
+          .select('id')
+          .single()
+        if (itemError) {
+          console.error('[onboarding] First-item insert FAILED:', itemError)
+          // Surface to the user so they know — registry still exists, retry-able later
+          setError(`הרשימה נוצרה אבל הוספת הפריט נכשלה: ${itemError.message}. אפשר להוסיף ידנית מהרשימה.`)
+        } else if (insertedItem) {
+          console.log('[onboarding] ✅ First item added:', insertedItem.id, pickedItem.name)
+          trackItemAdded({
+            registry_id: registryData.id,
+            item_id: insertedItem.id,
+            item_name: pickedItem.name,
+            item_category: pickedItem.category,
+            item_price: pickedItem.price,
+            source: extractStatus.state === 'success' ? 'paste' : 'manual',
+            has_extension: false,
+          })
+        }
+      }
+
       if (registryData) {
         trackRegistryCreated({
           registry_id: registryData.id,
@@ -217,35 +380,32 @@ export default function Onboarding() {
         })
       }
 
-      // Send welcome email (fire-and-forget, don't block onboarding UI)
+      // Welcome email — fire and forget
       try {
-        const currentWeek = data.dueDate
-          ? calculatePregnancyWeek(data.dueDate)
-          : 12
+        const currentWeek = data.dueDate ? calculatePregnancyWeek(data.dueDate) : 12
         const clampedWeek = Math.max(12, Math.min(40, currentWeek))
         const fruitInfo = FRUIT_BY_WEEK[clampedWeek] || FRUIT_BY_WEEK[12]
-
-        supabase.functions.invoke('send-email', {
-          body: {
-            type: 'welcome',
-            to: user.email,
-            data: {
-              firstName: data.firstName || user.email?.split('@')[0] || 'את',
-              currentWeek: clampedWeek,
-              fruitName: fruitInfo.name,
-              fruitEmoji: fruitInfo.emoji,
+        supabase.functions
+          .invoke('send-email', {
+            body: {
+              type: 'welcome',
+              to: user.email,
+              data: {
+                firstName: data.firstName || user.email?.split('@')[0] || 'את',
+                currentWeek: clampedWeek,
+                fruitName: fruitInfo.name,
+                fruitEmoji: fruitInfo.emoji,
+              },
             },
-          },
-        }).catch((err) => console.error('Welcome email error:', err))
+          })
+          .catch((err) => console.error('Welcome email error:', err))
       } catch (emailErr) {
         console.error('Welcome email setup error:', emailErr)
       }
 
-      // Don't refresh profile yet - it would trigger redirect
-      // Show celebration screen first
       setStep('celebration')
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'שגיאה לא צפויה. נסו שוב.'
+      const errorMessage = err instanceof Error ? err.message : 'שגיאה לא צפויה. נסי שוב.'
       setError(errorMessage)
       console.error('Error completing onboarding:', err)
     } finally {
@@ -259,54 +419,41 @@ export default function Onboarding() {
     return true
   }
 
-  // Handle celebration complete
   const handleCelebrationComplete = async () => {
-    // Now mark onboarding as complete
+    // Preview mode: just bounce home, no DB writes, no flag flips
+    if (isPreview) {
+      navigate('/?onboarding-preview=done')
+      return
+    }
     if (user) {
       try {
         const { error } = await supabase
           .from('profiles')
           .update({ onboarding_completed: true })
           .eq('id', user.id)
+        if (error) console.error('Error marking onboarding complete:', error)
 
-        if (error) {
-          console.error('Error marking onboarding complete:', error)
-        }
-
-        // Set sessionStorage flag BEFORE navigation as backup for the tutorial trigger
         try {
           sessionStorage.setItem('nesty_from_onboarding', 'true')
         } catch {
-          // Ignore sessionStorage errors
+          // ignore
         }
 
-        // Navigate FIRST with the state, then refresh profile
-        // This ensures the navigation state is preserved before any re-renders
         navigate('/checklist', { state: { fromOnboarding: true } })
-
-        // Refresh profile after navigation to update context
-        // Using setTimeout to ensure navigation completes first
-        setTimeout(() => {
-          refreshProfile()
-        }, 100)
+        setTimeout(() => refreshProfile(), 100)
         return
       } catch (err) {
         console.error('Error in handleCelebrationComplete:', err)
       }
     }
-
-    // Set sessionStorage flag BEFORE navigation as backup for the tutorial trigger
     try {
       sessionStorage.setItem('nesty_from_onboarding', 'true')
     } catch {
-      // Ignore sessionStorage errors
+      // ignore
     }
-
-    // Fallback navigation if something went wrong
     navigate('/checklist', { state: { fromOnboarding: true } })
   }
 
-  // Show celebration screen
   if (step === 'celebration') {
     return (
       <OnboardingCelebration
@@ -318,42 +465,42 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#fffbff] px-4 py-8 relative" dir="rtl">
-      {/* Faded baby icons background */}
       <FadedIconsBackground count={40} className="z-0 opacity-70" />
-      {/* Background decoration */}
+      {/* Soft corner blobs — sized & positioned to feel like a subtle accent
+          at any viewport. On mobile we shrink them and push slightly off-edge
+          so they don't overwhelm the small viewport (was: fixed 288/384 px
+          blobs that took over the screen on phones). */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-10 w-72 h-72 bg-[#eaddff]/40 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#ffd8e4]/30 rounded-full blur-3xl" />
+        <div className="absolute -top-10 md:top-20 -right-10 md:right-10 w-40 h-40 md:w-72 md:h-72 bg-[#eaddff]/40 rounded-full blur-3xl" />
+        <div className="absolute -bottom-10 md:bottom-20 -left-10 md:left-10 w-48 h-48 md:w-96 md:h-96 bg-[#ffd8e4]/30 rounded-full blur-3xl" />
       </div>
 
       <div className="w-full max-w-lg">
-        {/* Logo */}
         <Link to="/" className="flex items-center justify-center mb-6">
           <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-16 w-auto" />
         </Link>
 
-        {/* Progress dots */}
+        {/* Progress dots — 5 steps now */}
         <div className="flex justify-center gap-2 mb-6">
           {[1, 2, 3, 4, 5].map((s) => (
             <div
               key={s}
               className={`w-3 h-3 rounded-full transition-colors ${
-                s === step ? 'bg-[#6750a4]' : s < step ? 'bg-[#6750a4]/50' : 'bg-[#e7e0ec]'
+                s === step ? 'bg-[#6750a4]' : (typeof step === 'number' && s < step) ? 'bg-[#6750a4]/50' : 'bg-[#e7e0ec]'
               }`}
             />
           ))}
         </div>
 
-        {/* Card */}
         <div className="bg-white rounded-[32px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-[#e7e0ec] p-8">
-          {/* Step 1: Name */}
+
+          {/* ─────────── Step 1: Name ─────────── */}
           {step === 1 && (
             <div className="space-y-6">
               <div className="text-center">
-                <h1 className="text-2xl font-medium text-[#1d192b] mb-2">בואו נכיר!</h1>
-                <p className="text-[#49454f]">עוד כמה פרטים ואתם מוכנים להתחיל</p>
+                <h1 className="text-2xl font-medium text-[#1d192b] mb-2">בואי נכיר!</h1>
+                <p className="text-[#49454f]">עוד כמה פרטים ואת מוכנה להתחיל</p>
               </div>
-
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1d192b] mb-2">שם פרטי</label>
@@ -376,7 +523,6 @@ export default function Onboarding() {
                   />
                 </div>
               </div>
-
               <button
                 onClick={handleNext}
                 disabled={!canProceed()}
@@ -388,7 +534,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Step 2: Due Date */}
+          {/* ─────────── Step 2: Due Date ─────────── */}
           {step === 2 && (
             <div className="space-y-6">
               <div className="text-center">
@@ -396,20 +542,15 @@ export default function Onboarding() {
                   <Calendar className="w-8 h-8 text-[#6750a4]" />
                 </div>
                 <h1 className="text-2xl font-medium text-[#1d192b] mb-2">מתי התאריך המשוער?</h1>
-                <p className="text-[#49454f]">זה יעזור לנו להתאים את החוויה עבורכם</p>
+                <p className="text-[#49454f]">זה יעזור לנו להתאים את החוויה אלייך</p>
               </div>
-
               <input
                 type="date"
                 value={data.dueDate}
                 onChange={(e) => setData({ ...data, dueDate: e.target.value })}
                 className="w-full px-4 py-3 rounded-[16px] border-2 border-[#e7e0ec] bg-white text-[#1d192b] text-center focus:border-[#6750a4] focus:outline-none transition-colors"
               />
-
-              <p className="text-sm text-[#49454f] text-center">
-                אופציונלי - אפשר לדלג
-              </p>
-
+              <p className="text-sm text-[#49454f] text-center">אופציונלי - אפשר לדלג</p>
               <div className="flex gap-3">
                 <button
                   onClick={handleBack}
@@ -427,165 +568,112 @@ export default function Onboarding() {
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               </div>
-
-              <button
-                onClick={handleSkip}
-                className="w-full text-[#49454f] hover:text-[#6750a4] text-sm transition-colors"
-              >
+              <button onClick={handleSkip} className="w-full text-[#49454f] hover:text-[#6750a4] text-sm transition-colors">
                 דלג
               </button>
             </div>
           )}
 
-          {/* Step 3: Feeling */}
+          {/* ─────────── Step 3: Feeling + First-Time-Parent (combined, compact) ─────────── */}
           {step === 3 && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="text-center">
-                <div className="w-16 h-16 bg-[#ffd8e4]/40 rounded-[20px] flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-[#ba1a5c]" />
+                <div className="w-12 h-12 bg-[#ffd8e4]/40 rounded-[16px] flex items-center justify-center mx-auto mb-2">
+                  <Sparkles className="w-6 h-6 text-[#ba1a5c]" />
                 </div>
-                <h1 className="text-2xl font-medium text-[#1d192b] mb-2">איך אתם מרגישים?</h1>
-                <p className="text-[#49454f]">אין תשובה נכונה או לא נכונה</p>
+                <h1 className="text-xl font-medium text-[#1d192b] mb-1">איך את מרגישה?</h1>
+                <p className="text-xs text-[#49454f]">אין תשובה נכונה או לא נכונה</p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {feelings.map((feeling) => (
                   <button
                     key={feeling.value}
                     onClick={() => setData({ ...data, feeling: feeling.value })}
-                    className={`w-full p-4 rounded-[20px] border-2 text-right transition-all ${
+                    className={`w-full p-2.5 rounded-[14px] border-2 text-right transition-all ${
                       data.feeling === feeling.value
                         ? 'border-[#6750a4] bg-[#f3edff]/50'
                         : 'border-[#e7e0ec] hover:border-[#6750a4]/50'
                     }`}
                   >
-                    <div className="flex items-center gap-4">
-                      <span className="text-3xl">{feeling.emoji}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{feeling.emoji}</span>
                       <div>
-                        <p className="font-medium text-[#1d192b]">{feeling.title}</p>
-                        <p className="text-sm text-[#49454f]">{feeling.description}</p>
+                        <p className="font-medium text-[#1d192b] text-sm">{feeling.title}</p>
+                        <p className="text-xs text-[#49454f]">{feeling.description}</p>
                       </div>
                     </div>
                   </button>
                 ))}
               </div>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={handleBack}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-white border-2 border-[#e7e0ec] text-[#1d192b] font-medium hover:border-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
-                >
-                  <ArrowRight className="w-5 h-5" />
-                  חזור
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium hover:bg-[#7c5fbd] transition-all duration-300"
-                >
-                  המשך
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-              </div>
-
-              <button
-                onClick={handleSkip}
-                className="w-full text-[#49454f] hover:text-[#6750a4] text-sm transition-colors"
-              >
-                דלג
-              </button>
-            </div>
-          )}
-
-          {/* Step 4: First Time Parent */}
-          {step === 4 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#f3edff] rounded-[20px] flex items-center justify-center mx-auto mb-4">
-                  <Baby className="w-8 h-8 text-[#6750a4]" />
+              {/* Inline first-time-parent question — compact */}
+              <div className="border-t border-[#e7e0ec] pt-3">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Baby className="w-4 h-4 text-[#6750a4]" />
+                  <p className="text-xs font-medium text-[#1d192b]">זה הילד הראשון שלך?</p>
                 </div>
-                <h1 className="text-2xl font-medium text-[#1d192b] mb-2">זה הילד הראשון שלכם?</h1>
-                <p className="text-[#49454f]">נתאים את החוויה בהתאם לניסיון שלכם</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setData({ ...data, isFirstTimeParent: true })}
+                    className={`flex-1 px-3 py-2 rounded-[12px] border-2 text-xs font-medium transition-all ${
+                      data.isFirstTimeParent === true
+                        ? 'border-[#6750a4] bg-[#f3edff]/50 text-[#6750a4]'
+                        : 'border-[#e7e0ec] text-[#1d192b] hover:border-[#6750a4]/50'
+                    }`}
+                  >
+                    👶 כן, הראשון!
+                  </button>
+                  <button
+                    onClick={() => setData({ ...data, isFirstTimeParent: false })}
+                    className={`flex-1 px-3 py-2 rounded-[12px] border-2 text-xs font-medium transition-all ${
+                      data.isFirstTimeParent === false
+                        ? 'border-[#6750a4] bg-[#f3edff]/50 text-[#6750a4]'
+                        : 'border-[#e7e0ec] text-[#1d192b] hover:border-[#6750a4]/50'
+                    }`}
+                  >
+                    👨‍👩‍👧 כבר עם ילדים
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                <button
-                  onClick={() => setData({ ...data, isFirstTimeParent: true })}
-                  className={`w-full p-4 rounded-[20px] border-2 text-right transition-all ${
-                    data.isFirstTimeParent === true
-                      ? 'border-[#6750a4] bg-[#f3edff]/50'
-                      : 'border-[#e7e0ec] hover:border-[#6750a4]/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-3xl">👶</span>
-                    <div>
-                      <p className="font-medium text-[#1d192b]">כן, זה הראשון!</p>
-                      <p className="text-sm text-[#49454f]">מתרגשים מאוד</p>
-                    </div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => setData({ ...data, isFirstTimeParent: false })}
-                  className={`w-full p-4 rounded-[20px] border-2 text-right transition-all ${
-                    data.isFirstTimeParent === false
-                      ? 'border-[#6750a4] bg-[#f3edff]/50'
-                      : 'border-[#e7e0ec] hover:border-[#6750a4]/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-3xl">👨‍👩‍👧</span>
-                    <div>
-                      <p className="font-medium text-[#1d192b]">לא, כבר יש לנו ילדים</p>
-                      <p className="text-sm text-[#49454f]">מוסיפים עוד אחד למשפחה</p>
-                    </div>
-                  </div>
-                </button>
-              </div>
-
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <button
                   onClick={handleBack}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-white border-2 border-[#e7e0ec] text-[#1d192b] font-medium hover:border-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-[24px] bg-white border-2 border-[#e7e0ec] text-[#1d192b] font-medium text-sm hover:border-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
                 >
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                   חזור
                 </button>
                 <button
                   onClick={handleNext}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium hover:bg-[#7c5fbd] transition-all duration-300"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-[24px] bg-[#6750a4] text-white font-medium text-sm hover:bg-[#7c5fbd] transition-all duration-300"
                 >
                   המשך
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="w-4 h-4" />
                 </button>
               </div>
-
-              <button
-                onClick={handleSkip}
-                className="w-full text-[#49454f] hover:text-[#6750a4] text-sm transition-colors"
-              >
+              <button onClick={handleSkip} className="w-full text-[#49454f] hover:text-[#6750a4] text-xs transition-colors">
                 דלג
               </button>
             </div>
           )}
 
-          {/* Step 5: How did you hear about us? */}
-          {step === 5 && (
+          {/* ─────────── Step 4: Referral source ─────────── */}
+          {step === 4 && (
             <div className="space-y-6">
               <div className="text-center">
                 <div className="w-16 h-16 bg-[#d3e4fd]/40 rounded-[20px] flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">📣</span>
                 </div>
                 <h1 className="text-2xl font-medium text-[#1d192b] mb-2">איך הגעת אלינו?</h1>
-                <p className="text-[#49454f]">זה עוזר לנו להבין איפה למצוא עוד הורים כמוך</p>
+                <p className="text-[#49454f]">זה עוזר לנו למצוא עוד הורים כמוך</p>
               </div>
-
               <div className="grid grid-cols-2 gap-3">
-                {referralSources.map(source => (
+                {referralSources.map((source) => (
                   <button
                     key={source.value}
-                    onClick={() => {
-                      setData({ ...data, referralSource: source.value })
-                    }}
+                    onClick={() => setData({ ...data, referralSource: source.value })}
                     className={`p-4 rounded-[20px] border-2 text-center transition-all ${
                       data.referralSource === source.value
                         ? 'border-[#6750a4] bg-[#f3edff]/50'
@@ -597,7 +685,6 @@ export default function Onboarding() {
                   </button>
                 ))}
               </div>
-
               <div className="flex gap-3">
                 <button
                   onClick={handleBack}
@@ -614,103 +701,185 @@ export default function Onboarding() {
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               </div>
-
-              <button
-                onClick={handleSkip}
-                className="w-full text-center text-sm text-[#49454f] hover:text-[#6750a4] transition-colors"
-              >
+              <button onClick={handleSkip} className="w-full text-center text-sm text-[#49454f] hover:text-[#6750a4] transition-colors">
                 דלג
               </button>
             </div>
           )}
 
-          {/* Step 6: Marketing Emails */}
-          {step === 6 && (
-            <div className="space-y-6">
+          {/* ─────────── Step 5: First Item — the wow moment ─────────── */}
+          {step === 5 && (
+            <div className="space-y-4">
               <div className="text-center">
-                <div className="w-16 h-16 bg-[#ffd8e4]/40 rounded-[20px] flex items-center justify-center mx-auto mb-4">
-                  <Mail className="w-8 h-8 text-[#ba1a5c]" />
+                <div className="w-14 h-14 bg-[#f3edff] rounded-[18px] flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="w-7 h-7 text-[#6750a4]" />
                 </div>
-                <h1 className="text-2xl font-medium text-[#1d192b] mb-2">להישאר מעודכנים?</h1>
-                <p className="text-[#49454f]">נשלח לכם טיפים, מבצעים והמלצות שימושיות</p>
+                <h1 className="text-xl font-medium text-[#1d192b] mb-1">הרגע הכי כיף 🪺</h1>
+                <p className="text-sm text-[#49454f]">{firstItemSubtitle(data.feeling)}</p>
               </div>
 
               {error && (
-                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-[16px] text-center text-sm border border-red-100">
+                <div className="bg-red-50 text-red-600 px-3 py-2 rounded-[14px] text-center text-xs border border-red-100">
                   {error}
                 </div>
               )}
 
-              <div className="space-y-3">
-                <button
-                  onClick={() => setData({ ...data, marketingEmails: true })}
-                  className={`w-full p-4 rounded-[20px] border-2 text-right transition-all ${
-                    data.marketingEmails === true
-                      ? 'border-[#6750a4] bg-[#f3edff]/50'
-                      : 'border-[#e7e0ec] hover:border-[#6750a4]/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-3xl">💌</span>
-                    <div>
-                      <p className="font-medium text-[#1d192b]">כן, אשמח לקבל עדכונים</p>
-                      <p className="text-sm text-[#49454f]">טיפים, מבצעים והמלצות</p>
-                    </div>
+              {/* URL paste — compact */}
+              <div className="bg-[#f9f7fc] border border-[#e7e0ec] rounded-[16px] p-3">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Link2 className="w-3.5 h-3.5 text-[#6750a4]" />
+                  <p className="text-xs font-medium text-[#1d192b]">יש לך קישור מחנות?</p>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={pasteUrl}
+                    onChange={(e) => setPasteUrl(e.target.value)}
+                    placeholder="הדביקי קישור מכל אתר"
+                    className="flex-1 min-w-0 px-3 py-2 rounded-[10px] border border-[#e7e0ec] bg-white text-sm text-[#1d192b] placeholder:text-[#49454f]/60 focus:border-[#6750a4] focus:outline-none"
+                    disabled={extractStatus.state === 'loading'}
+                  />
+                  <button
+                    onClick={handleExtractUrl}
+                    disabled={!pasteUrl.trim() || extractStatus.state === 'loading'}
+                    className="px-3 py-2 rounded-[10px] bg-[#6750a4] text-white text-xs font-medium hover:bg-[#5a4690] disabled:opacity-40 transition-colors flex-shrink-0"
+                  >
+                    {extractStatus.state === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'הוסף'}
+                  </button>
+                </div>
+                {extractStatus.state === 'success' && (
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-[#2e7d32] bg-[#e8f5e9] px-2.5 py-1.5 rounded-[8px]">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    מעולה! "{extractStatus.product.name}" נבחר
                   </div>
-                </button>
-                <button
-                  onClick={() => setData({ ...data, marketingEmails: false })}
-                  className={`w-full p-4 rounded-[20px] border-2 text-right transition-all ${
-                    data.marketingEmails === false
-                      ? 'border-[#6750a4] bg-[#f3edff]/50'
-                      : 'border-[#e7e0ec] hover:border-[#6750a4]/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-3xl">🙅</span>
-                    <div>
-                      <p className="font-medium text-[#1d192b]">לא תודה</p>
-                      <p className="text-sm text-[#49454f]">רק התראות חיוניות</p>
-                    </div>
+                )}
+                {extractStatus.state === 'error' && (
+                  <div className="mt-2 text-xs text-red-600 bg-red-50 px-2.5 py-1.5 rounded-[8px]">
+                    {extractStatus.message}
                   </div>
-                </button>
+                )}
               </div>
 
-              <div className="flex gap-3">
+              {/* OR divider */}
+              <div className="flex items-center gap-2 text-[10px] text-[#9e9e9e]">
+                <div className="flex-1 border-t border-[#e7e0ec]" />
+                <span>או בחרי פריט פופולרי מהצ'קליסט</span>
+                <div className="flex-1 border-t border-[#e7e0ec]" />
+              </div>
+
+              {/* Real essentials — same products users see in /checklist */}
+              <div className="space-y-3 max-h-[320px] overflow-y-auto -mx-1 px-1">
+                {buildCuratedRows().map(({ group, products }) => {
+                  const cat = categoryFor(group.categoryEnum)
+                  const CatIcon = cat?.icon
+                  return (
+                  <div key={group.key}>
+                    <div className="flex items-center gap-2 mb-1.5 px-1">
+                      {CatIcon && cat && (
+                        <span
+                          style={categoryGradient(group.categoryEnum)}
+                          className="w-7 h-7 rounded-lg shadow-sm flex items-center justify-center text-white flex-shrink-0"
+                        >
+                          <CatIcon className="w-4 h-4" />
+                        </span>
+                      )}
+                      <p className="text-xs font-bold text-[#1d192b]">{group.key}</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {products.map((item) => {
+                        const isPicked = pickedItem?.url === item.url
+                        return (
+                          <button
+                            key={item.url}
+                            onClick={() => handlePickItem(item)}
+                            className={`relative text-right p-1.5 rounded-[12px] border-2 transition-all ${
+                              isPicked
+                                ? 'border-[#6750a4] bg-[#f3edff]/40 shadow-sm'
+                                : 'border-[#e7e0ec] hover:border-[#6750a4]/50 bg-white'
+                            }`}
+                          >
+                            {isPicked && (
+                              <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-[#6750a4] text-white flex items-center justify-center z-10">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              </span>
+                            )}
+                            <div className="aspect-square bg-[#f5f5f5] rounded-[8px] mb-1 overflow-hidden">
+                              <img
+                                src={item.image}
+                                alt={item.name}
+                                className="w-full h-full object-contain"
+                                loading="lazy"
+                                onError={(e) => {
+                                  ;(e.target as HTMLImageElement).style.display = 'none'
+                                }}
+                              />
+                            </div>
+                            <p className="text-[10px] font-bold text-[#1d192b] leading-tight line-clamp-2">
+                              {item.name}
+                            </p>
+                            <p className="text-[9px] text-[#49454f]">{item.store}</p>
+                            <p className="text-[10px] font-bold text-[#6750a4]">₪{item.price.toLocaleString()}</p>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  )
+                })}
+              </div>
+
+              {/* Final CTAs */}
+              <div className="flex gap-2 pt-1">
                 <button
                   onClick={handleBack}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-white border-2 border-[#e7e0ec] text-[#1d192b] font-medium hover:border-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-[24px] bg-white border-2 border-[#e7e0ec] text-[#1d192b] font-medium text-sm hover:border-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
                 >
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                   חזור
                 </button>
                 <button
                   onClick={handleComplete}
                   disabled={isLoading}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium hover:bg-[#7c5fbd] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-3 rounded-[24px] bg-[#6750a4] text-white font-medium text-sm hover:bg-[#7c5fbd] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
-                    <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : pickedItem ? (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      הוסיפי וסיימי
+                    </>
                   ) : (
                     <>
-                      סיום
-                      <Sparkles className="w-5 h-5" />
+                      סיימי
+                      <Sparkles className="w-4 h-4" />
                     </>
                   )}
                 </button>
               </div>
 
+              {/* Marketing disclosure */}
+              <p className="text-[10px] text-[#9e9e9e] text-center leading-relaxed">
+                בלחיצה על "סיימי" את מאשרת לקבל מאיתנו עדכונים שימושיים למייל. אפשר לבטל בכל רגע מ
+                <Link to="/settings/emails" className="underline hover:text-[#6750a4]">
+                  הגדרות
+                </Link>
+                .
+              </p>
+
+              {/* Skip — explicitly clears the picked item */}
               <button
-                onClick={handleSkip}
-                className="w-full text-[#49454f] hover:text-[#6750a4] text-sm transition-colors"
+                onClick={handleSkipFirstItem}
+                disabled={isLoading}
+                className="w-full text-[#49454f] hover:text-[#6750a4] text-xs transition-colors flex items-center justify-center gap-1"
               >
-                דלג
+                <ExternalLink className="w-3 h-3" />
+                דלגי וסיימי בלי פריט
               </button>
             </div>
           )}
         </div>
 
-        {/* Back to home */}
         <p className="text-center text-[#49454f] mt-6">
           <Link to="/" className="hover:text-[#6750a4] transition-colors">
             חזרה לדף הבית

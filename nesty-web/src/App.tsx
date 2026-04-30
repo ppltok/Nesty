@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -7,28 +8,36 @@ import ScrollToTop from './components/ScrollToTop'
 import WhatsAppButton from './components/WhatsAppButton'
 import { initializeStorageVersion } from './lib/storage-version'
 
-// Pages
+// ── Pages ────────────────────────────────────────────────────────────────
+// Eager-load only what's on the critical path: the public home page (so it
+// hydrates instantly on first paint) and the lightweight auth screens.
+// Everything else is split into its own chunk and fetched on demand.
 import Home from './pages/HomeNew'
 import SignIn from './pages/auth/SignIn'
 import SignUp from './pages/auth/SignUp'
 import AuthCallback from './pages/auth/AuthCallback'
-import ResetPasswordRequest from './pages/auth/ResetPasswordRequest'
-import UpdatePassword from './pages/auth/UpdatePassword'
-import Onboarding from './pages/onboarding/Onboarding'
-import Dashboard from './pages/Dashboard'
-import Checklist from './pages/Checklist'
-import PublicRegistry from './pages/PublicRegistry'
-import Gifts from './pages/Gifts'
-import Statistics from './pages/Statistics'
-import Settings from './pages/Settings'
-import EmailPreferences from './pages/EmailPreferences'
-import Unsubscribed from './pages/Unsubscribed'
-import InviteAccept from './pages/InviteAccept'
-import Terms from './pages/Terms'
-import Privacy from './pages/Privacy'
-import Contact from './pages/Contact'
-import GuideHubPage from './pages/GuideHubPage'
-import GuidePage from './pages/GuidePage'
+
+// Lazy-loaded routes — each becomes its own JS chunk that only downloads
+// when the user actually navigates to that route. Cuts initial bundle size
+// significantly without changing UX (each transition adds at most a few
+// hundred ms of download for routes the user hasn't seen yet).
+const ResetPasswordRequest = lazy(() => import('./pages/auth/ResetPasswordRequest'))
+const UpdatePassword = lazy(() => import('./pages/auth/UpdatePassword'))
+const Onboarding = lazy(() => import('./pages/onboarding/Onboarding'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Checklist = lazy(() => import('./pages/Checklist'))
+const PublicRegistry = lazy(() => import('./pages/PublicRegistry'))
+const Gifts = lazy(() => import('./pages/Gifts'))
+const Statistics = lazy(() => import('./pages/Statistics'))
+const Settings = lazy(() => import('./pages/Settings'))
+const EmailPreferences = lazy(() => import('./pages/EmailPreferences'))
+const Unsubscribed = lazy(() => import('./pages/Unsubscribed'))
+const InviteAccept = lazy(() => import('./pages/InviteAccept'))
+const Terms = lazy(() => import('./pages/Terms'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const Contact = lazy(() => import('./pages/Contact'))
+const GuideHubPage = lazy(() => import('./pages/GuideHubPage'))
+const GuidePage = lazy(() => import('./pages/GuidePage'))
 
 // Initialize localStorage versioning BEFORE React renders
 // This runs synchronously when the module is loaded
@@ -76,6 +85,7 @@ function AppRoutes() {
   }
 
   return (
+    <Suspense fallback={<LoadingScreen />}>
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<Home />} />
@@ -104,9 +114,14 @@ function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         {/* Onboarding - no side nav */}
         <Route path="/onboarding" element={
-          profile?.onboarding_completed
-            ? <Navigate to="/dashboard" replace />
-            : <Onboarding />
+          // ?preview=1 bypasses the redirect — used by dev helpers to preview
+          // the onboarding UI without touching DB state. Onboarding.tsx
+          // detects the same flag and stubs handleComplete.
+          (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === '1')
+            ? <Onboarding />
+            : profile?.onboarding_completed
+              ? <Navigate to="/dashboard" replace />
+              : <Onboarding />
         } />
 
         {/* Dashboard layout with side nav */}
@@ -139,6 +154,7 @@ function AppRoutes() {
       {/* 404 - Redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   )
 }
 

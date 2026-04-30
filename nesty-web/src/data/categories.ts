@@ -993,11 +993,11 @@ export const ITEMS_DATA: Record<string, ItemInfo> = {
     type: 'must',
     products: [
       {
-        name: 'אמבטיה סיליקון מתקפלת כולל מעמד צינורית ומושב אמבטיה דפני מתקפל',
-        store: 'rainbowbaby',
-        url: 'https://www.rainbowbaby.co.il/product/%D7%90%D7%9E%D7%91%D7%98%D7%99%D7%94-%D7%A1%D7%99%D7%9C%D7%99%D7%A7%D7%95%D7%9F-%D7%9E%D7%AA%D7%A7%D7%A4%D7%9C%D7%AA-%D7%9B%D7%95%D7%9C%D7%9C-%D7%9E%D7%A2%D7%9E%D7%93-%D7%95%D7%A6%D7%99%D7%A0%D7%95%D7%A8%D7%99%D7%AA',
-        image: 'https://www.rainbowbaby.co.il/images/itempics/1933_1810202517405313017_large.jpg',
-        price: 349,
+        name: 'אמבטיה מתקפלת – ים כחול עם פקק משנה צבע לפי חום',
+        store: 'סגל בייבי',
+        url: 'https://www.segalbaby.co.il/product/stokke/flexi-bath/%d7%90%d7%9e%d7%91%d7%98%d7%99%d7%94-%d7%9e%d7%aa%d7%a7%d7%a4%d7%9c%d7%aa-%d7%99%d7%9d-%d7%9b%d7%97%d7%95%d7%9c-%d7%a2%d7%9d-%d7%a4%d7%a7%d7%a7-%d7%9e%d7%a9%d7%a0%d7%94-%d7%a6%d7%91%d7%a2/',
+        image: 'https://www.segalbaby.co.il/wp-content/uploads/2024/10/FlexiBath_OceanBlue_NewbornSupp_onStand_231220-3096_RT.jpg',
+        price: 280,
       },
       {
         name: 'בבה ג׳ו אמבטיה מעוצבת LUMA אפור',
@@ -1007,11 +1007,11 @@ export const ITEMS_DATA: Record<string, ItemInfo> = {
         price: 399,
       },
       {
-        name: 'אמבטיה סיליקון מתקפלת',
-        store: 'rainbowbaby',
-        url: 'https://www.rainbowbaby.co.il/product/%D7%90%D7%9E%D7%91%D7%98%D7%99%D7%94-%D7%A1%D7%99%D7%9C%D7%99%D7%A7%D7%95%D7%9F-%D7%9E%D7%AA%D7%A7%D7%A4%D7%9C%D7%AA-%D7%9B%D7%95%D7%9C%D7%9C-%D7%9E%D7%A2%D7%9E%D7%93-%D7%A6%D7%99%D7%A0%D7%95%D7%A8%D7%99%D7%AA-%D7%95%D7%9E%D7%95%D7%A9%D7%91-%D7%90%D7%9E%D7%91%D7%98%D7%99%D7%94-%D7%93%D7%A4%D7%A0%D7%99-%D7%9E%D7%AA%D7%A7%D7%A4%D7%9C-0?aff=GoogleMerchant&gad_source=1&gad_campaignid=22249395274&gbraid=0AAAAA-nWUhY4Wf3a6vNs-igN8_XLn3Wek&gclid=Cj0KCQjw77bPBhC_ARIsAGAjjV_cYKi4OqrE5rMjLu38S4rJrynWdVHFEjUArlyXshE6rtd5Nb09FGEaAmBZEALw_wcB',
-        image: 'https://www.rainbowbaby.co.il/images/itempics/390_1810202517271313003_large.jpg',
-        price: 329,
+        name: 'Bebe אמבטיה סיליקון מתקפלת',
+        store: 'סופר־פארם',
+        url: 'https://shop.super-pharm.co.il/infants-and-toddlers/baby-wash/tubs-and-infant-bath-seats/%D7%90%D7%9E%D7%91%D7%98%D7%99%D7%94-%D7%A1%D7%99%D7%9C%D7%99%D7%A7%D7%95%D7%9F-%D7%9E%D7%AA%D7%A7%D7%A4%D7%9C%D7%AA-%D7%9B%D7%95%D7%9C%D7%9C-%D7%9E%D7%A2%D7%9E%D7%93-%D7%9E%D7%95%D7%91%D7%A0%D7%94-%D7%93%D7%92%D7%9D-Magic-Fold-%D7%A6%D7%91%D7%A2-%D7%94%D7%90%D7%9E%D7%91%D7%98%D7%99%D7%94-%D7%A9%D7%9E%D7%A0%D7%AA/p/mp-00318559',
+        image: 'https://superpharmstorage.blob.core.windows.net/hybris/products/desktop/medium/1208108116756.jpg',
+        price: 349,
       },
     ],
   },

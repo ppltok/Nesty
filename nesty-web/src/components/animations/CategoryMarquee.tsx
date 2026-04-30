@@ -1,34 +1,5 @@
 import { CATEGORIES } from '../../data/categories'
-
-/**
- * On-brand color palette per category. The raw `cat.color` field in the data
- * is mostly lavender variations and reads as one tone in this small marquee
- * size — this map distributes the palette across the brand spectrum
- * (lavender / dusty-rose / peach / sage) so the strip scans as variety.
- *
- * All values are within the brand kit's allowed colors.
- */
-const CATEGORY_GRADIENT: Record<string, [string, string]> = {
-  strollers:   ['#86608e', '#6d4e74'],   // primary lavender
-  car_safety:  ['#5a4690', '#4a3675'],   // deep lavender
-  furniture:   ['#a891ad', '#917a96'],   // soft lavender
-  safety:      ['#22c55e', '#16a34a'],   // success green (safety vibe)
-  feeding:     ['#f4acb7', '#e89aa6'],   // dusty rose
-  nursing:     ['#ffcad4', '#f4acb7'],   // soft rose
-  bath:        ['#7dd3c0', '#5fb8a3'],   // sage / mint
-  clothing:    ['#ffd8d7', '#f4b5b3'],   // peach
-  bedding:     ['#c9c2cb', '#a891ad'],   // muted lavender
-  toys:        ['#fbbf24', '#f59e0b'],   // warm amber
-  birth_prep:  ['#86608e', '#5a4690'],   // primary
-  siblings:    ['#a891ad', '#7a5582'],   // dual-tone
-}
-
-function gradientStyle(catId: string): React.CSSProperties {
-  const [from, to] = CATEGORY_GRADIENT[catId] ?? ['#a891ad', '#86608e']
-  return {
-    backgroundImage: `linear-gradient(135deg, ${from}, ${to})`,
-  }
-}
+import { categoryGradient } from '../../lib/categoryColors'
 
 /**
  * Narrow horizontal divider that scrolls every checklist category (icon + name)
@@ -56,7 +27,7 @@ function CategoryRow({ aria }: { aria?: 'hide' }) {
         return (
           <div key={`${cat.id}-${i}`} className="flex items-center gap-3 flex-shrink-0">
             <div
-              style={gradientStyle(cat.id)}
+              style={categoryGradient(cat.id)}
               className="w-10 h-10 md:w-11 md:h-11 rounded-2xl shadow-sm flex items-center justify-center text-white"
             >
               <Icon className="w-5 h-5" />
