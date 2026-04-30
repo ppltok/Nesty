@@ -4,6 +4,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Endlessly-scrolling marquee — used by AnnouncementBar and CategoryMarquee.
+ * Inline @keyframes so we don't depend on tailwind.config.js animation extend
+ * (which can miss HMR if the config was edited mid-session). */
+@keyframes nesty-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.nesty-marquee {
+  animation: nesty-marquee 130s linear infinite;
+  will-change: transform;
+}
+.nesty-marquee--fast {
+  animation-duration: 90s;
+}
+
 @layer base {
   * {
     box-sizing: border-box;

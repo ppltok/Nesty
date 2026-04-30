@@ -27,6 +27,8 @@ import InviteAccept from './pages/InviteAccept'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import Contact from './pages/Contact'
+import GuideHubPage from './pages/GuideHubPage'
+import GuidePage from './pages/GuidePage'
 
 // Initialize localStorage versioning BEFORE React renders
 // This runs synchronously when the module is loaded
@@ -65,7 +67,9 @@ function AppRoutes() {
     pathname.startsWith('/invite/') ||
     pathname === '/terms' ||
     pathname === '/privacy' ||
-    pathname === '/contact'
+    pathname === '/contact' ||
+    pathname === '/guides' ||
+    pathname.startsWith('/guides/')
 
   if (isLoading && !isPublicRoute) {
     return <LoadingScreen />
@@ -78,6 +82,8 @@ function AppRoutes() {
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/guides" element={<GuideHubPage />} />
+      <Route path="/guides/:slug" element={<GuidePage />} />
       <Route path="/auth/signin" element={<SignIn />} />
       <Route path="/auth/signup" element={<SignUp />} />
       <Route path="/auth/callback" element={<AuthCallback />} />

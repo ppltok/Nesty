@@ -53,9 +53,14 @@ export default {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' },
         },
+        marquee: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         'nesty-gradient': 'nesty-gradient 14s ease infinite',
+        marquee: 'marquee 45s linear infinite',
       },
     },
   },
