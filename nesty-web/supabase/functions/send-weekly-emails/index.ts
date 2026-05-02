@@ -532,6 +532,7 @@ function generateWeeklyEmailHtml(
 
   // Shorten the development text for the email (first 2 sentences)
   const devSentences = weekData.development.split(/(?<=[.!])\s+/).slice(0, 3).join(' ')
+  const fruitImageUrl = `https://nestyil.com/email-assets/weekly/pre-${weekData.week}.png`
 
   return `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -575,7 +576,7 @@ function generateWeeklyEmailHtml(
           <td style="background:linear-gradient(145deg,#6a35b0 0%,#9b62d4 60%,#c4a0e8 100%);border-radius:24px;padding:44px 40px 40px;overflow:hidden;">
             <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.08em;color:#ffffffa6;text-transform:uppercase;">העדכון השבועי שלך</p>
             <h1 style="margin:0 0 10px;font-size:46px;font-weight:800;color:#ffffff;line-height:1.1;">
-              שבוע ${weekData.week} 🌿
+              שבוע ${weekData.week}
             </h1>
             <p style="margin:0 0 28px;font-size:16px;color:#ffffffe6;line-height:1.8;font-weight:400;">
               היי <strong style="font-weight:800;color:#ffffff;">${firstName}</strong> — הגעת לשבוע ${weekData.week}! התינוק שלך בגודל של ${weekData.fruit} ${weekData.fruitEmoji} ומתפתח בקצב מדהים. 💜
@@ -597,38 +598,27 @@ function generateWeeklyEmailHtml(
 
         <!-- BABY SIZE CARD -->
         <tr>
-          <td>
+          <td style="background:#fff;border-radius:20px;padding:20px;border:1.5px solid #e8daf5;">
+            <img src="${fruitImageUrl}" alt="${weekData.fruit}" width="520" height="260" style="display:block;width:100%;max-width:100%;height:260px;border-radius:14px;object-fit:cover;object-position:center;margin-bottom:14px;" />
+            <div style="text-align:center;margin-bottom:18px;">
+              <p style="margin:0 0 2px;font-size:22px;font-weight:800;color:#3b1f6b;">בגודל של ${weekData.fruit}</p>
+              <p style="margin:0;font-size:11px;font-weight:700;color:#a087c0;letter-spacing:0.05em;">גודל התינוק השבוע</p>
+            </div>
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                <td width="44%" style="background:#fff;border-radius:20px;padding:28px 20px;text-align:center;vertical-align:middle;border:1.5px solid #e8daf5;">
-                  <div style="font-size:80px;line-height:1;margin-bottom:14px;">${weekData.fruitEmoji}</div>
-                  <p style="margin:0 0 4px;font-size:20px;font-weight:800;color:#3b1f6b;">${weekData.fruit}</p>
-                  <p style="margin:0;font-size:11px;font-weight:700;color:#a087c0;letter-spacing:0.05em;">גודל התינוק השבוע</p>
+                <td width="32%" style="background:#faf6ff;border-radius:14px;padding:14px 12px;border:1.5px solid #e8daf5;text-align:center;">
+                  <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;color:#a087c0;text-transform:uppercase;">אורך</p>
+                  <p style="margin:0;font-size:20px;font-weight:800;color:#3b1f6b;line-height:1.2;">${weekData.length}</p>
                 </td>
-                <td width="4%"></td>
-                <td width="52%" style="vertical-align:top;">
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td style="background:#fff;border-radius:14px;padding:17px 20px;border:1.5px solid #e8daf5;">
-                        <p style="margin:0 0 2px;font-size:10px;font-weight:700;letter-spacing:0.08em;color:#a087c0;text-transform:uppercase;">אורך</p>
-                        <p style="margin:0;font-size:28px;font-weight:800;color:#3b1f6b;">${weekData.length}</p>
-                      </td>
-                    </tr>
-                    <tr><td style="height:8px;"></td></tr>
-                    <tr>
-                      <td style="background:#fff;border-radius:14px;padding:17px 20px;border:1.5px solid #e8daf5;">
-                        <p style="margin:0 0 2px;font-size:10px;font-weight:700;letter-spacing:0.08em;color:#a087c0;text-transform:uppercase;">משקל</p>
-                        <p style="margin:0;font-size:28px;font-weight:800;color:#3b1f6b;">${weekData.weight}</p>
-                      </td>
-                    </tr>
-                    <tr><td style="height:8px;"></td></tr>
-                    <tr>
-                      <td style="background:linear-gradient(135deg,#ede0ff,#dcc8f8);border-radius:14px;padding:17px 20px;border:1.5px solid #d0b0f0;">
-                        <p style="margin:0 0 2px;font-size:10px;font-weight:700;letter-spacing:0.08em;color:#7c4dbd;text-transform:uppercase;">נותרו</p>
-                        <p style="margin:0;font-size:28px;font-weight:800;color:#3b1f6b;">${weeksRemaining} <span style="font-size:15px;color:#8a5dc0;font-weight:500;">שבועות 💜</span></p>
-                      </td>
-                    </tr>
-                  </table>
+                <td width="2%"></td>
+                <td width="32%" style="background:#faf6ff;border-radius:14px;padding:14px 12px;border:1.5px solid #e8daf5;text-align:center;">
+                  <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;color:#a087c0;text-transform:uppercase;">משקל</p>
+                  <p style="margin:0;font-size:20px;font-weight:800;color:#3b1f6b;line-height:1.2;">${weekData.weight}</p>
+                </td>
+                <td width="2%"></td>
+                <td width="32%" style="background:linear-gradient(135deg,#ede0ff,#dcc8f8);border-radius:14px;padding:14px 12px;border:1.5px solid #d0b0f0;text-align:center;">
+                  <p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;color:#7c4dbd;text-transform:uppercase;">נותרו</p>
+                  <p style="margin:0;font-size:20px;font-weight:800;color:#3b1f6b;line-height:1.2;">${weeksRemaining} <span style="font-size:12px;color:#8a5dc0;font-weight:500;">שבועות</span></p>
                 </td>
               </tr>
             </table>
@@ -1018,6 +1008,7 @@ function generatePostpartumEmailHtml(
 
   // Baby development — first 3 sentences
   const babyDevShort = weekData.babyDev.split(/(?<=[.!])\s+/).slice(0, 3).join(' ')
+  const heroImageUrl = `https://nestyil.com/email-assets/weekly/post-${weekData.week}.png`
 
   return `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -1059,7 +1050,6 @@ function generatePostpartumEmailHtml(
         <!-- HERO CARD -->
         <tr>
           <td style="background:linear-gradient(145deg,#5c3490 0%,#9b62d4 50%,#e8a0d0 100%);border-radius:24px;padding:44px 40px 40px;overflow:hidden;text-align:center;">
-            <div style="font-size:64px;line-height:1;margin-bottom:16px;">${weekData.milestoneEmoji}</div>
             <p style="margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:0.08em;color:#ffffffa6;text-transform:uppercase;">העדכון השבועי אחרי לידה</p>
             <h1 style="margin:0 0 14px;font-size:40px;font-weight:800;color:#ffffff;line-height:1.2;">
               ${weekData.milestone}
@@ -1067,6 +1057,19 @@ function generatePostpartumEmailHtml(
             <p style="margin:0;font-size:16px;color:#ffffffe6;line-height:1.8;font-weight:400;">
               היי <strong style="font-weight:800;color:#ffffff;">${firstName}</strong> — עברו ${weekData.week} שבועות מהלידה! איך את ואיך הקטנצ׳יק? 💜
             </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:10px;"></td></tr>
+
+        <!-- BABY HERO IMAGE CARD -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:20px;border:1.5px solid #e8daf5;">
+            <img src="${heroImageUrl}" alt="${weekData.milestone}" width="520" height="260" style="display:block;width:100%;max-width:100%;height:260px;border-radius:14px;object-fit:cover;object-position:center;margin-bottom:14px;" />
+            <div style="text-align:center;">
+              <p style="margin:0 0 2px;font-size:22px;font-weight:800;color:#3b1f6b;">${weekData.milestone}</p>
+              <p style="margin:0;font-size:11px;font-weight:700;color:#a087c0;letter-spacing:0.05em;">אבן הדרך של השבוע</p>
+            </div>
           </td>
         </tr>
 
