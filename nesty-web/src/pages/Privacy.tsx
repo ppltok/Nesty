@@ -142,7 +142,7 @@ export default function Privacy() {
             </ul>
             <p className="mt-4">
               למימוש זכויותיכם, פנו אלינו דרך{' '}
-              <Link to="/contact" className="text-[#6750a4] hover:underline">
+              <Link to="/contact" className="text-[#6750a4] underline">
                 טופס יצירת הקשר
               </Link>
               . נענה לפנייתכם תוך 30 יום כנדרש בחוק.
@@ -218,7 +218,7 @@ export default function Privacy() {
             <ul className="list-disc list-inside space-y-2 mr-4">
               <li>
                 פנו אלינו דרך{' '}
-                <Link to="/contact" className="text-[#6750a4] hover:underline">
+                <Link to="/contact" className="text-[#6750a4] underline">
                   טופס יצירת הקשר
                 </Link>
               </li>
@@ -228,7 +228,7 @@ export default function Privacy() {
             </p>
           </section>
 
-          <p className="text-sm text-[#79747e] mt-12">
+          <p className="text-sm text-[#49454f] mt-12">
             עודכן לאחרונה: דצמבר 2024
           </p>
         </div>

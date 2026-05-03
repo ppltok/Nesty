@@ -35,6 +35,7 @@ const Unsubscribed = lazy(() => import('./pages/Unsubscribed'))
 const InviteAccept = lazy(() => import('./pages/InviteAccept'))
 const Terms = lazy(() => import('./pages/Terms'))
 const Privacy = lazy(() => import('./pages/Privacy'))
+const Accessibility = lazy(() => import('./pages/Accessibility'))
 const Contact = lazy(() => import('./pages/Contact'))
 const GuideHubPage = lazy(() => import('./pages/GuideHubPage'))
 const GuidePage = lazy(() => import('./pages/GuidePage'))
@@ -76,6 +77,7 @@ function AppRoutes() {
     pathname.startsWith('/invite/') ||
     pathname === '/terms' ||
     pathname === '/privacy' ||
+    pathname === '/accessibility' ||
     pathname === '/contact' ||
     pathname === '/guides' ||
     pathname.startsWith('/guides/')
@@ -91,6 +93,7 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/accessibility" element={<Accessibility />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/guides" element={<GuideHubPage />} />
       <Route path="/guides/:slug" element={<GuidePage />} />

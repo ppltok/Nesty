@@ -229,7 +229,7 @@ export default function SignUp() {
 
   // ─── Signup form (default) ─────────────────────────────────
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fffbff] px-4 py-8" dir="rtl">
+    <main className="min-h-screen flex items-center justify-center bg-[#fffbff] px-4 py-8" dir="rtl">
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute top-20 right-10 w-72 h-72 bg-[#eaddff]/40 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#ffd8e4]/30 rounded-full blur-3xl" />
@@ -410,6 +410,6 @@ export default function SignUp() {
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   )
 }

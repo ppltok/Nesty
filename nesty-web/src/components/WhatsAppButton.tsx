@@ -39,8 +39,9 @@ export default function WhatsAppButton() {
   }
 
   return (
-    <div
+    <aside
       dir="ltr"
+      aria-label="צ׳אט וואטסאפ"
       className="fixed left-4 bottom-20 lg:bottom-6 z-50"
     >
       <a
@@ -69,6 +70,6 @@ export default function WhatsAppButton() {
       >
         <X className="w-3 h-3" strokeWidth={2.5} />
       </button>
-    </div>
+    </aside>
   )
 }

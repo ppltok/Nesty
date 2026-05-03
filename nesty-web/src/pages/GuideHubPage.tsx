@@ -88,6 +88,7 @@ export default function GuideHubPage() {
         </div>
       </header>
 
+      <main>
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-bl from-accent-pink-light/60 via-accent-peach/30 to-background pt-12 pb-20 md:pt-20 md:pb-28">
         <div
@@ -186,7 +187,7 @@ export default function GuideHubPage() {
           <h2 className="text-2xl md:text-3xl font-bold text-primary-foreground mb-3">
             מוכנה להתחיל את הרשימה שלך?
           </h2>
-          <p className="text-primary-foreground/85 text-base md:text-lg mb-6 max-w-xl mx-auto leading-relaxed">
+          <p className="text-primary-foreground text-base md:text-lg mb-6 max-w-xl mx-auto leading-relaxed">
             רשימה אחת מכל החנויות בעולם, חינם. בלי לחץ ובלי הפתעות.
           </p>
           <Link
@@ -205,6 +206,7 @@ export default function GuideHubPage() {
           <MarkdownRenderer content={editorialBody} />
         </article>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-border bg-card">
@@ -216,6 +218,9 @@ export default function GuideHubPage() {
             </Link>
             <Link to="/privacy" className="hover:text-primary">
               פרטיות
+            </Link>
+            <Link to="/accessibility" className="hover:text-primary">
+              נגישות
             </Link>
             <Link to="/terms" className="hover:text-primary">
               תנאי שימוש

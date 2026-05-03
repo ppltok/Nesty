@@ -38,6 +38,7 @@ export default function AnnouncementBar() {
   return (
     <div
       dir="ltr"
+      role="region"
       aria-label="הצעת ערך"
       className="bg-gradient-to-l from-[#6750a4] via-[#5a4690] to-[#6750a4] text-white text-xs sm:text-sm font-medium overflow-hidden"
     >

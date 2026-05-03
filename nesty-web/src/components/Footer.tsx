@@ -44,19 +44,24 @@ export default function Footer() {
             <h4 className="font-bold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">מידע</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-sm sm:text-base text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/terms" className="text-sm sm:text-base text-muted-foreground hover:text-primary transition-colors">
                   תנאי שימוש
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm sm:text-base text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/privacy" className="text-sm sm:text-base text-muted-foreground hover:text-primary transition-colors">
                   מדיניות פרטיות
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm sm:text-base text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/accessibility" className="text-sm sm:text-base text-muted-foreground hover:text-primary transition-colors">
+                  הצהרת נגישות
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-sm sm:text-base text-muted-foreground hover:text-primary transition-colors">
                   צור קשר
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

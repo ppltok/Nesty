@@ -306,6 +306,9 @@ export default function GuidePage() {
             <Link to="/privacy" className="hover:text-primary">
               פרטיות
             </Link>
+            <Link to="/accessibility" className="hover:text-primary">
+              נגישות
+            </Link>
             <Link to="/terms" className="hover:text-primary">
               תנאי שימוש
             </Link>

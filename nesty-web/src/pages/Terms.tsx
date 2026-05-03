@@ -173,14 +173,14 @@ export default function Terms() {
             <h2 className="text-2xl font-bold text-[#1d192b]">13. יצירת קשר</h2>
             <p>
               לשאלות בנוגע לתנאי השימוש או לכל עניין אחר, ניתן לפנות אלינו דרך{' '}
-              <Link to="/contact" className="text-[#6750a4] hover:underline">
+              <Link to="/contact" className="text-[#6750a4] underline">
                 טופס יצירת הקשר
               </Link>
               .
             </p>
           </section>
 
-          <p className="text-sm text-[#79747e] mt-12">
+          <p className="text-sm text-[#49454f] mt-12">
             עודכן לאחרונה: דצמבר 2024
           </p>
         </div>

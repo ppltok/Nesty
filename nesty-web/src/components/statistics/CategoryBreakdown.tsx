@@ -59,7 +59,7 @@ export default function CategoryBreakdown({ categoryStats }: CategoryBreakdownPr
           <span>התקבל</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-[#49454f] font-medium">
-          <ShoppingBag className="w-3.5 h-3.5 text-[#79747e]" />
+          <ShoppingBag className="w-3.5 h-3.5 text-[#49454f]" />
           <span>סה"כ ברשימה</span>
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function CategoryBreakdown({ categoryStats }: CategoryBreakdownPr
                   )}
                   <div>
                     <span className="font-bold text-[#1d192b] text-sm">{stat.name}</span>
-                    <div className="text-xs text-[#79747e] mt-0.5">
+                    <div className="text-xs text-[#49454f] mt-0.5">
                       <span className="text-green-600 font-medium">{stat.receivedCount}</span>
                       {' מתוך '}
                       <span className="font-medium">{stat.itemCount}</span>
@@ -110,7 +110,7 @@ export default function CategoryBreakdown({ categoryStats }: CategoryBreakdownPr
                     <span className="text-sm font-bold" style={{ color: colors.text }}>
                       ₪{stat.receivedValue.toLocaleString()}
                     </span>
-                    <span className="text-xs text-[#79747e]"> / ₪{stat.totalValue.toLocaleString()}</span>
+                    <span className="text-xs text-[#49454f]"> / ₪{stat.totalValue.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -140,7 +140,7 @@ export default function CategoryBreakdown({ categoryStats }: CategoryBreakdownPr
 
       {/* Note */}
       <div className="mt-5 pt-4 border-t border-[#e7e0ec]">
-        <p className="text-[11px] text-[#79747e] text-center font-medium">
+        <p className="text-[11px] text-[#49454f] text-center font-medium">
           מוצגות רק קטגוריות עם פריטים ברשימה שלך
         </p>
       </div>

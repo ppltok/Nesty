@@ -76,8 +76,14 @@ export default function HomeNew() {
                             </>
                         )}
                     </div>
-                    <button className="md:hidden p-2 text-[#1d192b]" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    <button
+                        type="button"
+                        className="md:hidden p-2 text-[#1d192b]"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label={isMobileMenuOpen ? 'סגירת תפריט' : 'פתיחת תפריט'}
+                        aria-expanded={isMobileMenuOpen}
+                    >
+                        {isMobileMenuOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
                     </button>
                 </div>
                 {isMobileMenuOpen && (
@@ -176,7 +182,7 @@ export default function HomeNew() {
                 <WaveDivider color="#ffffff" bgColor="transparent" />
 
                 {/* ══════════ HOW IT WORKS ══════════ */}
-                <section id="how-it-works" className="pt-2 pb-16 md:pt-4 md:pb-24 bg-gradient-to-b from-white via-[#fffbff] to-white relative overflow-hidden">
+                <section id="how-it-works" className="pt-2 pb-16 md:pt-4 md:pb-24 bg-gradient-to-b from-white via-[#fffbff] to-white relative overflow-hidden scroll-mt-24">
                     {/* Soft brand-color blobs in the background for depth */}
                     <div aria-hidden className="absolute -top-24 -end-24 w-96 h-96 rounded-full bg-[#f3edff]/50 blur-3xl pointer-events-none" />
                     <div aria-hidden className="absolute top-1/2 -start-32 w-96 h-96 rounded-full bg-[#ffd8e4]/40 blur-3xl pointer-events-none" />
@@ -362,7 +368,7 @@ export default function HomeNew() {
                                             {/* Content */}
                                             <div className="p-3">
                                                 <p className="text-[9px] font-bold text-[#6750a4] uppercase mb-1 tracking-wide">עגלות וטיולים</p>
-                                                <h4 className="font-bold text-[#1d192b] text-sm leading-snug mb-2 line-clamp-1">Anex IQ Pro</h4>
+                                                <h3 className="font-bold text-[#1d192b] text-sm leading-snug mb-2 line-clamp-1">Anex IQ Pro</h3>
                                                 <div className="flex items-end justify-between pt-2 border-t border-[#e7e0ec]/60">
                                                     <div className="flex flex-col">
                                                         <span className="text-[9px] text-[#49454f]">מחיר משוער</span>
@@ -448,7 +454,7 @@ export default function HomeNew() {
                                                 <div className="w-3 h-3 rounded-full bg-green-500" />
                                                 <span className="text-sm text-[#49454f] font-medium">www.NestyIL.com</span>
                                             </div>
-                                            <div className="overflow-y-auto overflow-x-hidden" style={{ height: '700px' }}>
+                                            <div className="overflow-y-auto overflow-x-hidden" style={{ height: '700px' }} tabIndex={0} role="region" aria-label="תצוגה מקדימה של רשימת מתנות">
                                                 <img src={asset('IMG_80F37FA15505-1.jpeg')} alt="דוגמה לרשימת מתנות" className="w-full" style={{ width: '390px' }} loading="lazy" />
                                             </div>
                                             <div className="absolute bottom-2 left-1/2 -translate-x-1/2"><div className="w-32 h-1 bg-[#1d192b] rounded-full" /></div>
@@ -484,7 +490,7 @@ export default function HomeNew() {
                 </section>
 
                 {/* ══════════ SMART ENGINE ══════════ */}
-                <section id="smart-engine" className="py-10 md:py-14 bg-[#fffbff] relative overflow-hidden">
+                <section id="smart-engine" className="py-10 md:py-14 bg-[#fffbff] relative overflow-hidden scroll-mt-24">
                     <FadedIconsBackground count={40} />
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -517,7 +523,7 @@ export default function HomeNew() {
                                         <div className="flex items-start gap-4 mb-6">
                                             <img src={asset('anex IQ Image.webp')} alt="עגלת Anex IQ" className="w-20 h-20 rounded-[20px] object-cover flex-shrink-0" />
                                             <div>
-                                                <h4 className="font-bold text-[#1d192b] text-lg mb-1">עגלת Anex IQ</h4>
+                                                <h3 className="font-bold text-[#1d192b] text-lg mb-1">עגלת Anex IQ</h3>
                                                 <p className="text-[#49454f]">מצאנו מחיר טוב יותר!</p>
                                             </div>
                                         </div>
@@ -551,7 +557,7 @@ export default function HomeNew() {
                 <WaveDivider color="#f3edff" bgColor="#fffbff" />
 
                 {/* ══════════ CHROME EXTENSION ══════════ */}
-                <section id="chrome-extension" className="py-10 md:py-14 bg-[#f3edff] relative overflow-hidden">
+                <section id="chrome-extension" className="py-10 md:py-14 bg-[#f3edff] relative overflow-hidden scroll-mt-24">
                     <FadedIconsBackground count={40} />
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -623,7 +629,7 @@ export default function HomeNew() {
                                                 <img src="https://la-mer.co.il/cdn/shop/files/9269e28d93ef21964decb2c1bc2a6722.jpg?v=1721649124&width=713" alt="מנשא בד La Mer" className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover flex-shrink-0" />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[10px] sm:text-xs text-[#49454f] mb-1">נמצא מוצר:</p>
-                                                    <h4 className="font-bold text-[#1d192b] mb-1 leading-tight text-xs sm:text-sm md:text-base">מנשא בד La Mer X Soft</h4>
+                                                    <h3 className="font-bold text-[#1d192b] mb-1 leading-tight text-xs sm:text-sm md:text-base">מנשא בד La Mer X Soft</h3>
                                                     <p className="text-base sm:text-lg font-bold text-[#6750a4]">₪899</p>
                                                 </div>
                                             </div>
@@ -835,7 +841,7 @@ export default function HomeNew() {
                                 <div className="order-2 lg:order-1 relative">
                                     <div className="bg-[#f3edff] rounded-[40px] rounded-br-[12px] p-8 max-w-md mx-auto">
                                         <img src={asset('Nanit.png')} alt="Nanit" className="w-40 h-40 rounded-[32px] object-cover mx-auto mb-6 shadow-lg" />
-                                        <h4 className="text-2xl font-medium text-[#1d192b] text-center mb-2">Nanit</h4>
+                                        <h3 className="text-2xl font-medium text-[#1d192b] text-center mb-2">Nanit</h3>
                                         <p className="text-lg text-[#49454f] text-center mb-6">₪1,999</p>
                                         <div className="mb-4">
                                             <div className="flex justify-between text-sm mb-2">
@@ -902,7 +908,7 @@ export default function HomeNew() {
                         <div className="absolute bottom-10 left-10 w-80 h-80 bg-[#ffd8e4]/20 rounded-full blur-3xl animate-orb-2" />
                     </div>
                     <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-                        <div className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full mb-6 font-medium backdrop-blur-sm">
+                        <div className="inline-flex items-center gap-2 bg-white text-[#6750a4] px-4 py-2 rounded-full mb-6 font-semibold">
                             <Gift className="w-5 h-5" /><span>חינם לגמרי</span>
                         </div>
                         <h2 className="text-4xl md:text-5xl lg:text-6xl font-medium text-white mb-6 tracking-tight">הקן שלכם מחכה.</h2>
@@ -929,7 +935,7 @@ export default function HomeNew() {
                             <p className="text-[#49454f] max-w-sm"><bdi>Nesty</bdi> — כמו אחות גדולה שעוזרת לכם להתארגן. רשימת ציוד חכמה מכל חנות, שיתוף עם המשפחה, וחיסכון אוטומטי.</p>
                         </div>
                         <div>
-                            <h4 className="font-bold text-[#1d192b] mb-4">קישורים</h4>
+                            <h3 className="font-bold text-[#1d192b] mb-4">קישורים</h3>
                             <ul className="space-y-3">
                                 <li><a href="#how-it-works" className="text-[#49454f] hover:text-[#6750a4] transition-colors">איך זה עובד</a></li>
                                 <li><a href="#chrome-extension" className="text-[#49454f] hover:text-[#6750a4] transition-colors">תוסף לכרום</a></li>
@@ -938,10 +944,11 @@ export default function HomeNew() {
                             </ul>
                         </div>
                         <div>
-                            <h4 className="font-bold text-[#1d192b] mb-4">מידע</h4>
+                            <h3 className="font-bold text-[#1d192b] mb-4">מידע</h3>
                             <ul className="space-y-3">
                                 <li><Link to="/terms" className="text-[#49454f] hover:text-[#6750a4] transition-colors">תנאי שימוש</Link></li>
                                 <li><Link to="/privacy" className="text-[#49454f] hover:text-[#6750a4] transition-colors">מדיניות פרטיות</Link></li>
+                                <li><Link to="/accessibility" className="text-[#49454f] hover:text-[#6750a4] transition-colors">הצהרת נגישות</Link></li>
                                 <li><Link to="/contact" className="text-[#49454f] hover:text-[#6750a4] transition-colors">צור קשר</Link></li>
                             </ul>
                         </div>
