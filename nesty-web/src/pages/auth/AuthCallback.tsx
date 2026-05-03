@@ -4,8 +4,6 @@ import { supabase } from '../../lib/supabase'
 import { isSafeRedirect } from '../../lib/authRedirect'
 import { trackGoogleAdsSignupConversion } from '../../utils/tracking'
 
-const ADMIN_EMAIL = 'hello@nestyil.com'
-
 /**
  * Universal auth-callback landing page. Handles three flows on the same route:
  *
@@ -24,9 +22,10 @@ const ADMIN_EMAIL = 'hello@nestyil.com'
  *
  * For flows 1 & 2 we then:
  *   - Look up the profile to decide onboarding vs dashboard.
- *   - Fire the admin_new_user email only when `email_confirmed_at` is set AND
- *     the user has no pending co-parent invitation (that flow fires
- *     admin_co_parent_joined from the accept-invitation function instead).
+ *   - Fire the Google Ads signup conversion (deduped per-user) for verified
+ *     new signups. The admin notification to hello@nestyil.com is no longer
+ *     fired here — it now fires from Onboarding.tsx (admin_onboarding_completed)
+ *     and from a cron-driven edge function (admin_onboarding_abandoned).
  *   - Honor a safe `?redirect=` param (from invite links) over the default
  *     onboarding/dashboard destination.
  */
@@ -143,60 +142,19 @@ export default function AuthCallback() {
         .eq('id', session.user.id)
         .maybeSingle()
 
-      // ─── 7. Admin notification (only for verified new signups) ──
-      // Gate: user must have a confirmed email (email_confirmed_at is set).
-      // For Google OAuth this is always set. For email/password it's only set
-      // AFTER the user clicks the verification link — which prevents the
-      // hello@nestyil.com inbox from filling with unverified signup attempts.
-      //
-      // Also skip when a pending co-parent invite exists for this email —
-      // the accept-invitation edge function fires admin_co_parent_joined
-      // once the user actually links to a partner registry.
-      const normalizedEmail = session.user.email?.toLowerCase() ?? ''
+      // ─── 7. Google Ads conversion only ─────────────────────────
+      // The admin_new_user notification used to fire here, but it carried no
+      // onboarding data (no name, due date, referral source, first item).
+      // It now fires from Onboarding.tsx as `admin_onboarding_completed` once
+      // the user actually finishes onboarding, and from a pg_cron-driven
+      // edge function (`notify-abandoned-signups`) as
+      // `admin_onboarding_abandoned` ~10 min after signup if they don't finish.
       if (
         !profile?.onboarding_completed &&
         session.user.email_confirmed_at &&
-        normalizedEmail
+        session.user.email
       ) {
-        // Google Ads signup conversion (deduped per-user via localStorage)
         trackGoogleAdsSignupConversion(session.user.id)
-
-        let hasCoParentInvite = false
-        try {
-          const { data: invites } = await supabase
-            .from('registry_invitations')
-            .select('id, status')
-            .eq('invited_email', normalizedEmail)
-            .in('status', ['pending', 'accepted'])
-            .limit(1)
-          hasCoParentInvite = !!(invites && invites.length > 0)
-        } catch (err) {
-          // Non-critical — fall back to sending the regular email
-          console.warn('Failed to check co-parent invitation (non-critical):', err)
-        }
-
-        if (!hasCoParentInvite) {
-          try {
-            supabase.functions
-              .invoke('send-email', {
-                body: {
-                  type: 'admin_new_user',
-                  to: ADMIN_EMAIL,
-                  data: {
-                    userEmail: session.user.email,
-                    userName:
-                      session.user.user_metadata?.full_name ||
-                      session.user.user_metadata?.name ||
-                      '',
-                    signupDate: new Date().toLocaleDateString('he-IL'),
-                  },
-                },
-              })
-              .catch((err) => console.warn('Failed to send admin notification (non-critical):', err))
-          } catch (err) {
-            console.warn('Edge function not available (non-critical):', err)
-          }
-        }
       }
 
       // ─── 8. Final navigation ──────────────────────────────

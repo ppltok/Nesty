@@ -140,7 +140,16 @@ const corsHeaders = {
 }
 
 interface EmailRequest {
-  type: 'purchase_notification' | 'thank_you' | 'admin_new_user' | 'admin_co_parent_joined' | 'contact' | 'welcome' | 'price_drop'
+  type:
+    | 'purchase_notification'
+    | 'thank_you'
+    | 'admin_new_user'
+    | 'admin_co_parent_joined'
+    | 'admin_onboarding_completed'
+    | 'admin_onboarding_abandoned'
+    | 'contact'
+    | 'welcome'
+    | 'price_drop'
   to?: string
   data?: {
     ownerName?: string
@@ -169,6 +178,26 @@ interface EmailRequest {
     fruitName?: string
     fruitEmoji?: string
     dueDate?: string
+    // For admin_onboarding_completed / admin_onboarding_abandoned
+    pregnancyWeek?: number
+    feeling?: string
+    isFirstTimeParent?: boolean | null
+    referralSource?: string
+    minutesToComplete?: number
+    minutesSinceSignup?: number
+    firstItem?: {
+      name?: string
+      price?: number | null
+      store?: string
+      category?: string
+      url?: string
+    } | null
+    skippedSteps?: string[]
+    utmSource?: string
+    utmMedium?: string
+    utmCampaign?: string
+    landingPage?: string
+    landingReferrer?: string
     // For price drop email
     userId?: string  // needed to build the signed unsubscribe URL
     drops?: Array<{
@@ -697,6 +726,154 @@ serve(async (req) => {
             : []),
           ...(registryTitle ? [{ label: 'רשימה', value: registryTitle }] : []),
           { label: 'תאריך הצטרפות', value: joinedDate },
+        ],
+      })
+    } else if (type === 'admin_onboarding_completed') {
+      // Internal ops email to hello@nestyil.com after a user finishes the
+      // onboarding flow (replaces the old admin_new_user that fired before
+      // any data was collected). Carries every actionable field they filled.
+      const userEmail = data?.userEmail || ''
+      const userName = data?.userName || ''
+      const firstName = data?.firstName || userName.split(' ')[0] || ''
+      const signupDate = data?.signupDate || new Date().toLocaleDateString('he-IL')
+      const dueDate = data?.dueDate || ''
+      const pregnancyWeek = data?.pregnancyWeek
+      const feeling = data?.feeling || ''
+      const isFirstTimeParent = data?.isFirstTimeParent
+      const referralSource = data?.referralSource || ''
+      const firstItem = data?.firstItem || null
+      const skippedSteps = data?.skippedSteps || []
+      const minutesToComplete = data?.minutesToComplete
+      const utmSource = data?.utmSource || ''
+      const utmMedium = data?.utmMedium || ''
+      const utmCampaign = data?.utmCampaign || ''
+      const landingPage = data?.landingPage || ''
+      const landingReferrer = data?.landingReferrer || ''
+
+      const feelingLabel: Record<string, string> = {
+        excited: 'מתרגשת 💜',
+        overwhelmed: 'קצת מוצפת 😅',
+        exploring: 'בודקת לאט 🌱',
+      }
+      const referralLabel: Record<string, string> = {
+        facebook: 'Facebook',
+        instagram: 'Instagram',
+        google: 'Google',
+        tiktok: 'TikTok',
+        friend: 'חברה / משפחה',
+        other: 'אחר',
+      }
+      const skipLabel: Record<string, string> = {
+        last_name: 'שם משפחה',
+        due_date: 'תאריך לידה משוער',
+        feeling: 'תחושה',
+        is_first_time_parent: 'הורות ראשונה',
+        referral_source: 'מקור הגעה',
+        first_item: 'הוספת פריט ראשון',
+      }
+
+      const subjBits = [`שבוע ${pregnancyWeek ?? '?'}`]
+      if (referralSource) subjBits.push(referralLabel[referralSource] || referralSource)
+      emailSubject = `✅ Onboarding הושלם: ${firstName || userEmail} (${subjBits.join(' · ')})`
+      recipient = to || 'hello@nestyil.com'
+
+      const firstItemValue = firstItem
+        ? [
+            firstItem.name || '—',
+            firstItem.price ? `₪${firstItem.price}` : null,
+            firstItem.store ? `· ${firstItem.store}` : null,
+            firstItem.category ? `· ${firstItem.category}` : null,
+            firstItem.url ? `<br/><a href="${firstItem.url}" style="color:#7c4dbd;text-decoration:underline;">${firstItem.url}</a>` : null,
+          ]
+            .filter(Boolean)
+            .join(' ')
+        : '<em style="color:#a087c0;">לא הוסיפה פריט</em>'
+
+      const utmBits = [
+        utmSource && `source=${utmSource}`,
+        utmMedium && `medium=${utmMedium}`,
+        utmCampaign && `campaign=${utmCampaign}`,
+      ].filter(Boolean).join(' · ') || '—'
+
+      const skippedValue = skippedSteps.length
+        ? skippedSteps.map((s) => skipLabel[s] || s).join(' · ')
+        : '— (השלימה הכל)'
+
+      html = buildAdminBrandedEmail({
+        heroEmoji: '✅',
+        heroTitle: 'משתמש סיים Onboarding',
+        heroSubtitle: 'משתמש חדש סיים את התהליך עם נתונים מלאים',
+        accentLabel: 'Onboarding completed',
+        accentColor: '#0a7c4a',
+        accentBg: '#e2f5ec',
+        rows: [
+          { label: 'שם', value: userName || firstName || '—' },
+          { label: 'אימייל', value: userEmail || '—' },
+          { label: 'תאריך הרשמה', value: signupDate },
+          ...(typeof minutesToComplete === 'number'
+            ? [{ label: 'זמן עד סיום Onboarding', value: `${minutesToComplete} דק'` }]
+            : []),
+          { label: 'תאריך לידה משוער', value: dueDate || '—' },
+          { label: 'שבוע הריון', value: typeof pregnancyWeek === 'number' ? String(pregnancyWeek) : '—' },
+          { label: 'תחושה', value: feelingLabel[feeling] || feeling || '—' },
+          {
+            label: 'הורות ראשונה',
+            value:
+              isFirstTimeParent === true ? 'כן' : isFirstTimeParent === false ? 'לא' : '—',
+          },
+          { label: 'מקור הגעה', value: referralLabel[referralSource] || referralSource || '—' },
+          { label: 'UTM', value: utmBits },
+          ...(landingPage ? [{ label: 'דף נחיתה', value: landingPage }] : []),
+          ...(landingReferrer ? [{ label: 'Referrer', value: landingReferrer }] : []),
+          { label: 'פריט ראשון', value: firstItemValue },
+          { label: 'שלבים שדולגו', value: skippedValue },
+        ],
+      })
+    } else if (type === 'admin_onboarding_abandoned') {
+      // Internal ops email to hello@nestyil.com fired by the
+      // notify-abandoned-signups cron job ~10 min after signup if the user
+      // never finished onboarding. Most fields will be empty for abandons —
+      // UTM/landing data is the most useful signal since it's set at landing
+      // time, before signup.
+      const userEmail = data?.userEmail || ''
+      const userName = data?.userName || ''
+      const firstName = data?.firstName || ''
+      const signupDate = data?.signupDate || new Date().toLocaleDateString('he-IL')
+      const minutesSinceSignup = data?.minutesSinceSignup
+      const dueDate = data?.dueDate || ''
+      const utmSource = data?.utmSource || ''
+      const utmMedium = data?.utmMedium || ''
+      const utmCampaign = data?.utmCampaign || ''
+      const landingPage = data?.landingPage || ''
+      const landingReferrer = data?.landingReferrer || ''
+
+      emailSubject = `⚠️ משתמש לא סיים Onboarding: ${userEmail || firstName}`
+      recipient = to || 'hello@nestyil.com'
+
+      const utmBits = [
+        utmSource && `source=${utmSource}`,
+        utmMedium && `medium=${utmMedium}`,
+        utmCampaign && `campaign=${utmCampaign}`,
+      ].filter(Boolean).join(' · ') || '—'
+
+      html = buildAdminBrandedEmail({
+        heroEmoji: '⚠️',
+        heroTitle: 'משתמש לא סיים Onboarding',
+        heroSubtitle: 'נפתח חשבון אך לא הושלם תהליך ההצטרפות',
+        accentLabel: 'Onboarding abandoned',
+        accentColor: '#b35400',
+        accentBg: '#fef0e0',
+        rows: [
+          { label: 'אימייל', value: userEmail || '—' },
+          { label: 'שם (אם קיים)', value: userName || firstName || '—' },
+          { label: 'תאריך הרשמה', value: signupDate },
+          ...(typeof minutesSinceSignup === 'number'
+            ? [{ label: 'זמן מאז הרשמה', value: `${minutesSinceSignup} דק'` }]
+            : []),
+          { label: 'תאריך לידה משוער', value: dueDate || '—' },
+          { label: 'UTM', value: utmBits },
+          ...(landingPage ? [{ label: 'דף נחיתה', value: landingPage }] : []),
+          ...(landingReferrer ? [{ label: 'Referrer', value: landingReferrer }] : []),
         ],
       })
     } else if (type === 'thank_you') {

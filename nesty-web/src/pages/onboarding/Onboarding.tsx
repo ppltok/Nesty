@@ -433,6 +433,95 @@ export default function Onboarding() {
           .eq('id', user.id)
         if (error) console.error('Error marking onboarding complete:', error)
 
+        // Admin notification: full onboarding-completed signal to
+        // hello@nestyil.com. Replaces the old admin_new_user that fired from
+        // AuthCallback before any data was collected. Deduped per-user via
+        // profiles.admin_completed_notified_at — only invoke if still null.
+        try {
+          const { data: profileRow } = await supabase
+            .from('profiles')
+            .select(
+              'admin_completed_notified_at, first_name, last_name, due_date, feeling, is_first_time_parent, referral_source, utm_source, utm_medium, utm_campaign, landing_page, landing_referrer'
+            )
+            .eq('id', user.id)
+            .maybeSingle()
+
+          if (profileRow && !profileRow.admin_completed_notified_at) {
+            const dueDateStr = profileRow.due_date || ''
+            const pregnancyWeek = dueDateStr
+              ? Math.max(1, Math.min(42, calculatePregnancyWeek(dueDateStr)))
+              : null
+            const skippedSteps: string[] = []
+            if (!profileRow.last_name) skippedSteps.push('last_name')
+            if (!profileRow.due_date) skippedSteps.push('due_date')
+            if (!profileRow.feeling) skippedSteps.push('feeling')
+            if (profileRow.is_first_time_parent === null || profileRow.is_first_time_parent === undefined)
+              skippedSteps.push('is_first_time_parent')
+            if (!profileRow.referral_source) skippedSteps.push('referral_source')
+            if (!pickedItem) skippedSteps.push('first_item')
+
+            // Minutes from auth signup → onboarding completion
+            let minutesToComplete: number | undefined
+            const createdAt = (user as { created_at?: string }).created_at
+            if (createdAt) {
+              const ms = Date.now() - new Date(createdAt).getTime()
+              if (ms >= 0) minutesToComplete = Math.round(ms / 60000)
+            }
+
+            const fullName = [profileRow.first_name, profileRow.last_name].filter(Boolean).join(' ')
+
+            supabase.functions
+              .invoke('send-email', {
+                body: {
+                  type: 'admin_onboarding_completed',
+                  to: 'hello@nestyil.com',
+                  data: {
+                    userEmail: user.email,
+                    userName: fullName,
+                    firstName: profileRow.first_name || '',
+                    signupDate: new Date().toLocaleDateString('he-IL'),
+                    minutesToComplete,
+                    dueDate: dueDateStr,
+                    pregnancyWeek: pregnancyWeek ?? undefined,
+                    feeling: profileRow.feeling || '',
+                    isFirstTimeParent: profileRow.is_first_time_parent,
+                    referralSource: profileRow.referral_source || '',
+                    firstItem: pickedItem
+                      ? {
+                          name: pickedItem.name,
+                          price: pickedItem.price ?? null,
+                          store: pickedItem.store,
+                          category: pickedItem.category,
+                          url: pickedItem.url,
+                        }
+                      : null,
+                    skippedSteps,
+                    utmSource: profileRow.utm_source || '',
+                    utmMedium: profileRow.utm_medium || '',
+                    utmCampaign: profileRow.utm_campaign || '',
+                    landingPage: profileRow.landing_page || '',
+                    landingReferrer: profileRow.landing_referrer || '',
+                  },
+                },
+              })
+              .then(async ({ error: invokeErr }) => {
+                if (invokeErr) {
+                  console.warn('admin_onboarding_completed invoke failed (non-critical):', invokeErr)
+                  return
+                }
+                await supabase
+                  .from('profiles')
+                  .update({ admin_completed_notified_at: new Date().toISOString() })
+                  .eq('id', user.id)
+              })
+              .catch((err) =>
+                console.warn('admin_onboarding_completed error (non-critical):', err)
+              )
+          }
+        } catch (notifyErr) {
+          console.warn('admin_onboarding_completed setup error (non-critical):', notifyErr)
+        }
+
         try {
           sessionStorage.setItem('nesty_from_onboarding', 'true')
         } catch {
