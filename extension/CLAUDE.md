@@ -102,6 +102,9 @@ Supabase query code:
 - [`.claude/rules/supabase-api-error-logging.md`](.claude/rules/supabase-api-error-logging.md)
   — log actual HTTP status + response body on every Supabase failure
 
+- [`.claude/rules/extension-image-assets-csp.md`](.claude/rules/extension-image-assets-csp.md)
+  — never load images from external URLs; bundle assets and use `chrome.runtime.getURL()`
+
 ---
 
 ## Environment Config

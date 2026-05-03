@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Add to Nesty Button",
-  "version": "1.5.3",
-  "description": "הוסיפי מוצרים מכל אתר מסחר אלקטרוני לרשימת הלידה שלך בהקלקה אחת על התוסף",
+  "name": "Nesqa",
+  "version": "1.0.1",
+  "description": "Add products to nestyil.com in one click",
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
@@ -118,8 +118,7 @@
     "https://babysafe.co.il/*",
     "https://*.aliexpress.com/*",
     "https://*.zara.com/*",
-    "https://zara.com/*",
-    "http://localhost:5173/*"
+    "https://zara.com/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -202,7 +201,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup-styles.css", "page-script.js", "config.js", "supabase-client.js", "icon16.png", "icon48.png", "icon128.png", "Nesty_logo.png"],
+      "resources": ["popup-styles.css", "page-script.js", "config.js", "supabase-client.js"],
       "matches": ["<all_urls>"]
     }
   ]

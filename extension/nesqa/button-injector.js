@@ -176,7 +176,7 @@
 
     const logo = document.createElement('img');
     logo.className = 'nesty-pill-logo';
-    logo.src = chrome.runtime.getURL('Nesty_logo.png');
+    logo.src = 'https://nestyil.com/Nesty_logo.png';
     logo.alt = 'Nesty';
 
     const spinner = document.createElement('span');
@@ -256,14 +256,14 @@
     // Label span (with -3px nudge to align with logo visual center)
     var labelEl = document.createElement('span');
     labelEl.textContent = LABEL;
-    ['position:relative', 'top:-2px', 'color:inherit', 'font-size:inherit',
+    ['position:relative', 'top:1px', 'color:inherit', 'font-size:inherit',
      'font-weight:inherit', 'background:none', 'border:none', 'padding:0', 'margin:0'].forEach(function(s) {
       var parts = s.split(':'); btn; labelEl.style.setProperty(parts[0], parts[1], 'important');
     });
 
     // Logo image
     var logoImg = document.createElement('img');
-    logoImg.src = chrome.runtime.getURL('Nesty_logo.png');
+    logoImg.src = 'https://nestyil.com/Nesty_logo.png';
     logoImg.alt = 'Nesty';
     ['height:20px', 'width:36px', 'object-fit:contain', 'object-position:center',
      'filter:brightness(0) invert(1)', 'flex-shrink:0', 'display:block',
