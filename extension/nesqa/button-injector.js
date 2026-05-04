@@ -267,7 +267,7 @@
     var logoImg = document.createElement('img');
     logoImg.src = LOGO_SRC;
     logoImg.alt = 'Nesty';
-    ['height:20px', 'width:36px', 'object-fit:contain', 'object-position:center',
+    ['height:26px', 'width:26px', 'min-width:26px', 'object-fit:contain', 'object-position:center',
      'filter:brightness(0) invert(1)', 'flex-shrink:0', 'display:block',
      'border:none', 'padding:0', 'margin:0', 'background:none'].forEach(function(s) {
       var parts = s.split(':'); logoImg.style.setProperty(parts[0], parts.slice(1).join(':'), 'important');

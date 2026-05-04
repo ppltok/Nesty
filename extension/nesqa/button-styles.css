@@ -70,8 +70,9 @@
 
 /* Variation C logo image in floating pill */
 .nesty-pill-logo {
-  height: 20px !important;
-  width: 36px !important;
+  height: 28px !important;
+  width: 28px !important;
+  min-width: 28px !important;
   object-fit: contain !important;
   object-position: center center !important;
   filter: brightness(0) invert(1) !important;
