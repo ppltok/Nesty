@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Nesqa",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Add products to nestyil.com in one click",
   "icons": {
     "16": "icon16.png",
@@ -201,7 +201,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup-styles.css", "page-script.js", "config.js", "supabase-client.js"],
+      "resources": ["popup-styles.css", "page-script.js", "config.js", "supabase-client.js", "icon16.png", "icon48.png", "icon128.png"],
       "matches": ["<all_urls>"]
     }
   ]
