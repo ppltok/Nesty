@@ -842,10 +842,14 @@
     await new Promise(resolve => setTimeout(resolve, 500));
 
     try {
+      // Detect what currency AliExpress is showing the user right now
+      const pageDisplaysILS = (doc.body?.innerText?.match(/₪/g) || []).length > 3;
+      console.log(`🌍 AliExpress display currency: ${pageDisplaysILS ? 'ILS (₪)' : 'USD ($)'}`);
+
       let productData = {
         name: '',
         price: '',
-        priceCurrency: 'USD',
+        priceCurrency: pageDisplaysILS ? 'ILS' : 'USD',
         brand: 'AliExpress',
         category: '',
         imageUrls: []
@@ -990,6 +994,10 @@
       // First, try to find the active product modal/container (for bundle deals)
       let productContainer = doc;
       const modalSelectors = [
+        '.pdp-mini-wrap',                // AliExpress bundle deals product modal
+        '.comet-v2-modal-body',          // AliExpress comet modal body
+        '.cosmos-drawer-body',           // AliExpress cosmos drawer
+        '[class*="cosmos-drawer-body"]',
         '[class*="modal"][class*="show"]',
         '[class*="modal"][class*="active"]',
         '[class*="modal"][class*="visible"]',
@@ -1001,9 +1009,12 @@
       ];
 
       for (let selector of modalSelectors) {
-        const modal = doc.querySelector(selector);
-        if (modal && modal.offsetParent !== null) { // Check if visible
-          productContainer = modal;
+        const el = doc.querySelector(selector);
+        // Only use as container if visible AND contains price/product data (avoids login drawers etc.)
+        if (el && el.offsetParent !== null &&
+            (el.querySelector('[class*="price"]') || el.querySelector('[itemprop="price"]') ||
+             el.querySelector('[class*="Price"]') || el.innerText?.includes('₪') || el.innerText?.includes('$'))) {
+          productContainer = el;
           console.log(`✅ Found active product container: ${selector}`);
           break;
         }
@@ -1018,7 +1029,8 @@
         '.pdp-product-title',
         'h1.product-title',
         '[class*="productTitle"]',
-        '[class*="ProductTitle"]'
+        '[class*="ProductTitle"]',
+        'h1',
       ];
 
       for (let selector of titleSelectors) {
@@ -1090,27 +1102,28 @@
 
           console.log(`🔍 Checking price in ${selector}:`, priceText);
 
-          // Check if it's USD (higher priority)
+          // Check if it's USD
           const usdMatch = priceText.match(/(?:US\s*)?[\$]\s*([\d,]+\.?\d*)/i);
           if (usdMatch && usdMatch[1]) {
+            // If page displays ILS, USD prices are low priority (user sees ILS)
+            const usdPriority = pageDisplaysILS ? 2 : 10;
             foundPrices.push({
               price: usdMatch[1].replace(',', ''),
               currency: 'USD',
-              priority: 10,
+              priority: usdPriority,
               selector: selector,
               source: priceText
             });
-            console.log(`   💵 Found USD price: $${usdMatch[1]}`);
+            console.log(`   💵 Found USD price: $${usdMatch[1]} (priority: ${usdPriority})`);
             return;
           }
 
-          // Check if it's shekel (lower priority)
+          // Check if it's shekel
           const ilsMatch = priceText.match(/₪\s*([\d,]+\.?\d*)/);
           if (ilsMatch && ilsMatch[1]) {
-            // Check if this price has a discount indicator nearby (higher priority)
+            // If page displays ILS, ILS prices are highest priority
             const hasDiscount = priceText.includes('%') || priceText.includes('off') || priceText.includes('הנחה');
-            const priority = hasDiscount ? 8 : 5; // Prioritize prices with discounts
-
+            const priority = pageDisplaysILS ? (hasDiscount ? 12 : 10) : (hasDiscount ? 8 : 5);
             foundPrices.push({
               price: ilsMatch[1].replace(',', ''),
               currency: 'ILS',
@@ -1118,21 +1131,21 @@
               selector: selector,
               source: priceText
             });
-            console.log(`   ₪ Found ILS price: ₪${ilsMatch[1]} ${hasDiscount ? '(with discount indicator)' : ''}`);
+            console.log(`   ₪ Found ILS price: ₪${ilsMatch[1]} (priority: ${priority})`);
             return;
           }
 
-          // Generic number (lowest priority)
+          // Generic number — assume page display currency
           const numMatch = priceText.match(/^[\d,]+\.?\d*$/);
           if (numMatch && numMatch[0].length > 0) {
             foundPrices.push({
               price: numMatch[0].replace(',', ''),
-              currency: 'USD',
+              currency: pageDisplaysILS ? 'ILS' : 'USD',
               priority: 3,
               selector: selector,
               source: priceText
             });
-            console.log(`   🔢 Found number: ${numMatch[0]}`);
+            console.log(`   🔢 Found number: ${numMatch[0]} (assumed ${pageDisplaysILS ? 'ILS' : 'USD'})`);
           }
         });
       }
@@ -1174,7 +1187,13 @@
         // Find ALL prices and choose the highest one (likely the product price)
         const allPrices = [];
 
-        const pricePatterns = [
+        const pricePatterns = pageDisplaysILS ? [
+          { pattern: /₪\s*([\d,]+\.?\d*)/g, priority: 10, currency: 'ILS' },
+          { pattern: /([\d,]+\.?\d*)\s*₪/g, priority: 9, currency: 'ILS' },
+          { pattern: /US\s*\$\s*([\d,]+\.?\d*)/gi, priority: 2, currency: 'USD' },
+          { pattern: /USD\s*([\d,]+\.?\d*)/gi, priority: 2, currency: 'USD' },
+          { pattern: /\$\s*([\d,]+\.?\d*)/g, priority: 1, currency: 'USD' },
+        ] : [
           { pattern: /US\s*\$\s*([\d,]+\.?\d*)/gi, priority: 10, currency: 'USD' },
           { pattern: /USD\s*([\d,]+\.?\d*)/gi, priority: 9, currency: 'USD' },
           { pattern: /\$\s*([\d,]+\.?\d*)/g, priority: 8, currency: 'USD' },
@@ -1307,6 +1326,16 @@
           productData.imageUrls.push(ogImage);
           console.log('✅ Found image in og:image');
         }
+      }
+
+      // If page shows ILS but we ended up with a USD price (e.g. from window.runParams),
+      // convert to ILS so Nesty always stores the currency the user sees
+      if (productData.price && productData.priceCurrency === 'USD' && pageDisplaysILS) {
+        const USD_TO_ILS = 3.6;
+        const converted = (parseFloat(productData.price) * USD_TO_ILS).toFixed(2);
+        console.log(`💱 Page shows ILS but got USD price — converting $${productData.price} → ₪${converted}`);
+        productData.price = converted;
+        productData.priceCurrency = 'ILS';
       }
 
       // Validate extraction

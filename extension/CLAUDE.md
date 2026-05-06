@@ -105,6 +105,28 @@ Supabase query code:
 - [`.claude/rules/extension-image-assets-csp.md`](.claude/rules/extension-image-assets-csp.md)
   — never load images from external URLs; bundle assets and use `chrome.runtime.getURL()`
 
+- [`.claude/rules/spa-product-container-scoping.md`](.claude/rules/spa-product-container-scoping.md)
+  — on SPA sites (AliExpress, bundle deals, modals), always scope extraction to the **visible product container**, never `document`; detect display currency from `₪`/`$` symbol count, never hardcode
+
+---
+
+## Extraction Gotchas
+
+When writing or debugging an extractor for a new site:
+
+1. **Find the product container first.** On SPA pages, the product detail lives
+   in a modal/drawer — not the page root. Open DevTools, find the element
+   wrapping the price and title, and add its selector to `modalSelectors` in the
+   extractor. Validate it's visible AND contains price data before using it.
+
+2. **Detect display currency from the DOM.** Count `₪` symbols in
+   `body.innerText` — don't assume USD. If the page shows ILS, ILS prices get
+   higher priority and any USD result must be converted before returning.
+
+3. **Check the GOTCHAS log.** `extension/nesqa/GOTCHAS.md` has a running
+   incident log. If a new site shows symptoms similar to a past bug, the fix
+   pattern is already there.
+
 ---
 
 ## Environment Config
