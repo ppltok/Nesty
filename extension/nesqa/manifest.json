@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Nesqa",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Add products to nestyil.com in one click",
   "icons": {
     "16": "icon16.png",
@@ -118,7 +118,9 @@
     "https://babysafe.co.il/*",
     "https://*.aliexpress.com/*",
     "https://*.zara.com/*",
-    "https://zara.com/*"
+    "https://zara.com/*",
+    "https://*.baby-lee.co.il/*",
+    "https://baby-lee.co.il/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -184,7 +186,8 @@
         "https://*.mothercare.co.il/*",     "https://mothercare.co.il/*",
         "https://*.babysafe.co.il/*",       "https://babysafe.co.il/*",
         "https://*.aliexpress.com/*",
-        "https://*.zara.com/*",             "https://zara.com/*"
+        "https://*.zara.com/*",             "https://zara.com/*",
+        "https://*.baby-lee.co.il/*",       "https://baby-lee.co.il/*"
       ],
       "js": ["button-injector.js"],
       "css": ["button-styles.css"],

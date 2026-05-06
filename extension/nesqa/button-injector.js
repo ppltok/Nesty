@@ -71,6 +71,7 @@
     { hostname: 'babysafe.co.il',         hasInline: false, anchorSelectors: [] },
     { hostname: 'aliexpress.com',         hasInline: false, anchorSelectors: [] },
     { hostname: 'zara.com',               hasInline: false, anchorSelectors: [] },
+    { hostname: 'baby-lee.co.il',         hasInline: false, anchorSelectors: [] },
   ];
 
   function getSiteConfig(hostname) {

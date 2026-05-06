@@ -264,6 +264,13 @@
    * @param {*} imageData - Image data from JSON-LD
    * @returns {Array} - Array of image URL strings
    */
+  function decodeHtmlEntities(str) {
+    if (!str || !str.includes('&')) return str;
+    const el = document.createElement('textarea');
+    el.innerHTML = str;
+    return el.value;
+  }
+
   function normalizeImageUrls(imageData) {
     if (!imageData) return [];
 
@@ -275,9 +282,11 @@
         // Direct URL string
         urls.push(item);
       } else if (typeof item === 'object' && item !== null) {
-        // Image object with url property
+        // Image object with url property (Wix uses contentUrl per schema.org ImageObject)
         if (item.url) {
           urls.push(item.url);
+        } else if (item.contentUrl) {
+          urls.push(item.contentUrl);
         } else if (item['@id']) {
           // Sometimes uses @id instead of url
           urls.push(item['@id']);
@@ -1439,8 +1448,26 @@
       // Extract name and image from meta tags
       const titleElement = doc.querySelector('meta[property="og:title"]') || doc.querySelector('title');
       let name = titleElement?.getAttribute('content') || titleElement?.textContent || '';
-      const imageElement = doc.querySelector('meta[property="og:image"]');
-      const image = imageElement?.getAttribute('content') || '';
+      let image = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') || '';
+
+      // Fallback: find wixstatic.com images directly in the DOM
+      if (!image) {
+        const wixImgSelectors = [
+          '[data-hook="main-media-image"] img',
+          '[data-hook="product-item-media"] img',
+          '[data-hook="media-inner-container"] img',
+          '[data-hook="product-page-media"] img',
+          'img[src*="wixstatic.com"]',
+        ];
+        for (const sel of wixImgSelectors) {
+          const el = doc.querySelector(sel);
+          if (el?.src && el.src.includes('wixstatic.com')) {
+            image = el.src;
+            console.log('🖼️ Found Wix image via DOM selector:', sel);
+            break;
+          }
+        }
+      }
 
       // Clean product name (remove site name)
       if (name.includes('|')) {
@@ -1964,7 +1991,7 @@
     const imageUrls = normalizeImageUrls(data.image);
 
     const result = {
-      name: data.name || '',
+      name: decodeHtmlEntities(data.name || ''),
       price: offer?.price || '',
       priceCurrency: offer?.priceCurrency || '',
       brand: data.brand?.name || data.brand || '',

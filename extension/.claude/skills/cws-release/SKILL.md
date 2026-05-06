@@ -85,6 +85,29 @@ node extension/verify-chrome-store-package.js extension/chrome-store
 If the script complains, **stop** and surface the errors. Do not zip a
 failing package.
 
+### 5b. HTML asset coverage check
+
+For every `.html` file in the extension folder, scan for local asset
+references (`src=` and `href=` attributes that don't start with `http`,
+`//`, `#`, or `chrome-extension://`). Verify each referenced file exists
+in the same folder.
+
+```bash
+# Quick check — list all local src/href values in HTML files
+grep -ohE '(src|href)="[^"http#/][^"]*"' extension/chrome-store/*.html 2>/dev/null | grep -v '^$'
+```
+
+For each extracted path, confirm the file exists:
+```bash
+ls extension/chrome-store/<extracted-filename>
+```
+
+If any referenced file is missing, **stop** — the extension will show
+broken assets after install. Add the missing file before zipping.
+
+This catches the class of bug where a new image/asset is added to an HTML
+page but not copied into the extension folder.
+
 ### 6. Create the zip
 
 The zip must contain the **contents** of `chrome-store/`, not the folder
@@ -99,14 +122,24 @@ cd extension/chrome-store && zip -r ../nesty-extension-vX.Y.Z.zip . -x "*.DS_Sto
 
 ### 7. Verify the zip
 
-Extract to a temp dir and re-check the two critical things:
+Extract to a temp dir and re-check the critical things:
 ```bash
 mkdir -p /tmp/nesty-zip-check && cd /tmp/nesty-zip-check && unzip -o ../../extension/nesty-extension-vX.Y.Z.zip
 grep -n "ENV = " config.js               # must show 'production'
 grep -n localhost manifest.json          # must return nothing
 ```
 
-If either check fails, stop and report.
+Also verify all HTML-referenced assets made it into the zip:
+```bash
+# Re-run asset check against the extracted zip
+grep -ohE '(src|href)="[^"http#/][^"]*"' /tmp/nesty-zip-check/*.html 2>/dev/null | \
+  sed 's/.*="//;s/"//' | sort -u | \
+  while read f; do
+    [ -f "/tmp/nesty-zip-check/$f" ] && echo "✅ $f" || echo "❌ MISSING: $f"
+  done
+```
+
+If any check fails, stop and report.
 
 ### 8. Write release notes
 
