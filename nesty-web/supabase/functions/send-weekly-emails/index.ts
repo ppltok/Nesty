@@ -1215,13 +1215,57 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Optional: pass { user_id } to send to a specific user (for testing)
+    // Optional body params:
+    //   { user_id }                          → send to a specific user (skips dedupe)
+    //   { test: { week, email, name? } }     → render the template for a given week
+    //                                          and send to the given email; doesn't touch DB
     let targetUserId: string | null = null
+    let testOverride: { week: number; email: string; name?: string } | null = null
     try {
       const body = await req.json()
       targetUserId = body?.user_id || null
+      if (body?.test?.week && body?.test?.email) {
+        testOverride = { week: Number(body.test.week), email: String(body.test.email), name: body.test.name }
+      }
     } catch {
       // No body = process all users
+    }
+
+    // ── Test override: bypass DB, render and send a single email ──
+    if (testOverride) {
+      const currentWeek = testOverride.week
+      const firstName = testOverride.name || 'תום'
+      const unsubscribeUrl = 'https://nestyil.com/settings/emails'
+      let html: string
+      let subject: string
+
+      if (currentWeek === 40) {
+        html = generateCelebrationEmailHtml(firstName, unsubscribeUrl)
+        subject = `🎉 ${firstName}, הגעת לשבוע 40! המסע המדהים שלך מגיע לשיא 💜`
+      } else if (currentWeek > 40 && currentWeek <= 52) {
+        const ppData = POSTPARTUM_DATA.find(w => w.week === currentWeek - 40)
+        if (!ppData) throw new Error(`No postpartum data for week ${currentWeek - 40}`)
+        html = generatePostpartumEmailHtml(firstName, ppData, unsubscribeUrl)
+        subject = `${ppData.milestoneEmoji} ${ppData.milestone} — ${firstName}, איך את והתינוק? 💜`
+      } else if (currentWeek >= 12 && currentWeek < 40) {
+        const weekData = WEEKLY_DATA.find(w => w.week === currentWeek)
+        if (!weekData) throw new Error(`No weekly data for week ${currentWeek}`)
+        html = generateWeeklyEmailHtml(firstName, weekData, '', unsubscribeUrl)
+        subject = `🌿 שבוע ${currentWeek} — ${firstName}, התינוק שלך בגודל של ${weekData.fruit} ${weekData.fruitEmoji}`
+      } else {
+        throw new Error(`Week ${currentWeek} out of supported range (12–52)`)
+      }
+
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_API_KEY}` },
+        body: JSON.stringify({ from: 'Nesty <hello@nestyil.com>', to: [testOverride.email], subject, html }),
+      })
+      const resData = await res.json()
+      return new Response(
+        JSON.stringify({ success: res.ok, test: true, week: currentWeek, to: testOverride.email, resend: resData }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: res.ok ? 200 : 500 }
+      )
     }
 
     // Query eligible profiles
@@ -1312,7 +1356,8 @@ serve(async (req) => {
           subject = `🌿 שבוע ${currentWeek} — ${firstName}, התינוק שלך בגודל של ${weekData.fruit} ${weekData.fruitEmoji}`
         }
 
-        // Send via Resend
+        // Send via Resend. RFC 8058 List-Unsubscribe headers enable the
+        // native Gmail/Outlook/Apple-Mail unsubscribe button.
         const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -1324,6 +1369,10 @@ serve(async (req) => {
             to: [profile.email],
             subject,
             html,
+            headers: {
+              'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
           }),
         })
 

@@ -465,6 +465,7 @@ serve(async (req) => {
 
         // Send checklist nudge email
         try {
+          const unsubUrl = await buildUnsubscribeUrl(user.id, 'reminders')
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -475,7 +476,11 @@ serve(async (req) => {
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
               subject: `${user.first_name}, הצ'קליסט מחכה לך! ✅`,
-              html: checklistNudgeHtml(user.first_name || 'את', await buildUnsubscribeUrl(user.id, 'reminders')),
+              html: checklistNudgeHtml(user.first_name || 'את', unsubUrl),
+              headers: {
+                'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+              },
             }),
           })
 
@@ -563,6 +568,7 @@ serve(async (req) => {
 
         // Send share nudge email
         try {
+          const unsubUrl = await buildUnsubscribeUrl(user.id, 'reminders')
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -573,7 +579,11 @@ serve(async (req) => {
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
               subject: `${user.first_name}, הרשימה שלך מוכנה לשיתוף! 🎁`,
-              html: shareNudgeHtml(user.first_name || 'את', itemsCount, await buildUnsubscribeUrl(user.id, 'reminders')),
+              html: shareNudgeHtml(user.first_name || 'את', itemsCount, unsubUrl),
+              headers: {
+                'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+              },
             }),
           })
 
@@ -655,6 +665,7 @@ serve(async (req) => {
 
       const { subject, variant } = pickFirstItemVariant(week)
       try {
+        const unsubUrl = await buildUnsubscribeUrl(user.id, 'reminders')
         const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_API_KEY}` },
@@ -662,7 +673,11 @@ serve(async (req) => {
             from: 'Nesty <hello@nestyil.com>',
             to: [user.email],
             subject: subject(user.first_name || 'את'),
-            html: firstItemNudgeHtml(user.first_name || 'את', week, await buildUnsubscribeUrl(user.id, 'reminders')),
+            html: firstItemNudgeHtml(user.first_name || 'את', week, unsubUrl),
+            headers: {
+              'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
           }),
         })
         if (res.ok) {
@@ -744,6 +759,7 @@ serve(async (req) => {
 
       const { subject, variant } = pickStalledVariant(week, itemsCount)
       try {
+        const unsubUrl = await buildUnsubscribeUrl(user.id, 'reminders')
         const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_API_KEY}` },
@@ -751,7 +767,11 @@ serve(async (req) => {
             from: 'Nesty <hello@nestyil.com>',
             to: [user.email],
             subject: subject(user.first_name || 'את'),
-            html: stalledNudgeHtml(user.first_name || 'את', week, itemsCount, await buildUnsubscribeUrl(user.id, 'reminders')),
+            html: stalledNudgeHtml(user.first_name || 'את', week, itemsCount, unsubUrl),
+            headers: {
+              'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
           }),
         })
         if (res.ok) {

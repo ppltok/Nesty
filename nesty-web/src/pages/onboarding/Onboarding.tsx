@@ -391,6 +391,7 @@ export default function Onboarding() {
               type: 'welcome',
               to: user.email,
               data: {
+                userId: user.id,
                 firstName: data.firstName || user.email?.split('@')[0] || 'את',
                 currentWeek: clampedWeek,
                 fruitName: fruitInfo.name,

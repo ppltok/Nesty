@@ -298,6 +298,7 @@ serve(async (req) => {
 
       const promises = batch.map(async (user) => {
         try {
+          const unsubUrl = await buildUnsubscribeUrl(user.id, 'features')
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -308,7 +309,11 @@ serve(async (req) => {
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
               subject: 'ביקשתן — קיבלתן! 💜 ניהול משותף עם בן/בת הזוג',
-              html: buildEmailHtml(await buildUnsubscribeUrl(user.id, 'features')),
+              html: buildEmailHtml(unsubUrl),
+              headers: {
+                'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
+                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+              },
             }),
           })
 

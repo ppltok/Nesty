@@ -1,13 +1,65 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildUnsubscribeUrl } from '../_shared/unsubscribe-url.ts'
+import type { EmailCategoryKey } from '../_shared/email-categories.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-// Plain management link (no token) for emails where one-click unsubscribe
-// doesn't make sense — welcome emails, transactional-adjacent templates.
-// The user needs to be logged in to change preferences; since welcome is
-// sent right after signup, the session is fresh.
+// Plain management link — settings page, requires login. Used as a fallback
+// only when we can't resolve the recipient to a userId for one-click
+// unsubscribe (e.g. transactional emails to non-Nesty users).
 const MANAGE_LINK = `<a href="https://nestyil.com/settings/emails" style="color:#9070b8;text-decoration:underline;">ניהול העדפות אימייל</a>`
+
+// Look up a profile id by email (for emails where the caller didn't pass
+// userId). Returns null if no match — caller should fall back to MANAGE_LINK.
+async function lookupUserIdByEmail(email: string): Promise<string | null> {
+  if (!email || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null
+  try {
+    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+    const { data } = await admin
+      .from('profiles')
+      .select('id')
+      .eq('email', email.toLowerCase())
+      .maybeSingle()
+    return data?.id ?? null
+  } catch (err) {
+    console.warn('[send-email] lookupUserIdByEmail failed (non-critical):', err)
+    return null
+  }
+}
+
+// Build the inline "הסרה מרשימת התפוצה" link for a marketing email. Prefers
+// the one-click signed URL; falls back to MANAGE_LINK if userId is unknown.
+async function buildInlineUnsubLink(
+  userId: string | null | undefined,
+  category: EmailCategoryKey,
+): Promise<string> {
+  if (!userId) return MANAGE_LINK
+  try {
+    const url = await buildUnsubscribeUrl(userId, category)
+    return `<a href="${url}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>`
+  } catch (err) {
+    console.warn('[send-email] buildUnsubscribeUrl failed, falling back:', err)
+    return MANAGE_LINK
+  }
+}
+
+// RFC 8058 List-Unsubscribe headers. Gmail / Outlook / Apple Mail render a
+// native unsubscribe button when these are present, which dramatically
+// reduces spam complaints (users hit the native button instead of "report
+// spam"). Pass the per-user signed URL — the unsubscribe edge function
+// accepts both GET and POST.
+function buildListUnsubHeaders(unsubUrl: string | null): Record<string, string> {
+  if (!unsubUrl) return {}
+  return {
+    'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  }
+}
 
 /**
  * Shared HTML shell for internal admin emails going to hello@nestyil.com.
@@ -233,6 +285,10 @@ serve(async (req) => {
     let emailSubject: string
     let html: string
     let recipient: string = to || ''
+    // Set per-branch when we have a per-user signed unsub URL. Used to
+    // populate the RFC 8058 List-Unsubscribe / List-Unsubscribe-Post headers
+    // sent to Resend.
+    let listUnsubUrl: string | null = null
 
     if (type === 'welcome') {
       // Welcome email to new user after onboarding
@@ -242,10 +298,12 @@ serve(async (req) => {
       const fruitEmoji = data?.fruitEmoji || '🍈'
       recipient = to || data?.ownerEmail || ''
       emailSubject = `ברוכה הבאה ל-Nesty, ${firstName}! 💜`
-      // Welcome is onboarding-adjacent — send a plain "manage preferences"
-      // link instead of a one-click unsubscribe token. User just signed up
-      // and is logged in; /settings/emails will open fine for them.
-      const unsubscribeLink = MANAGE_LINK
+      // One-click signed unsubscribe (category = 'all', master kill switch).
+      // Prefer userId from caller; fall back to email-lookup so existing
+      // callers without userId still get a working link.
+      const userId = data?.userId || (await lookupUserIdByEmail(recipient))
+      const unsubscribeLink = await buildInlineUnsubLink(userId, 'all')
+      listUnsubUrl = userId ? await buildUnsubscribeUrl(userId, 'all') : null
       html = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -531,6 +589,10 @@ serve(async (req) => {
       const storeName = data?.storeName && data.storeName !== 'ידני' ? data.storeName : ''
       const giftMessage = data?.giftMessage || ''
       emailSubject = `🎁 ${buyerName} רכש/ה מתנה מהרשימה שלך!`
+      // One-click signed unsubscribe for the registry owner.
+      const ownerId = data?.userId || (await lookupUserIdByEmail(recipient))
+      const purchaseUnsubLink = await buildInlineUnsubLink(ownerId, 'all')
+      listUnsubUrl = ownerId ? await buildUnsubscribeUrl(ownerId, 'all') : null
 
       html = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -660,7 +722,7 @@ serve(async (req) => {
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
-              ${MANAGE_LINK}
+              ${purchaseUnsubLink}
               &nbsp;·&nbsp;
               <a href="https://nestyil.com/privacy" style="color:#9070b8;text-decoration:underline;">מדיניות פרטיות</a>
               &nbsp;·&nbsp;
@@ -878,6 +940,11 @@ serve(async (req) => {
       })
     } else if (type === 'thank_you') {
       emailSubject = `תודה על המתנה ל${data?.ownerName || ''}! 💝`
+      // Buyer is often a guest with no Nesty account — look up by email and
+      // gracefully fall back to MANAGE_LINK if they're not in profiles.
+      const buyerId = data?.userId || (await lookupUserIdByEmail(recipient))
+      const thankYouUnsubLink = await buildInlineUnsubLink(buyerId, 'all')
+      listUnsubUrl = buyerId ? await buildUnsubscribeUrl(buyerId, 'all') : null
       html = `
         <!DOCTYPE html>
         <html dir="rtl" lang="he">
@@ -904,8 +971,13 @@ serve(async (req) => {
               <p style="font-size: 14px; color: #6b6b6b; margin-top: 24px;">מזל טוב! 🎉</p>
             </div>
             <div style="background-color: #faf8fb; padding: 24px; text-align: center; border-top: 1px solid #e8e4e9;">
-              <p style="margin: 0; color: #6b6b6b; font-size: 14px;">
+              <p style="margin: 0 0 8px; color: #6b6b6b; font-size: 14px;">
                 נשלח מ-<a href="https://nestyil.com" style="color: #86608e; text-decoration: none;">Nesty</a>
+              </p>
+              <p style="margin: 0; color: #9b9b9b; font-size: 12px;">
+                ${thankYouUnsubLink}
+                &nbsp;·&nbsp;
+                <a href="https://nestyil.com/privacy" style="color: #86608e; text-decoration: underline;">מדיניות פרטיות</a>
               </p>
             </div>
           </div>
@@ -915,8 +987,9 @@ serve(async (req) => {
     } else if (type === 'price_drop') {
       const firstName = data?.firstName || 'את'
       const drops = data?.drops || []
-      const userId = data?.userId || ''
+      const userId = data?.userId || (await lookupUserIdByEmail(to || data?.ownerEmail || ''))
       recipient = to || data?.ownerEmail || ''
+      listUnsubUrl = userId ? await buildUnsubscribeUrl(userId, 'prices') : null
 
       if (drops.length === 0) {
         throw new Error('No price drops provided')
@@ -1116,7 +1189,11 @@ serve(async (req) => {
       throw new Error(`Invalid email type: ${type}`)
     }
 
-    // Send email via Resend API
+    // Send email via Resend API. Pass List-Unsubscribe + List-Unsubscribe-Post
+    // headers (RFC 8058) when we have a per-user signed URL — Gmail / Outlook /
+    // Apple Mail render their native unsubscribe button when these are set,
+    // which is the most legally-defensible path for Israeli spam law.
+    const listUnsubHeaders = buildListUnsubHeaders(listUnsubUrl)
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -1128,6 +1205,7 @@ serve(async (req) => {
         to: [recipient],
         subject: emailSubject,
         html,
+        ...(Object.keys(listUnsubHeaders).length > 0 && { headers: listUnsubHeaders }),
       }),
     })
 
