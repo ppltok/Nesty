@@ -92,9 +92,18 @@ Deno.serve(async (req) => {
 
     const column = EMAIL_CATEGORIES[cat].column
     const newValue = action === 'unsub' ? false : true
+    // Israeli spam-law audit trail. When the master switch (`all` →
+    // marketing_emails column) flips, stamp the corresponding consent /
+    // unsubscribe timestamp so we can prove WHEN the user took the
+    // action, not just the boolean state.
+    const updatePayload: Record<string, unknown> = { [column]: newValue }
+    if (column === 'marketing_emails') {
+      updatePayload[newValue ? 'marketing_emails_consented_at' : 'marketing_emails_unsubscribed_at'] =
+        new Date().toISOString()
+    }
     const { error } = await admin
       .from('profiles')
-      .update({ [column]: newValue })
+      .update(updatePayload)
       .eq('id', uid)
 
     if (error) {

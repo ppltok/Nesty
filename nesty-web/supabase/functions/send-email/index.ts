@@ -516,8 +516,11 @@ serve(async (req) => {
             <a href="https://nestyil.com" style="text-decoration:none;">
               <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" />
             </a>
-            <p style="margin:0 0 8px;font-size:13px;color:#a087c0;">
+            <p style="margin:0 0 6px;font-size:13px;color:#a087c0;">
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
+            </p>
+            <p style="margin:0 0 8px;font-size:11px;color:#a087c0;">
+              באבו קפיטל בע"מ (Babu Capital Ltd) · יצירת קשר: <a href="mailto:hello@nestyil.com" style="color:#9070b8;">hello@nestyil.com</a>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
               ${unsubscribeLink}
@@ -718,8 +721,11 @@ serve(async (req) => {
             <a href="https://nestyil.com" style="text-decoration:none;">
               <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" />
             </a>
-            <p style="margin:0 0 8px;font-size:13px;color:#a087c0;">
+            <p style="margin:0 0 6px;font-size:13px;color:#a087c0;">
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
+            </p>
+            <p style="margin:0 0 8px;font-size:11px;color:#a087c0;">
+              באבו קפיטל בע"מ (Babu Capital Ltd) · יצירת קשר: <a href="mailto:hello@nestyil.com" style="color:#9070b8;">hello@nestyil.com</a>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
               ${purchaseUnsubLink}
@@ -971,8 +977,11 @@ serve(async (req) => {
               <p style="font-size: 14px; color: #6b6b6b; margin-top: 24px;">מזל טוב! 🎉</p>
             </div>
             <div style="background-color: #faf8fb; padding: 24px; text-align: center; border-top: 1px solid #e8e4e9;">
-              <p style="margin: 0 0 8px; color: #6b6b6b; font-size: 14px;">
+              <p style="margin: 0 0 4px; color: #6b6b6b; font-size: 14px;">
                 נשלח מ-<a href="https://nestyil.com" style="color: #86608e; text-decoration: none;">Nesty</a>
+              </p>
+              <p style="margin: 0 0 8px; color: #9b9b9b; font-size: 11px;">
+                באבו קפיטל בע"מ (Babu Capital Ltd) · <a href="mailto:hello@nestyil.com" style="color: #86608e;">hello@nestyil.com</a>
               </p>
               <p style="margin: 0; color: #9b9b9b; font-size: 12px;">
                 ${thankYouUnsubLink}
@@ -1165,8 +1174,11 @@ serve(async (req) => {
             <a href="https://nestyil.com" style="text-decoration:none;">
               <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" />
             </a>
-            <p style="margin:0 0 8px;font-size:13px;color:#a087c0;">
+            <p style="margin:0 0 6px;font-size:13px;color:#a087c0;">
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
+            </p>
+            <p style="margin:0 0 8px;font-size:11px;color:#a087c0;">
+              באבו קפיטל בע"מ (Babu Capital Ltd) · יצירת קשר: <a href="mailto:hello@nestyil.com" style="color:#9070b8;">hello@nestyil.com</a>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
               ${unsubscribeLink}

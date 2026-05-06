@@ -297,6 +297,12 @@ export default function Onboarding() {
         due_date: data.dueDate || null,
         onboarding_completed: false,
         marketing_emails: data.marketingEmails,
+        // Israeli spam-law audit trail — proves WHEN the user opted in
+        // (the moment they clicked "סיימי" with the disclosure visible).
+        // Set only on opt-in; opt-out path owns the unsubscribed_at column.
+        ...(data.marketingEmails
+          ? { marketing_emails_consented_at: new Date().toISOString() }
+          : { marketing_emails_unsubscribed_at: new Date().toISOString() }),
       }
 
       if (data.feeling) profileData.feeling = data.feeling
@@ -948,13 +954,15 @@ export default function Onboarding() {
                 </button>
               </div>
 
-              {/* Marketing disclosure */}
-              <p className="text-[10px] text-[#9e9e9e] text-center leading-relaxed">
-                בלחיצה על "סיימי" את מאשרת לקבל מאיתנו עדכונים שימושיים למייל. אפשר לבטל בכל רגע מ
-                <Link to="/settings/emails" className="underline hover:text-[#6750a4]">
+              {/* Marketing disclosure — Israeli spam-law requires the
+                  consent text to be prominent, not buried at 10px gray. */}
+              <p className="text-[12px] text-[#49454f] text-center leading-relaxed px-2">
+                בלחיצה על "סיימי" את מאשרת קבלת אימיילים שיווקיים מ-Nesty
+                (באבו קפיטל בע"מ). אפשר לבטל בכל רגע מ
+                <Link to="/settings/emails" className="underline hover:text-[#6750a4] font-medium">
                   הגדרות
-                </Link>
-                .
+                </Link>{' '}
+                או בלחיצה על "הסרה" בכל אימייל.
               </p>
 
               {/* Skip — explicitly clears the picked item */}

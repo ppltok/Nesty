@@ -234,8 +234,11 @@ function buildEmailHtml(unsubscribeUrl: string): string {
             <a href="https://nestyil.com" style="text-decoration:none;">
               <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" />
             </a>
-            <p style="margin:0 0 8px;font-size:13px;color:#a087c0;">
+            <p style="margin:0 0 6px;font-size:13px;color:#a087c0;">
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong> 💜
+            </p>
+            <p style="margin:0 0 8px;font-size:11px;color:#a087c0;">
+              באבו קפיטל בע"מ (Babu Capital Ltd) · יצירת קשר: <a href="mailto:hello@nestyil.com" style="color:#9070b8;">hello@nestyil.com</a>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
               <a href="${unsubscribeUrl}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>
@@ -271,6 +274,13 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
+    // Per-campaign tag — change this for each new feature drop. Used as
+    // the email_logs.email_type so we can dedupe (the SAME user must not
+    // receive the SAME campaign twice, even if the function is invoked
+    // multiple times by accident).
+    const FEATURE_KEY = 'feature_drop_coparent'
+    const SUBJECT = 'ביקשתן — קיבלתן! 💜 ניהול משותף עם בן/בת הזוג'
+
     // Respect both master opt-out and the per-category "feature announcements" toggle.
     // email_feature_announcements was added in 20260419_email_preferences.sql.
     const { data: users, error: usersError } = await supabaseAdmin
@@ -287,14 +297,37 @@ serve(async (req) => {
       })
     }
 
-    console.log(`Sending feature drop email to ${users.length} users`)
+    // Dedup: pull every recipient_email that has already received this
+    // campaign and skip them. email_logs is the source of truth (populated
+    // by sync-resend-emails AND by the per-recipient log we write below).
+    const { data: alreadySent } = await supabaseAdmin
+      .from('email_logs')
+      .select('recipient_email')
+      .eq('email_type', FEATURE_KEY)
+
+    const alreadySentSet = new Set(
+      (alreadySent ?? []).map((r) => (r.recipient_email || '').toLowerCase())
+    )
+    const eligibleUsers = users.filter(
+      (u) => u.email && !alreadySentSet.has(u.email.toLowerCase())
+    )
+    const skipped = users.length - eligibleUsers.length
+
+    if (eligibleUsers.length === 0) {
+      return new Response(
+        JSON.stringify({ sent: 0, skipped, total: users.length, message: 'All eligible users already received this campaign' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+
+    console.log(`Sending feature drop email to ${eligibleUsers.length} users (skipping ${skipped} already sent)`)
 
     let sent = 0
     let errors = 0
 
     // Send in batches of 10 to respect Resend rate limits
-    for (let i = 0; i < users.length; i += 10) {
-      const batch = users.slice(i, i + 10)
+    for (let i = 0; i < eligibleUsers.length; i += 10) {
+      const batch = eligibleUsers.slice(i, i + 10)
 
       const promises = batch.map(async (user) => {
         try {
@@ -308,7 +341,7 @@ serve(async (req) => {
             body: JSON.stringify({
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
-              subject: 'ביקשתן — קיבלתן! 💜 ניהול משותף עם בן/בת הזוג',
+              subject: SUBJECT,
               html: buildEmailHtml(unsubUrl),
               headers: {
                 'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
@@ -319,6 +352,16 @@ serve(async (req) => {
 
           if (res.ok) {
             sent++
+            // Per-recipient log so future invocations can skip this user.
+            // Best-effort — failure here doesn't affect the send.
+            await supabaseAdmin.from('email_logs').insert({
+              recipient_email: user.email.toLowerCase(),
+              email_type: FEATURE_KEY,
+              subject: SUBJECT,
+              status: 'sent',
+              sent_at: new Date().toISOString(),
+              provider: 'resend',
+            })
             console.log(`Sent to ${user.email}`)
           } else {
             const err = await res.json()
@@ -334,24 +377,14 @@ serve(async (req) => {
       await Promise.all(promises)
 
       // Small delay between batches
-      if (i + 10 < users.length) {
+      if (i + 10 < eligibleUsers.length) {
         await new Promise(r => setTimeout(r, 1000))
       }
     }
 
-    // Log to email_logs
-    try {
-      await supabaseAdmin.from('email_logs').insert({
-        recipient_email: 'all_users',
-        email_type: 'feature_drop_coparent',
-        subject: 'ביקשתן — קיבלתן! 💜 ניהול משותף עם בן/בת הזוג',
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-        provider: 'resend',
-      })
-    } catch (e) {
-      console.error('Log error (non-blocking):', e)
-    }
+    // (Per-recipient logs are written above on each successful send so
+    // future invocations dedup naturally. The previous "all_users" sentinel
+    // log row was misleading — removed.)
 
     return new Response(JSON.stringify({ sent, errors, total: users.length }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

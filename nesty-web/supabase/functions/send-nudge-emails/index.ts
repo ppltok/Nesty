@@ -87,8 +87,11 @@ ${content}
             <a href="https://nestyil.com" style="text-decoration:none;">
               <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" />
             </a>
-            <p style="margin:0 0 8px;font-size:13px;color:#a087c0;">
+            <p style="margin:0 0 6px;font-size:13px;color:#a087c0;">
               נשלח באהבה על ידי <strong style="color:#7c4dbd;">Nesty</strong>
+            </p>
+            <p style="margin:0 0 8px;font-size:11px;color:#a087c0;">
+              באבו קפיטל בע"מ (Babu Capital Ltd) · יצירת קשר: <a href="mailto:hello@nestyil.com" style="color:#9070b8;">hello@nestyil.com</a>
             </p>
             <p style="margin:0;font-size:12px;color:#bca8d4;">
               <a href="${unsubscribeUrl}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>

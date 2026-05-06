@@ -105,9 +105,18 @@ export default function EmailPreferences() {
     const next = !prefs[column]
     setPrefs((p) => ({ ...p, [column]: next }))
     setSavingKey(column)
+    // Israeli spam-law audit trail. When the master switch flips, stamp
+    // either the consent or the unsubscribe timestamp so we can prove
+    // when the user opted in or out. Per-category toggles don't legally
+    // need a stamp (they're sub-preferences below the master).
+    const updatePayload: Record<string, unknown> = { [column]: next }
+    if (column === 'marketing_emails') {
+      updatePayload[next ? 'marketing_emails_consented_at' : 'marketing_emails_unsubscribed_at'] =
+        new Date().toISOString()
+    }
     const { error } = await supabase
       .from('profiles')
-      .update({ [column]: next })
+      .update(updatePayload)
       .eq('id', user.id)
     setSavingKey(null)
     if (error) {
