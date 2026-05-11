@@ -1,0 +1,627 @@
+/**
+ * Nesty Extension - Content Script
+ * Full-featured version with authentication, product extraction, and form UI
+ */
+
+// Wrap entire script in IIFE to prevent conflicts
+(function() {
+  'use strict';
+
+  // Prevent double injection
+  if (window.nestyExtensionLoaded) {
+    console.log('⚠️ Nesty extension already loaded, skipping');
+    return;
+  }
+  window.nestyExtensionLoaded = true;
+
+  // Configuration
+  const NESTY_CONFIG = {
+  WEB_URL: 'http://localhost:5173',
+  SUPABASE_URL: 'https://wopsrjfdaovlyibivijl.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvcHNyamZkYW92bHlpYml2aWpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU2MTgxMjMsImV4cCI6MjA4MTE5NDEyM30.x4yVBmmbKyGKylOepJwOHessCfIjVxzRvSNbyJ4VyJw'
+}
+
+// Categories
+const CATEGORIES = [
+  { id: 'strollers', name: 'עגלות וטיולים' },
+  { id: 'car_safety', name: 'בטיחות ברכב' },
+  { id: 'furniture', name: 'ריהוט' },
+  { id: 'safety', name: 'מוצרי בטיחות' },
+  { id: 'feeding', name: 'האכלה' },
+  { id: 'nursing', name: 'הנקה' },
+  { id: 'bath', name: 'אמבט וטיפול בתינוק' },
+  { id: 'clothing', name: 'ביגוד ראשוני' },
+  { id: 'bedding', name: 'מצעים ואקססוריז' },
+  { id: 'toys', name: 'צעצועים' }
+]
+
+// Global state
+let supabaseSession = null
+let userRegistry = null
+
+// Main execution
+;(async function() {
+  console.log('🚀 Nesty Extension - Loading...')
+  console.log('📍 Current URL:', window.location.href)
+
+  // Inject CSS
+  console.log('💅 Injecting styles...')
+  injectStyles()
+
+  // Get Supabase session
+  console.log('🔑 Getting Supabase session...')
+  supabaseSession = await getSupabaseSession()
+  console.log('📦 Session data:', supabaseSession ? '✅ Found' : '❌ Not found')
+
+  if (!supabaseSession) {
+    console.log('❌ User not authenticated')
+    showLoginPrompt()
+    return
+  }
+
+  console.log('✅ User authenticated:', supabaseSession.user?.email)
+
+  // Fetch user's registry
+  try {
+    userRegistry = await fetchUserRegistry(supabaseSession.user.id)
+
+    if (!userRegistry) {
+      showErrorModal('לא נמצאה רשימה. אנא צור רשימה תחילה.')
+      return
+    }
+
+    // Extract product data
+    const productData = extractProductData()
+
+    if (productData) {
+      showProductForm(productData)
+    } else {
+      showErrorModal('לא נמצא מידע על מוצר בדף זה')
+    }
+  } catch (error) {
+    console.error('❌ Error:', error)
+    showErrorModal(error.message)
+  }
+})()
+
+/**
+ * Inject popup styles
+ */
+function injectStyles() {
+  if (document.getElementById('nesty-styles')) return
+
+  const link = document.createElement('link')
+  link.id = 'nesty-styles'
+  link.rel = 'stylesheet'
+  link.href = chrome.runtime.getURL('popup-styles.css')
+  document.head.appendChild(link)
+}
+
+/**
+ * Get Supabase session by injecting page script
+ */
+async function getSupabaseSession() {
+  return new Promise((resolve) => {
+    console.log('🔍 Setting up session listener...')
+
+    // Listen for session message
+    const messageHandler = (event) => {
+      console.log('📨 Received message:', event.data?.type)
+      if (event.data && event.data.type === 'NESTY_SUPABASE_SESSION') {
+        console.log('✅ Got session message:', event.data.session ? 'Session exists' : 'No session')
+        window.removeEventListener('message', messageHandler)
+        resolve(event.data.session)
+      }
+    }
+    window.addEventListener('message', messageHandler)
+
+    // Inject page script
+    console.log('💉 Injecting page-script.js...')
+    const script = document.createElement('script')
+    script.src = chrome.runtime.getURL('page-script.js')
+    script.onload = () => {
+      console.log('✅ Page script loaded')
+      script.remove()
+    }
+    script.onerror = () => {
+      console.error('❌ Failed to load page script')
+      script.remove()
+    }
+    ;(document.head || document.documentElement).appendChild(script)
+
+    // Timeout after 3 seconds
+    setTimeout(() => {
+      console.log('⏱️ Session timeout reached')
+      window.removeEventListener('message', messageHandler)
+      resolve(null)
+    }, 3000)
+  })
+}
+
+/**
+ * Fetch user's registry from Supabase
+ */
+async function fetchUserRegistry(userId) {
+  try {
+    const response = await fetch(
+      `${NESTY_CONFIG.SUPABASE_URL}/rest/v1/registries?owner_id=eq.${userId}&select=*`,
+      {
+        headers: {
+          'apikey': NESTY_CONFIG.SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${supabaseSession.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch registry')
+    }
+
+    const data = await response.json()
+    return data && data.length > 0 ? data[0] : null
+  } catch (error) {
+    console.error('Error fetching registry:', error)
+    throw error
+  }
+}
+
+/**
+ * Extract product data from the page
+ */
+function extractProductData() {
+  console.log('🔍 Extracting product data...')
+
+  // Look for JSON-LD scripts
+  const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]')
+  console.log(`Found ${jsonLdScripts.length} JSON-LD script(s)`)
+
+  for (let script of jsonLdScripts) {
+    try {
+      const data = JSON.parse(script.textContent)
+
+      // Handle Product type
+      if (data['@type'] === 'Product') {
+        console.log('✅ Found Product type')
+        return extractFromProduct(data)
+      }
+
+      // Handle ProductGroup type (like Shopify variants)
+      if (data['@type'] === 'ProductGroup') {
+        console.log('✅ Found ProductGroup type')
+        return extractFromProductGroup(data)
+      }
+
+      // Handle @graph array
+      if (data['@graph']) {
+        const product = data['@graph'].find(item =>
+          item['@type'] === 'Product' || item['@type'] === 'ProductGroup'
+        )
+        if (product) {
+          console.log('✅ Found Product in @graph')
+          return product['@type'] === 'Product'
+            ? extractFromProduct(product)
+            : extractFromProductGroup(product)
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to parse JSON-LD:', error)
+    }
+  }
+
+  console.log('❌ No product data found')
+  return null
+}
+
+/**
+ * Extract data from Product type
+ */
+function extractFromProduct(data) {
+  const offer = Array.isArray(data.offers) ? data.offers[0] : data.offers
+
+  // Handle images
+  const imageUrls = []
+  if (data.image) {
+    if (Array.isArray(data.image)) {
+      imageUrls.push(...data.image)
+    } else {
+      imageUrls.push(data.image)
+    }
+  }
+
+  return {
+    name: data.name || '',
+    category: data.category || '',
+    price: offer?.price || offer?.lowPrice || '',
+    priceCurrency: offer?.priceCurrency || '',
+    brand: data.brand?.name || data.brand || '',
+    imageUrls: [...new Set(imageUrls)],
+    originalUrl: window.location.href
+  }
+}
+
+/**
+ * Extract data from ProductGroup type
+ */
+function extractFromProductGroup(data) {
+  // Get first variant
+  const variants = data.hasVariant || []
+  const firstVariant = Array.isArray(variants) ? variants[0] : variants
+  const offer = firstVariant?.offers
+
+  // Collect all unique images from variants
+  const imageUrls = []
+  if (Array.isArray(variants)) {
+    variants.forEach(variant => {
+      if (variant.image) {
+        if (Array.isArray(variant.image)) {
+          imageUrls.push(...variant.image)
+        } else {
+          imageUrls.push(variant.image)
+        }
+      }
+    })
+  }
+
+  return {
+    name: data.name || '',
+    category: data.category || '',
+    price: offer?.price || '',
+    priceCurrency: offer?.priceCurrency || '',
+    brand: data.brand?.name || data.brand || '',
+    imageUrls: [...new Set(imageUrls)],
+    originalUrl: window.location.href
+  }
+}
+
+/**
+ * Show login prompt
+ */
+function showLoginPrompt() {
+  const overlay = document.createElement('div')
+  overlay.className = 'nesty-overlay'
+
+  const modal = document.createElement('div')
+  modal.className = 'nesty-modal'
+  modal.style.maxWidth = '400px'
+
+  modal.innerHTML = `
+    <div class="nesty-modal-header">
+      <h2 class="nesty-modal-title">נדרשת התחברות</h2>
+      <button class="nesty-close-btn" id="nesty-close">×</button>
+    </div>
+
+    <div class="nesty-modal-body" dir="rtl">
+      <p style="color: #374151; font-size: 14px; text-align: center; margin-bottom: 16px;">
+        כדי להוסיף מוצרים לרשימה, יש להתחבר תחילה.
+      </p>
+    </div>
+
+    <div class="nesty-modal-footer">
+      <button class="nesty-btn nesty-btn-tertiary" id="nesty-cancel">ביטול</button>
+      <button class="nesty-btn nesty-btn-primary" id="nesty-login">התחבר</button>
+    </div>
+  `
+
+  overlay.appendChild(modal)
+  document.body.appendChild(overlay)
+
+  document.getElementById('nesty-close').addEventListener('click', () => overlay.remove())
+  document.getElementById('nesty-cancel').addEventListener('click', () => overlay.remove())
+  document.getElementById('nesty-login').addEventListener('click', () => {
+    window.open(`${NESTY_CONFIG.WEB_URL}/login`, '_blank')
+    overlay.remove()
+  })
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove()
+  })
+}
+
+/**
+ * Show product form
+ */
+function showProductForm(product) {
+  const overlay = document.createElement('div')
+  overlay.className = 'nesty-overlay'
+
+  const modal = document.createElement('div')
+  modal.className = 'nesty-modal'
+  modal.style.maxWidth = '700px'
+
+  // Form state
+  const formData = {
+    name: product.name,
+    price: product.price,
+    category: '',
+    quantity: 1,
+    isMostWanted: false,
+    isPrivate: false,
+    isOpenToSecondhand: false,
+    notes: product.brand ? `מותג: ${product.brand}` : ''
+  }
+
+  const imageUrl = product.imageUrls[0] || ''
+
+  modal.innerHTML = `
+    <div class="nesty-modal-header">
+      <h2 class="nesty-modal-title">הוספת מוצר לרשימה</h2>
+      <button class="nesty-close-btn" id="nesty-close">×</button>
+    </div>
+
+    <div class="nesty-modal-body" dir="rtl" style="max-height: calc(90vh - 160px); overflow-y: auto;">
+      <div style="display: grid; grid-template-columns: 150px 1fr; gap: 20px; margin-bottom: 20px;">
+        <!-- Product Image -->
+        <div>
+          <img src="${imageUrl}" alt="${product.name}"
+               style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb;"
+               onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27150%27 height=%27150%27%3E%3Crect fill=%27%23f3f4f6%27 width=%27150%27 height=%27150%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 fill=%27%236b7280%27 font-size=%2712%27%3Eללא תמונה%3C/text%3E%3C/svg%3E'">
+          <p style="font-size: 12px; color: #6b7280; text-align: center; margin-top: 8px;">תמונה נבחרת</p>
+        </div>
+
+        <!-- Form Fields -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- Title -->
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #49454f; margin-bottom: 4px;">
+              שם המוצר *
+            </label>
+            <input type="text" id="nesty-title" value="${product.name}"
+                   style="width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+          </div>
+
+          <!-- Price & Quantity -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #49454f; margin-bottom: 4px;">
+                מחיר
+              </label>
+              <input type="number" id="nesty-price" value="${product.price}" min="0"
+                     style="width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+            </div>
+            <div>
+              <label style="display: block; font-size: 12px; font-weight: 600; color: #49454f; margin-bottom: 4px;">
+                כמות
+              </label>
+              <div style="display: flex; align-items: center; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                <button id="nesty-qty-minus" style="padding: 8px 12px; background: white; border: none; cursor: pointer; font-size: 18px;">−</button>
+                <span id="nesty-qty-display" style="flex: 1; text-align: center; font-weight: 600;">1</span>
+                <button id="nesty-qty-plus" style="padding: 8px 12px; background: white; border: none; cursor: pointer; font-size: 18px;">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Registry (read-only for now) -->
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: #49454f; margin-bottom: 4px;">
+          רשימה
+        </label>
+        <input type="text" value="${userRegistry.title || 'הרשימה שלי'}" readonly
+               style="width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; background: #f9fafb;">
+      </div>
+
+      <!-- Category -->
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: #49454f; margin-bottom: 4px;">
+          קטגוריה *
+        </label>
+        <select id="nesty-category"
+                style="width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+          <option value="">בחרו קטגוריה</option>
+          ${CATEGORIES.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+        </select>
+      </div>
+
+      <!-- Toggles -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;">
+        <button type="button" id="nesty-toggle-wanted"
+                style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; background: white; cursor: pointer; font-size: 13px; text-align: center;">
+          ⭐ הכי רוצה!
+        </button>
+        <button type="button" id="nesty-toggle-private"
+                style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; background: white; cursor: pointer; font-size: 13px; text-align: center;">
+          🔒 פריט פרטי
+        </button>
+        <button type="button" id="nesty-toggle-secondhand"
+                style="padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px; background: white; cursor: pointer; font-size: 13px; text-align: center;">
+          ♻️ יד שנייה
+        </button>
+      </div>
+
+      <!-- Notes -->
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; font-size: 12px; font-weight: 600; color: #49454f; margin-bottom: 4px;">
+          הערות לחברים ומשפחה
+        </label>
+        <textarea id="nesty-notes" rows="3"
+                  style="width: 100%; padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; resize: vertical;">${formData.notes}</textarea>
+      </div>
+
+      <div id="nesty-error" style="display: none; background: #ffebee; color: #b3261e; padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 12px;"></div>
+    </div>
+
+    <div class="nesty-modal-footer">
+      <button class="nesty-btn nesty-btn-tertiary" id="nesty-cancel">ביטול</button>
+      <button class="nesty-btn nesty-btn-primary" id="nesty-submit">הוסף לרשימה</button>
+    </div>
+  `
+
+  overlay.appendChild(modal)
+  document.body.appendChild(overlay)
+
+  // Event listeners
+  document.getElementById('nesty-close').addEventListener('click', () => overlay.remove())
+  document.getElementById('nesty-cancel').addEventListener('click', () => overlay.remove())
+
+  // Quantity controls
+  document.getElementById('nesty-qty-minus').addEventListener('click', () => {
+    if (formData.quantity > 1) {
+      formData.quantity--
+      document.getElementById('nesty-qty-display').textContent = formData.quantity
+    }
+  })
+
+  document.getElementById('nesty-qty-plus').addEventListener('click', () => {
+    formData.quantity++
+    document.getElementById('nesty-qty-display').textContent = formData.quantity
+  })
+
+  // Toggle buttons
+  const toggleButtons = {
+    wanted: document.getElementById('nesty-toggle-wanted'),
+    private: document.getElementById('nesty-toggle-private'),
+    secondhand: document.getElementById('nesty-toggle-secondhand')
+  }
+
+  toggleButtons.wanted.addEventListener('click', () => {
+    formData.isMostWanted = !formData.isMostWanted
+    toggleButtons.wanted.style.borderColor = formData.isMostWanted ? '#b3261e' : '#e5e7eb'
+    toggleButtons.wanted.style.background = formData.isMostWanted ? '#ffebee' : 'white'
+  })
+
+  toggleButtons.private.addEventListener('click', () => {
+    formData.isPrivate = !formData.isPrivate
+    toggleButtons.private.style.borderColor = formData.isPrivate ? '#6750a4' : '#e5e7eb'
+    toggleButtons.private.style.background = formData.isPrivate ? '#f3edff' : 'white'
+  })
+
+  toggleButtons.secondhand.addEventListener('click', () => {
+    formData.isOpenToSecondhand = !formData.isOpenToSecondhand
+    toggleButtons.secondhand.style.borderColor = formData.isOpenToSecondhand ? '#10b981' : '#e5e7eb'
+    toggleButtons.secondhand.style.background = formData.isOpenToSecondhand ? '#d1fae5' : 'white'
+  })
+
+  // Submit handler
+  document.getElementById('nesty-submit').addEventListener('click', async () => {
+    const errorDiv = document.getElementById('nesty-error')
+    errorDiv.style.display = 'none'
+
+    // Get form values
+    formData.name = document.getElementById('nesty-title').value.trim()
+    formData.price = document.getElementById('nesty-price').value
+    formData.category = document.getElementById('nesty-category').value
+    formData.notes = document.getElementById('nesty-notes').value.trim()
+
+    // Validation
+    if (!formData.name) {
+      errorDiv.textContent = 'יש להזין שם מוצר'
+      errorDiv.style.display = 'block'
+      return
+    }
+
+    if (!formData.category) {
+      errorDiv.textContent = 'יש לבחור קטגוריה'
+      errorDiv.style.display = 'block'
+      return
+    }
+
+    // Prepare item data
+    const itemData = {
+      registry_id: userRegistry.id,
+      name: formData.name,
+      price: formData.price ? parseFloat(formData.price) : 0,
+      category: formData.category,
+      quantity: formData.quantity,
+      quantity_received: 0,
+      is_most_wanted: formData.isMostWanted,
+      is_private: formData.isPrivate,
+      notes: formData.notes || null,
+      original_url: product.originalUrl,
+      store_name: new URL(product.originalUrl).hostname,
+      image_url: imageUrl || null
+    }
+
+    // Add "Open to secondhand" to notes if toggled
+    if (formData.isOpenToSecondhand && !itemData.notes?.includes('פתוח ליד שנייה')) {
+      itemData.notes = itemData.notes ? `${itemData.notes}\nפתוח ליד שנייה` : 'פתוח ליד שנייה'
+    }
+
+    // Submit to Supabase
+    try {
+      const submitBtn = document.getElementById('nesty-submit')
+      submitBtn.disabled = true
+      submitBtn.textContent = 'מוסיף...'
+
+      const response = await fetch(
+        `${NESTY_CONFIG.SUPABASE_URL}/rest/v1/items`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey': NESTY_CONFIG.SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${supabaseSession.access_token}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(itemData)
+        }
+      )
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to add item')
+      }
+
+      // Success!
+      submitBtn.textContent = '✓ נוסף!'
+      submitBtn.style.background = '#10b981'
+
+      setTimeout(() => {
+        overlay.remove()
+      }, 1500)
+
+    } catch (error) {
+      console.error('Error adding item:', error)
+      errorDiv.textContent = `שגיאה בהוספת הפריט: ${error.message}`
+      errorDiv.style.display = 'block'
+
+      const submitBtn = document.getElementById('nesty-submit')
+      submitBtn.disabled = false
+      submitBtn.textContent = 'הוסף לרשימה'
+    }
+  })
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove()
+  })
+}
+
+/**
+ * Show error modal
+ */
+function showErrorModal(message) {
+  const overlay = document.createElement('div')
+  overlay.className = 'nesty-overlay'
+
+  const modal = document.createElement('div')
+  modal.className = 'nesty-modal'
+  modal.style.maxWidth = '400px'
+
+  modal.innerHTML = `
+    <div class="nesty-modal-header">
+      <h2 class="nesty-modal-title" style="color: #dc2626;">שגיאה</h2>
+      <button class="nesty-close-btn" id="nesty-close">×</button>
+    </div>
+
+    <div class="nesty-modal-body" dir="rtl">
+      <p style="color: #374151; font-size: 14px; text-align: center;">${message}</p>
+    </div>
+
+    <div class="nesty-modal-footer">
+      <button class="nesty-btn nesty-btn-primary" id="nesty-ok">אישור</button>
+    </div>
+  `
+
+  overlay.appendChild(modal)
+  document.body.appendChild(overlay)
+
+  document.getElementById('nesty-close').addEventListener('click', () => overlay.remove())
+  document.getElementById('nesty-ok').addEventListener('click', () => overlay.remove())
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove()
+  })
+}
+
+})(); // End of IIFE
