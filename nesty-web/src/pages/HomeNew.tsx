@@ -351,7 +351,7 @@ export default function HomeNew() {
                                     </div>
 
                                     {/* Real Registry ItemCard — what guests see at the shared URL */}
-                                    <div className="bg-gradient-to-b from-[#d1fae5]/20 to-transparent px-6 pt-8 pb-5 min-h-[280px] flex items-center justify-center" dir="rtl">
+                                    <div className="bg-gradient-to-b from-[#d1fae5]/20 to-transparent px-6 pt-8 pb-5 min-h-[280px] flex flex-col items-center justify-center" dir="rtl">
                                         <div className="w-full max-w-[240px] bg-white rounded-[24px] rounded-tr-[4px] border border-[#e7e0ec] overflow-hidden shadow-sm">
                                             {/* Image */}
                                             <div className="aspect-[4/3] bg-[#f5f5f5] relative overflow-hidden">
