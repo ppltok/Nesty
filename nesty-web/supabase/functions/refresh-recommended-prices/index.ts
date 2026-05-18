@@ -4,11 +4,15 @@ import { DOMParser } from 'https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts
 import productsData from './products.json' with { type: 'json' }
 
 // ─── Config ──────────────────────────────────────────────────────
-const BATCH_SIZE = 8
-const BATCH_DELAY_MS = 1500
-const FETCH_TIMEOUT_MS = 10000
-const MAX_PER_RUN = 60
-const COOLDOWN_DAYS = 6 // run weekly; refetch anything older than 6 days
+// Sized so one invocation finishes inside Supabase's Edge Function
+// wall-time limit. Worst case: 3 batches × ~8s fetch + 2 × 1s delay ≈ 26s.
+// Scheduled daily, so 30 × 7 = 210 checks/week covers ~190 products with
+// the 6-day cooldown.
+const BATCH_SIZE = 10
+const BATCH_DELAY_MS = 1000
+const FETCH_TIMEOUT_MS = 8000
+const MAX_PER_RUN = 30
+const COOLDOWN_DAYS = 6
 const MAX_CONSECUTIVE_FAILURES = 3
 
 const corsHeaders = {
