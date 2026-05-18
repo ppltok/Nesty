@@ -324,6 +324,7 @@ export default function HomeNew() {
                                                 </span>
                                             </div>
                                         </div>
+                                        <p className="mt-3 text-[10px] text-[#79747e] text-center">* התמונה להמחשה בלבד</p>
                                     </div>
 
                                     {/* Content */}
@@ -381,6 +382,7 @@ export default function HomeNew() {
                                                 </div>
                                             </div>
                                         </div>
+                                        <p className="mt-3 text-[10px] text-[#79747e] text-center w-full">* התמונה להמחשה בלבד</p>
                                     </div>
 
                                     {/* Content */}
