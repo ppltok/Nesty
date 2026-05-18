@@ -12,14 +12,17 @@ let cachedPromise: Promise<Map<string, CacheRow>> | null = null
 
 function loadCache(): Promise<Map<string, CacheRow>> {
   if (cachedPromise) return cachedPromise
-  cachedPromise = supabase
-    .from('recommended_price_cache')
-    .select('url, price, last_checked')
-    .then(({ data, error }) => {
+  cachedPromise = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from('recommended_price_cache')
+        .select('url, price, last_checked')
       if (error || !data) return new Map<string, CacheRow>()
       return new Map<string, CacheRow>(data.map((r) => [r.url, r as CacheRow]))
-    })
-    .catch(() => new Map<string, CacheRow>())
+    } catch {
+      return new Map<string, CacheRow>()
+    }
+  })()
   return cachedPromise
 }
 
