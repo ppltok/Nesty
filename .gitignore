@@ -45,6 +45,7 @@ NESTY_PRD.md
 NESTY_DATABASE_SCHEMA.md
 Documents/
 scripts/
+!nesty-web/scripts/
 *.xlsx
 *.docx
 

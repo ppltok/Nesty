@@ -11,6 +11,7 @@ import CheckoutRegistryPromptModal from '../components/popups/CheckoutRegistryPr
 import ShareChecklistPromptModal from '../components/popups/ShareChecklistPromptModal'
 import { usePopupState, isNudgeFresh } from '../hooks/usePopups'
 import { CATEGORIES, ITEMS_DATA } from '../data/categories'
+import { useRecommendedPriceCache } from '../hooks/useRecommendedPriceCache'
 import { supabase } from '../lib/supabase'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
 import type { ChecklistPreference, PriorityLevel } from '../types'
@@ -36,6 +37,7 @@ export default function Checklist() {
   const { user, profile, registry, isLoading: authLoading } = useAuth()
   const { tutorialActive, tutorialStepId } = useDashboardLayout()
   const popups = usePopupState(user?.id)
+  const { getCurrentPrice } = useRecommendedPriceCache()
 
   // For co-parent support: checklist data is stored under the registry owner's user_id
   // Both owner and partner read/write the same checklist
@@ -1019,7 +1021,9 @@ export default function Checklist() {
                             {activeProductsPopover === item && (
                               <div className="mt-2 animate-in slide-in-from-top-2 duration-200">
                                 <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-                                  {ITEMS_DATA[item].products!.map((product, pIndex) => (
+                                  {ITEMS_DATA[item].products!.map((product, pIndex) => {
+                                    const livePrice = getCurrentPrice(product.url, product.price)
+                                    return (
                                     <div key={pIndex} className="flex-shrink-0 w-44 sm:w-52 snap-start bg-white rounded-xl border border-[#e7e0ec] p-2.5 shadow-sm hover:shadow-md transition-shadow">
                                       <img
                                         src={product.image}
@@ -1029,7 +1033,7 @@ export default function Checklist() {
                                       />
                                       <p className="text-xs font-semibold text-[#1d192b] mb-0.5 leading-tight line-clamp-2">{product.name}</p>
                                       <p className="text-[10px] text-[#49454f] mb-1">{product.store}</p>
-                                      <p className="text-sm font-bold text-[#2e7d32] mb-2">₪{product.price.toLocaleString()}</p>
+                                      <p className="text-sm font-bold text-[#2e7d32] mb-2">₪{livePrice.toLocaleString()}</p>
                                       <div className="flex gap-1.5">
                                         <a
                                           href={product.url}
@@ -1045,7 +1049,7 @@ export default function Checklist() {
                                             setPrefilledProductData({
                                               name: product.name,
                                               category: category.id,
-                                              price: product.price.toString(),
+                                              price: livePrice.toString(),
                                               storeName: product.store,
                                               originalUrl: product.url,
                                               imageUrl: product.image,
@@ -1061,7 +1065,7 @@ export default function Checklist() {
                                         </button>
                                       </div>
                                     </div>
-                                  ))}
+                                  )})}
                                   {/* Add custom product card */}
                                   <div
                                     onClick={() => {
