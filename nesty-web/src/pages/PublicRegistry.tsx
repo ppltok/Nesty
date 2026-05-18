@@ -21,6 +21,7 @@ import {
 import type { Registry, Profile, Item, ItemCategory } from '../types'
 import { getDaysUntilDueDate } from '../lib/utils'
 import PurchaseModal from '../components/PurchaseModal'
+import PriceStatusBadge from '../components/PriceStatusBadge'
 import { remainingQuantity, isPurchased } from '../types'
 import { CATEGORIES } from '../data/categories'
 import { trackRegistryViewed } from '../utils/tracking'
@@ -683,7 +684,14 @@ function ItemCard({
                 <p className="text-xs font-bold text-[#6750a4] uppercase">{category?.name}</p>
               </div>
               {item.price > 0 && (
-                <span className="font-bold text-[#1d192b] text-lg">₪{item.price.toLocaleString()}</span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="font-bold text-[#1d192b] text-lg">₪{item.price.toLocaleString()}</span>
+                  <PriceStatusBadge
+                    originalPrice={item.price}
+                    lastCheckedPrice={item.last_checked_price}
+                    lastPriceCheck={item.last_price_check}
+                  />
+                </div>
               )}
             </div>
             {item.notes && (
@@ -790,9 +798,17 @@ function ItemCard({
               <div className="flex flex-col">
                 <span className="text-xs text-[#49454f]">מחיר משוער</span>
                 {item.price > 0 ? (
-                  <span className="font-bold text-[#1d192b] text-2xl">
-                    ₪{item.price.toLocaleString()}
-                  </span>
+                  <>
+                    <span className="font-bold text-[#1d192b] text-2xl">
+                      ₪{item.price.toLocaleString()}
+                    </span>
+                    <PriceStatusBadge
+                      className="mt-1 self-start"
+                      originalPrice={item.price}
+                      lastCheckedPrice={item.last_checked_price}
+                      lastPriceCheck={item.last_price_check}
+                    />
+                  </>
                 ) : (
                   <span className="font-bold text-[#1d192b]">לא צוין</span>
                 )}

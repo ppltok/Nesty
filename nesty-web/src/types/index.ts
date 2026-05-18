@@ -102,6 +102,10 @@ export interface Item {
   price_alert_sent: boolean
   enable_chip_in: boolean
   chip_in_goal: number | null
+  last_checked_price: number | null
+  last_price_check: string | null
+  source_price: number | null
+  source_currency: string | null
   created_at: string
   updated_at: string
 }

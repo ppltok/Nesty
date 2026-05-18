@@ -26,6 +26,7 @@ import AddItemModal from '../components/AddItemModal'
 import ShareModal from '../components/ShareModal'
 import ExtensionBanner from '../components/ExtensionBanner'
 import ExtensionGuideModal from '../components/ExtensionGuideModal'
+import PriceStatusBadge from '../components/PriceStatusBadge'
 import FadedIconsBackground from '../components/animations/FadedIconsBackground'
 import PostOnboardingWizard from '../components/popups/PostOnboardingWizard'
 import SharePromptModal from '../components/popups/SharePromptModal'
@@ -781,11 +782,18 @@ export default function Dashboard() {
                   </p>
                 </div>
                 {item.price > 0 && (
-                  <span
-                    className={`font-bold text-lg ${isPurchased ? 'text-[#49454f] line-through' : 'text-[#1d192b]'}`}
-                  >
-                    ₪{item.price.toLocaleString()}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span
+                      className={`font-bold text-lg ${isPurchased ? 'text-[#49454f] line-through' : 'text-[#1d192b]'}`}
+                    >
+                      ₪{item.price.toLocaleString()}
+                    </span>
+                    <PriceStatusBadge
+                      originalPrice={item.price}
+                      lastCheckedPrice={item.last_checked_price}
+                      lastPriceCheck={item.last_price_check}
+                    />
+                  </div>
                 )}
               </div>
               {item.notes && (
@@ -910,11 +918,18 @@ export default function Dashboard() {
                 {getCategoryName(item.category)}
               </p>
               {item.price > 0 && (
-                <span
-                  className={`font-bold text-lg ${isPurchased ? 'text-[#49454f] line-through decoration-[#b3261e]/50' : 'text-[#1d192b]'}`}
-                >
-                  ₪{item.price.toLocaleString()}
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span
+                    className={`font-bold text-lg ${isPurchased ? 'text-[#49454f] line-through decoration-[#b3261e]/50' : 'text-[#1d192b]'}`}
+                  >
+                    ₪{item.price.toLocaleString()}
+                  </span>
+                  <PriceStatusBadge
+                    originalPrice={item.price}
+                    lastCheckedPrice={item.last_checked_price}
+                    lastPriceCheck={item.last_price_check}
+                  />
+                </div>
               )}
             </div>
 
