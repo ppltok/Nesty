@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Add to Nesty Button",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "הוסיפי מוצרים מכל אתר מסחר אלקטרוני לרשימת הלידה שלך בהקלקה אחת על התוסף",
   "icons": {
     "16": "icon16.png",
@@ -119,7 +119,8 @@
     "https://*.aliexpress.com/*",
     "https://*.zara.com/*",
     "https://zara.com/*",
-    "http://localhost:5173/*"
+    "https://*.baby-lee.co.il/*",
+    "https://baby-lee.co.il/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -185,7 +186,8 @@
         "https://*.mothercare.co.il/*",     "https://mothercare.co.il/*",
         "https://*.babysafe.co.il/*",       "https://babysafe.co.il/*",
         "https://*.aliexpress.com/*",
-        "https://*.zara.com/*",             "https://zara.com/*"
+        "https://*.zara.com/*",             "https://zara.com/*",
+        "https://*.baby-lee.co.il/*",       "https://baby-lee.co.il/*"
       ],
       "js": ["button-injector.js"],
       "css": ["button-styles.css"],
@@ -202,7 +204,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup-styles.css", "page-script.js", "config.js", "supabase-client.js", "icon16.png", "icon48.png", "icon128.png", "Nesty_logo.png"],
+      "resources": ["popup-styles.css", "page-script.js", "config.js", "supabase-client.js", "icon16.png", "icon48.png", "icon128.png"],
       "matches": ["<all_urls>"]
     }
   ]

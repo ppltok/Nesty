@@ -46,3 +46,7 @@ monbebe.co.il | https://www.monbebe.co.il/items/3116740--%D7%91%D7%A7%D7%91%D7%9
 babymichel.com | https://www.babymichel.com/index.php?dir=site&page=catalog&op=item&cs=5442&langpage=heb&category=3040
 rainbowbaby.co.il | https://www.rainbowbaby.co.il/products/balios-ts5-white
 agalease-baby.co.il | https://agalease-baby.co.il/product/%d7%94%d7%9c%d7%99%d7%9b%d7%95%d7%9f-%d7%a2%d7%92%d7%9c%d7%aa-%d7%a7%d7%95%d7%91%d7%99%d7%95%d7%aa-%d7%9e%d7%a2%d7%a5-%d7%93%d7%99%d7%99%d7%a0%d7%99%d7%96-dainy/
+baby-lee.co.il | https://www.baby-lee.co.il/product-page/flow-%D7%9E%D7%99%D7%98%D7%AA-%D7%AA%D7%99%D7%A0%D7%95%D7%A7-120-60-%D7%A1-%D7%9E-%D7%A7%D7%9C%D7%99%D7%99
+dreamkids.co.il | https://www.dreamkids.co.il/items/8877672-%D7%98%D7%99%D7%95%D7%9C%D7%95%D7%9F-%D7%A1%D7%95%D7%95%D7%99%D7%A4%D7%98-%D7%95%D7%95%D7%90%D7%99-Swift-Way-%D7%98%D7%95%D7%95%D7%99%D7%92%D7%99-Twigy
+intersun.co.il | https://intersun.co.il/product/%d7%97%d7%91%d7%99%d7%9c%d7%aa-%d7%9c%d7%99%d7%93%d7%94-%d7%a8%d7%90%d7%a9%d7%95%d7%a0%d7%94/
+mibebe.co.il | https://www.mibebe.co.il/shop/malibu-boy-babygrow/
