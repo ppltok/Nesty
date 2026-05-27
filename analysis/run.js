@@ -38,7 +38,7 @@ async function fetchData() {
   const [profiles, regs, items] = await Promise.all([
     fetchAll('/profiles?select=id,created_at,first_name,due_date,feeling,is_first_time_parent,referral_source,onboarding_completed,utm_source,avatar_url,marketing_emails,checklist_nudge_sent_at,share_nudge_sent_at,admin_abandon_notified_at'),
     fetchAll('/registries?select=id,owner_id,partner_id'),
-    fetchAll('/items?select=id,registry_id,created_at,store_name'),
+    fetchAll('/items?select=id,registry_id,created_at,store_name,name'),
   ]);
   console.log(`  profiles: ${profiles.length}, registries: ${regs.length}, items: ${items.length}`);
 
@@ -143,6 +143,24 @@ async function fetchData() {
   }
   const topStores = Object.entries(storeTotals).sort((a,b)=>b[1]-a[1]).slice(0,10);
 
+  // ── Top products (by distinct profiles) ─────────────────────────────────
+  const productProfiles = {}; // key -> Set of profile ids
+  const productMeta = {};     // key -> {name, store}
+  for (const item of items) {
+    const owner = regOwner[item.registry_id];
+    if (!owner) continue;
+    const name = (item.name || '').trim();
+    const store = (item.store_name || 'unknown').trim();
+    if (!name) continue;
+    const key = `${store}|||${name}`;
+    if (!productProfiles[key]) { productProfiles[key] = new Set(); productMeta[key] = {name, store}; }
+    productProfiles[key].add(owner);
+  }
+  const topProducts = Object.entries(productProfiles)
+    .map(([k, set]) => ({ ...productMeta[k], count: set.size }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 20);
+
   // ── 7. Profile completeness ──────────────────────────────────────────────
   const profileSignals = ['onboarding_completed','due_date','feeling','partner_linked','marketing_emails'];
   const profilePct = {};
@@ -225,6 +243,7 @@ async function fetchData() {
       pros: storeDivBuckets('pros'),
     },
     topStores,
+    topProducts,
     profilePct,
     funnel: {
       all: funnelFor('all'),
@@ -240,7 +259,7 @@ async function fetchData() {
 // ── Generate HTML ────────────────────────────────────────────────────────────
 function generateHTML(d) {
   const { totals, byMonth, monthKeys, sourceMap, sourceKeys,
-          timeToFirst, spread, storeDiv, topStores, profilePct,
+          timeToFirst, spread, storeDiv, topStores, topProducts, profilePct,
           funnel, nudge, abandon, generatedAt } = d;
 
   const monthLabels = monthKeys.map(k => {
@@ -405,6 +424,24 @@ function generateHTML(d) {
 <div class="section">
   <div class="section-header"><h2>Top 10 Stores by Items Added</h2><button class="collapse-btn" onclick="toggle('m8')">Hide</button></div>
   <div class="section-body" id="m8"><canvas id="topStoresChart" height="300"></canvas></div>
+</div>
+
+<!-- 8b. Top products -->
+<div class="section" style="width:700px">
+  <div class="section-header"><h2>Top 20 Products by Unique Profiles</h2><button class="collapse-btn" onclick="toggle('m8b')">Hide</button></div>
+  <div class="section-body" id="m8b">
+    <p class="note">Each row = a unique store+product combo. Count = distinct families who added it.</p>
+    <table>
+      <thead><tr><th>#</th><th>Product</th><th>Store</th><th style="text-align:right">Profiles</th><th style="text-align:right">% of all users</th></tr></thead>
+      <tbody>${topProducts.map((p,i) => `<tr>
+        <td>${i+1}</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.name.replace(/"/g,'&quot;')}">${p.name}</td>
+        <td style="color:#888;font-size:11px">${p.store}</td>
+        <td class="num-cell">${p.count}</td>
+        <td class="pct-cell">${pct(p.count, totals.all)}%</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>
 </div>
 
 <!-- 9. Time to first item -->

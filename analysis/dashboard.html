@@ -137,6 +137,138 @@
   <div class="section-body" id="m8"><canvas id="topStoresChart" height="300"></canvas></div>
 </div>
 
+<!-- 8b. Top products -->
+<div class="section" style="width:700px">
+  <div class="section-header"><h2>Top 20 Products by Unique Profiles</h2><button class="collapse-btn" onclick="toggle('m8b')">Hide</button></div>
+  <div class="section-body" id="m8b">
+    <p class="note">Each row = a unique store+product combo. Count = distinct families who added it.</p>
+    <table>
+      <thead><tr><th>#</th><th>Product</th><th>Store</th><th style="text-align:right">Profiles</th><th style="text-align:right">% of all users</th></tr></thead>
+      <tbody><tr>
+        <td>1</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="Bebe אמבטיה סיליקון מתקפלת">Bebe אמבטיה סיליקון מתקפלת</td>
+        <td style="color:#888;font-size:11px">סופר־פארם</td>
+        <td class="num-cell">19</td>
+        <td class="pct-cell">6%</td>
+      </tr><tr>
+        <td>2</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="Anex IQ Pro">Anex IQ Pro</td>
+        <td style="color:#888;font-size:11px">בייבי סטאר</td>
+        <td class="num-cell">10</td>
+        <td class="pct-cell">3%</td>
+      </tr><tr>
+        <td>3</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="בוגבו Dragonfly">בוגבו Dragonfly</td>
+        <td style="color:#888;font-size:11px">מוצצים</td>
+        <td class="num-cell">8</td>
+        <td class="pct-cell">2%</td>
+      </tr><tr>
+        <td>4</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="זוג בקבוקי האכלה Hegen">זוג בקבוקי האכלה Hegen</td>
+        <td style="color:#888;font-size:11px">Hegen</td>
+        <td class="num-cell">7</td>
+        <td class="pct-cell">2%</td>
+      </tr><tr>
+        <td>5</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="תיק החתלה פרחוני">תיק החתלה פרחוני</td>
+        <td style="color:#888;font-size:11px">Zara</td>
+        <td class="num-cell">6</td>
+        <td class="pct-cell">2%</td>
+      </tr><tr>
+        <td>6</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="Biamba Pump SOft">Biamba Pump SOft</td>
+        <td style="color:#888;font-size:11px">Biamba</td>
+        <td class="num-cell">6</td>
+        <td class="pct-cell">2%</td>
+      </tr><tr>
+        <td>7</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="דפני לאמבטיה - לבן">דפני לאמבטיה - לבן</td>
+        <td style="color:#888;font-size:11px">שילב</td>
+        <td class="num-cell">6</td>
+        <td class="pct-cell">2%</td>
+      </tr><tr>
+        <td>8</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="חמישיית חיתולי טטרה מיננה תכלת – Minene">חמישיית חיתולי טטרה מיננה תכלת – Minene</td>
+        <td style="color:#888;font-size:11px">עגליס</td>
+        <td class="num-cell">6</td>
+        <td class="pct-cell">2%</td>
+      </tr><tr>
+        <td>9</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="מנשא לתינוק Lamer X Soft">מנשא לתינוק Lamer X Soft</td>
+        <td style="color:#888;font-size:11px">Lamer</td>
+        <td class="num-cell">5</td>
+        <td class="pct-cell">2%</td>
+      </tr><tr>
+        <td>10</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="מוניטור וידאו לתינוקות קינזי לוגן VM3.5 לבן – Kinsey Logan Video Baby Monitor">מוניטור וידאו לתינוקות קינזי לוגן VM3.5 לבן – Kinsey Logan Video Baby Monitor</td>
+        <td style="color:#888;font-size:11px">עגליס</td>
+        <td class="num-cell">5</td>
+        <td class="pct-cell">2%</td>
+      </tr><tr>
+        <td>11</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="מראת רכב לתינוק">מראת רכב לתינוק</td>
+        <td style="color:#888;font-size:11px">KSP</td>
+        <td class="num-cell">5</td>
+        <td class="pct-cell">2%</td>
+      </tr><tr>
+        <td>12</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="מאמ Mam">מאמ Mam</td>
+        <td style="color:#888;font-size:11px">שילב</td>
+        <td class="num-cell">4</td>
+        <td class="pct-cell">1%</td>
+      </tr><tr>
+        <td>13</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="כסא אוכל משולב Anex Ozy - שלוש באחד">כסא אוכל משולב Anex Ozy - שלוש באחד</td>
+        <td style="color:#888;font-size:11px">www.baby-star.co.il</td>
+        <td class="num-cell">4</td>
+        <td class="pct-cell">1%</td>
+      </tr><tr>
+        <td>14</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="Baby Brezza">Baby Brezza</td>
+        <td style="color:#888;font-size:11px">שילב</td>
+        <td class="num-cell">4</td>
+        <td class="pct-cell">1%</td>
+      </tr><tr>
+        <td>15</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="הריונית">הריונית</td>
+        <td style="color:#888;font-size:11px">סופר פארם</td>
+        <td class="num-cell">4</td>
+        <td class="pct-cell">1%</td>
+      </tr><tr>
+        <td>16</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="מנשא מיני אייר">מנשא מיני אייר</td>
+        <td style="color:#888;font-size:11px">שילב</td>
+        <td class="num-cell">4</td>
+        <td class="pct-cell">1%</td>
+      </tr><tr>
+        <td>17</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="מוניטור + מצלמה מעמד רצפתי דור 2 (Nanit)">מוניטור + מצלמה מעמד רצפתי דור 2 (Nanit)</td>
+        <td style="color:#888;font-size:11px">מוצצים</td>
+        <td class="num-cell">4</td>
+        <td class="pct-cell">1%</td>
+      </tr><tr>
+        <td>18</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="קשת לעגלה שחור לבן">קשת לעגלה שחור לבן</td>
+        <td style="color:#888;font-size:11px">שילב</td>
+        <td class="num-cell">4</td>
+        <td class="pct-cell">1%</td>
+      </tr><tr>
+        <td>19</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="מיטת תינוק ריי">מיטת תינוק ריי</td>
+        <td style="color:#888;font-size:11px">סגל בייבי</td>
+        <td class="num-cell">4</td>
+        <td class="pct-cell">1%</td>
+      </tr><tr>
+        <td>20</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="סט מניקור וטיפוח לתינוק צ’יקו – Chicco Nail Care Set">סט מניקור וטיפוח לתינוק צ’יקו – Chicco Nail Care Set</td>
+        <td style="color:#888;font-size:11px">עגליס</td>
+        <td class="num-cell">4</td>
+        <td class="pct-cell">1%</td>
+      </tr></tbody>
+    </table>
+  </div>
+</div>
+
 <!-- 9. Time to first item -->
 <div class="section">
   <div class="section-header">
