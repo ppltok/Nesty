@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nesty — User Activation Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #f8f5fb; padding: 30px; }
+  h1 { color: #86608e; font-size: 20px; margin-bottom: 4px; }
+  p.sub { color: #888; font-size: 12px; margin-bottom: 24px; }
+  .section { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 2px 16px rgba(134,96,142,0.1); margin-bottom: 24px; width: 500px; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .section-header h2 { font-size: 14px; color: #86608e; margin: 0; }
+  .collapse-btn { background: #f0ebf4; border: none; border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #86608e; cursor: pointer; }
+  .collapse-btn:hover { background: #e2d8ea; }
+  .section-body.hidden { display: none; }
+  .summary { display: flex; gap: 12px; margin-top: 16px; }
+  .card { flex: 1; background: #f8f5fb; border-radius: 10px; padding: 12px; text-align: center; }
+  .card .num { font-size: 22px; font-weight: bold; }
+  .card .lbl { font-size: 11px; color: #888; margin-top: 2px; }
+  .nonactive .num { color: #d9534f; } .newbies .num { color: #f0a500; } .pros .num { color: #5cb85c; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  th { background: #f0ebf4; color: #86608e; padding: 7px 10px; text-align: left; white-space: nowrap; }
+  td { padding: 6px 10px; border-bottom: 1px solid #f0ebf4; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #faf7fc; }
+  td.num-cell { text-align: right; font-weight: bold; }
+  td.pct-cell { text-align: right; color: #aaa; font-size: 11px; }
+  .dim { opacity: 0.25; }
+  .inline-filter { background: white; border: 1.5px solid #86608e; border-radius: 8px; padding: 3px 8px; font-size: 11px; color: #86608e; cursor: pointer; outline: none; }
+  .note { font-size: 11px; color: #999; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<h1>Nesty — User Activation Analysis</h1>
+<p class="sub">
+  322 total users · generated 27 May 2026 ·
+  <span style="color:#d9534f;font-weight:bold">Nonactive</span> (0 items) ·
+  <span style="color:#f0a500;font-weight:bold">Newbies</span> (1–4 items) ·
+  <span style="color:#5cb85c;font-weight:bold">Pros</span> (5+ items)
+</p>
+
+<!-- 1. By Month -->
+<div class="section">
+  <div class="section-header"><h2>Distribution by Signup Month</h2><button class="collapse-btn" onclick="toggle('m1')">Hide</button></div>
+  <div class="section-body" id="m1">
+    <canvas id="monthChart" height="260"></canvas>
+    <div class="summary">
+      <div class="card nonactive"><div class="num">188</div><div class="lbl">Nonactive (58%)</div></div>
+      <div class="card newbies"><div class="num">92</div><div class="lbl">Newbies (29%)</div></div>
+      <div class="card pros"><div class="num">42</div><div class="lbl">Pros (13%)</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. Monthly table -->
+<div class="section">
+  <div class="section-header"><h2>Monthly Data Table</h2><button class="collapse-btn" onclick="toggle('m2')">Hide</button></div>
+  <div class="section-body" id="m2">
+    <table>
+      <thead><tr><th>Month</th><th>Total</th><th style="color:#d9534f">Nonactive</th><th style="color:#d9534f">%</th><th style="color:#f0a500">Newbies</th><th style="color:#f0a500">%</th><th style="color:#5cb85c">Pros</th><th style="color:#5cb85c">%</th></tr></thead>
+      <tbody><tr><td>Dec 2025</td><td class="num-cell">6</td><td class="num-cell" style="color:#d9534f">0</td><td class="pct-cell">0%</td><td class="num-cell" style="color:#f0a500">3</td><td class="pct-cell">50%</td><td class="num-cell" style="color:#5cb85c">3</td><td class="pct-cell">50%</td></tr><tr><td>Jan 2026</td><td class="num-cell">2</td><td class="num-cell" style="color:#d9534f">0</td><td class="pct-cell">0%</td><td class="num-cell" style="color:#f0a500">0</td><td class="pct-cell">0%</td><td class="num-cell" style="color:#5cb85c">2</td><td class="pct-cell">100%</td></tr><tr><td>Feb 2026</td><td class="num-cell">4</td><td class="num-cell" style="color:#d9534f">3</td><td class="pct-cell">75%</td><td class="num-cell" style="color:#f0a500">1</td><td class="pct-cell">25%</td><td class="num-cell" style="color:#5cb85c">0</td><td class="pct-cell">0%</td></tr><tr><td>Mar 2026</td><td class="num-cell">80</td><td class="num-cell" style="color:#d9534f">59</td><td class="pct-cell">74%</td><td class="num-cell" style="color:#f0a500">14</td><td class="pct-cell">18%</td><td class="num-cell" style="color:#5cb85c">7</td><td class="pct-cell">9%</td></tr><tr><td>Apr 2026</td><td class="num-cell">104</td><td class="num-cell" style="color:#d9534f">73</td><td class="pct-cell">70%</td><td class="num-cell" style="color:#f0a500">15</td><td class="pct-cell">14%</td><td class="num-cell" style="color:#5cb85c">16</td><td class="pct-cell">15%</td></tr><tr><td>May 2026</td><td class="num-cell">126</td><td class="num-cell" style="color:#d9534f">53</td><td class="pct-cell">42%</td><td class="num-cell" style="color:#f0a500">59</td><td class="pct-cell">47%</td><td class="num-cell" style="color:#5cb85c">14</td><td class="pct-cell">11%</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 3. By Source -->
+<div class="section">
+  <div class="section-header"><h2>Distribution by Traffic Source</h2><button class="collapse-btn" onclick="toggle('m3')">Hide</button></div>
+  <div class="section-body" id="m3"><canvas id="sourceChart" height="260"></canvas></div>
+</div>
+
+<!-- 4. Source table -->
+<div class="section">
+  <div class="section-header"><h2>Traffic Source Data Table</h2><button class="collapse-btn" onclick="toggle('m4')">Hide</button></div>
+  <div class="section-body" id="m4">
+    <table>
+      <thead><tr><th>Source</th><th>Total</th><th style="color:#d9534f">Nonactive</th><th style="color:#d9534f">%</th><th style="color:#f0a500">Newbies</th><th style="color:#f0a500">%</th><th style="color:#5cb85c">Pros</th><th style="color:#5cb85c">%</th></tr></thead>
+      <tbody><tr><td>Direct/unknown</td><td class="num-cell">242</td><td class="num-cell" style="color:#d9534f">155</td><td class="pct-cell">64%</td><td class="num-cell" style="color:#f0a500">56</td><td class="pct-cell">23%</td><td class="num-cell" style="color:#5cb85c">31</td><td class="pct-cell">13%</td></tr><tr><td>Facebook</td><td class="num-cell">45</td><td class="num-cell" style="color:#d9534f">16</td><td class="pct-cell">36%</td><td class="num-cell" style="color:#f0a500">22</td><td class="pct-cell">49%</td><td class="num-cell" style="color:#5cb85c">7</td><td class="pct-cell">16%</td></tr><tr><td>Instagram</td><td class="num-cell">29</td><td class="num-cell" style="color:#d9534f">12</td><td class="pct-cell">41%</td><td class="num-cell" style="color:#f0a500">13</td><td class="pct-cell">45%</td><td class="num-cell" style="color:#5cb85c">4</td><td class="pct-cell">14%</td></tr><tr><td>Google</td><td class="num-cell">6</td><td class="num-cell" style="color:#d9534f">5</td><td class="pct-cell">83%</td><td class="num-cell" style="color:#f0a500">1</td><td class="pct-cell">17%</td><td class="num-cell" style="color:#5cb85c">0</td><td class="pct-cell">0%</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 5. Onboarding funnel -->
+<div class="section">
+  <div class="section-header">
+    <h2>Onboarding Drop-off Funnel</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select class="inline-filter" onchange="updateFunnelChart(this.value)">
+        <option value="all">All</option><option value="nonactive">Nonactive</option><option value="newbies">Newbies</option><option value="pros">Pros</option>
+      </select>
+      <button class="collapse-btn" onclick="toggle('m5')">Hide</button>
+    </div>
+  </div>
+  <div class="section-body" id="m5"><canvas id="funnelChart" height="260"></canvas></div>
+</div>
+
+<!-- 6. Profile completeness -->
+<div class="section">
+  <div class="section-header">
+    <h2>Profile Completeness Signals</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select class="inline-filter" onchange="updateProfileChart(this.value)">
+        <option value="all">All segments</option><option value="nonactive">Nonactive</option><option value="newbies">Newbies</option><option value="pros">Pros</option>
+      </select>
+      <button class="collapse-btn" onclick="toggle('m6')">Hide</button>
+    </div>
+  </div>
+  <div class="section-body" id="m6">
+    <p class="note">% of users in each segment with each signal. Avatar not shown — 0% across all groups.</p>
+    <canvas id="profileChart" height="260"></canvas>
+  </div>
+</div>
+
+<!-- 7. Store diversity -->
+<div class="section">
+  <div class="section-header">
+    <h2>Store Diversity — Stores per User</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select class="inline-filter" onchange="updateStoreDivChart(this.value)">
+        <option value="all">All</option><option value="nonactive">Nonactive</option><option value="newbies">Newbies</option><option value="pros">Pros</option>
+      </select>
+      <button class="collapse-btn" onclick="toggle('m7')">Hide</button>
+    </div>
+  </div>
+  <div class="section-body" id="m7">
+    <p class="note">Among users who added at least 1 item.</p>
+    <canvas id="storeDivChart" height="220"></canvas>
+  </div>
+</div>
+
+<!-- 8. Top stores -->
+<div class="section">
+  <div class="section-header"><h2>Top 10 Stores by Items Added</h2><button class="collapse-btn" onclick="toggle('m8')">Hide</button></div>
+  <div class="section-body" id="m8"><canvas id="topStoresChart" height="300"></canvas></div>
+</div>
+
+<!-- 9. Time to first item -->
+<div class="section">
+  <div class="section-header">
+    <h2>Time from Signup to First Item Added</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select class="inline-filter" onchange="updateTimeChart(this.value)">
+        <option value="all">All</option><option value="nonactive">Nonactive</option><option value="newbies">Newbies</option><option value="pros">Pros</option>
+      </select>
+      <button class="collapse-btn" onclick="toggle('m9')">Hide</button>
+    </div>
+  </div>
+  <div class="section-body" id="m9">
+    <canvas id="timeChart" height="220"></canvas>
+    <div class="summary" style="margin-top:16px">
+      <div class="card"><div class="num" style="color:#86608e;font-size:18px">0.1 hrs</div><div class="lbl">Median time to first item</div></div>
+      <div class="card"><div class="num" style="color:#86608e;font-size:18px">30.2 hrs</div><div class="lbl">Average (skewed by outliers)</div></div>
+      <div class="card"><div class="num" style="color:#86608e;font-size:18px">134</div><div class="lbl">Users who added ≥1 item</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 10. Session spread -->
+<div class="section">
+  <div class="section-header">
+    <h2>Days Between First & Last Item (Session Spread)</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select class="inline-filter" onchange="updateSpreadChart(this.value)">
+        <option value="all">All</option><option value="nonactive">Nonactive</option><option value="newbies">Newbies</option><option value="pros">Pros</option>
+      </select>
+      <button class="collapse-btn" onclick="toggle('m10')">Hide</button>
+    </div>
+  </div>
+  <div class="section-body" id="m10">
+    <p class="note">Among users who added 2+ items — proxy for how many sessions it took.</p>
+    <canvas id="spreadChart" height="220"></canvas>
+  </div>
+</div>
+
+<!-- 11. Nudge email -->
+<div class="section">
+  <div class="section-header"><h2>Checklist Nudge Email — Effect on Activity</h2><button class="collapse-btn" onclick="toggle('m11')">Hide</button></div>
+  <div class="section-body" id="m11">
+    <p class="note">32 users received this email. Did they add items after receiving it?</p>
+    <canvas id="nudgeChart" height="200"></canvas>
+    <div class="summary" style="margin-top:16px">
+      <div class="card" style="background:#fff3cd"><div class="num" style="color:#856404;font-size:18px">12</div><div class="lbl">Already had items (mis-targeted)</div></div>
+      <div class="card" style="background:#f8d7da"><div class="num" style="color:#842029;font-size:18px">20</div><div class="lbl">Still 0 items after email</div></div>
+      <div class="card" style="background:#d1e7dd"><div class="num" style="color:#0f5132;font-size:18px">0</div><div class="lbl">Converted after email</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 12. Abandon email -->
+<div class="section">
+  <div class="section-header"><h2>Abandon Email — Effect on Activity</h2><button class="collapse-btn" onclick="toggle('m12')">Hide</button></div>
+  <div class="section-body" id="m12">
+    <p class="note">2 users received this email — small sample, directional only.</p>
+    <canvas id="abandonChart" height="200"></canvas>
+    <div class="summary" style="margin-top:16px">
+      <div class="card" style="background:#d1e7dd"><div class="num" style="color:#0f5132;font-size:18px">1</div><div class="lbl">Converted after email</div></div>
+      <div class="card" style="background:#f8d7da"><div class="num" style="color:#842029;font-size:18px">1</div><div class="lbl">Still 0 items after email</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const C = { nonactive:'#d9534f', newbies:'#f0a500', pros:'#5cb85c' };
+
+function toggle(id) {
+  const el = document.getElementById(id);
+  const hidden = el.classList.toggle('hidden');
+  el.previousElementSibling.querySelector('.collapse-btn').textContent = hidden ? 'Show' : 'Hide';
+}
+
+function pctLabel(value, ctx) {
+  const total = ctx.chart.data.datasets.reduce((s,ds)=>s+(ds.data[ctx.dataIndex]||0),0);
+  if (!total || value/total < 0.07) return '';
+  return Math.round(value/total*100)+'%';
+}
+
+function doughnutPctLabel(value, ctx) {
+  const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+  return total && value > 0 ? Math.round(value/total*100)+'%' : '';
+}
+
+function barAbovePct(value, ctx) {
+  const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+  return total ? Math.round(value/total*100)+'%' : '';
+}
+
+// ── 1. Month chart ──
+const monthRaw = [{"nonactive":0,"newbies":3,"pros":3},{"nonactive":0,"newbies":0,"pros":2},{"nonactive":3,"newbies":1,"pros":0},{"nonactive":59,"newbies":14,"pros":7},{"nonactive":73,"newbies":15,"pros":16},{"nonactive":53,"newbies":59,"pros":14}];
+const monthLabels = ["Dec 2025","Jan 2026","Feb 2026","Mar 2026","Apr 2026","May 2026"];
+new Chart(document.getElementById('monthChart'), {
+  type:'bar', plugins:[ChartDataLabels],
+  data:{ labels:monthLabels, datasets:[
+    {label:'Nonactive', data:monthRaw.map(r=>r.nonactive), backgroundColor:C.nonactive, borderRadius:3},
+    {label:'Newbies',   data:monthRaw.map(r=>r.newbies),   backgroundColor:C.newbies,   borderRadius:3},
+    {label:'Pros',      data:monthRaw.map(r=>r.pros),      backgroundColor:C.pros,      borderRadius:3},
+  ]},
+  options:{responsive:true, plugins:{legend:{position:'top',labels:{font:{size:11}}}, datalabels:{color:'#fff',font:{size:10,weight:'bold'},formatter:pctLabel}},
+    scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'Users',font:{size:11}}}}}
+});
+
+// ── 2. Source chart ──
+const sourceRaw = [{"nonactive":155,"newbies":56,"pros":31},{"nonactive":16,"newbies":22,"pros":7},{"nonactive":12,"newbies":13,"pros":4},{"nonactive":5,"newbies":1,"pros":0}];
+const srcLabels = ["Direct/unknown","Facebook","Instagram","Google"];
+new Chart(document.getElementById('sourceChart'), {
+  type:'bar', plugins:[ChartDataLabels],
+  data:{ labels:srcLabels, datasets:[
+    {label:'Nonactive', data:sourceRaw.map(r=>r.nonactive), backgroundColor:C.nonactive, borderRadius:3},
+    {label:'Newbies',   data:sourceRaw.map(r=>r.newbies),   backgroundColor:C.newbies,   borderRadius:3},
+    {label:'Pros',      data:sourceRaw.map(r=>r.pros),      backgroundColor:C.pros,      borderRadius:3},
+  ]},
+  options:{responsive:true, plugins:{legend:{position:'top',labels:{font:{size:11}}}, datalabels:{color:'#fff',font:{size:10,weight:'bold'},formatter:pctLabel}},
+    scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'Users',font:{size:11}}}}}
+});
+
+// ── 3. Funnel chart ──
+const funnelData = {"all":[322,322,273,262,283,294,134],"nonactive":[188,188,142,134,150,162,0],"newbies":[92,92,90,87,91,90,92],"pros":[42,42,41,41,42,42,42]};
+const funnelLabels = ["Signed up","Name (Step 1)","Due date (Step 2)","Feeling (Step 3)","Referral (Step 4)","Onboarding done","Added item"];
+const funnelSegColors = {all:'#86608e', nonactive:C.nonactive, newbies:C.newbies, pros:C.pros};
+
+function funnelBgColors(data, seg) {
+  return data.map((v,i,arr) => i===0 ? funnelSegColors[seg] : (arr[i-1]-v)/arr[0] > 0.08 ? '#d9534f' : funnelSegColors[seg]);
+}
+const funnelChart = new Chart(document.getElementById('funnelChart'), {
+  type:'bar', plugins:[ChartDataLabels],
+  data:{ labels:funnelLabels, datasets:[{label:'Users', data:funnelData.all, backgroundColor:funnelBgColors(funnelData.all,'all'), borderRadius:4}] },
+  options:{responsive:true,plugins:{legend:{display:false},
+    datalabels:{anchor:'end',align:'end',color:'#444',font:{size:9,weight:'bold'},
+      formatter(value,ctx){
+        const data=ctx.chart.data.datasets[0].data;
+        const p=Math.round(value/data[0]*100)+'%';
+        if(ctx.dataIndex===0) return value+' (100%)';
+        const drop=Math.round((data[ctx.dataIndex-1]-value)/data[ctx.dataIndex-1]*100);
+        return value+' ('+p+')'+(drop>0?'\n-'+drop+'%':'');
+      }}},
+    scales:{x:{ticks:{font:{size:10}}},y:{title:{display:true,text:'Users',font:{size:11}}}},layout:{padding:{top:24}}}
+});
+function updateFunnelChart(seg) {
+  funnelChart.data.datasets[0].data = funnelData[seg];
+  funnelChart.data.datasets[0].backgroundColor = funnelBgColors(funnelData[seg], seg);
+  funnelChart.update();
+}
+
+// ── 4. Profile chart ──
+const profileData = {"nonactive":[86,76,71,1,48],"newbies":[98,98,95,3,74],"pros":[100,98,98,14,64]};
+const profileLabels = ['Onboarding\ncompleted','Due date\nset','Feeling\nfilled','Partner\nlinked','Marketing\nemails on'];
+const profileChart = new Chart(document.getElementById('profileChart'), {
+  type:'bar', plugins:[ChartDataLabels],
+  data:{ labels:profileLabels, datasets:[
+    {label:'Nonactive', data:profileData.nonactive, backgroundColor:C.nonactive+'cc', borderRadius:3},
+    {label:'Newbies',   data:profileData.newbies,   backgroundColor:C.newbies+'cc',   borderRadius:3},
+    {label:'Pros',      data:profileData.pros,       backgroundColor:C.pros+'cc',      borderRadius:3},
+  ]},
+  options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:11}}},
+    datalabels:{anchor:'end',align:'end',color:'#444',font:{size:9,weight:'bold'},formatter:v=>v+'%',display:ctx=>ctx.dataset.data[ctx.dataIndex]>0}},
+    scales:{x:{ticks:{font:{size:10}}},y:{min:0,max:110,title:{display:true,text:'% of segment',font:{size:11}},ticks:{callback:v=>v+'%'}}}}
+});
+function updateProfileChart(seg) {
+  profileChart.data.datasets.forEach((ds,i) => ds.hidden = seg!=='all' && ['nonactive','newbies','pros'][i]!==seg);
+  profileChart.update();
+}
+
+// ── 5. Store diversity chart ──
+const storeDivData = {"all":[61,20,25,28],"nonactive":[0,0,0,0],"newbies":[59,19,14,0],"pros":[2,1,11,28]};
+const storeDivLabels = ["1 store","2 stores","3–5 stores","6+ stores"];
+let currentStoreSeg = 'all';
+
+function storeDivFormatter(value,ctx) {
+  if(!value) return '';
+  if(currentStoreSeg==='all'){
+    const colTotal=ctx.chart.data.datasets.reduce((s,ds)=>s+(ds.data[ctx.dataIndex]||0),0);
+    if(!colTotal||value/colTotal<0.07) return '';
+    return Math.round(value/colTotal*100)+'%';
+  } else {
+    const segTotal=ctx.dataset.data.reduce((a,b)=>a+b,0);
+    if(!segTotal||value/segTotal<0.04) return '';
+    return Math.round(value/segTotal*100)+'%';
+  }
+}
+const storeDivChart = new Chart(document.getElementById('storeDivChart'), {
+  type:'bar', plugins:[ChartDataLabels],
+  data:{ labels:storeDivLabels, datasets:[
+    {label:'Nonactive', data:[...storeDivData.nonactive], backgroundColor:C.nonactive, borderRadius:3},
+    {label:'Newbies',   data:[...storeDivData.newbies],   backgroundColor:C.newbies,   borderRadius:3},
+    {label:'Pros',      data:[...storeDivData.pros],       backgroundColor:C.pros,      borderRadius:3},
+  ]},
+  options:{responsive:true,plugins:{legend:{position:'top',labels:{font:{size:11}}},datalabels:{color:'#fff',font:{size:10,weight:'bold'},formatter:storeDivFormatter}},
+    scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'Users',font:{size:11}}}}}
+});
+function updateStoreDivChart(seg) {
+  currentStoreSeg = seg;
+  storeDivChart.data.datasets[0].data = seg==='nonactive'||seg==='all' ? [...storeDivData.nonactive] : [0,0,0,0];
+  storeDivChart.data.datasets[1].data = seg==='newbies'||seg==='all'   ? [...storeDivData.newbies]   : [0,0,0,0];
+  storeDivChart.data.datasets[2].data = seg==='pros'||seg==='all'       ? [...storeDivData.pros]     : [0,0,0,0];
+  storeDivChart.update();
+}
+
+// ── 6. Top stores ──
+const topStoreData = [["www.shilav.co.il",107],["motsesim.co.il",60],["ידני",53],["agalease-baby.co.il",47],["שילב",45],["עגליס",34],["סופר פארם",34],["מוצצים",28],["סופר־פארם",21],["www.baby-star.co.il",20]];
+new Chart(document.getElementById('topStoresChart'), {
+  type:'bar', plugins:[ChartDataLabels],
+  data:{ labels:topStoreData.map(s=>s[0]), datasets:[{label:'Items', data:topStoreData.map(s=>s[1]), backgroundColor:'#86608e', borderRadius:4}] },
+  options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},
+    datalabels:{anchor:'end',align:'end',color:'#555',font:{size:10,weight:'bold'},
+      formatter(v,ctx){const t=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);return v+' ('+Math.round(v/t*100)+'%)'}}},
+    scales:{x:{title:{display:true,text:'Items added',font:{size:11}}},y:{ticks:{font:{size:11}}}},layout:{padding:{right:60}}}
+});
+
+// ── 7. Time to first item ──
+const timeData = {"all":[111,8,4,4,7],"nonactive":[0,0,0,0,0],"newbies":[84,3,1,1,3],"pros":[27,5,3,3,4]};
+const timeBucketLabels = ['< 1 hour','1–24 hours','1–3 days','3–7 days','7–30 days'];
+const timeColors = {all:'#86608e', nonactive:C.nonactive, newbies:C.newbies, pros:C.pros};
+const timeChart = new Chart(document.getElementById('timeChart'), {
+  type:'bar', plugins:[ChartDataLabels],
+  data:{ labels:timeBucketLabels, datasets:[{label:'Users', data:timeData.all, backgroundColor:'#86608e', borderRadius:4}] },
+  options:{responsive:true,plugins:{legend:{display:false},
+    datalabels:{anchor:'end',align:'end',color:'#555',font:{size:10,weight:'bold'},formatter:barAbovePct}},
+    scales:{x:{title:{display:true,text:'Time since signup',font:{size:11}}},y:{title:{display:true,text:'Users',font:{size:11}}}}}
+});
+function updateTimeChart(seg) {
+  timeChart.data.datasets[0].data = [...timeData[seg]];
+  timeChart.data.datasets[0].backgroundColor = timeColors[seg];
+  timeChart.update();
+}
+
+// ── 8. Session spread ──
+const spreadData = {"all":[45,8,25],"nonactive":[0,0,0],"newbies":[28,2,6],"pros":[17,6,19]};
+const spreadBucketLabels = ['Same day','1–7 days','7+ days'];
+const spreadColors = {all:'#86608e', nonactive:C.nonactive, newbies:C.newbies, pros:C.pros};
+const spreadChart = new Chart(document.getElementById('spreadChart'), {
+  type:'bar', plugins:[ChartDataLabels],
+  data:{ labels:spreadBucketLabels, datasets:[{label:'Users', data:spreadData.all, backgroundColor:'#86608e', borderRadius:4}] },
+  options:{responsive:true,plugins:{legend:{display:false},
+    datalabels:{anchor:'end',align:'end',color:'#555',font:{size:10,weight:'bold'},formatter:barAbovePct}},
+    scales:{x:{title:{display:true,text:'Days between first and last item',font:{size:11}}},y:{title:{display:true,text:'Users',font:{size:11}}}}}
+});
+function updateSpreadChart(seg) {
+  spreadChart.data.datasets[0].data = [...spreadData[seg]];
+  spreadChart.data.datasets[0].backgroundColor = spreadColors[seg];
+  spreadChart.update();
+}
+
+// ── 9. Nudge email ──
+new Chart(document.getElementById('nudgeChart'), {
+  type:'doughnut', plugins:[ChartDataLabels],
+  data:{ labels:['Already had items (mis-targeted)','Still 0 items after email','Converted after email'],
+    datasets:[{data:[12,20,0], backgroundColor:['#f0a500','#d9534f','#5cb85c'], borderWidth:2}] },
+  options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:14}},
+    datalabels:{color:'#fff',font:{size:12,weight:'bold'},formatter:doughnutPctLabel}}}
+});
+
+// ── 10. Abandon email ──
+new Chart(document.getElementById('abandonChart'), {
+  type:'doughnut', plugins:[ChartDataLabels],
+  data:{ labels:['Converted after email','Still 0 items after email'],
+    datasets:[{data:[1,1], backgroundColor:['#5cb85c','#d9534f'], borderWidth:2}] },
+  options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:14}},
+    datalabels:{color:'#fff',font:{size:12,weight:'bold'},formatter:doughnutPctLabel}}}
+});
+</script>
+</body>
+</html>

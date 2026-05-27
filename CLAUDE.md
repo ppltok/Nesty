@@ -195,6 +195,12 @@ Full submission guide: `extension/chrome-store/STORE_LISTING.md`.
 
 ---
 
+## User Activation Analysis
+
+A reusable analysis dashboard lives in `analysis/`. Run `node analysis/run.js` to fetch live Supabase data and regenerate `analysis/dashboard.html`. Findings and chart inventory documented in `project_status.md`.
+
+---
+
 ## Branch Strategy
 
 `main` is the deploy branch — push to main triggers the GitHub Pages deploy. Use feature branches and PRs for non-trivial work; verify which branch is current before assuming.

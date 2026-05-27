@@ -1,6 +1,58 @@
 # Nesty Project Status
 
-**Last Updated:** December 21, 2024
+**Last Updated:** May 27, 2026
+
+---
+
+## User Activation Analysis
+
+**Last run:** 2026-05-27 · **Script:** `node analysis/run.js` → outputs `analysis/dashboard.html`
+
+### Segment definitions
+| Segment | Definition |
+|---------|-----------|
+| **Nonactive** | 0 items added |
+| **Newbies** | 1–4 items added |
+| **Pros** | 5+ items added |
+
+### Snapshot (2026-05-27, 321 users)
+| Segment | Users | % |
+|---------|-------|---|
+| Nonactive | 188 | 59% |
+| Newbies | 91 | 28% |
+| Pros | 42 | 13% |
+
+### Key findings
+- **59% of users never added a single item** — signed up and disappeared
+- **Pros completed onboarding 100%** vs 86% for nonactives — onboarding completion is the strongest predictor of activation
+- **83% of users who added anything did so within the first hour** — almost entirely a one-session product
+- **Pros spread across 6+ stores** (67% of pros); newbies mostly shop at 1 store (64%)
+- **Checklist nudge email: 0 conversions** from 32 sends; 12 were mis-targeted (already had items)
+- **Abandon email: only 2 ever sent** — trigger is barely firing, needs investigation
+- **Partner linking is rare** even for pros (14%) — untapped engagement lever
+- **Facebook is the dominant traffic source** (189 users, 13% pro rate); Instagram converts slightly better (18%)
+- **Direct/Unknown (35 users): 0% pro rate** — likely low-intent or bot traffic
+
+### Dashboard charts
+1. Distribution by signup month
+2. Monthly data table
+3. Distribution by traffic source
+4. Traffic source data table
+5. Onboarding drop-off funnel (with segment filter)
+6. Profile completeness signals
+7. Store diversity — stores per user
+8. Top 10 stores by items added
+9. Time from signup to first item added
+10. Days between first & last item (session spread)
+11. Checklist nudge email effect
+12. Abandon email effect
+
+### How to re-run
+```bash
+node analysis/run.js
+# then open analysis/dashboard.html in browser
+```
+Fetches live data from Supabase and recomputes all metrics. No hardcoded values.
 
 ---
 
