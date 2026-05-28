@@ -271,6 +271,8 @@ export default function AddItemModal({
         image_url: formData.imageUrl || null,
       }
 
+      const addedVia: 'paste_url' | 'manual' = isExtractedData ? 'paste_url' : 'manual'
+
       if (isEditMode && editItem) {
         const { error: updateError } = await supabase
           .from('items')
@@ -288,7 +290,7 @@ export default function AddItemModal({
       } else {
         const { data: insertedItem, error: insertError } = await supabase
           .from('items')
-          .insert({ ...itemData, registry_id: registryId })
+          .insert({ ...itemData, registry_id: registryId, added_via: addedVia })
           .select('id')
           .single()
 

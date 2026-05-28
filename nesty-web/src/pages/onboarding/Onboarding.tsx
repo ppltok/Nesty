@@ -349,6 +349,7 @@ export default function Onboarding() {
           category: pickedItem.category,
           quantity: 1,
           is_most_wanted: true, // first item is "most-wanted" by default — shines on dashboard
+          added_via: 'manual',
         }
         console.log('[onboarding] Inserting first item:', itemPayload)
         const { data: insertedItem, error: itemError } = await supabase
