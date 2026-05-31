@@ -400,33 +400,60 @@ function stalledNudgeHtml(firstName: string, week: number, itemsCount: number, u
   return emailWrapper(content, unsubscribeUrl)
 }
 
-// ── Main handler ──────────────────────────────────────────────────────
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+// ── Concurrency helper ────────────────────────────────────────────────
+// Process items in parallel batches. Each batch awaits Promise.all before
+// the next one starts — keeps Resend/Supabase load bounded.
+const BATCH_SIZE = 10
+
+async function processInBatches<T>(
+  items: T[],
+  batchSize: number,
+  fn: (item: T) => Promise<void>,
+): Promise<void> {
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize)
+    await Promise.all(batch.map((item) => fn(item).catch((err) => {
+      console.error('batch item failed:', err)
+    })))
+  }
+}
+
+// ── Nudge results bookkeeping ─────────────────────────────────────────
+type NudgeBucket = { sent: number; errors: number; skipped: number }
+type NudgeResults = {
+  checklist_nudge: NudgeBucket
+  share_nudge: NudgeBucket
+  first_item: NudgeBucket
+  registry_stalled: NudgeBucket
+}
+
+// ── Main worker ───────────────────────────────────────────────────────
+// Pulled out of the serve() handler so we can return 202 immediately
+// via EdgeRuntime.waitUntil() and run this in the background. Avoids
+// the caller (GitHub Actions / pg_cron) timing out as user count grows.
+async function runAllNudges(): Promise<NudgeResults> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  const adminClient = createClient(supabaseUrl, supabaseServiceKey)
+
+  const results: NudgeResults = {
+    checklist_nudge: { sent: 0, errors: 0, skipped: 0 },
+    share_nudge: { sent: 0, errors: 0, skipped: 0 },
+    first_item: { sent: 0, errors: 0, skipped: 0 },
+    registry_stalled: { sent: 0, errors: 0, skipped: 0 },
   }
 
-  try {
-    if (!RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY is not set')
-    }
+  // Users who already received another nudge today shouldn't get a second.
+  // Populated as we send each nudge so cross-type dedup works. Safe to
+  // mutate from parallel batches because JS is single-threaded — Set
+  // reads/writes don't yield.
+  const nudgedToday = new Set<string>()
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey)
+  // Run the 4 nudge types sequentially so cross-type dedup (nudgedToday)
+  // works deterministically. Within each type, candidates are processed
+  // in parallel batches.
 
-    const results = {
-      checklist_nudge: { sent: 0, errors: 0, skipped: 0 },
-      share_nudge: { sent: 0, errors: 0, skipped: 0 },
-      first_item: { sent: 0, errors: 0, skipped: 0 },
-      registry_stalled: { sent: 0, errors: 0, skipped: 0 },
-    }
-
-    // Users who already received another nudge today shouldn't get a second.
-    // Populated as we send each nudge so cross-type dedup works.
-    const nudgedToday = new Set<string>()
-
-    // ── 1. Checklist nudge ──────────────────────────────────────────
+  // ── 1. Checklist nudge ──────────────────────────────────────────
     // Find users who:
     // - Completed onboarding 7+ days ago
     // - Have email_notifications = true
@@ -449,7 +476,7 @@ serve(async (req) => {
     }
 
     if (checklistCandidates && checklistCandidates.length > 0) {
-      for (const user of checklistCandidates) {
+      await processInBatches(checklistCandidates, BATCH_SIZE, async (user) => {
         // Check if user has any checklist activity
         const { count } = await adminClient
           .from('checklist_preferences')
@@ -463,7 +490,7 @@ serve(async (req) => {
             .update({ checklist_nudge_sent_at: new Date().toISOString() })
             .eq('id', user.id)
           results.checklist_nudge.skipped++
-          continue
+          return
         }
 
         // Send checklist nudge email
@@ -504,7 +531,7 @@ serve(async (req) => {
           console.error(`Error sending checklist nudge to ${user.email}:`, err)
           results.checklist_nudge.errors++
         }
-      }
+      })
     }
 
     // ── 2. Share registry nudge ──────────────────────────────────────
@@ -532,7 +559,7 @@ serve(async (req) => {
     }
 
     if (shareCandidates && shareCandidates.length > 0) {
-      for (const user of shareCandidates) {
+      await processInBatches(shareCandidates, BATCH_SIZE, async (user) => {
         // Get user's registry
         const { data: registry } = await adminClient
           .from('registries')
@@ -542,7 +569,7 @@ serve(async (req) => {
 
         if (!registry) {
           results.share_nudge.skipped++
-          continue
+          return
         }
 
         // Count items and check timing
@@ -555,7 +582,7 @@ serve(async (req) => {
 
         if (itemsCount < 3) {
           results.share_nudge.skipped++
-          continue
+          return
         }
 
         // Check that the latest item was added 2+ days ago
@@ -566,7 +593,7 @@ serve(async (req) => {
         if (new Date(latestItem.created_at) > twoDaysAgo) {
           // Too recent — user might still be adding items, wait
           results.share_nudge.skipped++
-          continue
+          return
         }
 
         // Send share nudge email
@@ -607,7 +634,7 @@ serve(async (req) => {
           console.error(`Error sending share nudge to ${user.email}:`, err)
           results.share_nudge.errors++
         }
-      }
+      })
     }
 
     // ── 3. First Item nudge (repeatable, pregnancy-week-aware) ─────
@@ -631,16 +658,16 @@ serve(async (req) => {
       .not('due_date', 'is', null)
       .lt('updated_at', fiveDaysAgo.toISOString())
 
-    for (const user of firstItemCandidates ?? []) {
+    await processInBatches(firstItemCandidates ?? [], BATCH_SIZE, async (user) => {
       if (nudgedToday.has(user.id)) {
         results.first_item.skipped++
-        continue
+        return
       }
       const dueDate = new Date(user.due_date as string)
       const week = calculatePregnancyWeek(dueDate)
       if (week < 12 || week > 40) {
         results.first_item.skipped++
-        continue
+        return
       }
 
       // 0 items check
@@ -656,14 +683,14 @@ serve(async (req) => {
           .eq('registry_id', (registry as { id: string }).id)
         if ((count ?? 0) > 0) {
           results.first_item.skipped++
-          continue
+          return
         }
       }
 
       // Spacing + max-sends guard
       if (!(await canSendNudge(adminClient, user.id, 'first_item', { minSpacingDays: 14, maxSends: 3 }))) {
         results.first_item.skipped++
-        continue
+        return
       }
 
       const { subject, variant } = pickFirstItemVariant(week)
@@ -697,7 +724,7 @@ serve(async (req) => {
         console.error(`Error sending first_item nudge to ${user.email}:`, err)
         results.first_item.errors++
       }
-    }
+    })
 
     // ── 4. Registry Stalled nudge ──────────────────────────────────
     // Eligibility:
@@ -718,16 +745,16 @@ serve(async (req) => {
       .eq('email_engagement_reminders', true)
       .not('due_date', 'is', null)
 
-    for (const user of stalledCandidates ?? []) {
+    await processInBatches(stalledCandidates ?? [], BATCH_SIZE, async (user) => {
       if (nudgedToday.has(user.id)) {
         results.registry_stalled.skipped++
-        continue
+        return
       }
       const dueDate = new Date(user.due_date as string)
       const week = calculatePregnancyWeek(dueDate)
       if (week < 20 || week > 40) {
         results.registry_stalled.skipped++
-        continue
+        return
       }
 
       const { data: registry } = await adminClient
@@ -737,7 +764,7 @@ serve(async (req) => {
         .maybeSingle()
       if (!registry) {
         results.registry_stalled.skipped++
-        continue
+        return
       }
       const { data: items } = await adminClient
         .from('items')
@@ -747,17 +774,17 @@ serve(async (req) => {
       const itemsCount = items?.length ?? 0
       if (itemsCount < 1 || itemsCount > 4) {
         results.registry_stalled.skipped++
-        continue
+        return
       }
       const latestAt = items?.[0]?.created_at
       if (!latestAt || new Date(latestAt as string) > sevenDaysAgoForStalled) {
         results.registry_stalled.skipped++
-        continue
+        return
       }
 
       if (!(await canSendNudge(adminClient, user.id, 'registry_stalled', { minSpacingDays: 14, maxSends: 3 }))) {
         results.registry_stalled.skipped++
-        continue
+        return
       }
 
       const { subject, variant } = pickStalledVariant(week, itemsCount)
@@ -791,21 +818,45 @@ serve(async (req) => {
         console.error(`Error sending registry_stalled nudge to ${user.email}:`, err)
         results.registry_stalled.errors++
       }
-    }
-
-    return new Response(JSON.stringify({ success: true, results }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
     })
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error)
-    console.error('Error in send-nudge-emails:', message)
+
+  console.log('send-nudge-emails complete:', JSON.stringify(results))
+  return results
+}
+
+// ── HTTP entry point ──────────────────────────────────────────────────
+// Returns 202 immediately and runs runAllNudges() in the background via
+// EdgeRuntime.waitUntil(). Callers (GitHub Actions, pg_cron) get an
+// instant response — no more curl timeouts as the candidate pool grows.
+// Errors and the final results summary land in Supabase function logs.
+serve((req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  if (!RESEND_API_KEY) {
     return new Response(
-      JSON.stringify({ success: false, error: message }),
+      JSON.stringify({ success: false, error: 'RESEND_API_KEY is not set' }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
-      }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
     )
   }
+
+  const work = runAllNudges().catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('send-nudge-emails background run failed:', message)
+  })
+
+  // @ts-ignore — EdgeRuntime is provided by the Supabase Edge runtime
+  EdgeRuntime.waitUntil(work)
+
+  return new Response(
+    JSON.stringify({ status: 'accepted' }),
+    {
+      status: 202,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    },
+  )
 })
