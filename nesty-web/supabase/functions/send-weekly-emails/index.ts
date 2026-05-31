@@ -1322,10 +1322,44 @@ serve(async (req) => {
           continue
         }
 
-        // Check if already sent for this week
+        // Check if already sent for this week (cheap pre-check on stale snapshot).
+        // The authoritative check is the atomic CAS below — this just avoids
+        // doing per-user work for the common case.
         if (profile.last_weekly_email_week === currentWeek && !targetUserId) {
           results.push({ email: profile.email, week: currentWeek, status: 'already_sent' })
           continue
+        }
+
+        // Atomic claim: try to set last_weekly_email_week=currentWeek, but
+        // ONLY if nobody else has already claimed this week. Prevents
+        // concurrent invocations (e.g. workflow retries after a curl timeout)
+        // from each sending the same weekly email — that's what caused
+        // 4× duplicate "שבוע 28" sends to קרן on 2026-05-03.
+        //
+        // .or() matches when previous value is NULL OR less than currentWeek
+        // (we never want to send backwards). targetUserId path skips the
+        // claim — manual/test runs should always send.
+        if (!targetUserId) {
+          const { data: claimed, error: claimErr } = await supabaseAdmin
+            .from('profiles')
+            .update({ last_weekly_email_week: currentWeek })
+            .eq('id', profile.id)
+            .or(`last_weekly_email_week.is.null,last_weekly_email_week.lt.${currentWeek}`)
+            .select('id')
+            .maybeSingle()
+
+          if (claimErr) {
+            console.error(`Claim error for ${profile.email}:`, claimErr)
+            results.push({ email: profile.email, week: currentWeek, status: `claim_error: ${claimErr.message}` })
+            continue
+          }
+
+          if (!claimed) {
+            // Another concurrent invocation already claimed (and is sending)
+            // this week's email. Safe to skip.
+            results.push({ email: profile.email, week: currentWeek, status: 'already_claimed' })
+            continue
+          }
         }
 
         const firstName = profile.first_name || profile.email.split('@')[0]
@@ -1389,16 +1423,21 @@ serve(async (req) => {
 
         if (!res.ok) {
           console.error(`Failed to send to ${profile.email}:`, resData)
+          // Roll back the atomic claim so the next run retries this user.
+          // Without this, a Resend outage would silently skip a week.
+          if (!targetUserId) {
+            await supabaseAdmin
+              .from('profiles')
+              .update({ last_weekly_email_week: profile.last_weekly_email_week })
+              .eq('id', profile.id)
+              .eq('last_weekly_email_week', currentWeek)  // only roll back if WE set it
+          }
           results.push({ email: profile.email, week: currentWeek, status: `error: ${resData.message || 'unknown'}` })
           continue
         }
 
-        // Update last sent week
-        await supabaseAdmin
-          .from('profiles')
-          .update({ last_weekly_email_week: currentWeek })
-          .eq('id', profile.id)
-
+        // Successfully sent. The claim is already in place from the CAS above —
+        // no further DB update needed.
         results.push({ email: profile.email, week: currentWeek, status: 'sent' })
       } catch (err) {
         console.error(`Error processing ${profile.email}:`, err)
