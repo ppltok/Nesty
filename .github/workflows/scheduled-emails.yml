@@ -39,7 +39,7 @@ jobs:
           for attempt in $(seq 1 $max_retries); do
             echo "Attempt $attempt of $max_retries..."
 
-            response=$(curl -s -w "\n%{http_code}" --max-time 60 \
+            response=$(curl -s -w "\n%{http_code}" --max-time 180 \
               -X POST \
               "${{ secrets.SUPABASE_URL }}/functions/v1/send-weekly-emails" \
               -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -79,7 +79,7 @@ jobs:
           for attempt in $(seq 1 $max_retries); do
             echo "Attempt $attempt of $max_retries..."
 
-            response=$(curl -s -w "\n%{http_code}" --max-time 60 \
+            response=$(curl -s -w "\n%{http_code}" --max-time 180 \
               -X POST \
               "${{ secrets.SUPABASE_URL }}/functions/v1/send-nudge-emails" \
               -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -119,7 +119,7 @@ jobs:
           for attempt in $(seq 1 $max_retries); do
             echo "Attempt $attempt of $max_retries..."
 
-            response=$(curl -s -w "\n%{http_code}" --max-time 60 \
+            response=$(curl -s -w "\n%{http_code}" --max-time 180 \
               -X POST \
               "${{ secrets.SUPABASE_URL }}/functions/v1/nudge-invitation" \
               -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
