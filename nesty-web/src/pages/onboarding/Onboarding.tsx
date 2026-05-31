@@ -421,9 +421,23 @@ export default function Onboarding() {
     }
   }
 
+  // Due date sanity bounds. A normal pregnancy is ~9 months out, so we
+  // accept up to 10 months future. Postpartum content runs to week 52
+  // (~3 mo after due), so we accept up to 6 months past. This catches
+  // typo years like 2002/1993/1976 that broke the weekly cadence.
+  const DUE_DATE_MIN = new Date(Date.now() - 6 * 30 * 86400 * 1000)
+    .toISOString().slice(0, 10)
+  const DUE_DATE_MAX = new Date(Date.now() + 10 * 30 * 86400 * 1000)
+    .toISOString().slice(0, 10)
+
+  const isDueDateValid = (s: string) => {
+    if (!s.trim()) return false
+    return s >= DUE_DATE_MIN && s <= DUE_DATE_MAX
+  }
+
   const canProceed = () => {
     if (step === 1) return data.firstName.trim().length > 0
-    if (step === 2) return data.dueDate.trim().length > 0
+    if (step === 2) return isDueDateValid(data.dueDate)
     return true
   }
 
@@ -645,8 +659,15 @@ export default function Onboarding() {
                 type="date"
                 value={data.dueDate}
                 onChange={(e) => setData({ ...data, dueDate: e.target.value })}
+                min={DUE_DATE_MIN}
+                max={DUE_DATE_MAX}
                 className="w-full px-4 py-3 rounded-[16px] border-2 border-[#e7e0ec] bg-white text-[#1d192b] text-center focus:border-[#6750a4] focus:outline-none transition-colors"
               />
+              {data.dueDate && !isDueDateValid(data.dueDate) && (
+                <p className="text-sm text-red-600 text-center">
+                  התאריך חייב להיות בין 6 חודשים אחורה ל-10 חודשים קדימה 💜
+                </p>
+              )}
               <p className="text-sm text-[#49454f] text-center">אופציונלי - אפשר לדלג</p>
               <div className="flex gap-3">
                 <button

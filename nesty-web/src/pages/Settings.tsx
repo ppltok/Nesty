@@ -310,11 +310,22 @@ export default function Settings() {
     }
   }
 
+  // Due date sanity bounds — same range as onboarding. Keep these
+  // values in sync with Onboarding.tsx and the DB CHECK constraint.
+  const DUE_DATE_MIN = new Date(Date.now() - 6 * 30 * 86400 * 1000)
+    .toISOString().slice(0, 10)
+  const DUE_DATE_MAX = new Date(Date.now() + 10 * 30 * 86400 * 1000)
+    .toISOString().slice(0, 10)
+
   // Save due date
   const handleSaveDueDate = async () => {
     if (!profile) return
     if (!dueDate) {
       showError('נא לבחור תאריך לידה משוער')
+      return
+    }
+    if (dueDate < DUE_DATE_MIN || dueDate > DUE_DATE_MAX) {
+      showError('התאריך חייב להיות בין 6 חודשים אחורה ל-10 חודשים קדימה')
       return
     }
     setIsLoading(true)
@@ -546,6 +557,8 @@ export default function Settings() {
             <input
               type="date"
               value={dueDate}
+              min={DUE_DATE_MIN}
+              max={DUE_DATE_MAX}
               onChange={(e) => {
                 setDueDate(e.target.value)
                 setShowDueDateWarning(false)
