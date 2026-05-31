@@ -39,6 +39,7 @@ const Accessibility = lazy(() => import('./pages/Accessibility'))
 const Contact = lazy(() => import('./pages/Contact'))
 const GuideHubPage = lazy(() => import('./pages/GuideHubPage'))
 const GuidePage = lazy(() => import('./pages/GuidePage'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 
 // Initialize localStorage versioning BEFORE React renders
 // This runs synchronously when the module is loaded
@@ -152,6 +153,10 @@ function AppRoutes() {
               and from Settings.tsx. */}
           <Route path="/settings/emails" element={<EmailPreferences />} />
         </Route>
+
+        {/* Admin analytics — full-screen, no side nav. The page itself gates
+            access by email and redirects non-admins to /dashboard. */}
+        <Route path="/admin" element={<AdminDashboard />} />
       </Route>
 
       {/* 404 - Redirect to home */}

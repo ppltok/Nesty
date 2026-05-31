@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { asset } from '../../lib/assets'
+import { useAuth } from '../../contexts/AuthContext'
 import {
   Heart,
   ClipboardList,
   Gift,
   BarChart3,
   Settings,
+  LayoutGrid,
   ChevronRight,
   ChevronLeft,
 } from 'lucide-react'
+
+// Admin allow-list — keep in sync with AdminDashboard.tsx.
+const ADMIN_EMAILS = ['yaniv@goldbarventures.com']
 
 interface NavItem {
   id: string
@@ -25,7 +30,10 @@ interface SideNavProps {
 
 export default function SideNav({ giftsCount = 0 }: SideNavProps) {
   const location = useLocation()
+  const { user } = useAuth()
   const [isExpanded, setIsExpanded] = useState(false)
+
+  const isAdmin = ADMIN_EMAILS.includes(user?.email?.toLowerCase() ?? '')
 
   const navItems: NavItem[] = [
     {
@@ -231,6 +239,24 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
 
         {/* Bottom Actions - Settings */}
         <div className="p-3 border-t border-[#e7e0ec] flex-shrink-0 bg-[#fdfcff]">
+          {/* Admin-only analytics link — gated by email allow-list. */}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={`
+                flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-200
+                ${isActive('/admin')
+                  ? 'bg-[#eaddff] text-[#6750a4]'
+                  : 'text-[#49454f] hover:bg-[#f3edff] hover:text-[#1d192b]'
+                }
+                ${!isExpanded && 'justify-center'}
+              `}
+              title={!isExpanded ? 'אנליטיקס' : undefined}
+            >
+              <LayoutGrid className="w-6 h-6 flex-shrink-0" />
+              {isExpanded && <span className="font-medium">📊 אנליטיקס</span>}
+            </Link>
+          )}
           <Link
             to="/settings"
             data-tutorial="nav-settings"
