@@ -10,6 +10,8 @@ Nesty is an Israeli baby registry platform with two pieces:
 1. **Web app** (`nesty-web/`) — React 19 + TypeScript + Vite + TailwindCSS + Supabase. Deployed to GitHub Pages, served from `https://nestyil.com`.
 2. **Chrome extension** (`extension/final-version/`) — JSON-LD product scraper for adding items from any e-commerce site.
 
+> **⚠️ This repo is NOT the internal analytics dashboard.** `dashboard.nestyil.com` is a **separate** app in a **separate** repo — `ppltok/nesty-dashboard` (its own React/Vite/Supabase project, deployed manually to its `gh-pages` branch; no Actions workflow). Both apps share the same Supabase project (`wopsrjfdaovlyibivijl`). If a task is about internal metrics, pivot/report tooling, or anything served from `dashboard.nestyil.com`, **work in `ppltok/nesty-dashboard`, not here.** Pushing it to `nestyil.com` (this repo) means it never reaches the dashboard. (Push access to `nesty-dashboard` is granted to the `ppltok` owner account; the `yanivbarlev` collaborator account needs a write invite.)
+
 ---
 
 ## Brand & Voice — the day-to-day rules
