@@ -28,8 +28,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'checklist',
-    title: 'הצ׳קליסט - מפה מתחילה',
-    description: 'רשימת כל מה שתינוק צריך, מסודרת לפי קטגוריות.\nעברי על הפריטים, סמני מה כבר יש לך, ובחרי מה חשוב.',
+    title: 'הצ׳קליסט - תתחילי מפה',
+    description: 'פה תוכלי למצוא על מה שצריך לקראת התינוק, מסודרת לפי קטגוריות.\nעברי על הפריטים, סמני מה כבר יש לך, ובחרי מה חשוב ומה פינוק.',
     navItemId: 'checklist',
     route: '/checklist',
     icon: ClipboardList,

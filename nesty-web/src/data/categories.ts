@@ -221,8 +221,8 @@ export const ITEMS_DATA: Record<string, ItemInfo> = {
       {
         name: 'כיסא בטיחות טוויגי סייף גארד פלוס',
         store: 'עגליס',
-        url: 'https://agalease-baby.co.il/product/%D7%9B%D7%99%D7%A1%D7%90-%D7%91%D7%98%D7%99%D7%97%D7%95%D7%AA-%D7%A1%D7%99%D7%99%D7%A3-%D7%92%D7%90%D7%A8%D7%93-%D7%A4%D7%9C%D7%95%D7%A1-%D7%98%D7%95%D7%95%D7%99%D7%92%D7%99-twigy-safeguard-plus/?attribute_pa_color=%25d7%25a9%25d7%259e%25d7%25a0%25d7%25aa-ivory&tw_source=google&tw_adid=&tw_campaign=22294827738&tw_kwdid=&gad_source=1&gad_campaignid=22301392682&gbraid=0AAAAAC2FMluZ4w5O-wAdryOgNsN_5yp9V&gclid=Cj0KCQjw77bPBhC_ARIsAGAjjV_JZZWJjLWHGENFobxhjPQ2lR5PhHki088j_D_T-PxKarnMdb3YIgQaAi3AEALw_wcB',
-        image: 'https://agalease-baby.co.il/wp-content/uploads/2024/06/84222-1.jpg',
+        url: 'https://www.agalease-baby.co.il/products/12747?variant=43217037066329',
+        image: 'https://www.agalease-baby.co.il/cdn/shop/files/84222.jpg?v=1776077689',
         price: 699,
       },
     ],
