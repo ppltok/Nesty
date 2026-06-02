@@ -126,18 +126,24 @@ export default function SignIn() {
           {error && (
             <div className="bg-red-50 text-red-600 px-4 py-3 rounded-[16px] mb-6 text-center border border-red-100">
               <p>{error}</p>
-              {/* When the error is a credentials-mismatch we can't tell whether
-                  the email simply has no account yet — nudge toward signup so
-                  the user isn't stuck guessing. */}
+              {/* On a credentials-mismatch we can't tell (anti-enumeration)
+                  whether the account doesn't exist, or exists via Google with
+                  no password. Cover both: point to Google (the common trap —
+                  Google account, no password) and to signup. */}
               {error.includes('שגויים') && (
-                <p className="mt-2 text-sm">
-                  <Link
-                    to={`/auth/signup${redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ''}`}
-                    className="text-[#6750a4] font-medium hover:underline"
-                  >
-                    הירשמו כאן →
-                  </Link>
-                </p>
+                <div className="mt-2 text-sm space-y-1">
+                  <p className="text-[#49454f]">
+                    נרשמת עם Google? התחברי עם הכפתור למטה 👇
+                  </p>
+                  <p>
+                    <Link
+                      to={`/auth/signup${redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ''}`}
+                      className="text-[#6750a4] font-medium hover:underline"
+                    >
+                      אין לך חשבון? הירשמי כאן →
+                    </Link>
+                  </p>
+                </div>
               )}
             </div>
           )}

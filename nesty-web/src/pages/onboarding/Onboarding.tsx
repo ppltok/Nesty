@@ -119,7 +119,7 @@ function buildCuratedRows(): { group: typeof ESSENTIAL_GROUPS[number]; products:
   })
 }
 
-type Step = 1 | 2 | 3 | 4 | 5 | 'celebration'
+type Step = 1 | 2 | 3 | 4 | 5 | 6 | 'celebration'
 
 type ReferralSource = 'facebook' | 'instagram' | 'google' | 'tiktok' | 'friend' | 'other' | null
 
@@ -130,6 +130,7 @@ interface OnboardingData {
   feeling: 'excited' | 'overwhelmed' | 'exploring' | null
   isFirstTimeParent: boolean | null
   referralSource: ReferralSource
+  partnerEmail: string
   marketingEmails: boolean
 }
 
@@ -160,7 +161,7 @@ function firstItemSubtitle(feeling: OnboardingData['feeling']) {
   if (feeling === 'exploring') {
     return 'הנה דוגמה לאיך זה עובד — בחרי משהו ותראי איך הרשימה מתחילה להיראות.'
   }
-  return 'בחרי משהו אחד — או הדביקי קישור מכל חנות שאת אוהבת.'
+  return 'בחרי כמה שבא לך — אחד מכל קטגוריה. או הדביקי קישור מכל חנות.'
 }
 
 export default function Onboarding() {
@@ -181,11 +182,15 @@ export default function Onboarding() {
     feeling: null,
     isFirstTimeParent: null,
     referralSource: null,
+    partnerEmail: '',
     marketingEmails: true, // default ON, disclosure on the final button
   })
 
-  // First-item-step state
-  const [pickedItem, setPickedItem] = useState<CuratedItem | null>(null)
+  // First-item-step state — users may pick several items, but only one per
+  // essential group (one stroller, one car seat, one bath, etc.). Keyed
+  // implicitly by parentItem: picking within a group replaces that group's
+  // pick. A pasted-URL item lives under its own 'pasted' group.
+  const [pickedItems, setPickedItems] = useState<CuratedItem[]>([])
   const [pasteUrl, setPasteUrl] = useState('')
   const [extractStatus, setExtractStatus] = useState<
     | { state: 'idle' }
@@ -199,11 +204,12 @@ export default function Onboarding() {
     2: 'due_date',
     3: 'feeling_and_first_time_parent',
     4: 'referral_source',
-    5: 'first_item',
+    5: 'co_parent',
+    6: 'first_item',
   }
 
   const handleNext = () => {
-    if (typeof step === 'number' && step < 5) {
+    if (typeof step === 'number' && step < 6) {
       if (user) {
         trackOnboardingStep({
           user_id: user.id,
@@ -223,17 +229,25 @@ export default function Onboarding() {
   }
 
   const handleSkip = () => {
-    if (typeof step === 'number' && step < 5) {
+    if (typeof step === 'number' && step < 6) {
       setStep((step + 1) as Step)
-    } else if (step === 5) {
+    } else if (step === 6) {
       handleComplete()
     }
   }
 
+  const isEmailValid = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim())
+
   const handlePickItem = (item: CuratedItem) => {
-    setPickedItem(item === pickedItem ? null : item)
-    setPasteUrl('') // clear URL field when picking from grid
-    setExtractStatus({ state: 'idle' })
+    setPickedItems((prev) => {
+      const sameGroup = prev.find((p) => p.parentItem === item.parentItem)
+      // Click the already-selected item in its group → deselect it.
+      if (sameGroup && sameGroup.url === item.url) {
+        return prev.filter((p) => p.parentItem !== item.parentItem)
+      }
+      // Otherwise select it, replacing any prior pick from the same group.
+      return [...prev.filter((p) => p.parentItem !== item.parentItem), item]
+    })
   }
 
   const handleExtractUrl = async () => {
@@ -264,23 +278,23 @@ export default function Onboarding() {
         parentItem: 'pasted',
       }
       setExtractStatus({ state: 'success', product: extracted })
-      setPickedItem(extracted)
+      setPickedItems((prev) => [...prev.filter((p) => p.parentItem !== 'pasted'), extracted])
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'לא הצלחנו לחלץ — אפשר להוסיף ידנית בהמשך'
       setExtractStatus({ state: 'error', message: msg })
     }
   }
 
-  // "Skip without an item" — explicitly clears any picked item before completing
+  // "Skip without an item" — explicitly clears any picked items before completing
   const handleSkipFirstItem = () => {
-    setPickedItem(null)
+    setPickedItems([])
     handleComplete()
   }
 
   const handleComplete = async () => {
     // Preview mode: short-circuit to celebration without any DB writes
     if (isPreview) {
-      console.log('[__nesty preview] would have saved:', { data, pickedItem })
+      console.log('[__nesty preview] would have saved:', { data, pickedItems })
       setStep('celebration')
       return
     }
@@ -337,41 +351,99 @@ export default function Onboarding() {
         throw new Error(`שגיאה ביצירת הרשימה: ${registryError.message}`)
       }
 
-      // Phase 1: insert the first item if picked — the wow moment
-      if (registryData && pickedItem) {
-        const itemPayload = {
+      // Phase 1: insert the picked items — the wow moment. Users can pick one
+      // item per essential group, so this may be several rows. The first pick
+      // is flagged most-wanted so it shines on the dashboard.
+      if (registryData && pickedItems.length > 0) {
+        const itemRows = pickedItems.map((item, idx) => ({
           registry_id: registryData.id,
-          name: pickedItem.name,
-          price: pickedItem.price,
-          image_url: pickedItem.image || null,
-          original_url: pickedItem.url || null,
-          store_name: pickedItem.store || 'ידני',
-          category: pickedItem.category,
+          name: item.name,
+          price: item.price,
+          image_url: item.image || null,
+          original_url: item.url || null,
+          store_name: item.store || 'ידני',
+          category: item.category,
           quantity: 1,
-          is_most_wanted: true, // first item is "most-wanted" by default — shines on dashboard
+          is_most_wanted: idx === 0,
           added_via: 'manual',
-        }
-        console.log('[onboarding] Inserting first item:', itemPayload)
-        const { data: insertedItem, error: itemError } = await supabase
+        }))
+        console.log('[onboarding] Inserting first items:', itemRows)
+        const { data: insertedItems, error: itemError } = await supabase
           .from('items')
-          .insert(itemPayload)
+          .insert(itemRows)
           .select('id')
-          .single()
         if (itemError) {
           console.error('[onboarding] First-item insert FAILED:', itemError)
           // Surface to the user so they know — registry still exists, retry-able later
           setError(`הרשימה נוצרה אבל הוספת הפריט נכשלה: ${itemError.message}. אפשר להוסיף ידנית מהרשימה.`)
-        } else if (insertedItem) {
-          console.log('[onboarding] ✅ First item added:', insertedItem.id, pickedItem.name)
-          trackItemAdded({
-            registry_id: registryData.id,
-            item_id: insertedItem.id,
-            item_name: pickedItem.name,
-            item_category: pickedItem.category,
-            item_price: pickedItem.price,
-            source: extractStatus.state === 'success' ? 'paste' : 'manual',
-            has_extension: false,
+        } else if (insertedItems) {
+          console.log('[onboarding] ✅ First items added:', insertedItems.length)
+          pickedItems.forEach((item, idx) => {
+            trackItemAdded({
+              registry_id: registryData.id,
+              item_id: insertedItems[idx]?.id,
+              item_name: item.name,
+              item_category: item.category,
+              item_price: item.price,
+              source: item.parentItem === 'pasted' ? 'paste' : 'manual',
+              has_extension: false,
+            })
           })
+        }
+
+        // Auto-check the matching checklist items: picking the Anex stroller in
+        // onboarding marks "עגלה לתינוק מגיל לידה" as done in /checklist. Each
+        // curated group's parentItem is a checklist item_name, and its category
+        // enum is the checklist category_id. Pasted items have no checklist row.
+        const checklistRows = pickedItems
+          .filter((item) => item.parentItem !== 'pasted' && ITEMS_DATA[item.parentItem])
+          .map((item) => ({
+            user_id: user.id,
+            category_id: item.category,
+            item_name: item.parentItem,
+            quantity: 1,
+            is_checked: true,
+            is_hidden: false,
+            notes: '',
+            priority: ITEMS_DATA[item.parentItem]?.type === 'treat' ? 'nice_to_have' : 'essential',
+            checked_at: new Date().toISOString(),
+          }))
+        if (checklistRows.length > 0) {
+          const { error: checklistError } = await supabase
+            .from('checklist_preferences')
+            .upsert(checklistRows, { onConflict: 'user_id,category_id,item_name' })
+          if (checklistError) {
+            // Non-critical — the item is already in the registry; checklist
+            // marking is a nicety, never block onboarding for it.
+            console.warn('[onboarding] checklist auto-check failed (non-critical):', checklistError)
+          }
+        }
+      }
+
+      // Co-parent invite — fire only after the registry exists (send-invitation
+      // needs registry_id). Non-blocking: a failed invite must never fail
+      // onboarding. The registry is already created, so the user can retry
+      // from Settings.
+      if (registryData && data.partnerEmail.trim() && isEmailValid(data.partnerEmail)) {
+        try {
+          const { error: inviteErr } = await supabase.functions.invoke('send-invitation', {
+            body: {
+              registry_id: registryData.id,
+              invited_email: data.partnerEmail.trim().toLowerCase(),
+            },
+          })
+          if (inviteErr) {
+            console.warn('[onboarding] co-parent invite failed (non-critical):', inviteErr)
+          } else if (user) {
+            trackOnboardingStep({
+              user_id: user.id,
+              step: 5,
+              step_name: 'co_parent_invited',
+              completed: true,
+            })
+          }
+        } catch (inviteErr) {
+          console.warn('[onboarding] co-parent invite error (non-critical):', inviteErr)
         }
       }
 
@@ -438,6 +510,8 @@ export default function Onboarding() {
   const canProceed = () => {
     if (step === 1) return data.firstName.trim().length > 0
     if (step === 2) return isDueDateValid(data.dueDate)
+    // Co-parent email is optional, but if typed it must be valid.
+    if (step === 5) return data.partnerEmail.trim() === '' || isEmailValid(data.partnerEmail)
     return true
   }
 
@@ -480,7 +554,7 @@ export default function Onboarding() {
             if (profileRow.is_first_time_parent === null || profileRow.is_first_time_parent === undefined)
               skippedSteps.push('is_first_time_parent')
             if (!profileRow.referral_source) skippedSteps.push('referral_source')
-            if (!pickedItem) skippedSteps.push('first_item')
+            if (pickedItems.length === 0) skippedSteps.push('first_item')
 
             // Minutes from auth signup → onboarding completion
             let minutesToComplete: number | undefined
@@ -508,13 +582,14 @@ export default function Onboarding() {
                     feeling: profileRow.feeling || '',
                     isFirstTimeParent: profileRow.is_first_time_parent,
                     referralSource: profileRow.referral_source || '',
-                    firstItem: pickedItem
+                    firstItem: pickedItems[0]
                       ? {
-                          name: pickedItem.name,
-                          price: pickedItem.price ?? null,
-                          store: pickedItem.store,
-                          category: pickedItem.category,
-                          url: pickedItem.url,
+                          name: pickedItems[0].name,
+                          price: pickedItems[0].price ?? null,
+                          store: pickedItems[0].store,
+                          category: pickedItems[0].category,
+                          url: pickedItems[0].url,
+                          totalPicked: pickedItems.length,
                         }
                       : null,
                     skippedSteps,
@@ -591,9 +666,9 @@ export default function Onboarding() {
           <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-16 w-auto" />
         </Link>
 
-        {/* Progress dots — 5 steps now */}
+        {/* Progress dots — 6 steps now */}
         <div className="flex justify-center gap-2 mb-6">
-          {[1, 2, 3, 4, 5].map((s) => (
+          {[1, 2, 3, 4, 5, 6].map((s) => (
             <div
               key={s}
               className={`w-3 h-3 rounded-full transition-colors ${
@@ -825,8 +900,61 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* ─────────── Step 5: First Item — the wow moment ─────────── */}
+          {/* ─────────── Step 5: Co-parent invite ─────────── */}
           {step === 5 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#7c4dbd] to-[#9b62d4] rounded-[20px] flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <span className="text-3xl">💜</span>
+                </div>
+                <h1 className="text-2xl font-medium text-[#1d192b] mb-2">בונים את הקן ביחד?</h1>
+                <p className="text-[#49454f]">אפשר להזמין את בן/בת הזוג להוסיף, לערוך ולראות הכל איתך.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1d192b] mb-2">
+                  האימייל של בן/בת הזוג (אופציונלי)
+                </label>
+                <input
+                  type="email"
+                  inputMode="email"
+                  dir="ltr"
+                  value={data.partnerEmail}
+                  onChange={(e) => setData({ ...data, partnerEmail: e.target.value })}
+                  placeholder="partner@email.com"
+                  className="w-full px-4 py-3 rounded-[16px] border-2 border-[#e7e0ec] bg-white text-[#1d192b] text-left placeholder:text-[#49454f]/60 focus:border-[#6750a4] focus:outline-none transition-colors"
+                />
+                {data.partnerEmail.trim() !== '' && !isEmailValid(data.partnerEmail) && (
+                  <p className="text-sm text-red-600 text-center mt-2">בדקי שהאימייל תקין 💜</p>
+                )}
+              </div>
+              <p className="text-xs text-[#49454f] text-center">
+                נשלח להם הזמנה חמה להצטרף. אפשר גם להזמין אחר כך מההגדרות.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleBack}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-white border-2 border-[#e7e0ec] text-[#1d192b] font-medium hover:border-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  חזור
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={!canProceed()}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium hover:bg-[#7c5fbd] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  המשך
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              </div>
+              <button onClick={handleSkip} className="w-full text-[#49454f] hover:text-[#6750a4] text-sm transition-colors">
+                אזמין אחר כך
+              </button>
+            </div>
+          )}
+
+          {/* ─────────── Step 6: First Item — the wow moment ─────────── */}
+          {step === 6 && (
             <div className="space-y-4">
               <div className="text-center">
                 <div className="w-14 h-14 bg-[#f3edff] rounded-[18px] flex items-center justify-center mx-auto mb-3">
@@ -881,7 +1009,7 @@ export default function Onboarding() {
               {/* OR divider */}
               <div className="flex items-center gap-2 text-[10px] text-[#9e9e9e]">
                 <div className="flex-1 border-t border-[#e7e0ec]" />
-                <span>או בחרי פריט פופולרי מהצ'קליסט</span>
+                <span>או בחרי מהמומלצים — אפשר אחד מכל קטגוריה</span>
                 <div className="flex-1 border-t border-[#e7e0ec]" />
               </div>
 
@@ -905,7 +1033,7 @@ export default function Onboarding() {
                     </div>
                     <div className="grid grid-cols-3 gap-1.5">
                       {products.map((item) => {
-                        const isPicked = pickedItem?.url === item.url
+                        const isPicked = pickedItems.some((p) => p.url === item.url)
                         return (
                           <button
                             key={item.url}
@@ -962,10 +1090,10 @@ export default function Onboarding() {
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : pickedItem ? (
+                  ) : pickedItems.length > 0 ? (
                     <>
                       <Plus className="w-4 h-4" />
-                      הוסיפי וסיימי
+                      {pickedItems.length > 1 ? `הוסיפי ${pickedItems.length} וסיימי` : 'הוסיפי וסיימי'}
                     </>
                   ) : (
                     <>

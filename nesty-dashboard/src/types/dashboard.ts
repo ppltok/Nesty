@@ -8,6 +8,10 @@ export interface DashboardOverview {
   new_items: number
   total_gifts: number
   new_gifts: number
+  /** Confirmed gifts (period) where buyer email matches the registry owner or co-parent profile. */
+  gifts_by_owner: number
+  /** Confirmed gifts (period) where buyer email does NOT match the owner or co-parent — i.e. friends & family. */
+  gifts_by_external: number
   platform_gmv: number
   period_gmv: number
   avg_registry_value: number
@@ -24,6 +28,8 @@ export interface DashboardOverview {
   prev_active_registries: number
   prev_new_items: number
   prev_new_gifts: number
+  prev_gifts_by_owner: number
+  prev_gifts_by_external: number
   prev_platform_gmv: number
 }
 
@@ -31,6 +37,25 @@ export interface FunnelStage {
   stage: string
   stage_order: number
   count: number
+}
+
+/** 5-tier user funnel + behavioral flag matrix. See User-Tiers.md in the
+ *  Nesty Obsidian vault for tier and flag definitions. */
+export interface TierFunnel {
+  total_users: number
+  tiers: { tier: TierName; tier_order: number; users: number }[]
+  flags_overall: TierFlagCounts
+  flag_by_tier: ({ tier: TierName; tier_order: number; users: number } & TierFlagCounts)[]
+}
+
+export type TierName = 'user' | 'started' | 'active' | 'super' | 'champion'
+
+export interface TierFlagCounts {
+  has_coparent: number
+  sharer: number
+  network_reached: number
+  self_fulfiller: number
+  gift_received: number
 }
 
 export interface StoreBreakdown {
