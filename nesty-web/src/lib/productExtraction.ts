@@ -13,12 +13,62 @@
 
 // TypeScript Interfaces
 export interface ExtractedProductData {
+  /** Display price — already converted to ILS when source was a known foreign currency. */
   name: string
   price: string
+  /** Currency of the `price` field. 'ILS' after conversion; the original is preserved in sourceCurrency. */
   priceCurrency: string
   brand: string
   category: string
   imageUrls: string[]
+  /** Original price from the source page, before any currency conversion. NULL if no conversion happened. */
+  sourcePrice?: string
+  /** Original currency code from the source page (e.g. 'EUR', 'USD'). NULL if no conversion happened. */
+  sourceCurrency?: string
+}
+
+// FX rates to ILS — used when a foreign-currency product page is extracted.
+// Keep these in sync with the extension's content.js conversion logic.
+// Updated periodically; small drift is acceptable since the user can edit
+// the price before saving.
+const FX_TO_ILS: Record<string, number> = {
+  USD: 3.19,
+  EUR: 3.43,
+  GBP: 4.05,
+}
+
+/**
+ * Convert a non-ILS price to ILS using the FX_TO_ILS table.
+ * Returns a normalised ExtractedProductData with price in ILS and the
+ * original price/currency preserved in sourcePrice / sourceCurrency.
+ *
+ * If currency is already ILS, blank, or unknown, the data is returned
+ * as-is (no source fields set).
+ */
+function convertPriceToILS(data: ExtractedProductData): ExtractedProductData {
+  const rawCurrency = (data.priceCurrency || '').toUpperCase().trim()
+  const rawPrice = parseFloat(data.price)
+
+  // Pass through when there's nothing to convert
+  if (!rawCurrency || rawCurrency === 'ILS' || rawCurrency === 'NIS' || !rawPrice) {
+    return data
+  }
+
+  const rate = FX_TO_ILS[rawCurrency]
+  if (!rate) {
+    console.warn(`   ⚠️ No FX rate for ${rawCurrency}, leaving price as-is`)
+    return data
+  }
+
+  const ilsPrice = (rawPrice * rate).toFixed(2)
+  console.log(`   💱 Converted ${rawPrice} ${rawCurrency} → ₪${ilsPrice} ILS (rate: ${rate})`)
+  return {
+    ...data,
+    price: ilsPrice,
+    priceCurrency: 'ILS',
+    sourcePrice: String(rawPrice),
+    sourceCurrency: rawCurrency,
+  }
 }
 
 interface OfferSchema {
@@ -108,14 +158,14 @@ function extractFromProduct(data: ProductSchema, baseUrl?: string): ExtractedPro
   // Normalize image URLs (handles both strings and objects, resolves relative URLs)
   const imageUrls = normalizeImageUrls(data.image, baseUrl)
 
-  return {
+  return convertPriceToILS({
     name: data.name || '',
     price: offer?.price || '',
     priceCurrency: offer?.priceCurrency || '',
     brand: typeof data.brand === 'object' ? data.brand?.name || '' : data.brand || '',
     category: data.category || '',
     imageUrls: [...new Set(imageUrls)] // Remove duplicates
-  }
+  })
 }
 
 /**
@@ -137,14 +187,14 @@ function extractFromProductGroup(data: ProductGroupSchema, baseUrl?: string): Ex
     })
   }
 
-  return {
+  return convertPriceToILS({
     name: data.name || '',
     price: offer?.price || '',
     priceCurrency: offer?.priceCurrency || '',
     brand: typeof data.brand === 'object' ? data.brand?.name || '' : data.brand || '',
     category: data.category || '',
     imageUrls: [...new Set(imageUrls)] // Remove duplicates
-  }
+  })
 }
 
 /**

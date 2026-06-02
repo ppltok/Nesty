@@ -44,6 +44,10 @@ interface ItemFormData {
   isMostWanted: boolean
   isPrivate: boolean
   imageUrl: string
+  /** Original price from source page, before EUR/USD/GBP → ILS conversion. */
+  sourcePrice?: string | null
+  /** Original currency code from source page (e.g. 'EUR'). NULL when source was already ILS. */
+  sourceCurrency?: string | null
 }
 
 export default function AddItemModal({
@@ -71,6 +75,8 @@ export default function AddItemModal({
     isMostWanted: false,
     isPrivate: false,
     imageUrl: '',
+    sourcePrice: null,
+    sourceCurrency: null,
   })
 
   // URL extraction state
@@ -182,7 +188,10 @@ export default function AddItemModal({
     try {
       const productData = await extractProductFromUrl(urlInput, session.access_token)
 
-      // Populate form with extracted data
+      // Populate form with extracted data. `price` is already in ILS when
+      // the source was EUR/USD/GBP (productExtraction.convertPriceToILS).
+      // Hold onto sourcePrice / sourceCurrency in state so they can be
+      // persisted on submit — see handleSubmit.
       setFormData({
         ...formData,
         name: productData.name,
@@ -190,7 +199,9 @@ export default function AddItemModal({
         originalUrl: urlInput,
         storeName: new URL(urlInput).hostname,
         notes: productData.brand ? `מותג: ${productData.brand}` : formData.notes,
-        imageUrl: productData.imageUrls[0] || ''
+        imageUrl: productData.imageUrls[0] || '',
+        sourcePrice: productData.sourcePrice ?? null,
+        sourceCurrency: productData.sourceCurrency ?? null,
       })
 
       setIsExtractedData(true)
@@ -269,6 +280,11 @@ export default function AddItemModal({
         is_most_wanted: formData.isMostWanted,
         is_private: formData.isPrivate,
         image_url: formData.imageUrl || null,
+        // Preserve original price/currency when extraction did EUR/USD/GBP → ILS
+        // conversion. Default for source_currency in DB is 'ILS', so only set
+        // these columns when the source was actually a foreign currency.
+        source_price: formData.sourcePrice ? parseFloat(formData.sourcePrice) : null,
+        source_currency: formData.sourceCurrency || 'ILS',
       }
 
       const addedVia: 'paste_url' | 'manual' = isExtractedData ? 'paste_url' : 'manual'
