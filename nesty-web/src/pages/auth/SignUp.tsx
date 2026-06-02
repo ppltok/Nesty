@@ -24,6 +24,9 @@ export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null) // null = form state, string = "check your email" state
+  // Set when signUp reveals the email is already registered (e.g. the user
+  // originally signed up with Google). Drives a dedicated "account exists" screen.
+  const [duplicateEmail, setDuplicateEmail] = useState<string | null>(null)
 
   // Resend-confirmation cooldown
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(null)
@@ -105,7 +108,7 @@ export default function SignUp() {
     }
 
     setIsLoading(true)
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
       options: {
@@ -118,11 +121,19 @@ export default function SignUp() {
     setIsLoading(false)
 
     if (signUpError) {
-      // Rate-limit and weak-password are still surfaced via the translator.
-      // "User already registered" returns a fake-success with empty identities
-      // (anti-enumeration), which we do NOT surface — we show the same
-      // check-your-email screen regardless.
       setError(translateAuthError(signUpError))
+      return
+    }
+
+    // Already-registered detection. Supabase's anti-enumeration protection
+    // returns a fake-success for an existing email — but with an empty
+    // `identities` array. We use that (and only that) to show a helpful
+    // "you already have an account" screen instead of a check-your-email
+    // screen that would never receive a mail. This is the common Google-then-
+    // email-signup trap: the original account has no password, so no
+    // confirmation mail is ever sent.
+    if (signUpData.user && (signUpData.user.identities?.length ?? 0) === 0) {
+      setDuplicateEmail(normalizedEmail)
       return
     }
 
@@ -154,6 +165,63 @@ export default function SignUp() {
       setResendMessage('שלחנו שוב — בדקו את תיבת הדואר.')
     }
     setCooldownUntil(Date.now() + RESEND_COOLDOWN_SECONDS * 1000)
+  }
+
+  // ─── Already-registered state ──────────────────────────────
+  if (duplicateEmail) {
+    const signInHref = `/auth/signin${redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ''}`
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#fffbff] px-4" dir="rtl">
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute top-20 right-10 w-72 h-72 bg-[#eaddff]/40 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-[#ffd8e4]/30 rounded-full blur-3xl" />
+        </div>
+        <div className="w-full max-w-md">
+          <Link to="/" className="flex items-center justify-center mb-8">
+            <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-20 w-auto" />
+          </Link>
+
+          <div className="bg-white rounded-[32px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-[#e7e0ec] p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#f3edff] flex items-center justify-center">
+              <span className="text-3xl">💜</span>
+            </div>
+            <h1 className="text-2xl font-medium text-[#1d192b] mb-3">
+              כבר יש לך חשבון
+            </h1>
+            <p className="text-[#1d192b] font-medium mb-3 break-all">
+              {duplicateEmail}
+            </p>
+            <p className="text-[#49454f] text-sm mb-6 leading-relaxed">
+              האימייל הזה כבר רשום אצלנו. אם נרשמת בעבר עם Google, התחברי דרך כפתור
+              Google. אם בחרת סיסמה — התחברי איתה.
+            </p>
+
+            <Link
+              to={signInHref}
+              className="w-full inline-flex items-center justify-center px-6 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium text-lg hover:bg-[#7c5fbd] transition-all duration-300 mb-3"
+            >
+              להתחברות
+            </Link>
+
+            <button
+              onClick={() => {
+                setDuplicateEmail(null)
+                setError(null)
+              }}
+              className="text-[#6750a4] text-sm hover:underline"
+            >
+              הרשמה עם אימייל אחר
+            </button>
+          </div>
+
+          <p className="text-center text-[#49454f] mt-4">
+            <Link to="/" className="hover:text-[#6750a4] transition-colors">
+              חזרה לדף הבית
+            </Link>
+          </p>
+        </div>
+      </div>
+    )
   }
 
   // ─── Check-your-email success state ────────────────────────
