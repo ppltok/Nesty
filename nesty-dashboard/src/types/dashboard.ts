@@ -58,6 +58,18 @@ export interface TierFlagCounts {
   gift_received: number
 }
 
+/** Per-signup-week cohort tier composition. For each week of signups,
+ *  how many users currently sit in each tier. */
+export interface TierTrendRow {
+  week: string           // ISO date for the week-start (Monday)
+  signups: number
+  user: number
+  started: number
+  active: number
+  super: number
+  champion: number
+}
+
 export interface StoreBreakdown {
   store_domain: string
   store_display_name: string
