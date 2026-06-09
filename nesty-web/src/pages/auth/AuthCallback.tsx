@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { isSafeRedirect } from '../../lib/authRedirect'
-import { trackGoogleAdsSignupConversion } from '../../utils/tracking'
+import { trackGoogleAdsSignupConversion, trackGoogleAdsPmaxSignupConversion } from '../../utils/tracking'
 
 /**
  * Universal auth-callback landing page. Handles three flows on the same route:
@@ -155,6 +155,7 @@ export default function AuthCallback() {
         session.user.email
       ) {
         trackGoogleAdsSignupConversion(session.user.id)
+        trackGoogleAdsPmaxSignupConversion(session.user.id)
       }
 
       // ─── 8. Final navigation ──────────────────────────────

@@ -30,6 +30,22 @@ export const trackGoogleAdsSignupConversion = (userId: string) => {
   });
 };
 
+// Second Google Ads account (AW-17613449177) — PMax campaign on 143-300-1725
+const GOOGLE_ADS_ID_PMAX = 'AW-17613449177';
+
+export const trackGoogleAdsPmaxSignupConversion = (userId: string) => {
+  if (typeof window === 'undefined' || !window.gtag) return;
+  // Dedupe per-user across AuthCallback revisits
+  const key = `nesty_gads_pmax_signup_${userId}`;
+  try {
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+  } catch { /* ignore storage errors */ }
+  window.gtag('event', 'conversion', {
+    send_to: `${GOOGLE_ADS_ID_PMAX}/LvOgCPux47scENnP385B`,
+  });
+};
+
 export const trackGoogleAdsFirstProductConversion = (userId: string) => {
   if (typeof window === 'undefined' || !window.gtag) return;
   const key = `nesty_gads_first_product_${userId}`;
