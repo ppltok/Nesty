@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { trackCoParentInvitationSent } from '../utils/tracking'
 import type { RegistryInvitation, Profile } from '../types'
 
 export default function Settings() {
@@ -179,6 +180,11 @@ export default function Settings() {
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Failed to send invitation')
 
+      trackCoParentInvitationSent({
+        registry_id: registry.id,
+        user_id: user.id,
+        invited_email: email,
+      })
       setInviteEmail('')
       await fetchCoParentData()
       showSuccess('ההזמנה נשלחה בהצלחה!')

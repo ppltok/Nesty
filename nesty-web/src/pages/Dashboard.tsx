@@ -25,6 +25,7 @@ import AddressModal from '../components/AddressModal'
 import AddItemModal from '../components/AddItemModal'
 import ShareModal from '../components/ShareModal'
 import ExtensionBanner from '../components/ExtensionBanner'
+import FinishRegistrySetupPanel from '../components/FinishRegistrySetupPanel'
 import ExtensionGuideModal from '../components/ExtensionGuideModal'
 import PriceStatusBadge from '../components/PriceStatusBadge'
 import FadedIconsBackground from '../components/animations/FadedIconsBackground'
@@ -62,7 +63,7 @@ const getAddressSkippedKey = (userId: string) => `nesty_address_skipped_${userId
 export default function Dashboard() {
   const { profile, registry, refreshProfile, isLoading: authLoading, user } = useAuth()
   const { tutorialActive, tutorialCheckComplete } = useDashboardLayout()
-  const { isInstalled: extensionInstalled } = useExtensionDetection()
+  const { isInstalled: extensionInstalled, isLoading: extensionLoading, version: extensionVersion } = useExtensionDetection()
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const [showAddressModal, setShowAddressModal] = useState(false)
@@ -1279,6 +1280,33 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
         {/* Extension Banner */}
         <ExtensionBanner />
+
+        {/* Finish-registry-setup activation checklist (Babylist-style) */}
+        {registry && popups.loaded && !popups.dismissed.finish_registry_setup && (
+          <FinishRegistrySetupPanel
+            userId={user?.id}
+            registryId={registry.id}
+            itemCount={items.length}
+            hasPartner={!!registry.partner_id}
+            hasShared={!!profile?.registry_shared_at}
+            hasAddress={!!(registry.address_city || registry.address_street)}
+            extensionInstalled={extensionInstalled}
+            extensionLoading={extensionLoading}
+            extensionVersion={extensionVersion}
+            onboardingDone={!!profile?.onboarding_completed}
+            onAddItem={handleOpenAddModal}
+            onShare={() => setShowShareModal(true)}
+            onInvitePartner={() => navigate('/settings#co-parent')}
+            onInstallExtension={() =>
+              window.open(
+                'https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll',
+                '_blank',
+                'noopener',
+              )
+            }
+            onAddAddress={() => setShowAddressModal(true)}
+          />
+        )}
 
         {/* Welcome & Stats Section */}
         <div className="flex flex-col xl:flex-row gap-8 mb-12">
