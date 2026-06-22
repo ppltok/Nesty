@@ -223,3 +223,45 @@ export const trackPageView = (params: {
 }) => {
   pushEvent('page_view', params);
 };
+
+// ===================
+// ENGAGEMENT — EXTENSION & CO-PARENT
+// ===================
+
+export const trackExtensionInstalled = (params: {
+  user_id: string;
+  version: string | null;
+}) => {
+  // Dedupe per-user so we only count the first detection, not every page load.
+  const key = `nesty_ext_installed_tracked_${params.user_id}`;
+  try {
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+  } catch { /* ignore storage errors */ }
+  pushEvent('extension_installed', {
+    user_id: params.user_id,
+    version: params.version || 'unknown',
+  });
+  // Meta Pixel custom event
+  if (typeof window !== 'undefined' && window.fbq) {
+    window.fbq('trackCustom', 'ExtensionInstalled', {
+      version: params.version || 'unknown',
+    });
+  }
+};
+
+export const trackCoParentInvitationSent = (params: {
+  registry_id: string;
+  user_id: string;
+  invited_email: string;
+}) => {
+  pushEvent('co_parent_invitation_sent', {
+    registry_id: params.registry_id,
+    user_id: params.user_id,
+    invited_email: params.invited_email,
+  });
+  // Meta Pixel custom event
+  if (typeof window !== 'undefined' && window.fbq) {
+    window.fbq('trackCustom', 'CoParentInvitationSent');
+  }
+};

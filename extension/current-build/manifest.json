@@ -16,6 +16,7 @@
   ],
   "host_permissions": [
     "https://nestyil.com/*",
+    "http://localhost:5173/*",
     "https://*.shilav.co.il/*",
     "https://shilav.co.il/*",
     "https://*.motsesim.co.il/*",
@@ -128,7 +129,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://nestyil.com/*"],
+      "matches": ["https://nestyil.com/*", "http://localhost:5173/*"],
       "js": ["detector.js"],
       "run_at": "document_start"
     },
