@@ -27,7 +27,7 @@ const corsHeaders = {
 
 const COLLAB = 'supherb'
 const COLLAB_KEY = 'collab_supherb' // email_logs.email_type — dedup key
-const SUBJECT = 'יש לך מתנה מ-Nesty 🎁 15% הנחה ב-Supherb'
+const SUBJECT = '15% הנחה נוספים בסופהרב 🌿 הטבה בלעדית למשתמשות Nesty'
 const TEST_EMAILS = ['tomargov73@gmail.com', 'tom@ppltok.com', 'hello@nestyil.com']
 
 // The email funnels users to the in-app gifts page (where the code + partner
@@ -51,8 +51,8 @@ function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string
   <title>${SUBJECT}</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 </head>
-<body style="margin:0;padding:0;background:#f5f0fa;font-family:'Heebo',sans-serif;direction:rtl;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0fa;direction:rtl;">
+<body style="margin:0;padding:0;background:#eef2ee;font-family:'Heebo',sans-serif;direction:rtl;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2ee;direction:rtl;">
   <tr>
     <td align="center" style="padding:40px 16px 64px;">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;direction:rtl;">
@@ -68,51 +68,51 @@ function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string
                   </a>
                 </td>
                 <td align="left">
-                  <span style="font-size:15px;color:#a087c0;font-weight:700;letter-spacing:0.04em;">מתנה בשבילך 🎁</span>
+                  <span style="font-size:15px;color:#4e7a5a;font-weight:700;letter-spacing:0.04em;">הטבה בשבילך 🌿</span>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
 
-        <!-- HERO -->
+        <!-- HERO — Supherb green -->
         <tr>
-          <td style="background:linear-gradient(145deg,#6a35b0 0%,#9b62d4 60%,#c4a0e8 100%);border-radius:24px;padding:48px 40px 44px;text-align:center;">
-            <!-- co-brand lockup: Nesty logo × Supherb logo -->
+          <td style="background:linear-gradient(135deg,#25402c 0%,#4e7a5a 60%,#93bd9e 100%);border-radius:24px;padding:48px 40px 44px;text-align:center;">
+            <!-- co-brand lockup: Supherb logo white pill × Nesty -->
             <div style="display:inline-block;background:#ffffff;border-radius:100px;padding:10px 22px;margin-bottom:24px;">
-              <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:22px;width:auto;vertical-align:middle;" />
-              <span style="font-size:16px;color:#9b62d4;font-weight:700;vertical-align:middle;">&nbsp;&nbsp;×&nbsp;&nbsp;</span>
               <img src="https://nestyil.com/demo/supherb-logo.png" alt="Supherb" style="height:22px;width:auto;vertical-align:middle;" />
+              <span style="font-size:16px;color:#4e7a5a;font-weight:700;vertical-align:middle;">&nbsp;&nbsp;×&nbsp;&nbsp;</span>
+              <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:22px;width:auto;vertical-align:middle;" />
             </div>
             <h1 style="margin:0 0 14px;font-size:34px;font-weight:800;color:#ffffff;line-height:1.2;">
-              יש לך מתנה שמחכה לך 🎁
+              15% הנחה נוספים בסופהרב 🌿
             </h1>
-            <p style="margin:0;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:440px;margin-left:auto;margin-right:auto;">
-              ${hi}כל אמא בהריון צריכה ויטמינים — אז התחברנו ל-<strong style="color:#fff;">Supherb</strong>, הטובים ביותר,
-              והכנו לך הטבה ששווה לך. 💜
+            <p style="margin:0;font-size:16px;color:#ffffffe6;line-height:1.8;font-weight:400;max-width:460px;margin-left:auto;margin-right:auto;">
+              ${hi}כל אישה בהריון צריכה תוספי תזונה — אז חברנו ל-<strong style="color:#fff;">Supherb</strong>, יצרנית תוספי הבריאות הגדולה בישראל.
+              עכשיו את יכולה ליהנות מ-15% הנחה נוספים על כל האתר, בנוסף על מבצעים קיימים באתר. 🌿
             </p>
           </td>
         </tr>
 
         <tr><td style="height:14px;"></td></tr>
 
-        <!-- TEASER CARD: no code here — the gift opens inside Nesty -->
+        <!-- TEASER CARD: no code here — the benefit opens inside Nesty -->
         <tr>
-          <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #e8daf5;text-align:center;">
-            <div style="display:inline-block;background:#fff0f5;border:1px solid #ffd8e4;border-radius:100px;padding:6px 16px;margin-bottom:20px;">
-              <span style="font-size:12px;font-weight:700;color:#b3261e;">✦ דיל בלעדי למשתמשות Nesty</span>
+          <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #dcebe0;text-align:center;">
+            <div style="display:inline-block;background:#e8f1ea;border:1px solid #bcd6c2;border-radius:100px;padding:6px 16px;margin-bottom:20px;">
+              <span style="font-size:12px;font-weight:700;color:#25402c;">✦ הטבה בלעדית למשתמשות Nesty</span>
             </div>
 
-            <div style="margin:0 auto 18px;width:96px;height:96px;background:#faf6ff;border:1px solid #f0e8ff;border-radius:20px;line-height:96px;">
-              <img src="https://nestyil.com/demo/supherb-pregently.webp" alt="Supherb" style="width:80px;height:80px;object-fit:contain;vertical-align:middle;" />
+            <div style="margin:0 auto 18px;width:96px;height:96px;background:#ebe7e3;border:1px solid #dcebe0;border-radius:20px;line-height:96px;">
+              <img src="https://nestyil.com/demo/supherb-tabingum.png" alt="Supherb טאבינגאם" style="width:84px;height:84px;object-fit:contain;vertical-align:middle;" />
             </div>
 
-            <h2 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#3b1f6b;">15% הנחה על מוצרי Supherb</h2>
-            <p style="margin:0 0 24px;font-size:15px;color:#7a6090;line-height:1.7;">המתנה מחכה לך עטופה ב-Nesty — היכנסי לחשוף אותה ולקבל את הקוד שלך. 🎁</p>
+            <h2 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#1f3a26;">15% הנחה נוספים על כל האתר</h2>
+            <p style="margin:0 0 24px;font-size:15px;color:#4e7a5a;line-height:1.7;">ההטבה מחכה לך ב-Nesty — היכנסי לצפות בה ולקבל את הקוד שלך. 🌿</p>
 
-            <a href="${gifts}" style="display:block;background:#6750a4;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 32px;border-radius:100px;text-align:center;">לחשיפת המתנה ←</a>
+            <a href="${gifts}" style="display:block;background:#35573D;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 32px;border-radius:100px;text-align:center;">למימוש ההטבה</a>
 
-            <p style="margin:18px 0 0;font-size:12px;color:#b3261e;font-weight:700;">⏳ ההטבה בתוקף עד 28.7 — אל תפספסי</p>
+            <p style="margin:18px 0 0;font-size:12px;color:#b3261e;font-weight:700;">⏳ בתוקף עד 31.7.2026 — אל תפספסי</p>
           </td>
         </tr>
 
@@ -120,9 +120,9 @@ function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string
 
         <!-- REFERRAL -->
         <tr>
-          <td style="background:#f7f1f8;border:1px dashed #d0bcff;border-radius:20px;padding:24px 32px;text-align:center;">
-            <p style="margin:0;font-size:14px;line-height:1.8;color:#3b1f6b;">
-              מכירה עוד מישהי בהריון? שלחי לה את <strong style="color:#6a35b0;">Nesty</strong> 💜 ותגלו יחד עוד הטבות וקופונים.
+          <td style="background:#f4f9f5;border:1px dashed #93bd9e;border-radius:20px;padding:24px 32px;text-align:center;">
+            <p style="margin:0;font-size:14px;line-height:1.8;color:#25402c;">
+              מכירה עוד מישהי בהריון? שלחי לה את <strong style="color:#35573D;">Nesty</strong> 🌿 ותגלו יחד עוד הטבות וקופונים.
             </p>
           </td>
         </tr>
