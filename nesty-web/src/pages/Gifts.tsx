@@ -218,6 +218,11 @@ export default function Gifts() {
   const thankYousNeeded = purchases.filter(p => !p.thanked_at && p.buyer_phone && p.status === 'confirmed').length
   const receivedCount = purchases.filter(p => p.is_received).length
 
+  // Nesty × Supherb partner gift (popup + gifts-page card). Audience-gated
+  // inside the hook; append ?supherb=1 to force-preview. Must run before any
+  // early return — it calls hooks (rules of hooks).
+  const supherbGift = useSupherbGift()
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#fffbff] flex items-center justify-center" dir="rtl">
@@ -228,10 +233,6 @@ export default function Gifts() {
       </div>
     )
   }
-
-  // Nesty × Supherb partner gift (popup + gifts-page card). Audience-gated
-  // inside the hook; append ?supherb=1 to force-preview.
-  const supherbGift = useSupherbGift()
 
   return (
     <div className="min-h-screen bg-[#fffbff] font-sans text-[#1d192b]" dir="rtl">
