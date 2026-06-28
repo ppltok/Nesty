@@ -21,7 +21,7 @@ const REDEEM_URL = 'https://bit.ly/4g1uf7v'
 // Fixed campaign end (Asia/Jerusalem) — "בתוקף עד 31.7.2026".
 const OFFER_END = new Date('2026-07-31T23:59:59+03:00').getTime()
 
-const AUDIENCE: 'test' | 'all' = 'test'
+const AUDIENCE: 'test' | 'all' = 'all'
 const TEST_EMAILS = ['tomargov73@gmail.com', 'tom@ppltok.com', 'hello@nestyil.com']
 
 const POPUP_DISMISS_KEY = 'nesty_collab_supherb_popup_dismissed'

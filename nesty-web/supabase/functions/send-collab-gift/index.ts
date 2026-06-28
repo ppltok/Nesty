@@ -175,25 +175,17 @@ serve(async (req) => {
       if (error) throw error
       recipients = (data ?? []) as Recipient[]
     } else {
-      const { data: users, error } = await supabaseAdmin
-        .from('profiles')
-        .select('id, email, first_name')
-        .eq('marketing_emails', true)
-        .eq('email_feature_announcements', true)
-        .eq('onboarding_completed', true)
+      // Warmest-first daily batch: the RPC returns consented users not yet sent
+      // this campaign, ordered Champions → Super → Active → Started → User,
+      // capped at the batch size (default 100/day).
+      const { data, error } = await supabaseAdmin.rpc('get_collab_gift_recipients', {
+        p_email_type: COLLAB_KEY,
+        p_limit: limit && limit > 0 ? limit : 100,
+      })
       if (error) throw error
-
-      // Dedup against anyone who already received this campaign.
-      const { data: alreadySent } = await supabaseAdmin
-        .from('email_logs')
-        .select('recipient_email')
-        .eq('email_type', COLLAB_KEY)
-      const sentSet = new Set((alreadySent ?? []).map((r) => (r.recipient_email || '').toLowerCase()))
-
-      recipients = ((users ?? []) as Recipient[]).filter(
-        (u) => u.email && !sentSet.has(u.email.toLowerCase()),
-      )
-      if (limit && limit > 0) recipients = recipients.slice(0, limit)
+      recipients = ((data ?? []) as Recipient[]).map((u) => ({
+        id: u.id, email: u.email, first_name: u.first_name,
+      }))
     }
 
     if (recipients.length === 0) {
