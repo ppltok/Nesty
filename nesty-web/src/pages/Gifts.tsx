@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { safeGetItem, safeSetItem } from '../lib/storage-version'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
 import { CATEGORIES } from '../data/categories'
+import { useSupherbGift } from '../components/collab/SupherbGift'
 import type { Purchase } from '../types'
 
 type ViewMode = 'grid' | 'list'
@@ -228,8 +229,13 @@ export default function Gifts() {
     )
   }
 
+  // Nesty × Supherb partner gift (popup + gifts-page card). Audience-gated
+  // inside the hook; append ?supherb=1 to force-preview.
+  const supherbGift = useSupherbGift()
+
   return (
     <div className="min-h-screen bg-[#fffbff] font-sans text-[#1d192b]" dir="rtl">
+      {supherbGift.popup}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
 
         {/* Header Title */}
@@ -272,6 +278,9 @@ export default function Gifts() {
             colorClass="bg-white text-[#33691e]"
           />
         </div>
+
+        {/* Nesty × Supherb partner gift card */}
+        {supherbGift.card}
 
         {/* Filters and View Toggle */}
         {purchases.length > 0 && (
