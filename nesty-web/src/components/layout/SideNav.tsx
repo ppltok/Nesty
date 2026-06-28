@@ -17,13 +17,16 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>
   path: string
   badge?: number
+  dot?: boolean
 }
 
 interface SideNavProps {
   giftsCount?: number
+  /** Show a red dot on the gifts icon — an unopened partner gift is waiting. */
+  giftDot?: boolean
 }
 
-export default function SideNav({ giftsCount = 0 }: SideNavProps) {
+export default function SideNav({ giftsCount = 0, giftDot = false }: SideNavProps) {
   const location = useLocation()
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -46,6 +49,7 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
       icon: Gift,
       path: '/gifts',
       badge: giftsCount > 0 ? giftsCount : undefined,
+      dot: giftDot,
     },
     {
       id: 'statistics',
@@ -82,6 +86,9 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
                     <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] bg-[#b3261e] text-white text-[9px] rounded-full flex items-center justify-center font-bold px-0.5">
                       {item.badge > 9 ? '9+' : item.badge}
                     </span>
+                  )}
+                  {item.dot && !item.badge && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#b3261e] rounded-full ring-2 ring-white" />
                   )}
                 </div>
                 <span className={`text-[10px] font-medium ${active ? 'text-[#6750a4]' : ''}`}>
@@ -140,6 +147,9 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
                     <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] bg-[#b3261e] text-white text-[9px] rounded-full flex items-center justify-center font-bold px-0.5">
                       {item.badge > 9 ? '9+' : item.badge}
                     </span>
+                  )}
+                  {item.dot && !item.badge && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#b3261e] rounded-full ring-2 ring-white" />
                   )}
                 </div>
                 <span className={`text-[10px] font-medium ${active ? 'text-[#6750a4]' : ''}`}>
@@ -214,6 +224,9 @@ export default function SideNav({ giftsCount = 0 }: SideNavProps) {
                     <span className="absolute -top-2 -left-2 min-w-[20px] h-5 bg-[#b3261e] text-white text-[11px] rounded-full flex items-center justify-center font-bold px-1">
                       {item.badge > 9 ? '9+' : item.badge}
                     </span>
+                  )}
+                  {item.dot && !item.badge && (
+                    <span className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-[#b3261e] rounded-full ring-2 ring-white" />
                   )}
                 </div>
                 {isExpanded && (

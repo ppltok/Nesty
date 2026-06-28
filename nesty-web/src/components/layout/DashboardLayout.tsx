@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import SideNav from './SideNav'
+import { useCollabGiftBadge } from '../collab/SupherbGift'
 import OnboardingTutorial from '../OnboardingTutorial'
 import FadedIconsBackground from '../animations/FadedIconsBackground'
 
@@ -14,6 +15,7 @@ export default function DashboardLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const [giftsCount, setGiftsCount] = useState(0)
+  const showGiftDot = useCollabGiftBadge()
   const [showTutorial, setShowTutorial] = useState(false)
   const [tutorialStepId, setTutorialStepId] = useState<string | null>(null)
   // Track if tutorial check is complete (so address modal knows when it's safe to show)
@@ -147,7 +149,7 @@ export default function DashboardLayout() {
       )}
 
       {/* Side Navigation */}
-      <SideNav giftsCount={giftsCount} />
+      <SideNav giftsCount={giftsCount} giftDot={showGiftDot} />
 
       {/* Main Content - with padding for mobile bottom nav */}
       <main className="flex-1 min-w-0 pb-20 lg:pb-0 relative">

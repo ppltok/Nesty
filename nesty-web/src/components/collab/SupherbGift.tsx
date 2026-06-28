@@ -26,6 +26,16 @@ const TEST_EMAILS = ['tomargov73@gmail.com', 'tom@ppltok.com', 'hello@nestyil.co
 
 const POPUP_DISMISS_KEY = 'nesty_collab_supherb_popup_dismissed'
 const COLLAPSED_KEY = 'nesty_collab_supherb_collapsed'
+// Set once the user has actually landed on the gifts page and seen the perk.
+// Drives the sidebar red-dot indicator (shown until the gift is "opened").
+const OPENED_KEY = 'nesty_collab_supherb_opened'
+const OPENED_EVENT = 'nesty:collab-opened'
+
+function inCollabAudience(email?: string | null): boolean {
+  const e = (email || '').toLowerCase()
+  const audience = AUDIENCE === 'all' || TEST_EMAILS.includes(e)
+  return Date.now() < OFFER_END && audience
+}
 
 const PRODUCT_IMG = '/demo/supherb-tabingum.png'
 const LOGO_IMG = '/demo/supherb-logo.png'
@@ -271,6 +281,13 @@ export function useSupherbGift() {
 
   useEffect(() => {
     if (!eligible) return
+    // Landing on the gifts page = the perk has been seen → clear the sidebar dot.
+    try {
+      if (!localStorage.getItem(OPENED_KEY)) {
+        localStorage.setItem(OPENED_KEY, '1')
+        window.dispatchEvent(new Event(OPENED_EVENT))
+      }
+    } catch { /* ignore */ }
     try { setCollapsed(!!localStorage.getItem(COLLAPSED_KEY)) } catch { /* ignore */ }
     if (noPopup) return
     let dismissed = false
@@ -294,4 +311,26 @@ export function useSupherbGift() {
     banner: eligible && !collapsed ? <SupherbGiftCard onClose={collapse} /> : null,
     listCard: eligible && collapsed ? <SupherbGiftCollapsed onOpen={openFromCollapsed} /> : null,
   }
+}
+
+/**
+ * Sidebar red-dot indicator. True when the user has an unopened partner gift —
+ * i.e. they're in-audience, the offer is live, and they haven't visited the
+ * gifts page to see it yet. Clears as soon as they open /gifts (which fires
+ * the OPENED_EVENT). Used by the gift nav icon.
+ */
+export function useCollabGiftBadge(): boolean {
+  const { user } = useAuth()
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    const check = () => {
+      let opened = false
+      try { opened = !!localStorage.getItem(OPENED_KEY) } catch { /* ignore */ }
+      setShow(inCollabAudience(user?.email) && !opened)
+    }
+    check()
+    window.addEventListener(OPENED_EVENT, check)
+    return () => window.removeEventListener(OPENED_EVENT, check)
+  }, [user])
+  return show
 }
