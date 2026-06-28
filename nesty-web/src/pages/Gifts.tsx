@@ -280,8 +280,8 @@ export default function Gifts() {
           />
         </div>
 
-        {/* Nesty × Supherb partner gift card */}
-        {supherbGift.card}
+        {/* Nesty × Supherb partner benefit — full banner (collapses into the list) */}
+        {supherbGift.banner}
 
         {/* Filters and View Toggle */}
         {purchases.length > 0 && (
@@ -373,6 +373,7 @@ export default function Gifts() {
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {supherbGift.listCard}
             {filteredPurchases.map((purchase) => (
               <PurchaseCard
                 key={purchase.id}
@@ -387,6 +388,7 @@ export default function Gifts() {
           </div>
         ) : (
           <div className="space-y-3">
+            {supherbGift.listCard}
             {filteredPurchases.map((purchase) => (
               <PurchaseListItem
                 key={purchase.id}
