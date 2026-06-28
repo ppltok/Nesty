@@ -222,6 +222,8 @@ export default function Gifts() {
   // inside the hook; append ?supherb=1 to force-preview. Must run before any
   // early return — it calls hooks (rules of hooks).
   const supherbGift = useSupherbGift()
+  // The Nesty × Supherb partner gift counts as a received gift in the top stats.
+  const giftBonus = supherbGift.eligible ? 1 : 0
 
   if (isLoading) {
     return (
@@ -256,9 +258,9 @@ export default function Gifts() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <StatCard
             icon={Gift}
-            value={totalGifts}
+            value={totalGifts + giftBonus}
             label="מתנות התקבלו"
-            subLabel={`מתוכן ${receivedCount} אצלכם`}
+            subLabel={`מתוכן ${receivedCount + giftBonus} אצלכם`}
             bgClass="bg-[#f3edff] border-[#eaddff]"
             colorClass="bg-white text-[#6750a4]"
           />
