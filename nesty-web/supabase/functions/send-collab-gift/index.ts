@@ -156,7 +156,8 @@ serve(async (req) => {
     if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY is not set')
 
     const body = await req.json().catch(() => ({}))
-    const mode: 'test' | 'all' = body.mode === 'all' ? 'all' : 'test'
+    const mode: 'test' | 'all' | 'new_users' =
+      body.mode === 'all' ? 'all' : body.mode === 'new_users' ? 'new_users' : 'test'
     const limit: number | null = typeof body.limit === 'number' ? body.limit : null
 
     const supabaseAdmin = createClient(
@@ -174,6 +175,17 @@ serve(async (req) => {
         .in('email', TEST_EMAILS)
       if (error) throw error
       recipients = (data ?? []) as Recipient[]
+    } else if (mode === 'new_users') {
+      // Post-launch signups, ≥4h after signup, no other marketing email in 24h.
+      // Driven by a daily morning cron so the gift lands "the morning after".
+      const { data, error } = await supabaseAdmin.rpc('get_collab_newuser_recipients', {
+        p_email_type: COLLAB_KEY,
+        p_limit: limit && limit > 0 ? limit : 200,
+      })
+      if (error) throw error
+      recipients = ((data ?? []) as Recipient[]).map((u) => ({
+        id: u.id, email: u.email, first_name: u.first_name,
+      }))
     } else {
       // Warmest-first daily batch: the RPC returns consented users not yet sent
       // this campaign, ordered Champions → Super → Active → Started → User,
@@ -234,8 +246,8 @@ serve(async (req) => {
               email: user.email.toLowerCase(),
               meta: { mode },
             })
-            // Dedup log (only for the real rollout — test mode stays re-sendable).
-            if (mode === 'all') {
+            // Dedup log (real rollout + new-user automation — test mode stays re-sendable).
+            if (mode === 'all' || mode === 'new_users') {
               await supabaseAdmin.from('email_logs').insert({
                 recipient_email: user.email.toLowerCase(),
                 email_type: COLLAB_KEY,
