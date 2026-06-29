@@ -36,7 +36,12 @@ function giftsUrl(userId: string): string {
   return `${SUPABASE_URL}/functions/v1/collab-redirect?c=${COLLAB}&u=${userId}&s=email&to=gifts`
 }
 
-function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string): string {
+// Open-tracking pixel (Resend's open tracking is off account-wide).
+function openPixelUrl(userId: string): string {
+  return `${SUPABASE_URL}/functions/v1/collab-open?c=${COLLAB}&u=${userId}`
+}
+
+function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string, openUrl: string): string {
   const hi = firstName ? `${firstName}, ` : ''
   const footer = renderLegalFooter({
     unsubscribeLinkHtml: `<a href="${unsubscribeUrl}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>`,
@@ -141,6 +146,7 @@ function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string
     </td>
   </tr>
 </table>
+<img src="${openUrl}" width="1" height="1" alt="" style="display:block;border:0;width:1px;height:1px;" />
 </body>
 </html>`
 }
@@ -216,7 +222,7 @@ serve(async (req) => {
       const promises = batch.map(async (user) => {
         try {
           const unsubUrl = await buildUnsubscribeUrl(user.id, 'features')
-          const html = buildEmailHtml(user.first_name ?? '', giftsUrl(user.id), unsubUrl)
+          const html = buildEmailHtml(user.first_name ?? '', giftsUrl(user.id), unsubUrl, openPixelUrl(user.id))
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
