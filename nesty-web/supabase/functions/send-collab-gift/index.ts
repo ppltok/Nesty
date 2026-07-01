@@ -28,6 +28,8 @@ const corsHeaders = {
 const COLLAB = 'supherb'
 const COLLAB_KEY = 'collab_supherb' // email_logs.email_type — dedup key
 const SUBJECT = '15% הנחה נוספים בסופהרב 🌿 הטבה בלעדית למשתמשות Nesty'
+// v2 re-engagement subject for the top-tier retarget send.
+const RETARGET_SUBJECT = 'לא לפספס: 15% נוספים על כל מבצעי סופהרב 🌿'
 const TEST_EMAILS = ['tomargov73@gmail.com', 'tom@ppltok.com', 'hello@nestyil.com']
 
 // The email funnels users to the in-app gifts page (where the code + partner
@@ -151,6 +153,100 @@ function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string
 </html>`
 }
 
+// v2 re-engagement email for the top-tier retarget send. Same green Supherb
+// design + open pixel + tracked link to the in-app gift (where the code + copy
+// tracking live), but with a "don't miss it" framing and the stacked-value hook.
+function buildRetargetEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string, openUrl: string): string {
+  const hi = firstName ? `${firstName}, ` : ''
+  const footer = renderLegalFooter({
+    unsubscribeLinkHtml: `<a href="${unsubscribeUrl}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>`,
+  })
+  return `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only"/>
+  <title>${RETARGET_SUBJECT}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body style="margin:0;padding:0;background:#eef2ee;font-family:'Heebo',sans-serif;direction:rtl;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2ee;direction:rtl;">
+  <tr>
+    <td align="center" style="padding:40px 16px 64px;">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;direction:rtl;">
+
+        <tr>
+          <td style="padding-bottom:28px;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td><a href="https://nestyil.com" style="text-decoration:none;"><img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:40px;width:auto;display:block;" /></a></td>
+              <td align="left"><span style="font-size:15px;color:#4e7a5a;font-weight:700;letter-spacing:0.04em;">ההטבה שלך 🌿</span></td>
+            </tr></table>
+          </td>
+        </tr>
+
+        <!-- HERO -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#25402c 0%,#4e7a5a 60%,#93bd9e 100%);border-radius:24px;padding:48px 40px 44px;text-align:center;">
+            <div style="display:inline-block;background:#ffffff;border-radius:100px;padding:10px 22px;margin-bottom:24px;">
+              <img src="https://nestyil.com/demo/supherb-logo.png" alt="Supherb" style="height:22px;width:auto;vertical-align:middle;" />
+              <span style="font-size:16px;color:#4e7a5a;font-weight:700;vertical-align:middle;">&nbsp;&nbsp;×&nbsp;&nbsp;</span>
+              <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:22px;width:auto;vertical-align:middle;" />
+            </div>
+            <h1 style="margin:0 0 14px;font-size:32px;font-weight:800;color:#ffffff;line-height:1.25;">
+              15% הנחה נוספים — בנוסף לכל מבצע באתר 🌿
+            </h1>
+            <p style="margin:0;font-size:16px;color:#ffffffe6;line-height:1.8;font-weight:400;max-width:460px;margin-left:auto;margin-right:auto;">
+              ${hi}רצינו לוודא שלא פספסת. ההטבה הבלעדית שלך בסופהרב עדיין פעילה —
+              <strong style="color:#fff;">15% הנחה נוספים על כל האתר, מעל המבצעים שכבר רצים שם.</strong>
+            </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:14px;"></td></tr>
+
+        <!-- CARD: no code — opens (and copy-tracking) live in the app -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #dcebe0;text-align:center;">
+            <div style="display:inline-block;background:#e8f1ea;border:1px solid #bcd6c2;border-radius:100px;padding:6px 16px;margin-bottom:20px;">
+              <span style="font-size:12px;font-weight:700;color:#25402c;">✦ הטבה בלעדית למשתמשות Nesty</span>
+            </div>
+            <div style="margin:0 auto 18px;width:96px;height:96px;background:#ebe7e3;border:1px solid #dcebe0;border-radius:20px;line-height:96px;">
+              <img src="https://nestyil.com/demo/supherb-tabingum.png" alt="Supherb טאבינגאם" style="width:84px;height:84px;object-fit:contain;vertical-align:middle;" />
+            </div>
+            <h2 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#1f3a26;">טאבינגאם — 15% נוספים על המבצע</h2>
+            <p style="margin:0 0 24px;font-size:15px;color:#4e7a5a;line-height:1.7;">המולטי-ויטמין לנשים בהריון שכולן מדברות עליו. הקוד מחכה לך ב-Nesty — בלחיצה אחת.</p>
+            <a href="${gifts}" style="display:block;background:#35573D;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 32px;border-radius:100px;text-align:center;">למימוש ההטבה בסופהרב</a>
+            <p style="margin:18px 0 0;font-size:12px;color:#b3261e;font-weight:700;">⏳ בתוקף עד 31.7.2026 — אל תפספסי</p>
+          </td>
+        </tr>
+
+        <tr><td style="height:14px;"></td></tr>
+
+        <tr>
+          <td style="background:#f4f9f5;border:1px dashed #93bd9e;border-radius:20px;padding:24px 32px;text-align:center;">
+            <p style="margin:0;font-size:14px;line-height:1.8;color:#25402c;">
+              מכירה עוד מישהי בהריון? שלחי לה את <strong style="color:#35573D;">Nesty</strong> 🌿 ותגלו יחד עוד הטבות וקופונים.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:30px 0 0;text-align:center;">
+            <a href="https://nestyil.com" style="text-decoration:none;"><img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" /></a>
+            ${footer}
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<img src="${openUrl}" width="1" height="1" alt="" style="display:block;border:0;width:1px;height:1px;" />
+</body>
+</html>`
+}
+
 interface Recipient { id: string; email: string; first_name: string | null }
 
 serve(async (req) => {
@@ -162,8 +258,11 @@ serve(async (req) => {
     if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY is not set')
 
     const body = await req.json().catch(() => ({}))
-    const mode: 'test' | 'all' | 'new_users' =
-      body.mode === 'all' ? 'all' : body.mode === 'new_users' ? 'new_users' : 'test'
+    const mode: 'test' | 'all' | 'new_users' | 'retarget_top' =
+      body.mode === 'all' ? 'all'
+      : body.mode === 'new_users' ? 'new_users'
+      : body.mode === 'retarget_top' ? 'retarget_top'
+      : 'test'
     const limit: number | null = typeof body.limit === 'number' ? body.limit : null
 
     const supabaseAdmin = createClient(
@@ -187,6 +286,16 @@ serve(async (req) => {
       const { data, error } = await supabaseAdmin.rpc('get_collab_newuser_recipients', {
         p_email_type: COLLAB_KEY,
         p_limit: limit && limit > 0 ? limit : 200,
+      })
+      if (error) throw error
+      recipients = ((data ?? []) as Recipient[]).map((u) => ({
+        id: u.id, email: u.email, first_name: u.first_name,
+      }))
+    } else if (mode === 'retarget_top') {
+      // Tracked v2 re-send to the top tier (Champion + Super). Own dedup via
+      // meta.mode='retarget_top', so it re-emails people the base rollout hit.
+      const { data, error } = await supabaseAdmin.rpc('get_collab_retarget_recipients', {
+        p_limit: limit && limit > 0 ? limit : 100,
       })
       if (error) throw error
       recipients = ((data ?? []) as Recipient[]).map((u) => ({
@@ -222,7 +331,10 @@ serve(async (req) => {
       const promises = batch.map(async (user) => {
         try {
           const unsubUrl = await buildUnsubscribeUrl(user.id, 'features')
-          const html = buildEmailHtml(user.first_name ?? '', giftsUrl(user.id), unsubUrl, openPixelUrl(user.id))
+          const isRetarget = mode === 'retarget_top'
+          const html = isRetarget
+            ? buildRetargetEmailHtml(user.first_name ?? '', giftsUrl(user.id), unsubUrl, openPixelUrl(user.id))
+            : buildEmailHtml(user.first_name ?? '', giftsUrl(user.id), unsubUrl, openPixelUrl(user.id))
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
@@ -232,7 +344,7 @@ serve(async (req) => {
             body: JSON.stringify({
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
-              subject: SUBJECT,
+              subject: isRetarget ? RETARGET_SUBJECT : SUBJECT,
               html,
               headers: {
                 'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
