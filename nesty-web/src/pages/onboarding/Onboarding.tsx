@@ -302,6 +302,27 @@ export default function Onboarding() {
     setIsLoading(true)
     setError(null)
 
+    // Session-loss guard. Opening the email-confirmation link inside an
+    // in-app browser (Gmail/Instagram webview) can establish the session in
+    // memory but fail to persist it — React still has `user`, but every DB
+    // write goes out as `anon` and dies on RLS with a cryptic English error
+    // ("new row violates row-level security policy for table profiles").
+    // Verify the session is actually live before writing; try one refresh;
+    // otherwise send to sign-in — onboarding_completed=false routes them
+    // straight back here after login.
+    const { data: sessionCheck } = await supabase.auth.getSession()
+    let liveSession = sessionCheck.session
+    if (!liveSession) {
+      const { data: refreshed } = await supabase.auth.refreshSession()
+      liveSession = refreshed.session
+    }
+    if (!liveSession) {
+      setIsLoading(false)
+      setError('ההתחברות התנתקה באמצע 😕 מעבירים אותך להתחברות מחדש — ואז מסיימים בקליק.')
+      setTimeout(() => navigate('/auth/signin', { replace: true }), 3500)
+      return
+    }
+
     try {
       const profileData: Record<string, unknown> = {
         id: user.id,
@@ -331,6 +352,17 @@ export default function Onboarding() {
 
       if (profileError) {
         console.error('Profile update error:', profileError)
+        // RLS / expired-JWT failure = the session died between the guard
+        // above and this write. Same recovery: re-login, come right back.
+        if (
+          profileError.code === '42501' ||
+          profileError.message?.includes('row-level security') ||
+          profileError.message?.includes('JWT')
+        ) {
+          setError('ההתחברות התנתקה באמצע 😕 מעבירים אותך להתחברות מחדש — ואז מסיימים בקליק.')
+          setTimeout(() => navigate('/auth/signin', { replace: true }), 3500)
+          return
+        }
         throw new Error(`שגיאה בעדכון הפרופיל: ${profileError.message}`)
       }
 
