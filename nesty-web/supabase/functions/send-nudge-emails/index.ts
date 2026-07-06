@@ -505,7 +505,7 @@ async function runAllNudges(): Promise<NudgeResults> {
             body: JSON.stringify({
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
-              subject: `${user.first_name}, הצ'קליסט מחכה לך! ✅`,
+              subject: `${user.first_name || 'את'}, הצ'קליסט מחכה לך! ✅`,
               html: checklistNudgeHtml(user.first_name || 'את', unsubUrl),
               headers: {
                 'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
@@ -608,7 +608,7 @@ async function runAllNudges(): Promise<NudgeResults> {
             body: JSON.stringify({
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
-              subject: `${user.first_name}, הרשימה שלך מוכנה לשיתוף! 🎁`,
+              subject: `${user.first_name || 'את'}, הרשימה שלך מוכנה לשיתוף! 🎁`,
               html: shareNudgeHtml(user.first_name || 'את', itemsCount, unsubUrl),
               headers: {
                 'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,

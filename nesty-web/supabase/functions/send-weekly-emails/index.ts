@@ -363,7 +363,7 @@ const TIP_EMOJIS = ['💡', '📋', '🎯', '🛒', '🩺', '🧘', '💪', '�
 
 function parseTips(rawTips: string): Array<{ emoji: string; text: string }> {
   // Remove header prefixes like "טיפים:" or "משימות:"
-  let cleaned = rawTips.replace(/^(טיפים|משימות|תזונה ובדיקות)\s*:?\s*/i, '')
+  const cleaned = rawTips.replace(/^(טיפים|משימות|תזונה ובדיקות)\s*:?\s*/i, '')
   // Split by period
   const parts = cleaned.split('.').map(t => t.trim()).filter(t => t.length > 10)
   return parts.slice(0, 3).map((text, i) => ({

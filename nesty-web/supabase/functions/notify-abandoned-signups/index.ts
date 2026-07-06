@@ -6,8 +6,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 //   * still have onboarding_completed = false
 //   * haven't already been notified (admin_abandon_notified_at IS NULL)
 // …and sends `admin_onboarding_abandoned` to hello@nestyil.com via the
-// shared `send-email` function. Each successful send stamps
-// admin_abandon_notified_at so the next cron tick won't double-fire.
+// shared `send-email` function. admin_abandon_notified_at is stamped
+// before the send so the next cron tick won't double-fire.
 //
 // Scheduled by supabase/migrations/20260503_cron_abandoned_signups.sql
 // (every 5 minutes via pg_cron + pg_net).
@@ -93,6 +93,20 @@ serve(async (req) => {
         (Date.now() - new Date(p.created_at).getTime()) / 60000
       )
 
+      // Stamp the dedupe marker BEFORE sending. If the stamp fails we skip the
+      // send entirely (retry next tick); if the send then fails we only lose
+      // one admin email — better than re-sending every 5-minute cron tick.
+      const { error: updErr } = await admin
+        .from('profiles')
+        .update({ admin_abandon_notified_at: new Date().toISOString() })
+        .eq('id', p.id)
+
+      if (updErr) {
+        console.error(`notify-abandoned-signups: dedupe stamp failed for ${p.id}`, updErr)
+        result.errors++
+        continue
+      }
+
       const { error: invokeErr } = await admin.functions.invoke('send-email', {
         body: {
           type: 'admin_onboarding_abandoned',
@@ -114,18 +128,9 @@ serve(async (req) => {
       })
 
       if (invokeErr) {
+        // Already stamped — this admin email is lost, but that beats
+        // double-sending on every subsequent tick.
         console.error(`notify-abandoned-signups: invoke failed for ${p.email}`, invokeErr)
-        result.errors++
-        continue
-      }
-
-      const { error: updErr } = await admin
-        .from('profiles')
-        .update({ admin_abandon_notified_at: new Date().toISOString() })
-        .eq('id', p.id)
-
-      if (updErr) {
-        console.error(`notify-abandoned-signups: dedupe stamp failed for ${p.id}`, updErr)
         result.errors++
         continue
       }

@@ -1,5 +1,5 @@
 // Shared pregnancy-week math used by email cron functions.
-// Previously duplicated in send-weekly-emails/index.ts and send-welcome-batch/index.ts.
+// Previously duplicated in send-weekly-emails/index.ts.
 
 /**
  * Calculate the user's current pregnancy week from a due date.

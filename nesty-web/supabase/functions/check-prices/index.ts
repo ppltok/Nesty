@@ -631,23 +631,6 @@ serve(async (req) => {
     if (priceDrops.length > 0) {
       console.log(`📉 Found ${priceDrops.length} price drop(s)!`)
 
-      // Insert price_alerts
-      const alertInserts = priceDrops.map(drop => ({
-        item_id: drop.item_id,
-        original_price: drop.original_price_ils,
-        found_price: drop.found_price_ils,
-        found_url: drop.original_url,
-        found_store: drop.store_name,
-      }))
-
-      const { error: alertError } = await supabase
-        .from('price_alerts')
-        .insert(alertInserts)
-
-      if (alertError) {
-        console.error('Failed to insert price alerts:', alertError.message)
-      }
-
       // Group drops by registry owner
       const dropsByRegistry = new Map<string, PriceDrop[]>()
       for (const drop of priceDrops) {
@@ -688,6 +671,25 @@ serve(async (req) => {
           const topDrops = drops
             .sort((a, b) => b.drop_percent - a.drop_percent)
             .slice(0, MAX_ALERTS_PER_EMAIL)
+
+          // Insert price_alerts only for the drops that actually go into the
+          // email — inserting for all drops would arm the 7-day cooldown for
+          // ranked 6+ items that were never emailed.
+          const alertInserts = topDrops.map(drop => ({
+            item_id: drop.item_id,
+            original_price: drop.original_price_ils,
+            found_price: drop.found_price_ils,
+            found_url: drop.original_url,
+            found_store: drop.store_name,
+          }))
+
+          const { error: alertError } = await supabase
+            .from('price_alerts')
+            .insert(alertInserts)
+
+          if (alertError) {
+            console.error('Failed to insert price alerts:', alertError.message)
+          }
 
           // Build email data
           const emailDrops = topDrops.map(d => ({
