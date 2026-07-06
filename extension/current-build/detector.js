@@ -5,12 +5,12 @@
 
 // Set detection markers immediately
 document.documentElement.setAttribute('data-nesty-extension-installed', 'true');
-document.documentElement.setAttribute('data-nesty-extension-version', '1.3.0');
+document.documentElement.setAttribute('data-nesty-extension-version', '1.5.5');
 
 // Also dispatch a custom event for dynamic detection
 window.dispatchEvent(new CustomEvent('nestyExtensionDetected', {
   detail: {
-    version: '1.3.0',
+    version: '1.5.5',
     installed: true
   }
 }));

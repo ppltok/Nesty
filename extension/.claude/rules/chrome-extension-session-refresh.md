@@ -34,14 +34,50 @@ const newSession = await response.json();
 ```
 
 ## Session Retrieval Flow (background.js)
-1. Read from `chrome.storage.local`
-2. Valid? Return immediately.
-3. Expired/missing? Read from Nesty tab localStorage.
-4. Still expired? Call refresh endpoint.
-5. Refresh failed (e.g. refresh_token also expired)? Clear storage, return null → user must log in again.
-6. Cache the valid session in `chrome.storage.local`.
+The Nesty tab's localStorage is authoritative for *who is signed in*; the
+`chrome.storage.local` cache is only a token optimization. Every `GET_SESSION`
+reconciles the cache against the tab so a logout / account switch can't leak
+items into the previously cached account's registry:
+
+1. Read the cached session from `chrome.storage.local`.
+2. Read the live auth state from the Nesty tab(s) — `readSessionFromTab()`
+   returns `{ tabPresent, session }` so "no tab open" is distinguishable from
+   "tab open but signed out".
+3. If a tab is open and **signed out** → clear the cache, return null.
+4. If a tab is open with a **different user id** than the cache → discard the
+   cached (previous-account) session.
+5. Prefer the tab's live session when the cache is stale/missing (see rotation
+   note below).
+6. Valid session in hand? Cache it and return.
+7. Still expired? Call the refresh endpoint. Failed (refresh_token also
+   expired)? Clear storage, return null → user must log in again.
+
+## The account-switch leak (why step 2–4 exist)
+The old code returned the cached session whenever the token had >5 min left and
+**never consulted the tab**. So after a user logged out (or logged into a second
+account) on nestyil.com, clicking the extension within the cached token lifetime
+(~1h) added items to the **previous** account's registry. Reconciling against the
+tab on every call closes this. Residual gap: if *no* Nesty tab is open we can't
+verify identity and fall back to the cache — acceptable because logout requires a
+tab, and requiring one on every click would break the "closed the Nesty tab" flow.
+
+## Refresh-token rotation reuse-detection
+Supabase rotates the `refresh_token` on every refresh and invalidates the old
+one. If the extension refreshes using the web app's refresh_token, the web app's
+SDK still holds the old token and trips reuse-detection on its next refresh
+(potentially signing the user out). Mitigations in place:
+- **Prefer the tab's live, SDK-maintained session** and only call the refresh
+  endpoint as a last resort. While a healthy tab is open the extension never
+  rotates the token.
+- When the extension *must* refresh with a tab present (dormant tab, both tokens
+  expired), it writes the rotated session back into the tab's localStorage
+  (`writeSessionToTab()`, same-user only) so both sides stay on one token.
+- Residual timing window: the tab's SDK auto-refresh timer may fire before the
+  write-back lands. Not fully eliminable without SDK cooperation.
 
 ## Rule
-Never rely solely on "re-read from tab" as the expiry recovery path.
-Always implement a `refresh_token` call as the actual recovery mechanism.
-The tab's localStorage is a source-of-last-resort, not a source-of-truth.
+Never rely solely on "re-read from tab" as the expiry recovery path — always
+implement a `refresh_token` call as the actual recovery mechanism. But equally,
+never trust the cache blindly: reconcile it against the tab's live identity so a
+stale session can't write to the wrong account. The tab's localStorage is the
+source of truth for identity; the cache is a source-of-last-resort for tokens.
