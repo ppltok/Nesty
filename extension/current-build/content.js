@@ -9,7 +9,7 @@
 
   // Signal to website that extension is installed
   document.documentElement.setAttribute('data-nesty-extension-installed', 'true');
-  document.documentElement.setAttribute('data-nesty-extension-version', '1.5.2');
+  document.documentElement.setAttribute('data-nesty-extension-version', '1.5.5');
   console.log('✅ Extension detection markers set');
 
   // Remove any existing Nesty UI elements (modals, overlays, styles)
@@ -271,7 +271,33 @@
     return el.value;
   }
 
-  function normalizeImageUrls(imageData) {
+  /**
+   * Resolve a potentially relative URL to an absolute URL
+   * (mirrors productExtraction.ts — needed for paste-URL mode where the
+   * parsed document's relative paths must resolve against the pasted URL)
+   */
+  function resolveUrl(src, baseUrl) {
+    if (!src) return '';
+    // Already absolute
+    if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:')) {
+      return src;
+    }
+    // Protocol-relative
+    if (src.startsWith('//')) {
+      return 'https:' + src;
+    }
+    // Relative — resolve against base URL
+    if (baseUrl) {
+      try {
+        return new URL(src, baseUrl).href;
+      } catch {
+        return src;
+      }
+    }
+    return src;
+  }
+
+  function normalizeImageUrls(imageData, baseUrl) {
     if (!imageData) return [];
 
     const urls = [];
@@ -280,16 +306,16 @@
     dataArray.forEach(item => {
       if (typeof item === 'string') {
         // Direct URL string
-        urls.push(item);
+        urls.push(resolveUrl(item, baseUrl));
       } else if (typeof item === 'object' && item !== null) {
         // Image object with url property (Wix uses contentUrl per schema.org ImageObject)
         if (item.url) {
-          urls.push(item.url);
+          urls.push(resolveUrl(item.url, baseUrl));
         } else if (item.contentUrl) {
-          urls.push(item.contentUrl);
+          urls.push(resolveUrl(item.contentUrl, baseUrl));
         } else if (item['@id']) {
           // Sometimes uses @id instead of url
-          urls.push(item['@id']);
+          urls.push(resolveUrl(item['@id'], baseUrl));
         }
       }
     });
@@ -456,6 +482,8 @@
 
       console.log(`📊 Parsed data type:`, data['@type']);
 
+      try {
+
       if (data['@type'] === 'Product') {
         console.log('✅ Found Product type, extracting...');
         const offersData = data.offers || data.Offers;
@@ -470,7 +498,7 @@
           offersLength: Array.isArray(offersData) ? offersData.length : 'N/A'
         });
 
-        const result = extractFromProduct(data);
+        const result = extractFromProduct(data, currentUrl);
         console.log('✅ Extraction result:', result);
 
         // Check if this product matches the current URL
@@ -497,7 +525,7 @@
 
       if (data['@type'] === 'ProductGroup') {
         console.log('✅ Found ProductGroup type, extracting...');
-        const result = extractFromProductGroup(data);
+        const result = extractFromProductGroup(data, currentUrl);
         console.log('✅ Extraction result:', result);
 
         if (isValidProductData(result)) {
@@ -508,22 +536,28 @@
         }
       }
 
-      if (data['@graph']) {
+      if (data['@graph'] && Array.isArray(data['@graph'])) {
         console.log('📊 Found @graph, searching for product...');
         const product = data['@graph'].find(item =>
-          item['@type'] === 'Product' || item['@type'] === 'ProductGroup'
+          item && (item['@type'] === 'Product' || item['@type'] === 'ProductGroup')
         );
         if (product) {
           console.log(`✅ Found ${product['@type']} in @graph`);
           const result = product['@type'] === 'Product'
-            ? extractFromProduct(product)
-            : extractFromProductGroup(product);
+            ? extractFromProduct(product, currentUrl)
+            : extractFromProductGroup(product, currentUrl);
 
           if (isValidProductData(result)) {
             allProducts.push({ result, isMatch: false, index: i });
             console.log('✅ Valid product data from @graph');
           }
         }
+      }
+
+      } catch (scriptError) {
+        // One malformed JSON-LD script must not kill the whole extraction chain
+        console.warn(`⚠️ Error processing JSON-LD script #${i + 1}, skipping:`, scriptError);
+        continue;
       }
     }
 
@@ -562,6 +596,38 @@
       console.log(`⚠️ No URL match found in ${allProducts.length} product(s), trying platform-specific fallback...`);
     } else {
       console.log('⚠️ No valid products found in JSON-LD, trying platform-specific fallback...');
+    }
+
+    // Check for non-product page types (Article, BlogPost, etc.) —
+    // mirrors productExtraction.ts so pasted article links get a clear error.
+    // Paste mode only (doc !== document): live pages keep their DOM fallbacks
+    // even when the site emits a stray WebPage/Article JSON-LD block.
+    const nonProductTypes = doc === document ? [] : ['Article', 'BlogPosting', 'NewsArticle', 'WebPage',
+      'AboutPage', 'ContactPage', 'FAQPage', 'CollectionPage'];
+
+    for (const script of nonProductTypes.length ? jsonLdScripts : []) {
+      try {
+        const data = JSON.parse(script.textContent || '');
+        const pageType = data['@type'];
+        if (nonProductTypes.includes(pageType)) {
+          throw new Error('הדף הזה נראה כמו כתבה ולא כמו דף מוצר. נסה להדביק קישור ישיר לדף המוצר.');
+        }
+        if (data['@graph'] && Array.isArray(data['@graph'])) {
+          const hasNonProduct = data['@graph'].some(item =>
+            item && nonProductTypes.includes(item['@type'])
+          );
+          const hasProduct = data['@graph'].some(item =>
+            item && (item['@type'] === 'Product' || item['@type'] === 'ProductGroup')
+          );
+          if (hasNonProduct && !hasProduct) {
+            throw new Error('הדף הזה נראה כמו כתבה ולא כמו דף מוצר. נסה להדביק קישור ישיר לדף המוצר.');
+          }
+        }
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('כתבה')) {
+          throw error;
+        }
+      }
     }
 
     return await extractFromShopifyFallback(doc);
@@ -1331,8 +1397,7 @@
       // If page shows ILS but we ended up with a USD price (e.g. from window.runParams),
       // convert to ILS so Nesty always stores the currency the user sees
       if (productData.price && productData.priceCurrency === 'USD' && pageDisplaysILS) {
-        const USD_TO_ILS = 3.6;
-        const converted = (parseFloat(productData.price) * USD_TO_ILS).toFixed(2);
+        const converted = (parseFloat(productData.price) * FX_TO_ILS.USD).toFixed(2);
         console.log(`💱 Page shows ILS but got USD price — converting $${productData.price} → ₪${converted}`);
         productData.price = converted;
         productData.priceCurrency = 'ILS';
@@ -2006,7 +2071,7 @@
       const doc = parser.parseFromString(data.html, 'text/html');
 
       // Extract product data using same logic as current page
-      const productData = extractProductDataFromDocument(doc);
+      const productData = await extractProductDataFromDocument(doc);
 
       if (!productData) {
         throw new Error('לא נמצא מידע על מוצר בדף זה');
@@ -2021,7 +2086,45 @@
     }
   }
 
-  function extractFromProduct(data) {
+  // FX rates to ILS — keep in sync with nesty-web/src/lib/productExtraction.ts
+  const FX_TO_ILS = {
+    USD: 3.19,
+    EUR: 3.43,
+    GBP: 4.05,
+  };
+
+  /**
+   * Convert a non-ILS price to ILS using the FX_TO_ILS table.
+   * Preserves the original price/currency in sourcePrice / sourceCurrency.
+   * If currency is already ILS, blank, or unknown, the data is returned as-is.
+   */
+  function convertPriceToILS(data) {
+    const rawCurrency = (data.priceCurrency || '').toUpperCase().trim();
+    const rawPrice = parseFloat(data.price);
+
+    // Pass through when there's nothing to convert
+    if (!rawCurrency || rawCurrency === 'ILS' || rawCurrency === 'NIS' || !rawPrice) {
+      return data;
+    }
+
+    const rate = FX_TO_ILS[rawCurrency];
+    if (!rate) {
+      console.warn(`   ⚠️ No FX rate for ${rawCurrency}, leaving price as-is`);
+      return data;
+    }
+
+    const ilsPrice = (rawPrice * rate).toFixed(2);
+    console.log(`   💱 Converted ${rawPrice} ${rawCurrency} → ₪${ilsPrice} ILS (rate: ${rate})`);
+    return {
+      ...data,
+      price: ilsPrice,
+      priceCurrency: 'ILS',
+      sourcePrice: String(rawPrice),
+      sourceCurrency: rawCurrency,
+    };
+  }
+
+  function extractFromProduct(data, baseUrl) {
     // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
     const offersData = data.offers || data.Offers;
 
@@ -2046,23 +2149,23 @@
       console.log('📦 Using single offer:', { price: offer?.price });
     }
 
-    // Extract images (normalize to string URLs first)
-    const imageUrls = normalizeImageUrls(data.image);
+    // Extract images (normalize to string URLs first, resolve relative paths)
+    const imageUrls = normalizeImageUrls(data.image, baseUrl);
 
-    const result = {
+    const result = convertPriceToILS({
       name: decodeHtmlEntities(data.name || ''),
       price: offer?.price || '',
       priceCurrency: offer?.priceCurrency || '',
       brand: data.brand?.name || data.brand || '',
       category: data.category || '',
       imageUrls: filterAndPrioritizeImages([...new Set(imageUrls)])
-    };
+    });
 
     console.log('✅ extractFromProduct result:', result);
     return result;
   }
 
-  function extractFromProductGroup(data) {
+  function extractFromProductGroup(data, baseUrl) {
     const variants = data.hasVariant || [];
     const firstVariant = Array.isArray(variants) ? variants[0] : variants;
     // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
@@ -2073,19 +2176,19 @@
     if (Array.isArray(variants)) {
       variants.forEach(variant => {
         if (variant.image) {
-          imageUrls.push(...normalizeImageUrls(variant.image));
+          imageUrls.push(...normalizeImageUrls(variant.image, baseUrl));
         }
       });
     }
 
-    return {
+    return convertPriceToILS({
       name: data.name || '',
       price: offer?.price || '',
       priceCurrency: offer?.priceCurrency || '',
       brand: data.brand?.name || data.brand || '',
       category: data.category || '',
       imageUrls: filterAndPrioritizeImages([...new Set(imageUrls)])
-    };
+    });
   }
 
   /**
@@ -2189,6 +2292,17 @@
     setTimeout(() => { host.remove(); }, cleanupMs);
   }
 
+  // Escape values interpolated into innerHTML — product names from page JSON-LD
+  // routinely contain quotes (e.g. sizes like 32") and must not break out of attributes
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function showProductForm(product = null, mode = 'current') {
     console.log('🎨 Creating product form...');
 
@@ -2254,7 +2368,7 @@
         <div id="nesty-current-mode-content" style="display: ${currentMode === 'current' ? 'grid' : 'none'}; grid-template-columns: 160px 1fr; gap: 20px;">
           <!-- Left side - Image -->
           <div style="text-align: center;">
-            <img src="${imageUrl}" alt="${product ? product.name : ''}"
+            <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(product ? product.name : '')}"
                  style="width: 160px; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid #e8e4e9; margin-bottom: 8px;"
                  onerror="this.style.background='#e8e4e9'; this.alt='No Image'">
             <div id="nesty-image-meta" style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 2px;">
@@ -2276,7 +2390,7 @@
             <!-- Title -->
             <div>
               <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">שם המוצר</label>
-              <input type="text" id="nesty-title" value="${product ? product.name : ''}"
+              <input type="text" id="nesty-title" value="${escapeHtml(product ? product.name : '')}"
                      style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px; font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
             </div>
 
@@ -2284,7 +2398,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
               <div>
                 <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">מחיר</label>
-                <input type="text" id="nesty-price" value="${product ? product.price : ''}"
+                <input type="text" id="nesty-price" value="${escapeHtml(product ? product.price : '')}"
                        style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px;">
               </div>
               <div>
@@ -2653,7 +2767,9 @@
         );
 
         if (!response.ok) {
-          throw new Error('Failed to add item to registry');
+          const body = await response.text().catch(() => '');
+          console.error('Items POST failed:', response.status, body);
+          throw new Error(`שגיאת שרת ${response.status} בהוספת המוצר`);
         }
 
         const result = await response.json();

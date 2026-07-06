@@ -33,11 +33,12 @@ investigator) or test directly in the browser — not the orchestrator.
 
 ## Active Extension Folder
 
-**`extension/chrome-store/`** — this is the only folder you should read or
+**`extension/current-build/`** — this is the only folder you should read or
 edit. All other version folders (`archive/`, `*.zip`) are historical.
 
 Do not edit files in `extension/archive/` or any versioned zip.
-Do not confuse the path with the old name `final-version/` (deprecated).
+Do not confuse the path with the old names `chrome-store/` or
+`final-version/` (both deprecated and deleted).
 
 ---
 
@@ -45,21 +46,22 @@ Do not confuse the path with the old name `final-version/` (deprecated).
 
 | File | Purpose |
 |---|---|
-| `chrome-store/manifest.json` | Extension config (currently v1.4.7, MV3) |
-| `chrome-store/background.js` | Service worker — session fetch + token refresh |
-| `chrome-store/content.js` | Injected script — product extraction, form UI, Supabase writes |
-| `chrome-store/config.js` | Switch between `development` / `production` environments |
-| `chrome-store/popup-styles.css` | All extension UI styles |
-| `chrome-store/detector.js` | Tiny content script that sets `data-nesty-extension-installed` |
+| `current-build/manifest.json` | Extension config (currently v1.5.4, MV3) |
+| `current-build/background.js` | Service worker — session fetch + token refresh |
+| `current-build/content.js` | Injected script — product extraction, form UI, Supabase writes |
+| `current-build/config.js` | Switch between `development` / `production` environments |
+| `current-build/popup-styles.css` | All extension UI styles |
+| `current-build/detector.js` | Tiny content script that sets `data-nesty-extension-installed` |
+| `current-build/button-injector.js` | Inline "Add to Nesty" button on whitelisted sites |
 
 ---
 
 ## Release Workflow
 
-1. Edit files in `chrome-store/`
+1. Edit files in `current-build/`
 2. Set `ENV = 'production'` in `config.js`
 3. Remove `http://localhost:5173/*` from `manifest.json` host_permissions
-4. Zip `chrome-store/` contents (not the folder itself)
+4. Zip `current-build/` contents (not the folder itself)
 5. Upload to Chrome Web Store
 6. Restore localhost to `manifest.json` for continued dev
 

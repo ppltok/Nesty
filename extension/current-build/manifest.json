@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Add to Nesty Button",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "הוסיפי מוצרים מכל אתר מסחר אלקטרוני לרשימת הלידה שלך בהקלקה אחת על התוסף",
   "icons": {
     "16": "icon16.png",
@@ -205,7 +205,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup-styles.css", "page-script.js", "config.js", "supabase-client.js", "icon16.png", "icon48.png", "icon128.png"],
+      "resources": ["popup-styles.css", "config.js", "icon16.png", "icon48.png", "icon128.png"],
       "matches": ["<all_urls>"]
     }
   ]

@@ -8,7 +8,7 @@ Guidance for Claude Code working in this repository. Canonical product, brand, a
 
 Nesty is an Israeli baby registry platform with two pieces:
 1. **Web app** (`nesty-web/`) — React 19 + TypeScript + Vite + TailwindCSS + Supabase. Deployed to GitHub Pages, served from `https://nestyil.com`.
-2. **Chrome extension** (`extension/final-version/`) — JSON-LD product scraper for adding items from any e-commerce site.
+2. **Chrome extension** (`extension/current-build/`) — JSON-LD product scraper for adding items from any e-commerce site.
 
 > **⚠️ This repo is NOT the internal analytics dashboard.** `dashboard.nestyil.com` is a **separate** app in a **separate** repo — `ppltok/nesty-dashboard` (its own React/Vite/Supabase project, deployed manually to its `gh-pages` branch; no Actions workflow). Both apps share the same Supabase project (`wopsrjfdaovlyibivijl`). If a task is about internal metrics, pivot/report tooling, or anything served from `dashboard.nestyil.com`, **work in `ppltok/nesty-dashboard`, not here.** Pushing it to `nestyil.com` (this repo) means it never reaches the dashboard. (Push access to `nesty-dashboard` is granted to the `ppltok` owner account; the `yanivbarlev` collaborator account needs a write invite.)
 
@@ -49,7 +49,7 @@ npm run preview
 
 ### Chrome extension
 
-Production code: `extension/final-version/`. Load via `chrome://extensions/` → Developer mode → Load unpacked. Chrome Web Store package: `extension/nesty-extension-v1.0.0.zip` (see `extension/chrome-store/STORE_LISTING.md` for submission).
+Production code: `extension/current-build/`. Load via `chrome://extensions/` → Developer mode → Load unpacked. Chrome Web Store package: `extension/nesty-extension-v1.5.4.zip` (see `extension/CHROME_STORE_RELEASE_CHECKLIST.md` for submission).
 
 ### Deployment (web)
 
@@ -75,9 +75,9 @@ See `Nesty-Obsidian/Tech-Notes/Supabase-Edge-Functions.md` for the deploy gotcha
 
 **Manifest V3, JSON-LD-first.** Background script handles session fetching (only `chrome.tabs` context can read the Nesty tab's localStorage). Content script extracts product data from JSON-LD structured data, falling back to platform-specific extractors (AliExpress, Shopify) and finally to Open Graph meta tags.
 
-**Two implementations exist** — `extension/final-version/` is the source of truth (JSON-LD). `extension/nesty-local/` is **deprecated DOM scraping**, do not touch.
+**Two implementations exist** — `extension/current-build/` is the source of truth (JSON-LD). `extension/archive/` holds deprecated versions (incl. the old DOM-scraping `nesty-local`), do not touch.
 
-**Full extension architecture:** `Nesty-Obsidian/Tech-Notes/Chrome-Extension-Architecture.md`. Permissions and store-submission detail: `extension/chrome-store/STORE_LISTING.md`.
+**Full extension architecture:** `Nesty-Obsidian/Tech-Notes/Chrome-Extension-Architecture.md`. Permissions and store-submission detail: `extension/CHROME_STORE_RELEASE_CHECKLIST.md`.
 
 ### Mock API
 
@@ -89,26 +89,26 @@ See `Nesty-Obsidian/Tech-Notes/Supabase-Edge-Functions.md` for the deploy gotcha
 
 **Configuration:**
 - `nesty-web/vite.config.ts` — Vite config, mock API plugin, base path
-- `extension/final-version/config.js` — `ENV = 'production'` vs `'development'` toggle
-- `extension/final-version/manifest.json` — extension permissions, host_permissions
+- `extension/current-build/config.js` — `ENV = 'production'` vs `'development'` toggle
+- `extension/current-build/manifest.json` — extension permissions, host_permissions
 
 **Implementation:**
 - `nesty-web/src/contexts/AuthContext.tsx` — auth state
 - `nesty-web/src/lib/supabase.ts` — Supabase client
 - `nesty-web/src/lib/productExtraction.ts` — **shared extraction logic, source of truth**
-- `extension/final-version/content.js` — extension main logic (mirrors productExtraction.ts)
-- `extension/final-version/background.js` — service worker, session fetching
+- `extension/current-build/content.js` — extension main logic (mirrors productExtraction.ts)
+- `extension/current-build/background.js` — service worker, session fetching
 
 **Reference docs (in repo):**
 - `NESTY_DATABASE_SCHEMA.md` — full schema, RLS policies
 - `project_status.md` — recent decisions, in-flight work
-- `extension/final-version/DEVELOPMENT_LOG.md` — extension history
+- `extension/current-build/DEVELOPMENT_LOG.md` — extension history
 
 ---
 
 ## Keeping Extraction Logic in Sync
 
-Website's "paste URL" feature and the extension share extraction logic. **`nesty-web/src/lib/productExtraction.ts` is the source of truth** — add/update it first, then port to `extension/final-version/content.js` keeping function names identical. The extension may have *extra* methods (live JS variables like `window.runParams` for AliExpress) but the DOM-based extraction must match.
+Website's "paste URL" feature and the extension share extraction logic. **`nesty-web/src/lib/productExtraction.ts` is the source of truth** — add/update it first, then port to `extension/current-build/content.js` keeping function names identical. The extension may have *extra* methods (live JS variables like `window.runParams` for AliExpress) but the DOM-based extraction must match.
 
 When adding a new platform: update `detectPlatform()` and add `extractFromX()` in `productExtraction.ts`, port to `content.js`, test both paths (paste-URL modal + extension click), then update `Tech-Notes/Product-Extraction-System.md` if the methodology changes.
 
@@ -123,7 +123,7 @@ Full methodology and platform notes: `Nesty-Obsidian/Tech-Notes/Product-Extracti
 ### 1. Extension shows "login required" but user is logged in
 
 - Confirm a Nesty tab is open at the URL matching extension's `ENV` (production: `https://nestyil.com`; dev: `http://localhost:5173`)
-- Check `extension/final-version/config.js` — `ENV` must match
+- Check `extension/current-build/config.js` — `ENV` must match
 - Clear cache: `chrome.storage.local.clear()` in the extension's service worker console
 
 ### 2. Wrong price on Shopify products
@@ -184,7 +184,7 @@ When uploading a new version:
 4. Bump version, zip, upload
 5. **Restore localhost to manifest.json** for continued local development
 
-Full submission guide: `extension/chrome-store/STORE_LISTING.md`.
+Full submission guide: `extension/CHROME_STORE_RELEASE_CHECKLIST.md` (or run the `cws-release` skill).
 
 ---
 
