@@ -33,6 +33,11 @@ export interface Profile {
   // Popup/toast state (see 20260417_engagement_retention_round1.sql)
   dismissed_popups?: Record<string, boolean>
   last_milestone_shown?: number
+  // WhatsApp phone capture (see 20260706_whatsapp_phone_capture.sql).
+  // phone_number is E.164 (+9725XXXXXXXX), stored only with explicit opt-in.
+  phone_number?: string | null
+  whatsapp_opt_in?: boolean
+  whatsapp_consented_at?: string | null
   created_at: string
   updated_at: string
 }

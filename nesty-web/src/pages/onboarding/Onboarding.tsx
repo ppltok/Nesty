@@ -15,6 +15,20 @@ import {
   CheckCircle,
   Loader2,
   Plus,
+  Heart,
+  Gift,
+  Tag,
+  Users,
+  Lock,
+  Phone,
+  Megaphone,
+  PartyPopper,
+  HelpCircle,
+  Facebook,
+  Instagram,
+  Search,
+  Music,
+  MessageCircle,
 } from 'lucide-react'
 import OnboardingCelebration from '../../components/OnboardingCelebration'
 import FadedIconsBackground from '../../components/animations/FadedIconsBackground'
@@ -119,7 +133,7 @@ function buildCuratedRows(): { group: typeof ESSENTIAL_GROUPS[number]; products:
   })
 }
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6 | 'celebration'
+type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 'celebration'
 
 type ReferralSource = 'facebook' | 'instagram' | 'google' | 'tiktok' | 'friend' | 'other' | null
 
@@ -130,23 +144,34 @@ interface OnboardingData {
   feeling: 'excited' | 'overwhelmed' | 'exploring' | null
   isFirstTimeParent: boolean | null
   referralSource: ReferralSource
+  phoneNumber: string // display format 05X-XXX-XXXX; normalized to E.164 on save
   partnerEmail: string
   marketingEmails: boolean
 }
 
+// Israeli mobile input helpers for the WhatsApp step. The input keeps a
+// human-readable 05X-XXX-XXXX; validation runs on bare digits.
+function formatIlPhone(raw: string): string {
+  const d = raw.replace(/\D/g, '').slice(0, 10)
+  if (d.length > 6) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`
+  if (d.length > 3) return `${d.slice(0, 3)}-${d.slice(3)}`
+  return d
+}
+const isIlMobileValid = (digits: string) => /^05\d{8}$/.test(digits)
+
 const referralSources = [
-  { value: 'facebook' as const, emoji: '📘', title: 'פייסבוק' },
-  { value: 'instagram' as const, emoji: '📸', title: 'אינסטגרם' },
-  { value: 'google' as const, emoji: '🔍', title: 'חיפוש בגוגל' },
-  { value: 'tiktok' as const, emoji: '🎵', title: 'טיקטוק' },
-  { value: 'friend' as const, emoji: '💬', title: 'חבר/ה המליצ/ה' },
-  { value: 'other' as const, emoji: '✨', title: 'אחר' },
+  { value: 'facebook' as const, icon: Facebook, title: 'פייסבוק', bg: 'bg-[#d3e4fd]/60', fg: 'text-[#1877f2]' },
+  { value: 'instagram' as const, icon: Instagram, title: 'אינסטגרם', bg: 'bg-[#ffd8e4]/60', fg: 'text-[#d62976]' },
+  { value: 'google' as const, icon: Search, title: 'גוגל', bg: 'bg-[#fef3dd]', fg: 'text-[#e8930c]' },
+  { value: 'tiktok' as const, icon: Music, title: 'טיקטוק', bg: 'bg-[#f2f0f4]', fg: 'text-[#1d192b]' },
+  { value: 'friend' as const, icon: MessageCircle, title: 'חבר/ה המליצ/ה', bg: 'bg-[#e8f5e9]', fg: 'text-[#2e7d32]' },
+  { value: 'other' as const, icon: Sparkles, title: 'אחר', bg: 'bg-[#f3edff]', fg: 'text-[#6750a4]' },
 ]
 
 const feelings = [
-  { value: 'excited' as const, emoji: '🎉', title: 'מתרגשת!', description: 'אני כל כך שמחה' },
-  { value: 'overwhelmed' as const, emoji: '❓', title: 'קצת המומה', description: 'יש כל כך הרבה לחשוב עליו' },
-  { value: 'exploring' as const, emoji: '❤️', title: 'סתם בודקת', description: 'רוצה לראות מה יש פה' },
+  { value: 'excited' as const, icon: PartyPopper, title: 'מתרגשת!', description: 'אני כל כך שמחה', bg: 'bg-[#ffd8e4]/60', fg: 'text-[#ba1a5c]' },
+  { value: 'overwhelmed' as const, icon: HelpCircle, title: 'קצת המומה', description: 'יש כל כך הרבה לחשוב עליו', bg: 'bg-[#fef3dd]', fg: 'text-[#c9821f]' },
+  { value: 'exploring' as const, icon: Heart, title: 'סתם בודקת', description: 'רוצה לראות מה יש פה', bg: 'bg-[#f3edff]', fg: 'text-[#6750a4]' },
 ]
 
 // Subtitle for the first-item step adapts to the user's emotional state —
@@ -182,6 +207,7 @@ export default function Onboarding() {
     feeling: null,
     isFirstTimeParent: null,
     referralSource: null,
+    phoneNumber: '',
     partnerEmail: '',
     marketingEmails: true, // default ON, disclosure on the final button
   })
@@ -204,12 +230,13 @@ export default function Onboarding() {
     2: 'due_date',
     3: 'feeling_and_first_time_parent',
     4: 'referral_source',
-    5: 'co_parent',
-    6: 'first_item',
+    5: 'whatsapp_phone',
+    6: 'co_parent',
+    7: 'first_item',
   }
 
   const handleNext = () => {
-    if (typeof step === 'number' && step < 6) {
+    if (typeof step === 'number' && step < 7) {
       if (user) {
         trackOnboardingStep({
           user_id: user.id,
@@ -229,9 +256,9 @@ export default function Onboarding() {
   }
 
   const handleSkip = () => {
-    if (typeof step === 'number' && step < 6) {
+    if (typeof step === 'number' && step < 7) {
       setStep((step + 1) as Step)
-    } else if (step === 6) {
+    } else if (step === 7) {
       handleComplete()
     }
   }
@@ -321,7 +348,7 @@ export default function Onboarding() {
     }
     if (!liveSession) {
       setIsLoading(false)
-      setError('ההתחברות התנתקה באמצע 😕 מעבירים אותך להתחברות מחדש — ואז מסיימים בקליק.')
+      setError('ההתחברות התנתקה באמצע. מעבירים אותך להתחברות מחדש — ואז מסיימים בקליק.')
       setTimeout(() => navigate('/auth/signin', { replace: true }), 3500)
       return
     }
@@ -362,11 +389,33 @@ export default function Onboarding() {
           profileError.message?.includes('row-level security') ||
           profileError.message?.includes('JWT')
         ) {
-          setError('ההתחברות התנתקה באמצע 😕 מעבירים אותך להתחברות מחדש — ואז מסיימים בקליק.')
+          setError('ההתחברות התנתקה באמצע. מעבירים אותך להתחברות מחדש — ואז מסיימים בקליק.')
           setTimeout(() => navigate('/auth/signin', { replace: true }), 3500)
           return
         }
         throw new Error(`שגיאה בעדכון הפרופיל: ${profileError.message}`)
+      }
+
+      // WhatsApp opt-in — separate, non-critical write. The CTA on the phone
+      // step is disabled unless the number is a valid IL mobile, so a value
+      // here means an explicit opt-in. Kept out of the main upsert so a
+      // missing column (migration not applied yet) can never fail onboarding.
+      // Mirrors the marketing-consent audit trail: whatsapp_consented_at
+      // proves WHEN she opted in. Set only on opt-in — skip leaves the
+      // columns untouched so re-running onboarding can't clobber a prior one.
+      const phoneDigits = data.phoneNumber.replace(/\D/g, '')
+      if (isIlMobileValid(phoneDigits)) {
+        const { error: phoneError } = await supabase
+          .from('profiles')
+          .update({
+            phone_number: `+972${phoneDigits.slice(1)}`,
+            whatsapp_opt_in: true,
+            whatsapp_consented_at: new Date().toISOString(),
+          })
+          .eq('id', user.id)
+        if (phoneError) {
+          console.warn('[onboarding] WhatsApp phone save failed (non-critical):', phoneError)
+        }
       }
 
       // Create registry — but reuse an existing one first. A user who closed
@@ -490,7 +539,7 @@ export default function Onboarding() {
           } else if (user) {
             trackOnboardingStep({
               user_id: user.id,
-              step: 5,
+              step: 6,
               step_name: 'co_parent_invited',
               completed: true,
             })
@@ -564,7 +613,7 @@ export default function Onboarding() {
     if (step === 1) return data.firstName.trim().length > 0
     if (step === 2) return isDueDateValid(data.dueDate)
     // Co-parent email is optional, but if typed it must be valid.
-    if (step === 5) return data.partnerEmail.trim() === '' || isEmailValid(data.partnerEmail)
+    if (step === 6) return data.partnerEmail.trim() === '' || isEmailValid(data.partnerEmail)
     return true
   }
 
@@ -719,9 +768,9 @@ export default function Onboarding() {
           <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-16 w-auto" />
         </Link>
 
-        {/* Progress dots — 6 steps now */}
+        {/* Progress dots — 7 steps now */}
         <div className="flex justify-center gap-2 mb-6">
-          {[1, 2, 3, 4, 5, 6].map((s) => (
+          {[1, 2, 3, 4, 5, 6, 7].map((s) => (
             <div
               key={s}
               className={`w-3 h-3 rounded-full transition-colors ${
@@ -793,7 +842,8 @@ export default function Onboarding() {
               />
               {data.dueDate && !isDueDateValid(data.dueDate) && (
                 <p className="text-sm text-red-600 text-center">
-                  התאריך חייב להיות בין 6 חודשים אחורה ל-10 חודשים קדימה 💜
+                  התאריך חייב להיות בין 6 חודשים אחורה ל-10 חודשים קדימה{' '}
+                  <Heart className="inline w-3.5 h-3.5 text-[#6750a4] fill-current align-[-2px]" />
                 </p>
               )}
               <p className="text-sm text-[#49454f] text-center">אופציונלי - אפשר לדלג</p>
@@ -814,7 +864,10 @@ export default function Onboarding() {
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               </div>
-              <button onClick={handleSkip} className="w-full text-[#49454f] hover:text-[#6750a4] text-sm transition-colors">
+              <button
+                onClick={handleSkip}
+                className="w-full px-6 py-3.5 rounded-[28px] bg-white border-2 border-[#e7e0ec] text-[#49454f] font-medium hover:border-[#6750a4] hover:text-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
+              >
                 דלג
               </button>
             </div>
@@ -832,7 +885,9 @@ export default function Onboarding() {
               </div>
 
               <div className="space-y-2">
-                {feelings.map((feeling) => (
+                {feelings.map((feeling) => {
+                  const FeelingIcon = feeling.icon
+                  return (
                   <button
                     key={feeling.value}
                     onClick={() => setData({ ...data, feeling: feeling.value })}
@@ -843,14 +898,17 @@ export default function Onboarding() {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{feeling.emoji}</span>
+                      <span className={`w-9 h-9 rounded-[12px] ${feeling.bg} flex items-center justify-center flex-shrink-0`}>
+                        <FeelingIcon className={`w-5 h-5 ${feeling.fg}`} />
+                      </span>
                       <div>
                         <p className="font-medium text-[#1d192b] text-sm">{feeling.title}</p>
                         <p className="text-xs text-[#49454f]">{feeling.description}</p>
                       </div>
                     </div>
                   </button>
-                ))}
+                  )
+                })}
               </div>
 
               {/* Inline first-time-parent question — compact */}
@@ -868,7 +926,9 @@ export default function Onboarding() {
                         : 'border-[#e7e0ec] text-[#1d192b] hover:border-[#6750a4]/50'
                     }`}
                   >
-                    👶 כן, הראשון!
+                    <span className="inline-flex items-center gap-1.5 justify-center">
+                      <Baby className="w-4 h-4" /> כן, הראשון!
+                    </span>
                   </button>
                   <button
                     onClick={() => setData({ ...data, isFirstTimeParent: false })}
@@ -878,7 +938,9 @@ export default function Onboarding() {
                         : 'border-[#e7e0ec] text-[#1d192b] hover:border-[#6750a4]/50'
                     }`}
                   >
-                    👨‍👩‍👧 כבר עם ילדים
+                    <span className="inline-flex items-center gap-1.5 justify-center">
+                      <Users className="w-4 h-4" /> כבר עם ילדים
+                    </span>
                   </button>
                 </div>
               </div>
@@ -899,7 +961,10 @@ export default function Onboarding() {
                   <ArrowLeft className="w-4 h-4" />
                 </button>
               </div>
-              <button onClick={handleSkip} className="w-full text-[#49454f] hover:text-[#6750a4] text-xs transition-colors">
+              <button
+                onClick={handleSkip}
+                className="w-full px-4 py-3 rounded-[24px] bg-white border-2 border-[#e7e0ec] text-[#49454f] font-medium text-sm hover:border-[#6750a4] hover:text-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
+              >
                 דלג
               </button>
             </div>
@@ -910,13 +975,15 @@ export default function Onboarding() {
             <div className="space-y-6">
               <div className="text-center">
                 <div className="w-16 h-16 bg-[#d3e4fd]/40 rounded-[20px] flex items-center justify-center mx-auto mb-4">
-                  <span className="text-3xl">📣</span>
+                  <Megaphone className="w-8 h-8 text-[#1877f2]" />
                 </div>
                 <h1 className="text-2xl font-medium text-[#1d192b] mb-2">איך הגעת אלינו?</h1>
                 <p className="text-[#49454f]">זה עוזר לנו למצוא עוד הורים כמוך</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {referralSources.map((source) => (
+                {referralSources.map((source) => {
+                  const SourceIcon = source.icon
+                  return (
                   <button
                     key={source.value}
                     onClick={() => setData({ ...data, referralSource: source.value })}
@@ -926,10 +993,13 @@ export default function Onboarding() {
                         : 'border-[#e7e0ec] hover:border-[#6750a4]/50'
                     }`}
                   >
-                    <span className="text-2xl block mb-2">{source.emoji}</span>
+                    <span className={`w-10 h-10 rounded-[12px] ${source.bg} flex items-center justify-center mx-auto mb-2`}>
+                      <SourceIcon className={`w-5 h-5 ${source.fg}`} />
+                    </span>
                     <p className="font-medium text-[#1d192b] text-sm">{source.title}</p>
                   </button>
-                ))}
+                  )
+                })}
               </div>
               <div className="flex gap-3">
                 <button
@@ -947,18 +1017,133 @@ export default function Onboarding() {
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               </div>
-              <button onClick={handleSkip} className="w-full text-center text-sm text-[#49454f] hover:text-[#6750a4] transition-colors">
+              <button
+                onClick={handleSkip}
+                className="w-full px-6 py-3.5 rounded-[28px] bg-white border-2 border-[#e7e0ec] text-[#49454f] font-medium hover:border-[#6750a4] hover:text-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
+              >
                 דלג
               </button>
             </div>
           )}
 
-          {/* ─────────── Step 5: Co-parent invite ─────────── */}
+          {/* ─────────── Step 5: WhatsApp phone — gift-alert opt-in ─────────── */}
           {step === 5 && (
+            <div className="space-y-5">
+              <div className="text-center">
+                <div className="relative w-16 h-16 mx-auto mb-4">
+                  <div className="w-16 h-16 bg-[#f3edff] rounded-[20px] flex items-center justify-center">
+                    <Gift className="w-8 h-8 text-[#6750a4]" />
+                  </div>
+                  <span className="absolute -bottom-1.5 -left-3 bg-[#25d366] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md">
+                    וואטסאפ
+                  </span>
+                </div>
+                <h1 className="text-2xl font-medium text-[#1d192b] flex items-center justify-center gap-2">
+                  <Heart className="w-5 h-5 text-[#6750a4] fill-current flex-shrink-0" />
+                  הוסיפי מספר — ואל תפספסי כלום!
+                  <Heart className="w-5 h-5 text-[#6750a4] fill-current flex-shrink-0" />
+                </h1>
+              </div>
+
+              <div className="space-y-2">
+                {[
+                  { icon: Gift, text: 'עדכון ברגע שנכנסת מתנה', bg: 'bg-[#ffd8e4]/60', fg: 'text-[#ba1a5c]' },
+                  { icon: Tag, text: 'נגיד לך אם מחיר יורד', bg: 'bg-[#e8f5e9]', fg: 'text-[#2e7d32]' },
+                  { icon: Heart, text: 'תזכורות עדינות, בקצב שלך', bg: 'bg-[#f3edff]', fg: 'text-[#6750a4]' },
+                ].map((benefit) => {
+                  const BenefitIcon = benefit.icon
+                  return (
+                  <div
+                    key={benefit.text}
+                    className="flex items-center gap-3 p-2.5 rounded-[14px] border border-[#e7e0ec] bg-white"
+                  >
+                    <span className={`w-8 h-8 rounded-[10px] ${benefit.bg} flex items-center justify-center flex-shrink-0`}>
+                      <BenefitIcon className={`w-4 h-4 ${benefit.fg}`} />
+                    </span>
+                    <p className="text-sm font-medium text-[#1d192b]">{benefit.text}</p>
+                  </div>
+                  )
+                })}
+              </div>
+
+              <div>
+                <div
+                  className={`flex items-center gap-2 px-3 rounded-[16px] border-2 bg-white transition-colors ${
+                    isIlMobileValid(data.phoneNumber.replace(/\D/g, ''))
+                      ? 'border-[#25d366]'
+                      : 'border-[#e7e0ec] focus-within:border-[#6750a4]'
+                  }`}
+                >
+                  <Phone className="w-5 h-5 text-[#6750a4] flex-shrink-0" aria-hidden="true" />
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    dir="ltr"
+                    value={data.phoneNumber}
+                    onChange={(e) => setData({ ...data, phoneNumber: formatIlPhone(e.target.value) })}
+                    placeholder="050-000-0000"
+                    aria-label="מספר נייד"
+                    className="flex-1 min-w-0 py-3 bg-transparent text-center text-lg font-medium text-[#1d192b] tracking-wide placeholder:text-[#49454f]/50 focus:outline-none"
+                  />
+                  {isIlMobileValid(data.phoneNumber.replace(/\D/g, '')) ? (
+                    <CheckCircle className="w-5 h-5 text-[#25d366] flex-shrink-0" />
+                  ) : (
+                    <span className="w-5 flex-shrink-0" />
+                  )}
+                </div>
+                {data.phoneNumber.replace(/\D/g, '').length > 0 &&
+                  !isIlMobileValid(data.phoneNumber.replace(/\D/g, '')) && (
+                    <p className="text-sm text-red-600 text-center mt-2">
+                      מספר נייד ישראלי — 10 ספרות שמתחילות ב-05{' '}
+                      <Heart className="inline w-3.5 h-3.5 text-[#6750a4] fill-current align-[-2px]" />
+                    </p>
+                  )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleBack}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-4 rounded-[28px] bg-white border-2 border-[#e7e0ec] text-[#1d192b] font-medium hover:border-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  חזור
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={!isIlMobileValid(data.phoneNumber.replace(/\D/g, ''))}
+                  className="flex-[2] flex items-center justify-center gap-2 px-4 py-4 rounded-[28px] bg-[#6750a4] text-white font-medium hover:bg-[#7c5fbd] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  כן, עדכנו אותי בוואטסאפ
+                </button>
+              </div>
+
+              {/* Skip — a real secondary button, not a buried text link.
+                  Visible on purpose: the value pitch does the persuading. */}
+              <button
+                onClick={() => {
+                  setData({ ...data, phoneNumber: '' })
+                  handleSkip()
+                }}
+                className="w-full px-6 py-3.5 rounded-[28px] bg-white border-2 border-[#e7e0ec] text-[#49454f] font-medium hover:border-[#6750a4] hover:text-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
+              >
+                אוסיף אחר כך
+              </button>
+
+              {/* WhatsApp consent — same prominence rules as the marketing
+                  disclosure on the final step (Israeli spam law). */}
+              <p className="text-[12px] text-[#49454f] text-center leading-relaxed px-2">
+                בלחיצה על "כן" את מאשרת קבלת הודעות וואטסאפ מ-Nesty (באבו קפיטל בע"מ).
+                בלי ספאם <Lock className="inline w-3 h-3 align-[-1px]" /> מבטלים בכל רגע, בהודעה אחת.
+              </p>
+            </div>
+          )}
+
+          {/* ─────────── Step 6: Co-parent invite ─────────── */}
+          {step === 6 && (
             <div className="space-y-6">
               <div className="text-center">
                 <div className="w-16 h-16 bg-gradient-to-br from-[#7c4dbd] to-[#9b62d4] rounded-[20px] flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <span className="text-3xl">💜</span>
+                  <Heart className="w-8 h-8 text-white fill-current" />
                 </div>
                 <h1 className="text-2xl font-medium text-[#1d192b] mb-2">בונים את הקן ביחד?</h1>
                 <p className="text-[#49454f]">אפשר להזמין את בן/בת הזוג להוסיף, לערוך ולראות הכל איתך.</p>
@@ -977,7 +1162,10 @@ export default function Onboarding() {
                   className="w-full px-4 py-3 rounded-[16px] border-2 border-[#e7e0ec] bg-white text-[#1d192b] text-left placeholder:text-[#49454f]/60 focus:border-[#6750a4] focus:outline-none transition-colors"
                 />
                 {data.partnerEmail.trim() !== '' && !isEmailValid(data.partnerEmail) && (
-                  <p className="text-sm text-red-600 text-center mt-2">בדקי שהאימייל תקין 💜</p>
+                  <p className="text-sm text-red-600 text-center mt-2">
+                    בדקי שהאימייל תקין{' '}
+                    <Heart className="inline w-3.5 h-3.5 text-[#6750a4] fill-current align-[-2px]" />
+                  </p>
                 )}
               </div>
               <p className="text-xs text-[#49454f] text-center">
@@ -1000,20 +1188,26 @@ export default function Onboarding() {
                   <ArrowLeft className="w-5 h-5" />
                 </button>
               </div>
-              <button onClick={handleSkip} className="w-full text-[#49454f] hover:text-[#6750a4] text-sm transition-colors">
+              <button
+                onClick={handleSkip}
+                className="w-full px-6 py-3.5 rounded-[28px] bg-white border-2 border-[#e7e0ec] text-[#49454f] font-medium hover:border-[#6750a4] hover:text-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300"
+              >
                 אזמין אחר כך
               </button>
             </div>
           )}
 
-          {/* ─────────── Step 6: First Item — the wow moment ─────────── */}
-          {step === 6 && (
+          {/* ─────────── Step 7: First Item — the wow moment ─────────── */}
+          {step === 7 && (
             <div className="space-y-4">
               <div className="text-center">
                 <div className="w-14 h-14 bg-[#f3edff] rounded-[18px] flex items-center justify-center mx-auto mb-3">
                   <Sparkles className="w-7 h-7 text-[#6750a4]" />
                 </div>
-                <h1 className="text-xl font-medium text-[#1d192b] mb-1">הרגע הכי כיף 🪺</h1>
+                <h1 className="text-xl font-medium text-[#1d192b] mb-1 flex items-center justify-center gap-1.5">
+                  הרגע הכי כיף
+                  <Sparkles className="w-5 h-5 text-[#ba1a5c]" />
+                </h1>
                 <p className="text-sm text-[#49454f]">{firstItemSubtitle(data.feeling)}</p>
               </div>
 
@@ -1172,9 +1366,9 @@ export default function Onboarding() {
               <button
                 onClick={handleSkipFirstItem}
                 disabled={isLoading}
-                className="w-full text-[#49454f] hover:text-[#6750a4] text-xs transition-colors flex items-center justify-center gap-1"
+                className="w-full px-4 py-3 rounded-[24px] bg-white border-2 border-[#e7e0ec] text-[#49454f] font-medium text-sm hover:border-[#6750a4] hover:text-[#6750a4] hover:bg-[#f3edff]/30 transition-all duration-300 flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="w-3.5 h-3.5" />
                 דלגי וסיימי בלי פריט
               </button>
             </div>

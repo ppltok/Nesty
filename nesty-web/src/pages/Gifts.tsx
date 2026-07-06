@@ -350,7 +350,12 @@ export default function Gifts() {
 
         {/* Gifts Display */}
         {purchases.length === 0 ? (
-          <div className="bg-white rounded-[40px] rounded-tr-[12px] rounded-bl-[12px] border border-[#e7e0ec] p-16 text-center shadow-sm">
+          <div className="space-y-3">
+            {/* The collapsed Supherb perk must render here too — otherwise
+                collapsing it with zero purchases makes it vanish entirely
+                (the grid/list branches below never mount on an empty box). */}
+            {supherbGift.listCard}
+            <div className="bg-white rounded-[40px] rounded-tr-[12px] rounded-bl-[12px] border border-[#e7e0ec] p-16 text-center shadow-sm">
             <div className="w-24 h-24 bg-[#f5f5f5] rounded-full flex items-center justify-center mx-auto mb-6 text-[#49454f]">
               <Gift className="w-12 h-12" />
             </div>
@@ -366,6 +371,7 @@ export default function Gifts() {
             >
               חזרה לרשימה
             </Link>
+            </div>
           </div>
         ) : filteredPurchases.length === 0 ? (
           <div className="bg-white rounded-[28px] border border-[#e7e0ec] p-12 text-center">
