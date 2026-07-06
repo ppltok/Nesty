@@ -33,9 +33,10 @@ import PostOnboardingWizard from '../components/popups/PostOnboardingWizard'
 import SharePromptModal from '../components/popups/SharePromptModal'
 import MilestoneToast, { type MilestoneKind } from '../components/popups/MilestoneToast'
 import PartnerInviteCard from '../components/popups/PartnerInviteCard'
+import WhatsAppRecaptureModal from '../components/popups/WhatsAppRecaptureModal'
 import { useExtensionDetection } from '../hooks/useExtensionDetection'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
-import { usePopupState, advanceMilestone, milestoneForCount } from '../hooks/usePopups'
+import { usePopupState, advanceMilestone, milestoneForCount, isNudgeFresh } from '../hooks/usePopups'
 import { CATEGORIES } from '../data/categories'
 import { supabase } from '../lib/supabase'
 import type { Item, ItemCategory } from '../types'
@@ -108,6 +109,7 @@ export default function Dashboard() {
   const [showPostOnboarding, setShowPostOnboarding] = useState(false)
   const [showSharePrompt, setShowSharePrompt] = useState(false)
   const [showPartnerInvite, setShowPartnerInvite] = useState(false)
+  const [showWhatsAppRecapture, setShowWhatsAppRecapture] = useState(false)
   const [activeToast, setActiveToast] = useState<MilestoneKind | null>(null)
   // Snapshot of items.length before the latest add, so handleItemSave can
   // detect milestone crossings without re-fetching state mid-flow.
@@ -169,6 +171,28 @@ export default function Dashboard() {
     if (showPostOnboarding || showAddressModal || showSharePrompt) return
     setShowPartnerInvite(true)
   }, [popups.loaded, popups.dismissed.partner_invite_card, user, registry, isLoadingItems, items.length, showPostOnboarding, showAddressModal, showSharePrompt])
+
+  // WhatsApp re-capture — for users who finished onboarding without a phone
+  // on file (everyone from before the phone step, plus skippers). Yields to
+  // every other modal so it's never part of a popup pile-up. Two exposures
+  // max: "לא עכשיו" snoozes 7 days, the post-snooze show is the last one.
+  useEffect(() => {
+    if (!popups.loaded || !user || !profile) return
+    if (profile.phone_number || profile.whatsapp_opt_in) return
+    const recaptureVal = popups.dismissed.whatsapp_recapture
+    if (recaptureVal === true) return
+    if (isNudgeFresh(recaptureVal, 7)) return
+    if (!tutorialCheckComplete || tutorialActive) return
+    if (isLoadingItems) return
+    if (showPostOnboarding || showAddressModal || showSharePrompt || showPartnerInvite) return
+    // Small delay so the dashboard settles before the ask.
+    const timer = setTimeout(() => setShowWhatsAppRecapture(true), 2500)
+    return () => clearTimeout(timer)
+  }, [
+    popups.loaded, popups.dismissed.whatsapp_recapture, user, profile,
+    tutorialCheckComplete, tutorialActive, isLoadingItems,
+    showPostOnboarding, showAddressModal, showSharePrompt, showPartnerInvite,
+  ])
 
   // First-gift celebration toast — fires once when the registry receives its
   // very first purchase. Uses milestone integer 100 (reserved for first_gift)
@@ -1115,6 +1139,15 @@ export default function Dashboard() {
         <PartnerInviteCard
           userId={user.id}
           onClose={() => setShowPartnerInvite(false)}
+        />
+      )}
+
+      {showWhatsAppRecapture && user && (
+        <WhatsAppRecaptureModal
+          userId={user.id}
+          finalShow={typeof popups.dismissed.whatsapp_recapture === 'string'}
+          onClose={() => setShowWhatsAppRecapture(false)}
+          onSaved={() => void refreshProfile()}
         />
       )}
 

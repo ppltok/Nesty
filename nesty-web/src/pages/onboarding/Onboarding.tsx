@@ -40,6 +40,7 @@ import {
 } from '../../utils/tracking'
 import { getAttributionForProfile } from '../../utils/utmTracking'
 import { extractProductFromUrl } from '../../lib/productExtraction'
+import { formatIlPhone, isIlMobileValid, ilToE164 } from '../../lib/phone'
 import { ITEMS_DATA, CATEGORIES } from '../../data/categories'
 import { categoryGradient } from '../../lib/categoryColors'
 
@@ -149,15 +150,7 @@ interface OnboardingData {
   marketingEmails: boolean
 }
 
-// Israeli mobile input helpers for the WhatsApp step. The input keeps a
-// human-readable 05X-XXX-XXXX; validation runs on bare digits.
-function formatIlPhone(raw: string): string {
-  const d = raw.replace(/\D/g, '').slice(0, 10)
-  if (d.length > 6) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`
-  if (d.length > 3) return `${d.slice(0, 3)}-${d.slice(3)}`
-  return d
-}
-const isIlMobileValid = (digits: string) => /^05\d{8}$/.test(digits)
+// Israeli mobile input helpers shared with the WhatsApp re-capture modal.
 
 const referralSources = [
   { value: 'facebook' as const, icon: Facebook, title: 'פייסבוק', bg: 'bg-[#d3e4fd]/60', fg: 'text-[#1877f2]' },
@@ -408,7 +401,7 @@ export default function Onboarding() {
         const { error: phoneError } = await supabase
           .from('profiles')
           .update({
-            phone_number: `+972${phoneDigits.slice(1)}`,
+            phone_number: ilToE164(data.phoneNumber),
             whatsapp_opt_in: true,
             whatsapp_consented_at: new Date().toISOString(),
           })
