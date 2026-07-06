@@ -185,6 +185,7 @@ export default function PublicRegistry() {
             .from('purchases')
             .select('buyer_name')
             .in('item_id', itemsData.map(i => i.id))
+            .eq('status', 'confirmed')
           if (purchasesData) {
             const buyers = new Set(
               purchasesData.map(p => (p.buyer_name || '').trim().toLowerCase()).filter(Boolean)

@@ -285,16 +285,19 @@ export default function Onboarding() {
     }
   }
 
-  // "Skip without an item" — explicitly clears any picked items before completing
+  // "Skip without an item" — passes an explicit empty list because setState
+  // wouldn't be visible to handleComplete's closure until the next render
   const handleSkipFirstItem = () => {
     setPickedItems([])
-    handleComplete()
+    handleComplete([])
   }
 
-  const handleComplete = async () => {
+  // itemsOverride must be checked with Array.isArray — onClick passes a MouseEvent
+  const handleComplete = async (itemsOverride?: unknown) => {
+    const itemsToInsert = Array.isArray(itemsOverride) ? (itemsOverride as CuratedItem[]) : pickedItems
     // Preview mode: short-circuit to celebration without any DB writes
     if (isPreview) {
-      console.log('[__nesty preview] would have saved:', { data, pickedItems })
+      console.log('[__nesty preview] would have saved:', { data, pickedItems: itemsToInsert })
       setStep('celebration')
       return
     }
@@ -366,28 +369,46 @@ export default function Onboarding() {
         throw new Error(`שגיאה בעדכון הפרופיל: ${profileError.message}`)
       }
 
-      // Create registry
-      const slug = generateSlug(data.firstName || 'user')
-      const { data: registryData, error: registryError } = await supabase
+      // Create registry — but reuse an existing one first. A user who closed
+      // the tab on the celebration screen still has onboarding_completed=false
+      // and is routed back here; inserting unconditionally would give her a
+      // second registry, which breaks every "the user's registry" lookup.
+      let registryData: { id: string } | null = null
+      const { data: existingRegistry } = await supabase
         .from('registries')
-        .insert({
-          owner_id: user.id,
-          slug,
-          title: `הרשימה של ${data.firstName}`,
-        })
         .select('id')
-        .single()
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
 
-      if (registryError) {
-        console.error('Registry creation error:', registryError)
-        throw new Error(`שגיאה ביצירת הרשימה: ${registryError.message}`)
+      if (existingRegistry) {
+        console.log('[onboarding] Reusing existing registry:', existingRegistry.id)
+        registryData = existingRegistry
+      } else {
+        const slug = generateSlug(data.firstName || 'user')
+        const { data: newRegistry, error: registryError } = await supabase
+          .from('registries')
+          .insert({
+            owner_id: user.id,
+            slug,
+            title: `הרשימה של ${data.firstName}`,
+          })
+          .select('id')
+          .single()
+
+        if (registryError) {
+          console.error('Registry creation error:', registryError)
+          throw new Error(`שגיאה ביצירת הרשימה: ${registryError.message}`)
+        }
+        registryData = newRegistry
       }
 
       // Phase 1: insert the picked items — the wow moment. Users can pick one
       // item per essential group, so this may be several rows. The first pick
       // is flagged most-wanted so it shines on the dashboard.
-      if (registryData && pickedItems.length > 0) {
-        const itemRows = pickedItems.map((item, idx) => ({
+      if (registryData && itemsToInsert.length > 0) {
+        const itemRows = itemsToInsert.map((item, idx) => ({
           registry_id: registryData.id,
           name: item.name,
           price: item.price,
@@ -410,7 +431,7 @@ export default function Onboarding() {
           setError(`הרשימה נוצרה אבל הוספת הפריט נכשלה: ${itemError.message}. אפשר להוסיף ידנית מהרשימה.`)
         } else if (insertedItems) {
           console.log('[onboarding] ✅ First items added:', insertedItems.length)
-          pickedItems.forEach((item, idx) => {
+          itemsToInsert.forEach((item, idx) => {
             trackItemAdded({
               registry_id: registryData.id,
               item_id: insertedItems[idx]?.id,
@@ -427,7 +448,7 @@ export default function Onboarding() {
         // onboarding marks "עגלה לתינוק מגיל לידה" as done in /checklist. Each
         // curated group's parentItem is a checklist item_name, and its category
         // enum is the checklist category_id. Pasted items have no checklist row.
-        const checklistRows = pickedItems
+        const checklistRows = itemsToInsert
           .filter((item) => item.parentItem !== 'pasted' && ITEMS_DATA[item.parentItem])
           .map((item) => ({
             user_id: user.id,

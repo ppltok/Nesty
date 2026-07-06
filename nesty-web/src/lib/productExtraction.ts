@@ -47,7 +47,8 @@ const FX_TO_ILS: Record<string, number> = {
  */
 function convertPriceToILS(data: ExtractedProductData): ExtractedProductData {
   const rawCurrency = (data.priceCurrency || '').toUpperCase().trim()
-  const rawPrice = parseFloat(data.price)
+  // Strip thousands separators — parseFloat("1,299") would return 1
+  const rawPrice = parseFloat((data.price || '').replace(/,/g, ''))
 
   // Pass through when there's nothing to convert
   if (!rawCurrency || rawCurrency === 'ILS' || rawCurrency === 'NIS' || !rawPrice) {
@@ -175,7 +176,9 @@ function extractFromProductGroup(data: ProductGroupSchema, baseUrl?: string): Ex
   const variants = data.hasVariant || []
   const firstVariant = Array.isArray(variants) ? variants[0] : variants
   // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
-  const offer = ((firstVariant as any)?.offers || (firstVariant as any)?.Offers) as OfferSchema | undefined
+  // offers can itself be an array — normalize like extractFromProduct does
+  const offersData = (firstVariant as any)?.offers || (firstVariant as any)?.Offers
+  const offer = (Array.isArray(offersData) ? offersData[0] : offersData) as OfferSchema | undefined
 
   // Extract and normalize images from all variants
   const imageUrls: string[] = []
@@ -964,33 +967,41 @@ function extractProductDataFromDocument(doc: Document, url?: string): ExtractedP
   const jsonLdScripts = doc.querySelectorAll('script[type="application/ld+json"]')
   console.log(`Found ${jsonLdScripts.length} JSON-LD scripts`)
 
+  // @type can be a string or an array (e.g. ["Product", "Thing"])
+  const isType = (d: any, t: string): boolean =>
+    !!d && (d['@type'] === t || (Array.isArray(d['@type']) && d['@type'].includes(t)))
+
   for (const script of jsonLdScripts) {
     try {
-      const data = JSON.parse(script.textContent || '')
+      const parsed = JSON.parse(script.textContent || '')
+      // Top-level JSON-LD can be a single object or an array of objects
+      const candidates = Array.isArray(parsed) ? parsed : [parsed]
 
-      // Check for Product type
-      if (data['@type'] === 'Product') {
-        console.log('✅ Found Product type')
-        return extractFromProduct(data as ProductSchema, url)
-      }
+      for (const data of candidates) {
+        // Check for Product type
+        if (isType(data, 'Product')) {
+          console.log('✅ Found Product type')
+          return extractFromProduct(data as ProductSchema, url)
+        }
 
-      // Check for ProductGroup type
-      if (data['@type'] === 'ProductGroup') {
-        console.log('✅ Found ProductGroup type')
-        return extractFromProductGroup(data as ProductGroupSchema, url)
-      }
+        // Check for ProductGroup type
+        if (isType(data, 'ProductGroup')) {
+          console.log('✅ Found ProductGroup type')
+          return extractFromProductGroup(data as ProductGroupSchema, url)
+        }
 
-      // Check for @graph structure
-      if (data['@graph']) {
-        const graphData = data as GraphSchema
-        const product = graphData['@graph']?.find(item =>
-          item['@type'] === 'Product' || item['@type'] === 'ProductGroup'
-        )
-        if (product) {
-          console.log('✅ Found product in @graph')
-          return product['@type'] === 'Product'
-            ? extractFromProduct(product as ProductSchema, url)
-            : extractFromProductGroup(product as ProductGroupSchema, url)
+        // Check for @graph structure
+        if (data && data['@graph']) {
+          const graphData = data as GraphSchema
+          const product = graphData['@graph']?.find(item =>
+            isType(item, 'Product') || isType(item, 'ProductGroup')
+          )
+          if (product) {
+            console.log('✅ Found product in @graph')
+            return isType(product, 'Product')
+              ? extractFromProduct(product as ProductSchema, url)
+              : extractFromProductGroup(product as ProductGroupSchema, url)
+          }
         }
       }
     } catch (error) {

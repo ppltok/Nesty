@@ -99,23 +99,26 @@ export default function PurchaseModal({
     if (!ownerInfo) return
 
     try {
-      // Send notification to registry owner
-      await supabase.functions.invoke('send-email', {
-        body: {
-          type: 'purchase_notification',
-          to: ownerInfo.email,
-          data: {
-            ownerName: ownerInfo.name,
-            buyerName: purchaseData.buyerName,
-            buyerEmail: purchaseData.buyerEmail,
-            itemName: purchaseData.itemName,
-            itemPrice: purchaseData.itemPrice,
-            itemImage: item?.image_url || '',
-            storeName: purchaseData.storeName,
-            giftMessage: purchaseData.giftMessage,
+      // Send notification to registry owner. Skip when the fallback registry
+      // path (unauthenticated profile fetch) left the owner email empty.
+      if (ownerInfo.email) {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'purchase_notification',
+            to: ownerInfo.email,
+            data: {
+              ownerName: ownerInfo.name,
+              buyerName: purchaseData.buyerName,
+              buyerEmail: purchaseData.buyerEmail,
+              itemName: purchaseData.itemName,
+              itemPrice: purchaseData.itemPrice,
+              itemImage: item?.image_url || '',
+              storeName: purchaseData.storeName,
+              giftMessage: purchaseData.giftMessage,
+            },
           },
-        },
-      })
+        })
+      }
 
       // Send thank you email to buyer
       await supabase.functions.invoke('send-email', {
@@ -216,13 +219,8 @@ export default function PurchaseModal({
 
       console.log('Attempting to insert purchase for item:', item.id)
 
-      // NOTE: order_number column does not exist in the purchases table yet.
-      // Store it in gift_message as a prefix until the column is added via migration.
       const orderNum = formData.orderNumber.trim()
       const giftMsg = formData.giftMessage.trim()
-      const combinedMessage = orderNum
-        ? (giftMsg ? `[הזמנה: ${orderNum}] ${giftMsg}` : `[הזמנה: ${orderNum}]`)
-        : (giftMsg || null)
 
       const purchaseData = {
         item_id: item.id,
@@ -230,7 +228,8 @@ export default function PurchaseModal({
         buyer_email: formData.buyerEmail.trim().toLowerCase(),
         buyer_phone: formData.buyerPhone.trim() || null,
         purchased_at: storeName,
-        gift_message: combinedMessage,
+        gift_message: giftMsg || null,
+        order_number: orderNum || null,
         is_surprise: formData.isSurprise,
         quantity_purchased: formData.quantity,
         status: 'confirmed',

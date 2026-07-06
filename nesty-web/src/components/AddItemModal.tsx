@@ -124,6 +124,8 @@ export default function AddItemModal({
           isMostWanted: editItem.is_most_wanted,
           isPrivate: editItem.is_private,
           imageUrl: editItem.image_url || '',
+          sourcePrice: editItem.source_price != null ? editItem.source_price.toString() : null,
+          sourceCurrency: editItem.source_currency || null,
         })
       } else if (prefilledData) {
         setFormData((prev) => ({
@@ -269,6 +271,13 @@ export default function AddItemModal({
         combinedNotes += combinedNotes ? `\n${formData.notes}` : formData.notes
       }
 
+      // In edit mode, a manual price change invalidates the stored source
+      // price/currency (they described the old price), so reset them. When
+      // the price is unchanged, preserve the values loaded from editItem.
+      const priceChanged = isEditMode && editItem
+        ? (formData.price ? parseFloat(formData.price) : 0) !== editItem.price
+        : false
+
       const itemData = {
         name: formData.name.trim(),
         price: formData.price ? parseFloat(formData.price) : 0,
@@ -283,8 +292,8 @@ export default function AddItemModal({
         // Preserve original price/currency when extraction did EUR/USD/GBP → ILS
         // conversion. Default for source_currency in DB is 'ILS', so only set
         // these columns when the source was actually a foreign currency.
-        source_price: formData.sourcePrice ? parseFloat(formData.sourcePrice) : null,
-        source_currency: formData.sourceCurrency || 'ILS',
+        source_price: priceChanged ? null : (formData.sourcePrice ? parseFloat(formData.sourcePrice) : null),
+        source_currency: priceChanged ? 'ILS' : (formData.sourceCurrency || 'ILS'),
       }
 
       const addedVia: 'paste_url' | 'manual' = isExtractedData ? 'paste_url' : 'manual'

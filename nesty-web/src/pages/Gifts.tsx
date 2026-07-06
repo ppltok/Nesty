@@ -118,8 +118,12 @@ export default function Gifts() {
   const handleSendThankYou = async (purchase: Purchase & { item_name?: string }) => {
     if (!purchase.buyer_phone) return
 
-    let phone = purchase.buyer_phone.replace(/[-\s()]/g, '')
-    if (phone.startsWith('0')) {
+    // Normalize to international format for wa.me: strip non-digits
+    // (also drops a leading '+'), then map 00972/0-prefixed numbers to 972.
+    let phone = purchase.buyer_phone.replace(/\D/g, '')
+    if (phone.startsWith('00972')) {
+      phone = phone.substring(2)
+    } else if (phone.startsWith('0')) {
       phone = '972' + phone.substring(1)
     }
 

@@ -17,9 +17,14 @@ function loadCache(): Promise<Map<string, CacheRow>> {
       const { data, error } = await supabase
         .from('recommended_price_cache')
         .select('url, price, last_checked')
-      if (error || !data) return new Map<string, CacheRow>()
+      if (error || !data) {
+        // Don't cache a failed fetch — let the next mount retry.
+        cachedPromise = null
+        return new Map<string, CacheRow>()
+      }
       return new Map<string, CacheRow>(data.map((r) => [r.url, r as CacheRow]))
     } catch {
+      cachedPromise = null
       return new Map<string, CacheRow>()
     }
   })()

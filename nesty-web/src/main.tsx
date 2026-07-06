@@ -109,6 +109,14 @@ window.onerror = (message, source, lineno, colno, error) => {
   ) {
     console.warn('Detected storage-related error, clearing Nesty data (preserving auth)')
     try {
+      // Loop guard: if clearing + reloading didn't fix it, stop after 2
+      // attempts in this session instead of reloading forever.
+      const reloads = parseInt(sessionStorage.getItem('nesty_error_reloads') || '0', 10)
+      if (reloads >= 2) {
+        console.warn('Storage-error reload limit reached, not reloading again')
+        return
+      }
+      sessionStorage.setItem('nesty_error_reloads', String(reloads + 1))
       // Only clear Nesty keys, not Supabase auth session
       const nestyKeys = [
         'nesty-checked-suggestions',

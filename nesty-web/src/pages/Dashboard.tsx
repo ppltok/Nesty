@@ -415,6 +415,9 @@ export default function Dashboard() {
 
   const handleOpenEditModal = (item: Item) => {
     setEditingItem(item)
+    // Snapshot here too — edits don't change the count, so handleItemSave
+    // must not compare against a stale snapshot from a previous add.
+    itemsCountBeforeSave.current = items.length
     setShowAddItemModal(true)
   }
 

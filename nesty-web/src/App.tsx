@@ -71,7 +71,6 @@ function AppRoutes() {
   const pathname = window.location.pathname
 
   const isPublicRoute = pathname === '/' ||
-    pathname === '/home-new' ||
     pathname.startsWith('/registry/') ||
     pathname.startsWith('/auth/') ||
     pathname.startsWith('/invite/') ||
