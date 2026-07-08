@@ -19,6 +19,7 @@ export type PopupKey =
   | 'share_prompt_checklist_60'
   | 'finish_registry_setup'
   | 'whatsapp_recapture'
+  | 'tutorial_done'
 
 export interface PopupState {
   // Values are either `true` (permanently dismissed) or an ISO timestamp

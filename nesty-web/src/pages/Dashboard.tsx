@@ -248,37 +248,11 @@ export default function Dashboard() {
   //   on Dashboard load if registry has no address (and they haven't skipped
   //   it). They never went through the new flow, so flipping the rule mid-
   //   account-life would feel inconsistent.
-  const NEW_FLOW_CUTOFF = new Date('2026-04-30T00:00:00Z').getTime()
-  const isNewFlowUser = profile?.created_at
-    ? new Date(profile.created_at).getTime() >= NEW_FLOW_CUTOFF
-    : false
-
-  const addressModalChecked = useRef(false)
-  useEffect(() => {
-    if (!tutorialCheckComplete) return
-    if (tutorialActive) return
-    if (addressModalChecked.current) return
-    if (!registry) return
-    // Defer until 3+ items only for new-flow users; old users keep the
-    // immediate prompt they're used to.
-    if (isNewFlowUser && items.length < 3) return
-
-    addressModalChecked.current = true
-
-    if (!registry.address_city && !registry.address_street) {
-      try {
-        const addressSkipped = user ? localStorage.getItem(getAddressSkippedKey(user.id)) : null
-        if (!addressSkipped) {
-          // Pre-existing users that hit this on first dashboard load still
-          // need the "from onboarding" close-redirect; new-flow users don't.
-          addressModalFromOnboarding.current = !isNewFlowUser
-          setShowAddressModal(true)
-        }
-      } catch {
-        // localStorage error — skip showing modal
-      }
-    }
-  }, [registry, user, tutorialActive, tutorialCheckComplete, items.length, isNewFlowUser])
+  // Address modal auto-fire removed (setup-completion plan, PR 1). The modal
+  // was one of up to five UIs ambushing the first session; the address ask
+  // now lives where it's actionable — the Finish-Setup panel's address step
+  // (and, later, contextually inside the share flow). The modal itself stays,
+  // opened via setShowAddressModal from the panel.
 
   // Handle highlight parameter for scrolling to specific item
   useEffect(() => {
@@ -1315,7 +1289,9 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
         {/* Extension Banner */}
-        <ExtensionBanner />
+        {/* Deferred out of the empty first session — the extension pitch
+            lands once she's added an item and knows what adding feels like. */}
+        {items.length >= 1 && <ExtensionBanner />}
 
         {/* Finish-registry-setup activation checklist (Babylist-style) */}
         {registry && popups.loaded && !popups.dismissed.finish_registry_setup && (

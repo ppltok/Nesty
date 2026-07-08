@@ -1,18 +1,18 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import SideNav from './SideNav'
 import { useCollabGiftBadge } from '../collab/SupherbGift'
 import OnboardingTutorial from '../OnboardingTutorial'
 import FadedIconsBackground from '../animations/FadedIconsBackground'
+import { usePopupState, dismissPopup } from '../../hooks/usePopups'
 
 // Helper to get user-specific localStorage keys
 const getTutorialKey = (userId: string) => `nesty_tutorial_completed_${userId}`
 
 export default function DashboardLayout() {
-  const { registry, user } = useAuth()
-  const location = useLocation()
+  const { registry, user, profile } = useAuth()
   const navigate = useNavigate()
   const [giftsCount, setGiftsCount] = useState(0)
   const showGiftDot = useCollabGiftBadge()
@@ -21,72 +21,58 @@ export default function DashboardLayout() {
   // Track if tutorial check is complete (so address modal knows when it's safe to show)
   const [tutorialCheckComplete, setTutorialCheckComplete] = useState(false)
 
-  // Tutorial state management
+  // Tutorial state management. The trigger is DB-first: any user who finished
+  // onboarding but never completed the tour gets it — reliably, once, on any
+  // device. The old trigger required a one-shot sessionStorage flag set at
+  // the celebration screen (lost on email-confirmation redirects / new tabs),
+  // which is why most users never saw the tutorial at all.
+  const popups = usePopupState(user?.id)
   const tutorialChecked = useRef(false)
-  const fromOnboardingRef = useRef(location.state?.fromOnboarding === true)
 
-  // Capture fromOnboarding state on mount
-  useEffect(() => {
-    if (location.state?.fromOnboarding === true) {
-      fromOnboardingRef.current = true
-      try {
-        sessionStorage.setItem('nesty_from_onboarding', 'true')
-      } catch {
-        // Ignore
-      }
-    } else if (!fromOnboardingRef.current) {
-      // Check sessionStorage as fallback
-      try {
-        if (sessionStorage.getItem('nesty_from_onboarding') === 'true') {
-          fromOnboardingRef.current = true
-        }
-      } catch {
-        // Ignore
-      }
-    }
-  }, [location.state])
-
-  // Check if we should show tutorial
   useEffect(() => {
     if (tutorialChecked.current) return
-    if (!user) return
-    if (!registry) return
+    if (!user || !registry || !profile) return
+    if (!popups.loaded) return
 
     tutorialChecked.current = true
+    // The old one-shot flag is no longer part of the trigger — clean it up.
+    try { sessionStorage.removeItem('nesty_from_onboarding') } catch { /* ignore */ }
 
-    try {
-      const tutorialCompleted = localStorage.getItem(getTutorialKey(user.id))
-      const fromOnboarding = fromOnboardingRef.current
-
-      if (!tutorialCompleted && fromOnboarding) {
-        // Clear the sessionStorage flag
-        try {
-          sessionStorage.removeItem('nesty_from_onboarding')
-        } catch {
-          // Ignore
-        }
-        // Small delay to ensure page is rendered, then show tutorial
-        const timer = setTimeout(() => {
-          setShowTutorial(true)
-          setTutorialCheckComplete(true)
-        }, 500)
-        return () => clearTimeout(timer)
-      } else {
-        // No tutorial needed, mark check as complete immediately
-        setTutorialCheckComplete(true)
-      }
-    } catch {
-      // localStorage error - skip tutorial, mark as complete
+    if (!profile.onboarding_completed || popups.dismissed.tutorial_done) {
       setTutorialCheckComplete(true)
+      return
     }
-  }, [user, registry])
 
-  const handleTutorialComplete = () => {
+    let localDone = false
+    try { localDone = !!localStorage.getItem(getTutorialKey(user.id)) } catch { /* ignore */ }
+    if (localDone) {
+      // Grandfather: finished the tour on this device before the DB flag
+      // existed — record it account-wide instead of re-showing.
+      void dismissPopup(user.id, 'tutorial_done')
+      setTutorialCheckComplete(true)
+      return
+    }
+
+    // Small delay to ensure page is rendered, then show tutorial
+    const timer = setTimeout(() => {
+      setShowTutorial(true)
+      setTutorialCheckComplete(true)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [user, registry, profile, popups.loaded, popups.dismissed.tutorial_done])
+
+  const markTutorialDone = () => {
     try {
       if (user) localStorage.setItem(getTutorialKey(user.id), 'true')
     } catch {
       // localStorage error - continue anyway
     }
+    // Account-wide flag so the tour never re-fires on another device.
+    if (user) void dismissPopup(user.id, 'tutorial_done')
+  }
+
+  const handleTutorialComplete = () => {
+    markTutorialDone()
     setShowTutorial(false)
     // Land on /checklist after the tutorial — that's where the user starts
     // engaging with the product (browsing categories, picking items).
@@ -94,11 +80,7 @@ export default function DashboardLayout() {
   }
 
   const handleTutorialSkip = () => {
-    try {
-      if (user) localStorage.setItem(getTutorialKey(user.id), 'true')
-    } catch {
-      // localStorage error - continue anyway
-    }
+    markTutorialDone()
     setShowTutorial(false)
     navigate('/checklist')
   }
