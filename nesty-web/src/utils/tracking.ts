@@ -6,8 +6,27 @@ declare global {
     dataLayer: Record<string, unknown>[];
     fbq?: (...args: unknown[]) => void;
     gtag?: (...args: unknown[]) => void;
+    clarity?: (...args: unknown[]) => void;
   }
 }
+
+// ===================
+// MICROSOFT CLARITY (session recordings)
+// ===================
+
+// Ties the Clarity session to our auth user so recordings are filterable by
+// user_id in the Clarity dashboard (Recordings → Filters → Custom tags).
+// The abandoned-onboarding admin email links here using this tag.
+export const clarityIdentify = (userId: string) => {
+  if (typeof window === 'undefined' || !window.clarity) return;
+  window.clarity('identify', userId);
+  window.clarity('set', 'user_id', userId);
+};
+
+const claritySet = (key: string, value: string) => {
+  if (typeof window === 'undefined' || !window.clarity) return;
+  window.clarity('set', key, value);
+};
 
 // ===================
 // GOOGLE ADS CONVERSIONS (AW-1006081641)
@@ -182,6 +201,16 @@ export const trackOnboardingStep = (params: {
   completed: boolean;
 }) => {
   pushEvent('onboarding_step', params);
+
+  // Tag the Clarity session with onboarding progress so abandoned sessions
+  // are filterable by the last step reached. 'upgrade' asks Clarity to
+  // prioritize recording this session (onboarding footage is the one we
+  // review when a signup abandons).
+  claritySet('onboarding_step', `${params.step}_${params.step_name}`);
+  claritySet('onboarding', 'in_progress');
+  if (typeof window !== 'undefined' && window.clarity) {
+    window.clarity('upgrade', 'onboarding');
+  }
 };
 
 export const trackOnboardingCompleted = (params: {
@@ -189,6 +218,7 @@ export const trackOnboardingCompleted = (params: {
   registry_id: string;
 }) => {
   pushEvent('onboarding_completed', params);
+  claritySet('onboarding', 'completed');
 
   // Fire Meta Pixel CompleteRegistration standard event
   if (typeof window !== 'undefined' && window.fbq) {
