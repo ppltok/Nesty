@@ -632,7 +632,7 @@ export default function Onboarding() {
           const { data: profileRow } = await supabase
             .from('profiles')
             .select(
-              'admin_completed_notified_at, first_name, last_name, due_date, feeling, is_first_time_parent, referral_source, utm_source, utm_medium, utm_campaign, landing_page, landing_referrer'
+              'admin_completed_notified_at, first_name, last_name, due_date, feeling, is_first_time_parent, referral_source, whatsapp_opt_in, phone_number, utm_source, utm_medium, utm_campaign, landing_page, landing_referrer'
             )
             .eq('id', user.id)
             .maybeSingle()
@@ -649,6 +649,7 @@ export default function Onboarding() {
             if (profileRow.is_first_time_parent === null || profileRow.is_first_time_parent === undefined)
               skippedSteps.push('is_first_time_parent')
             if (!profileRow.referral_source) skippedSteps.push('referral_source')
+            if (!profileRow.whatsapp_opt_in) skippedSteps.push('whatsapp_phone')
             if (pickedItems.length === 0) skippedSteps.push('first_item')
 
             // Minutes from auth signup → onboarding completion
@@ -688,6 +689,9 @@ export default function Onboarding() {
                         }
                       : null,
                     skippedSteps,
+                    whatsappOptIn: !!profileRow.whatsapp_opt_in,
+                    phoneNumber: profileRow.phone_number || '',
+                    coParentInvited: data.partnerEmail.trim() !== '' && isEmailValid(data.partnerEmail),
                     utmSource: profileRow.utm_source || '',
                     utmMedium: profileRow.utm_medium || '',
                     utmCampaign: profileRow.utm_campaign || '',

@@ -245,6 +245,11 @@ interface EmailRequest {
       url?: string
     } | null
     skippedSteps?: string[]
+    // New-flow stage signals (Jul 2026 onboarding: WhatsApp phone step +
+    // co-parent invite). Optional so pre-deploy senders stay compatible.
+    whatsappOptIn?: boolean
+    phoneNumber?: string
+    coParentInvited?: boolean
     utmSource?: string
     utmMedium?: string
     utmCampaign?: string
@@ -811,6 +816,9 @@ serve(async (req) => {
       const referralSource = data?.referralSource || ''
       const firstItem = data?.firstItem || null
       const skippedSteps = data?.skippedSteps || []
+      const whatsappOptIn = data?.whatsappOptIn
+      const phoneNumber = data?.phoneNumber || ''
+      const coParentInvited = data?.coParentInvited
       const minutesToComplete = data?.minutesToComplete
       const utmSource = data?.utmSource || ''
       const utmMedium = data?.utmMedium || ''
@@ -831,14 +839,15 @@ serve(async (req) => {
         friend: 'חברה / משפחה',
         other: 'אחר',
       }
-      const skipLabel: Record<string, string> = {
-        last_name: 'שם משפחה',
-        due_date: 'תאריך לידה משוער',
-        feeling: 'תחושה',
-        is_first_time_parent: 'הורות ראשונה',
-        referral_source: 'מקור הגעה',
-        first_item: 'הוספת פריט ראשון',
-      }
+      // Per-stage ✅/❌ checklist for the new 7-step flow. `null` state renders
+      // a neutral dash (unknown — e.g. emails sent by a pre-deploy client).
+      const skipped = (key: string) => skippedSteps.includes(key)
+      const stageLine = (ok: boolean | null, label: string, extra?: string) =>
+        ok === null
+          ? `<span style="color:#a087c0;">➖ ${label} <span style="font-weight:400;">(לא ידוע)</span></span>`
+          : ok
+            ? `<span style="color:#0a7c4a;font-weight:600;">✅ ${label}</span>${extra ? `<span style="color:#3d3d3d;"> — ${extra}</span>` : ''}`
+            : `<span style="color:#c0392b;font-weight:600;">❌ ${label}</span>`
 
       const subjBits = [`שבוע ${pregnancyWeek ?? '?'}`]
       if (referralSource) subjBits.push(referralLabel[referralSource] || referralSource)
@@ -863,14 +872,45 @@ serve(async (req) => {
         utmCampaign && `campaign=${utmCampaign}`,
       ].filter(Boolean).join(' · ') || '—'
 
-      const skippedValue = skippedSteps.length
-        ? skippedSteps.map((s) => skipLabel[s] || s).join(' · ')
-        : '— (השלימה הכל)'
+      // WhatsApp: prefer the explicit boolean; fall back to skippedSteps from
+      // newer clients; pre-deploy clients send neither → unknown (null).
+      const waState: boolean | null =
+        typeof whatsappOptIn === 'boolean'
+          ? whatsappOptIn
+          : skipped('whatsapp_phone')
+            ? false
+            : null
+      const waPhoneLink = phoneNumber
+        ? `<a href="https://wa.me/${phoneNumber.replace(/\D/g, '')}" style="color:#0a7c4a;text-decoration:underline;font-weight:600;">${phoneNumber}</a>`
+        : ''
+      const coParentState: boolean | null =
+        typeof coParentInvited === 'boolean' ? coParentInvited : null
+
+      const stagesValue = [
+        stageLine(true, 'שם פרטי', firstName || undefined),
+        stageLine(!skipped('last_name'), 'שם משפחה'),
+        stageLine(!skipped('due_date'), 'תאריך לידה משוער', dueDate || undefined),
+        stageLine(!skipped('feeling'), 'תחושה', feelingLabel[feeling] || feeling || undefined),
+        stageLine(
+          !skipped('is_first_time_parent'),
+          'הורות ראשונה',
+          isFirstTimeParent === true ? 'כן' : isFirstTimeParent === false ? 'לא' : undefined,
+        ),
+        stageLine(!skipped('referral_source'), 'מקור הגעה', referralLabel[referralSource] || referralSource || undefined),
+        stageLine(waState, 'וואטסאפ 📱', waPhoneLink || undefined),
+        stageLine(coParentState, 'הזמנת בן/בת זוג'),
+        stageLine(!skipped('first_item'), 'פריט ראשון', firstItem?.name || undefined),
+      ].join('<br/>')
+
+      const completedCount = 1 + // first name is always completed
+        ['last_name', 'due_date', 'feeling', 'is_first_time_parent', 'referral_source', 'first_item']
+          .filter((s) => !skipped(s)).length +
+        (waState === true ? 1 : 0) + (coParentState === true ? 1 : 0)
 
       html = buildAdminBrandedEmail({
         heroEmoji: '✅',
         heroTitle: 'משתמש סיים Onboarding',
-        heroSubtitle: 'משתמש חדש סיים את התהליך עם נתונים מלאים',
+        heroSubtitle: `${completedCount}/9 שלבים הושלמו${waState === true ? ' · מחוברת לוואטסאפ 📱' : ''}`,
         accentLabel: 'Onboarding completed',
         accentColor: '#0a7c4a',
         accentBg: '#e2f5ec',
@@ -881,20 +921,12 @@ serve(async (req) => {
           ...(typeof minutesToComplete === 'number'
             ? [{ label: 'זמן עד סיום Onboarding', value: `${minutesToComplete} דק'` }]
             : []),
-          { label: 'תאריך לידה משוער', value: dueDate || '—' },
+          { label: 'שלבי התהליך', value: stagesValue },
           { label: 'שבוע הריון', value: typeof pregnancyWeek === 'number' ? String(pregnancyWeek) : '—' },
-          { label: 'תחושה', value: feelingLabel[feeling] || feeling || '—' },
-          {
-            label: 'הורות ראשונה',
-            value:
-              isFirstTimeParent === true ? 'כן' : isFirstTimeParent === false ? 'לא' : '—',
-          },
-          { label: 'מקור הגעה', value: referralLabel[referralSource] || referralSource || '—' },
           { label: 'UTM', value: utmBits },
           ...(landingPage ? [{ label: 'דף נחיתה', value: landingPage }] : []),
           ...(landingReferrer ? [{ label: 'Referrer', value: landingReferrer }] : []),
           { label: 'פריט ראשון', value: firstItemValue },
-          { label: 'שלבים שדולגו', value: skippedValue },
         ],
       })
     } else if (type === 'admin_onboarding_abandoned') {
@@ -903,6 +935,7 @@ serve(async (req) => {
       // never finished onboarding. Most fields will be empty for abandons —
       // UTM/landing data is the most useful signal since it's set at landing
       // time, before signup.
+      const userId = data?.userId || ''
       const userEmail = data?.userEmail || ''
       const userName = data?.userName || ''
       const firstName = data?.firstName || ''
@@ -914,6 +947,12 @@ serve(async (req) => {
       const utmCampaign = data?.utmCampaign || ''
       const landingPage = data?.landingPage || ''
       const landingReferrer = data?.landingReferrer || ''
+
+      // Microsoft Clarity session footage. The web app tags every logged-in
+      // session with a `user_id` custom tag (see tracking.ts clarityIdentify),
+      // so the recording is found by filtering on that tag.
+      const CLARITY_PROJECT = 'xi1xr7lx6t'
+      const clarityRecordingsUrl = `https://clarity.microsoft.com/projects/view/${CLARITY_PROJECT}/impressions`
 
       emailSubject = `⚠️ משתמש לא סיים Onboarding: ${userEmail || firstName}`
       recipient = to || 'hello@nestyil.com'
@@ -942,6 +981,14 @@ serve(async (req) => {
           { label: 'UTM', value: utmBits },
           ...(landingPage ? [{ label: 'דף נחיתה', value: landingPage }] : []),
           ...(landingReferrer ? [{ label: 'Referrer', value: landingReferrer }] : []),
+          ...(userId
+            ? [{
+                label: '🎥 הקלטת סשן (Clarity)',
+                value: `<a href="${clarityRecordingsUrl}" style="color:#6a35b0;font-weight:700;">פתח הקלטות</a>` +
+                  `<br/><span style="font-size:12px;color:#a087c0;">סנן לפי Custom tag → user_id = </span>` +
+                  `<span style="font-size:12px;font-family:monospace;direction:ltr;unicode-bidi:embed;">${userId}</span>`,
+              }]
+            : []),
         ],
       })
     } else if (type === 'thank_you') {
