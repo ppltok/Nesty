@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -217,6 +217,24 @@ export default function Onboarding() {
     | { state: 'success'; product: CuratedItem }
     | { state: 'error'; message: string }
   >({ state: 'idle' })
+
+  // Record the furthest step reached so the abandoned-signup admin email can
+  // show where a user dropped (nothing else is persisted until the final
+  // step). Fire-and-forget, monotonic, never blocks the UI. Skipped in
+  // preview mode. The profiles row already exists (handle_new_user trigger).
+  const maxStepWritten = useRef(0)
+  useEffect(() => {
+    if (isPreview || !user || typeof step !== 'number') return
+    if (step <= maxStepWritten.current) return
+    maxStepWritten.current = step
+    void supabase
+      .from('profiles')
+      .update({ onboarding_last_step: step })
+      .eq('id', user.id)
+      .then(({ error }) => {
+        if (error) console.warn('[onboarding] last_step write failed (non-critical):', error.message)
+      })
+  }, [step, user, isPreview])
 
   const stepNames: Record<number, string> = {
     1: 'name',

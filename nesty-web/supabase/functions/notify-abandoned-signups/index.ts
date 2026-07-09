@@ -37,7 +37,7 @@ serve(async (req) => {
     const { data: candidates, error: candErr } = await admin
       .from('profiles')
       .select(
-        'id, email, first_name, last_name, due_date, created_at, utm_source, utm_medium, utm_campaign, landing_page, landing_referrer'
+        'id, email, first_name, last_name, due_date, onboarding_last_step, created_at, utm_source, utm_medium, utm_campaign, landing_page, landing_referrer'
       )
       .eq('onboarding_completed', false)
       .is('admin_abandon_notified_at', null)
@@ -112,12 +112,14 @@ serve(async (req) => {
           type: 'admin_onboarding_abandoned',
           to: 'hello@nestyil.com',
           data: {
+            userId: p.id,
             userEmail: p.email,
             firstName: p.first_name || '',
             userName: [p.first_name, p.last_name].filter(Boolean).join(' '),
             signupDate: new Date(p.created_at).toLocaleDateString('he-IL'),
             minutesSinceSignup,
             dueDate: p.due_date || '',
+            onboardingLastStep: p.onboarding_last_step ?? null,
             utmSource: p.utm_source || '',
             utmMedium: p.utm_medium || '',
             utmCampaign: p.utm_campaign || '',

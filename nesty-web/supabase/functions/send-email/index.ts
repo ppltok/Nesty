@@ -250,6 +250,7 @@ interface EmailRequest {
     whatsappOptIn?: boolean
     phoneNumber?: string
     coParentInvited?: boolean
+    onboardingLastStep?: number | null
     utmSource?: string
     utmMedium?: string
     utmCampaign?: string
@@ -947,6 +948,21 @@ serve(async (req) => {
       const utmCampaign = data?.utmCampaign || ''
       const landingPage = data?.landingPage || ''
       const landingReferrer = data?.landingReferrer || ''
+      const lastStep = typeof data?.onboardingLastStep === 'number' ? data.onboardingLastStep : null
+
+      // How far she got before leaving. Nothing else is persisted mid-flow,
+      // so this furthest-step marker is the real drop-off signal.
+      const ABANDON_STEPS = [
+        'שם', 'תאריך לידה', 'תחושה', 'מקור הגעה', 'וואטסאפ 📱', 'הזמנת בן/בת זוג', 'פריט ראשון',
+      ]
+      const stagesValue = lastStep === null
+        ? '<span style="color:#a087c0;">➖ לא ידוע היכן נעצרה (נרשמה לפני שהמעקב נוסף)</span>'
+        : ABANDON_STEPS.map((label, idx) => {
+            const n = idx + 1
+            if (n < lastStep) return `<span style="color:#0a7c4a;font-weight:600;">✅ ${label}</span>`
+            if (n === lastStep) return `<span style="color:#c0392b;font-weight:700;">🛑 ${label} — נעצרה כאן</span>`
+            return `<span style="color:#b8adc0;">⬜ ${label}</span>`
+          }).join('<br/>')
 
       // Microsoft Clarity session footage. The web app tags every logged-in
       // session with a `user_id` custom tag (see tracking.ts clarityIdentify),
@@ -963,10 +979,14 @@ serve(async (req) => {
         utmCampaign && `campaign=${utmCampaign}`,
       ].filter(Boolean).join(' · ') || '—'
 
+      const abandonSubtitle = lastStep === null
+        ? 'נפתח חשבון אך לא הושלם תהליך ההצטרפות'
+        : `נעצרה בשלב ${lastStep}/7 — ${ABANDON_STEPS[lastStep - 1]}`
+
       html = buildAdminBrandedEmail({
         heroEmoji: '⚠️',
         heroTitle: 'משתמש לא סיים Onboarding',
-        heroSubtitle: 'נפתח חשבון אך לא הושלם תהליך ההצטרפות',
+        heroSubtitle: abandonSubtitle,
         accentLabel: 'Onboarding abandoned',
         accentColor: '#b35400',
         accentBg: '#fef0e0',
@@ -977,7 +997,8 @@ serve(async (req) => {
           ...(typeof minutesSinceSignup === 'number'
             ? [{ label: 'זמן מאז הרשמה', value: `${minutesSinceSignup} דק'` }]
             : []),
-          { label: 'תאריך לידה משוער', value: dueDate || '—' },
+          { label: 'עד היכן הגיעה', value: stagesValue },
+          ...(dueDate ? [{ label: 'תאריך לידה משוער', value: dueDate }] : []),
           { label: 'UTM', value: utmBits },
           ...(landingPage ? [{ label: 'דף נחיתה', value: landingPage }] : []),
           ...(landingReferrer ? [{ label: 'Referrer', value: landingReferrer }] : []),
