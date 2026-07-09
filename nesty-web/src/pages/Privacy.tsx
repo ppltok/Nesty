@@ -157,7 +157,7 @@ export default function Privacy() {
                 <strong>עוגיות הכרחיות:</strong> לניהול הזדהות ושמירת העדפות הפעלה
               </li>
               <li>
-                <strong>עוגיות אנליטיקה:</strong> להבנת אופן השימוש באתר ושיפורו (Google Analytics)
+                <strong>עוגיות אנליטיקה:</strong> להבנת אופן השימוש באתר ושיפורו, כולל הקלטות שימוש אנונימיות (Google Analytics, Microsoft Clarity)
               </li>
             </ul>
             <p className="mt-4">

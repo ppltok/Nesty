@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useRef, useCallback } f
 import type { ReactNode } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { clarityIdentify } from '../utils/tracking'
 import type { Profile, Registry } from '../types'
 
 interface AuthContextType {
@@ -32,6 +33,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Which user's profile/registry we actually loaded — lets SIGNED_IN decide
   // whether a fetch is still needed (fires on interactive login AND on tab refocus)
   const dataLoadedFor = useRef<string | null>(null)
+
+  // Tag the Clarity session recording with the auth user id so recordings
+  // are filterable per-user (used by the abandoned-onboarding admin alert).
+  useEffect(() => {
+    if (user?.id) clarityIdentify(user.id)
+  }, [user?.id])
 
   const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     try {
