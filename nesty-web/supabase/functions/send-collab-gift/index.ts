@@ -286,7 +286,7 @@ function buildReminderEmailHtml(firstName: string, gifts: string, unsubscribeUrl
              baked in), so no redundant CSS headline needed below. -->
         <tr>
           <td style="border-radius:24px;overflow:hidden;">
-            <img src="https://nestyil.com/demo/supherb-reminder-hero.jpg" alt="אל תפספסי! ההטבה נגמרת ב-31.7.2026 — 15% הנחה נוספים בסופהרב"
+            <img src="https://nestyil.com/demo/supherb-reminder-hero.jpg" alt="15% הנחה נוספים על כל האתר! בתוקף עד 31.7.2026 — אל תפספסי"
                  width="560" style="display:block;width:100%;max-width:560px;height:auto;border-radius:24px;" />
           </td>
         </tr>
