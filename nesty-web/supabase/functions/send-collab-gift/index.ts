@@ -282,18 +282,21 @@ function buildReminderEmailHtml(firstName: string, gifts: string, unsubscribeUrl
           </td>
         </tr>
 
-        <!-- HERO — urgency framing, not a re-pitch -->
+        <!-- HERO — generated visual (product + co-brand lockup + urgency headline
+             baked in), so no redundant CSS headline needed below. -->
         <tr>
-          <td style="background:linear-gradient(135deg,#25402c 0%,#4e7a5a 60%,#93bd9e 100%);border-radius:24px;padding:48px 40px 44px;text-align:center;">
-            <div style="display:inline-block;background:#ffffff;border-radius:100px;padding:10px 22px;margin-bottom:24px;">
-              <img src="https://nestyil.com/demo/supherb-logo.png" alt="Supherb" style="height:22px;width:auto;vertical-align:middle;" />
-              <span style="font-size:16px;color:#4e7a5a;font-weight:700;vertical-align:middle;">&nbsp;&nbsp;×&nbsp;&nbsp;</span>
-              <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:22px;width:auto;vertical-align:middle;" />
-            </div>
-            <h1 style="margin:0 0 14px;font-size:30px;font-weight:800;color:#ffffff;line-height:1.3;">
-              עדיין לא מימשת את ההטבה? 🌿
-            </h1>
-            <p style="margin:0;font-size:16px;color:#ffffffe6;line-height:1.8;font-weight:400;max-width:460px;margin-left:auto;margin-right:auto;">
+          <td style="border-radius:24px;overflow:hidden;">
+            <img src="https://nestyil.com/demo/supherb-reminder-hero.jpg" alt="אל תפספסי! ההטבה נגמרת ב-31.7.2026 — 15% הנחה נוספים בסופהרב"
+                 width="560" style="display:block;width:100%;max-width:560px;height:auto;border-radius:24px;" />
+          </td>
+        </tr>
+
+        <tr><td style="height:18px;"></td></tr>
+
+        <!-- personal completion nudge, keeps the reminder framing + name -->
+        <tr>
+          <td style="text-align:center;padding:0 12px;">
+            <p style="margin:0;font-size:16px;color:#3a4f40;line-height:1.8;font-weight:400;max-width:460px;margin-left:auto;margin-right:auto;">
               ${hi}שמנו לב שההטבה שלך בסופהרב עדיין מחכה לך. לוקח דקה — להיכנס ל-Nesty,
               להעתיק את הקוד, ולהשתמש בו באתר סופהרב.
             </p>
