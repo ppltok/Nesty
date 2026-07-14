@@ -364,6 +364,13 @@ serve(async (req) => {
       : body.mode === 'reminder_notcopied' ? 'reminder_notcopied'
       : 'test'
     const limit: number | null = typeof body.limit === 'number' ? body.limit : null
+    // Test-only override: preview a non-default template against TEST_EMAILS
+    // without touching the production recipient RPCs. Ignored for every mode
+    // except 'test'.
+    const testTemplate: 'base' | 'retarget' | 'reminder' =
+      mode === 'test' && body.template === 'retarget' ? 'retarget'
+      : mode === 'test' && body.template === 'reminder' ? 'reminder'
+      : 'base'
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -444,10 +451,15 @@ serve(async (req) => {
           const unsubUrl = await buildUnsubscribeUrl(user.id, 'features')
           const gifts = giftsUrl(user.id)
           const openUrl = openPixelUrl(user.id)
+          const effectiveTemplate =
+            mode === 'retarget_top' ? 'retarget'
+            : mode === 'reminder_notcopied' ? 'reminder'
+            : mode === 'test' ? testTemplate
+            : 'base'
           const { subject, html } =
-            mode === 'retarget_top'
+            effectiveTemplate === 'retarget'
               ? { subject: RETARGET_SUBJECT, html: buildRetargetEmailHtml(user.first_name ?? '', gifts, unsubUrl, openUrl) }
-              : mode === 'reminder_notcopied'
+              : effectiveTemplate === 'reminder'
               ? { subject: REMINDER_SUBJECT, html: buildReminderEmailHtml(user.first_name ?? '', gifts, unsubUrl, openUrl) }
               : { subject: SUBJECT, html: buildEmailHtml(user.first_name ?? '', gifts, unsubUrl, openUrl) }
           const res = await fetch('https://api.resend.com/emails', {
