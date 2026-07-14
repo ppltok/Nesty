@@ -1339,14 +1339,21 @@ serve(async (req) => {
         // .or() matches when previous value is NULL OR less than currentWeek
         // (we never want to send backwards). targetUserId path skips the
         // claim — manual/test runs should always send.
+        //
+        // IMPORTANT: use count:'exact' and NO .select() here. PostgREST
+        // re-applies the .or() filter to the RETURNING projection of an
+        // UPDATE: with .select('id') the filter column isn't in the
+        // projection → 42703 "column does not exist" (this silently killed
+        // ALL weekly emails from 2026-06-01 to 2026-07-14). And even with
+        // the column selected, the outer filter evaluates on POST-update
+        // values (always false after a claim) → claimed rows come back
+        // empty. Row count sidesteps both.
         if (!targetUserId) {
-          const { data: claimed, error: claimErr } = await supabaseAdmin
+          const { count: claimedCount, error: claimErr } = await supabaseAdmin
             .from('profiles')
-            .update({ last_weekly_email_week: currentWeek })
+            .update({ last_weekly_email_week: currentWeek }, { count: 'exact' })
             .eq('id', profile.id)
             .or(`last_weekly_email_week.is.null,last_weekly_email_week.lt.${currentWeek}`)
-            .select('id')
-            .maybeSingle()
 
           if (claimErr) {
             console.error(`Claim error for ${profile.email}:`, claimErr)
@@ -1354,7 +1361,7 @@ serve(async (req) => {
             continue
           }
 
-          if (!claimed) {
+          if (!claimedCount) {
             // Another concurrent invocation already claimed (and is sending)
             // this week's email. Safe to skip.
             results.push({ email: profile.email, week: currentWeek, status: 'already_claimed' })
@@ -1446,9 +1453,13 @@ serve(async (req) => {
     }
 
     const sentCount = results.filter(r => r.status === 'sent').length
+    // Surface per-user failures at the top level so the GitHub Actions
+    // caller can fail the run — an HTTP 200 with sent:0 and 297 claim
+    // errors masqueraded as success for 6 weeks.
+    const errorCount = results.filter(r => r.status.includes('error')).length
 
     return new Response(
-      JSON.stringify({ success: true, sent: sentCount, total: profiles.length, results }),
+      JSON.stringify({ success: true, sent: sentCount, errors: errorCount, total: profiles.length, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error) {

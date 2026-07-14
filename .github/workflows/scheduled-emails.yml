@@ -52,6 +52,14 @@ jobs:
             echo "Response: $body"
 
             if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 400 ]; then
+              # HTTP 200 alone is not success — the function returns 200 even
+              # when every per-user send fails (June–July 2026 outage). Fail
+              # loudly if any per-user error occurred.
+              errors=$(echo "$body" | jq -r '.errors // 0' 2>/dev/null || echo 0)
+              if [ "$errors" -gt 0 ]; then
+                echo "::error::Weekly emails ran but $errors user(s) failed — check the response above"
+                exit 1
+              fi
               echo "Weekly emails succeeded."
               exit 0
             fi
