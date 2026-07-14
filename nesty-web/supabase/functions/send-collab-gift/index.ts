@@ -97,7 +97,7 @@ function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string
               15% הנחה נוספים בסופהרב 🌿
             </h1>
             <p style="margin:0;font-size:16px;color:#ffffffe6;line-height:1.8;font-weight:400;max-width:460px;margin-left:auto;margin-right:auto;">
-              ${hi}כל אישה בהריון צריכה תוספי תזונה — אז חברנו ל-<strong style="color:#fff;">Supherb</strong>, יצרנית תוספי הבריאות הגדולה בישראל.
+              ${hi}כל אישה בהריון צריכה תוספי תזונה - אז חברנו ל-<strong style="color:#fff;">Supherb</strong>, יצרנית תוספי הבריאות הגדולה בישראל.
               עכשיו את יכולה ליהנות מ-15% הנחה נוספים על כל האתר, בנוסף על מבצעים קיימים באתר. 🌿
             </p>
           </td>
@@ -117,11 +117,11 @@ function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string
             </div>
 
             <h2 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#1f3a26;">15% הנחה נוספים על כל האתר</h2>
-            <p style="margin:0 0 24px;font-size:15px;color:#4e7a5a;line-height:1.7;">ההטבה מחכה לך ב-Nesty — היכנסי לצפות בה ולקבל את הקוד שלך. 🌿</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4e7a5a;line-height:1.7;">ההטבה מחכה לך ב-Nesty - היכנסי לצפות בה ולקבל את הקוד שלך. 🌿</p>
 
             <a href="${gifts}" style="display:block;background:#35573D;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 32px;border-radius:100px;text-align:center;">למימוש ההטבה</a>
 
-            <p style="margin:18px 0 0;font-size:12px;color:#b3261e;font-weight:700;">⏳ בתוקף עד 31.7.2026 — אל תפספסי</p>
+            <p style="margin:18px 0 0;font-size:12px;color:#b3261e;font-weight:700;">⏳ בתוקף עד 31.7.2026 - אל תפספסי</p>
           </td>
         </tr>
 
@@ -196,10 +196,10 @@ function buildRetargetEmailHtml(firstName: string, gifts: string, unsubscribeUrl
               <img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:22px;width:auto;vertical-align:middle;" />
             </div>
             <h1 style="margin:0 0 14px;font-size:32px;font-weight:800;color:#ffffff;line-height:1.25;">
-              15% הנחה נוספים — בנוסף לכל מבצע באתר 🌿
+              15% הנחה נוספים - בנוסף לכל מבצע באתר 🌿
             </h1>
             <p style="margin:0;font-size:16px;color:#ffffffe6;line-height:1.8;font-weight:400;max-width:460px;margin-left:auto;margin-right:auto;">
-              ${hi}רצינו לוודא שלא פספסת. ההטבה הבלעדית שלך בסופהרב עדיין פעילה —
+              ${hi}רצינו לוודא שלא פספסת. ההטבה הבלעדית שלך בסופהרב עדיין פעילה -
               <strong style="color:#fff;">15% הנחה נוספים על כל האתר, מעל המבצעים שכבר רצים שם.</strong>
             </p>
           </td>
@@ -216,10 +216,10 @@ function buildRetargetEmailHtml(firstName: string, gifts: string, unsubscribeUrl
             <div style="margin:0 auto 18px;width:96px;height:96px;background:#ebe7e3;border:1px solid #dcebe0;border-radius:20px;line-height:96px;">
               <img src="https://nestyil.com/demo/supherb-tabingum.png" alt="Supherb טאבינגאם" style="width:84px;height:84px;object-fit:contain;vertical-align:middle;" />
             </div>
-            <h2 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#1f3a26;">טאבינגאם — 15% נוספים על המבצע</h2>
-            <p style="margin:0 0 24px;font-size:15px;color:#4e7a5a;line-height:1.7;">המולטי-ויטמין לנשים בהריון שכולן מדברות עליו. הקוד מחכה לך ב-Nesty — בלחיצה אחת.</p>
+            <h2 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#1f3a26;">טאבינגאם - 15% נוספים על המבצע</h2>
+            <p style="margin:0 0 24px;font-size:15px;color:#4e7a5a;line-height:1.7;">המולטי-ויטמין לנשים בהריון שכולן מדברות עליו. הקוד מחכה לך ב-Nesty - בלחיצה אחת.</p>
             <a href="${gifts}" style="display:block;background:#35573D;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 32px;border-radius:100px;text-align:center;">למימוש ההטבה בסופהרב</a>
-            <p style="margin:18px 0 0;font-size:12px;color:#b3261e;font-weight:700;">⏳ בתוקף עד 31.7.2026 — אל תפספסי</p>
+            <p style="margin:18px 0 0;font-size:12px;color:#b3261e;font-weight:700;">⏳ בתוקף עד 31.7.2026 - אל תפספסי</p>
           </td>
         </tr>
 
@@ -286,7 +286,7 @@ function buildReminderEmailHtml(firstName: string, gifts: string, unsubscribeUrl
              baked in), so no redundant CSS headline needed below. -->
         <tr>
           <td style="border-radius:24px;overflow:hidden;">
-            <img src="https://nestyil.com/demo/supherb-reminder-hero.jpg" alt="15% הנחה נוספים על כל האתר! בתוקף עד 31.7.2026 — אל תפספסי"
+            <img src="https://nestyil.com/demo/supherb-reminder-hero.jpg" alt="15% הנחה נוספים על כל האתר! בתוקף עד 31.7.2026 - אל תפספסי"
                  width="560" style="display:block;width:100%;max-width:560px;height:auto;border-radius:24px;" />
           </td>
         </tr>
@@ -297,7 +297,7 @@ function buildReminderEmailHtml(firstName: string, gifts: string, unsubscribeUrl
         <tr>
           <td style="text-align:center;padding:0 12px;">
             <p style="margin:0;font-size:16px;color:#3a4f40;line-height:1.8;font-weight:400;max-width:460px;margin-left:auto;margin-right:auto;">
-              ${hi}שמנו לב שההטבה שלך בסופהרב עדיין מחכה לך. לוקח דקה — להיכנס ל-Nesty,
+              ${hi}שמנו לב שההטבה שלך בסופהרב עדיין מחכה לך. לוקח דקה - להיכנס ל-Nesty,
               להעתיק את הקוד, ולהשתמש בו באתר סופהרב.
             </p>
           </td>
@@ -315,7 +315,7 @@ function buildReminderEmailHtml(firstName: string, gifts: string, unsubscribeUrl
               <img src="https://nestyil.com/demo/supherb-tabingum.png" alt="Supherb טאבינגאם" style="width:84px;height:84px;object-fit:contain;vertical-align:middle;" />
             </div>
             <h2 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#1f3a26;">15% הנחה נוספים על כל האתר</h2>
-            <p style="margin:0 0 24px;font-size:15px;color:#4e7a5a;line-height:1.7;">הקוד עדיין שם, מחכה לך ב-Nesty. אחרי ה-31.7 — זהו, נגמר.</p>
+            <p style="margin:0 0 24px;font-size:15px;color:#4e7a5a;line-height:1.7;">הקוד עדיין שם, מחכה לך ב-Nesty. אחרי ה-31.7 - זהו, נגמר.</p>
             <a href="${gifts}" style="display:block;background:#35573D;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 32px;border-radius:100px;text-align:center;">לצפייה בהטבה ומימוש</a>
           </td>
         </tr>
