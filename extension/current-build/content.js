@@ -26,8 +26,9 @@
   // Load configuration dynamically from config.js
   let NESTY_CONFIG = null;
 
-  // Categories (Hebrew)
+  // Categories (Hebrew) — keep in sync with nesty-web/src/data/categories.ts
   const CATEGORIES = [
+    { id: 'general', name: 'כללי' },
     { id: 'strollers', name: 'עגלות וטיולים' },
     { id: 'car_safety', name: 'בטיחות ברכב' },
     { id: 'furniture', name: 'ריהוט' },
@@ -37,7 +38,9 @@
     { id: 'bath', name: 'אמבט וטיפול בתינוק' },
     { id: 'clothing', name: 'ביגוד ראשוני' },
     { id: 'bedding', name: 'מצעים ואקססוריז' },
-    { id: 'toys', name: 'צעצועים' }
+    { id: 'toys', name: 'צעצועים' },
+    { id: 'birth_prep', name: 'הכנה ללידה ולאמא' },
+    { id: 'siblings', name: 'תוספות לאחים / תאומים' }
   ];
 
   // Global state
@@ -2332,7 +2335,7 @@
       const defense = document.createElement('style');
       defense.id = 'nesty-defense-styles';
       defense.textContent = `
-        .nesty-overlay div:empty { display: block !important; }
+        .nesty-overlay div:empty:not(#nesty-error-banner):not(#nesty-report-image-status) { display: block !important; }
         #toggle-wanted-switch,
         #toggle-private-switch,
         #toggle-secondhand-switch { display: block !important; }
@@ -2350,10 +2353,12 @@
 
     const modal = document.createElement('div');
     modal.className = 'nesty-modal';
-    modal.style.maxWidth = '800px';
+    // Match the web app's AddItemModal: max-w-xl + rounded-[28px]
+    modal.style.maxWidth = '576px';
     modal.style.maxHeight = '90vh';
     modal.style.display = 'flex';
     modal.style.flexDirection = 'column';
+    modal.style.borderRadius = '28px';
 
     let imageUrl = product?.imageUrls?.[0] || '';
 
@@ -2365,153 +2370,169 @@
     let isPrivate = false;
     let isSecondhand = false;
 
+    // Shared field styles — mirrors the web app's AddItemModal (manual tab)
+    const LBL = `display: block; font-size: 11px; font-weight: 700; color: #49454f; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; font-family: 'Assistant', 'Heebo', sans-serif;`;
+    const INP = `width: 100%; padding: 8px 12px; border: 1px solid #e7e0ec; border-radius: 12px; font-size: 14px; background: #ffffff; color: #1d192b; box-sizing: border-box; font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;`;
+    const EYE_SVG = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const EYEOFF_SVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+    const STAR_SVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+
     modal.innerHTML = `
-      <div class="nesty-modal-header" style="border-bottom: 1px solid #e8e4e9; padding: 16px 20px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, #faf8fb, #ffffff);">
-        <!-- Tab interface -->
+      <div class="nesty-modal-header" style="border-bottom: 1px solid #e7e0ec; padding: 12px 20px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 28px 28px 0 0;">
+        <!-- Tab interface — styled like the web app's modal tabs -->
         <div id="nesty-mode-tabs" style="display: flex; gap: 8px; align-items: center;">
           <button id="nesty-mode-current" class="nesty-mode-tab"
-                  style="padding: 8px 16px; background: ${currentMode === 'current' ? '#86608e' : '#e8e4e9'}; color: ${currentMode === 'current' ? 'white' : '#1a1a1a'}; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
+                  style="padding: 8px 16px; background: ${currentMode === 'current' ? '#6750a4' : '#f3edff'}; color: ${currentMode === 'current' ? '#ffffff' : '#6750a4'}; opacity: ${currentMode === 'current' ? '1' : '0.7'}; border: none; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
             עמוד נוכחי
           </button>
           <button id="nesty-mode-paste" class="nesty-mode-tab"
-                  style="padding: 8px 16px; background: ${currentMode === 'paste' ? '#86608e' : '#e8e4e9'}; color: ${currentMode === 'paste' ? 'white' : '#1a1a1a'}; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
+                  style="padding: 8px 16px; background: ${currentMode === 'paste' ? '#6750a4' : '#f3edff'}; color: ${currentMode === 'paste' ? '#ffffff' : '#6750a4'}; opacity: ${currentMode === 'paste' ? '1' : '0.7'}; border: none; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
             הדבק קישור
           </button>
         </div>
 
-        <button class="nesty-close-btn" id="nesty-close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b6b6b; padding: 0;">×</button>
+        <button class="nesty-close-btn" id="nesty-close" style="background: none; border: none; font-size: 22px; cursor: pointer; color: #49454f; padding: 4px 8px; border-radius: 12px;">×</button>
       </div>
 
-      <div class="nesty-modal-body" style="padding: 20px; flex: 1; overflow-y: auto;">
-        <!-- Current Page Mode Content -->
-        <div id="nesty-current-mode-content" style="display: ${currentMode === 'current' ? 'grid' : 'none'}; grid-template-columns: 160px 1fr; gap: 20px;">
-          <!-- Left side - Image -->
-          <div style="text-align: center;">
-            <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(product ? product.name : '')}"
-                 style="width: 160px; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid #e8e4e9; margin-bottom: 8px;"
-                 onerror="this.style.background='#e8e4e9'; this.alt='No Image'">
-            <div id="nesty-image-meta" style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 2px;">
-              <span style="font-size: 11px; color: #9a90a8; letter-spacing: 0.01em;">תמונה שנבחרה</span>
-              <span style="width: 1px; height: 10px; background: #ddd8e3; display: inline-block; flex-shrink: 0;"></span>
-              <button id="nesty-report-image"
-                style="padding: 0; background: none; border: none; font-size: 11px; color: #c4b8d1; cursor: pointer; font-family: 'Assistant', 'Heebo', sans-serif; display: inline-flex; align-items: center; gap: 3px; line-height: 1; transition: color 0.15s ease;"
-                onmouseover="this.style.color='#86608e'"
-                onmouseout="this.style.color='#c4b8d1'">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#c8a84b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-                דווח תמונה שגויה/חסרה
-              </button>
-            </div>
-            <div id="nesty-report-image-status" style="font-size: 11px; color: #9a90a8; margin-top: 5px; min-height: 0;"></div>
+      <div class="nesty-modal-body" style="padding: 16px; flex: 1; overflow-y: auto; background: #ffffff;">
+        <!-- Error banner (validation) — same style as the web app -->
+        <div id="nesty-error-banner" style="display: none; background: #ffebee; color: #b3261e; padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 500; margin-bottom: 12px; font-family: 'Assistant', 'Heebo', sans-serif;"></div>
+
+        <!-- Current Page Mode Content — same structure as the app's manual tab -->
+        <div id="nesty-current-mode-content" style="display: ${currentMode === 'current' ? 'grid' : 'none'}; grid-template-columns: 1fr 1fr; gap: 10px 12px;">
+
+          <!-- Name - full width -->
+          <div style="grid-column: 1 / -1;">
+            <label style="${LBL}">שם המוצר *</label>
+            <input type="text" id="nesty-title" value="${escapeHtml(product ? product.name : '')}" placeholder="למשל: עגלת תינוק" style="${INP}">
           </div>
 
-          <!-- Right side - Form -->
-          <div style="display: flex; flex-direction: column; gap: 12px;">
-            <!-- Title -->
-            <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">שם המוצר</label>
-              <input type="text" id="nesty-title" value="${escapeHtml(product ? product.name : '')}"
-                     style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px; font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            </div>
+          <!-- Category -->
+          <div>
+            <label style="${LBL}">קטגוריה *</label>
+            <select id="nesty-category" style="${INP} cursor: pointer; appearance: none;">
+              <option value="">בחרו קטגוריה</option>
+              ${CATEGORIES.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+            </select>
+          </div>
 
-            <!-- Price and Quantity -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div>
-                <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">מחיר</label>
-                <input type="text" id="nesty-price" value="${escapeHtml(product ? product.price : '')}"
-                       style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px;">
-              </div>
-              <div>
-                <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">כמות</label>
-                <div style="display: flex; align-items: center; border: 1px solid #e8e4e9; border-radius: 6px; overflow: hidden; background: white;">
-                  <button id="qty-minus" style="padding: 8px 14px; background: #faf8fb; border: none; border-right: 1px solid #e8e4e9; cursor: pointer; font-size: 16px; color: #1a1a1a;">−</button>
-                  <div id="qty-display" style="flex: 1; text-align: center; font-weight: 600; font-size: 14px;">1</div>
-                  <button id="qty-plus" style="padding: 8px 14px; background: #faf8fb; border: none; border-left: 1px solid #e8e4e9; cursor: pointer; font-size: 16px; color: #1a1a1a;">+</button>
+          <!-- Price -->
+          <div>
+            <label style="${LBL}">מחיר (₪)</label>
+            <input type="number" id="nesty-price" value="${escapeHtml(product ? product.price : '')}" placeholder="0" min="0" style="${INP}">
+          </div>
+
+          <!-- Quantity -->
+          <div>
+            <label style="${LBL}">כמות</label>
+            <div style="display: flex; align-items: center; border: 1px solid #e7e0ec; border-radius: 12px; background: white; overflow: hidden;">
+              <button id="qty-minus" style="padding: 8px 12px; background: none; border: none; cursor: pointer; font-size: 16px; color: #49454f; font-weight: 500;">−</button>
+              <div id="qty-display" style="flex: 1; text-align: center; font-weight: 700; font-size: 14px; color: #1d192b;">1</div>
+              <button id="qty-plus" style="padding: 8px 12px; background: none; border: none; cursor: pointer; font-size: 16px; color: #49454f; font-weight: 500;">+</button>
+            </div>
+          </div>
+
+          <!-- Color -->
+          <div>
+            <label style="${LBL}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg> צבע מועדף</label>
+            <input type="text" id="nesty-color" placeholder="אפור, ורוד..." style="${INP}">
+          </div>
+
+          <!-- Store -->
+          <div>
+            <label style="${LBL}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg> חנות</label>
+            <input type="text" id="nesty-store" value="${escapeHtml(window.location.hostname.replace(/^www\./, ''))}" placeholder="בייבי סטאר..." style="${INP}">
+          </div>
+
+          <!-- Image preview (extension-specific: shows what will be saved) -->
+          <div>
+            <label style="${LBL}">תמונה שנבחרה</label>
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+              <img id="nesty-image-thumb" src="${escapeHtml(imageUrl)}" alt=""
+                   style="width: 88px; height: 88px; object-fit: cover; border-radius: 12px; border: 1px solid #e7e0ec; flex-shrink: 0; background: #f3edff;"
+                   onerror="this.style.background='#f3edff'; this.alt='';">
+              <div style="min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+                <div id="nesty-image-meta">
+                  <button id="nesty-report-image"
+                    style="display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; background: white; border: 1px solid #e7e0ec; border-radius: 9999px; font-size: 10px; font-weight: 600; color: #49454f; cursor: pointer; font-family: 'Assistant', 'Heebo', sans-serif; line-height: 1.4; transition: all 0.15s ease;"
+                    onmouseover="this.style.borderColor='#6750a4'; this.style.color='#6750a4'; this.style.background='#f3edff';"
+                    onmouseout="this.style.borderColor='#e7e0ec'; this.style.color='#49454f'; this.style.background='white';">
+                    🐞 דווח תמונה שגויה/חסרה
+                  </button>
                 </div>
+                <div id="nesty-report-image-status" style="font-size: 11px; color: #9a90a8; min-height: 0; font-family: 'Assistant', 'Heebo', sans-serif;"></div>
               </div>
             </div>
+          </div>
 
-            <!-- Category -->
-            <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">קטגוריה</label>
-              <select id="nesty-category"
-                      style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 13px; background: white;">
-                <option value="">כללי</option>
-                ${CATEGORIES.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
-              </select>
-            </div>
+          <!-- Product URL - full width -->
+          <div style="grid-column: 1 / -1;">
+            <label style="${LBL}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> קישור למוצר</label>
+            <input type="text" id="nesty-url-field" value="${escapeHtml(window.location.href)}" placeholder="https://..." dir="ltr" style="${INP} text-align: left;">
+          </div>
 
-            <!-- Toggles -->
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-              <div id="toggle-wanted" style="padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">הכי רציתי</div>
-                <div style="margin-top: 6px;">
-                  <div style="width: 40px; height: 20px; background: #e8e4e9; border-radius: 10px; margin: 0 auto; position: relative;">
-                    <div id="toggle-wanted-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
-                  </div>
-                </div>
-              </div>
+          <!-- Notes - full width -->
+          <div style="grid-column: 1 / -1;">
+            <label style="${LBL}">הערות</label>
+            <input type="text" id="nesty-notes" placeholder="מידה, פרטים נוספים..." style="${INP}">
+            <p style="display: flex; align-items: center; gap: 4px; font-size: 10px; color: #49454f; margin: 4px 0 0 0; font-family: 'Assistant', 'Heebo', sans-serif;">${EYE_SVG} האורחים יראו הערה זו</p>
+          </div>
 
-              <div id="toggle-private" style="padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">פרטי</div>
-                <div style="margin-top: 6px;">
-                  <div style="width: 40px; height: 20px; background: #e8e4e9; border-radius: 10px; margin: 0 auto; position: relative;">
-                    <div id="toggle-private-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
-                  </div>
-                </div>
-              </div>
+          <!-- Toggle buttons - side by side, same as the app -->
+          <button type="button" id="toggle-wanted" style="display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 12px; border: 2px solid #e7e0ec; background: white; cursor: pointer; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
+            <span id="toggle-wanted-icon" style="color: #49454f; display: inline-flex;">${STAR_SVG}</span>
+            <span style="flex: 1; text-align: right; font-size: 13px; font-weight: 700; color: #1d192b;" id="toggle-wanted-label">הכי רוצה!</span>
+            <span style="width: 36px; height: 20px; border-radius: 10px; background: #e7e0ec; position: relative; transition: background 0.2s; display: inline-block; flex-shrink: 0;" id="toggle-wanted-track">
+              <span id="toggle-wanted-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.15); display: block;"></span>
+            </span>
+          </button>
 
-              <!-- TEMPORARILY HIDDEN: "Open to secondhand" feature not yet available on site -->
-              <div id="toggle-secondhand" style="display: none; padding: 8px; border: 2px solid #e8e4e9; border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s;">
-                <div style="font-size: 11px; font-weight: 500; color: #1a1a1a;">פתוח למשומש</div>
-                <div style="margin-top: 6px;">
-                  <div style="width: 40px; height: 20px; background: #e8e4e9; border-radius: 10px; margin: 0 auto; position: relative;">
-                    <div id="toggle-secondhand-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <button type="button" id="toggle-private" style="display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 12px; border: 2px solid #e7e0ec; background: white; cursor: pointer; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
+            <span id="toggle-private-icon" style="color: #49454f; display: inline-flex;">${EYEOFF_SVG}</span>
+            <span style="flex: 1; text-align: right; font-size: 13px; font-weight: 700; color: #1d192b;" id="toggle-private-label">פריט פרטי</span>
+            <span style="width: 36px; height: 20px; border-radius: 10px; background: #e7e0ec; position: relative; transition: background 0.2s; display: inline-block; flex-shrink: 0;" id="toggle-private-track">
+              <span id="toggle-private-switch" style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.15); display: block;"></span>
+            </span>
+          </button>
 
-            <!-- Notes -->
-            <div>
-              <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">הערות</label>
-              <textarea id="nesty-notes" rows="2" placeholder="הערות למשפחה וחברים..."
-                        style="width: 100%; padding: 8px 10px; border: 1px solid #e8e4e9; border-radius: 6px; font-size: 12px; resize: none; font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"></textarea>
-            </div>
+          <!-- TEMPORARILY HIDDEN: "Open to secondhand" feature not yet available on site -->
+          <div id="toggle-secondhand" style="display: none;">
+            <div id="toggle-secondhand-switch" style="display: none;"></div>
           </div>
         </div>
 
-        <!-- Paste URL Mode Content (NEW) -->
-        <div id="nesty-paste-mode-content" style="display: ${currentMode === 'paste' ? 'flex' : 'none'}; flex-direction: column; align-items: center; padding: 40px 20px;">
-          <div style="width: 100%; max-width: 500px;">
-            <div style="text-align: center; margin-bottom: 24px;">
-              <div style="font-size: 48px; margin-bottom: 12px;">🔗</div>
-              <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0 0 8px 0;">הדבק קישור למוצר</h3>
-              <p style="font-size: 13px; color: #6b6b6b; margin: 0;">הדבק כתובת URL של מוצר מכל אתר מסחר אלקטרוני</p>
+        <!-- Paste URL Mode Content -->
+        <div id="nesty-paste-mode-content" style="display: ${currentMode === 'paste' ? 'flex' : 'none'}; flex-direction: column; align-items: center; padding: 32px 16px;">
+          <div style="width: 100%; max-width: 420px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <div style="margin-bottom: 10px; color: #6750a4;"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" y1="12" x2="16" y2="12"/></svg></div>
+              <h3 style="font-size: 17px; font-weight: 700; color: #1d192b; margin: 0 0 6px 0; font-family: 'Assistant', 'Heebo', sans-serif;">הדבק קישור למוצר</h3>
+              <p style="font-size: 13px; color: #49454f; margin: 0; font-family: 'Assistant', 'Heebo', sans-serif;">הדבק כתובת URL של מוצר מכל אתר מסחר אלקטרוני</p>
             </div>
 
-            <label style="display: block; font-size: 12px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px;">
-              כתובת URL
-            </label>
-            <input type="url" id="nesty-url-input" placeholder="https://example.com/product"
-                   style="width: 100%; padding: 12px; border: 2px solid #e8e4e9; border-radius: 8px; font-size: 14px; margin-bottom: 16px; direction: ltr; text-align: left;">
+            <input type="url" id="nesty-url-input" placeholder="https://example.com/product" dir="ltr"
+                   style="${INP} text-align: left; margin-bottom: 14px; padding: 10px 14px;">
 
             <button id="nesty-extract-btn"
-                    style="width: 100%; padding: 12px 32px; background: #86608e; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    style="width: 100%; padding: 12px 24px; background: #6750a4; color: white; border: none; border-radius: 9999px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(103,80,164,0.25); font-family: 'Assistant', 'Heebo', sans-serif;">
               הוספה מהירה מלינק
             </button>
 
-            <div id="nesty-extraction-status" style="margin-top: 16px; text-align: center; color: #6b6b6b; font-size: 13px; min-height: 20px;"></div>
+            <div id="nesty-extraction-status" style="margin-top: 14px; text-align: center; color: #49454f; font-size: 13px; min-height: 20px; font-family: 'Assistant', 'Heebo', sans-serif;"></div>
           </div>
         </div>
       </div>
 
-      <div class="nesty-modal-footer" id="nesty-footer" style="padding: 14px 20px; border-top: 1px solid #e8e4e9; background: #faf8fb; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-shrink: 0;">
-        <label id="nesty-autoclose-label" style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b6b6b; cursor: pointer; user-select: none;">
-          <input type="checkbox" id="nesty-autoclose" style="width: 16px; height: 16px; cursor: pointer; accent-color: #86608e;">
+      <div class="nesty-modal-footer" id="nesty-footer" style="padding: 12px 16px; border-top: 1px solid #e7e0ec; background: #fdfcff; display: flex; align-items: center; gap: 10px; flex-shrink: 0; border-radius: 0 0 28px 28px;">
+        <label id="nesty-autoclose-label" style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #49454f; cursor: pointer; user-select: none; white-space: nowrap; font-family: 'Assistant', 'Heebo', sans-serif;">
+          <input type="checkbox" id="nesty-autoclose" style="width: 15px; height: 15px; cursor: pointer; accent-color: #6750a4;">
           סגור לאחר הוספה
         </label>
-        <button id="nesty-submit" style="padding: 10px 28px; background: #86608e; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;">
-          הוסף לרשימה
+        <button id="nesty-cancel" style="flex: 1; padding: 10px 16px; border-radius: 9999px; border: 1px solid #e7e0ec; background: white; color: #49454f; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
+          ביטול
+        </button>
+        <button id="nesty-submit" style="flex: 1.4; padding: 10px 16px; border-radius: 9999px; background: #6750a4; color: white; border: none; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(103,80,164,0.25); white-space: nowrap; font-family: 'Assistant', 'Heebo', sans-serif;">
+          + הוסף לרשימה
         </button>
       </div>
     `;
@@ -2545,56 +2566,52 @@
       }
     });
 
-    // Toggle controls
+    // Toggle controls — same active colors as the web app's AddItemModal:
+    // "הכי רוצה!" red (#b3261e / #ffebee), "פריט פרטי" purple (#6750a4 / #f3edff)
+    function styleToggle(prefix, on, color, bg) {
+      const toggle = document.getElementById(`toggle-${prefix}`);
+      const track = document.getElementById(`toggle-${prefix}-track`);
+      const knob = document.getElementById(`toggle-${prefix}-switch`);
+      const icon = document.getElementById(`toggle-${prefix}-icon`);
+      const label = document.getElementById(`toggle-${prefix}-label`);
+      if (!toggle) return;
+      toggle.style.borderColor = on ? color : '#e7e0ec';
+      toggle.style.background = on ? bg : 'white';
+      if (track) track.style.background = on ? color : '#e7e0ec';
+      if (knob) knob.style.left = on ? '18px' : '2px';
+      if (icon) icon.style.color = on ? color : '#49454f';
+      if (label) label.style.color = on ? color : '#1d192b';
+    }
+
     document.getElementById('toggle-wanted').addEventListener('click', () => {
       isMostWanted = !isMostWanted;
-      const toggle = document.getElementById('toggle-wanted');
-      const toggleSwitch = document.getElementById('toggle-wanted-switch');
-      if (isMostWanted) {
-        toggle.style.borderColor = '#ef4444';
-        toggle.style.background = '#fef2f2';
-        toggleSwitch.style.left = '22px';
-        toggleSwitch.style.background = '#ef4444';
-      } else {
-        toggle.style.borderColor = '#e8e4e9';
-        toggle.style.background = 'white';
-        toggleSwitch.style.left = '2px';
-        toggleSwitch.style.background = 'white';
-      }
+      styleToggle('wanted', isMostWanted, '#b3261e', '#ffebee');
     });
 
     document.getElementById('toggle-private').addEventListener('click', () => {
       isPrivate = !isPrivate;
-      const toggle = document.getElementById('toggle-private');
-      const toggleSwitch = document.getElementById('toggle-private-switch');
-      if (isPrivate) {
-        toggle.style.borderColor = '#a891ad';
-        toggle.style.background = '#f5f3ff';
-        toggleSwitch.style.left = '22px';
-        toggleSwitch.style.background = '#a891ad';
-      } else {
-        toggle.style.borderColor = '#e8e4e9';
-        toggle.style.background = 'white';
-        toggleSwitch.style.left = '2px';
-        toggleSwitch.style.background = 'white';
+      styleToggle('private', isPrivate, '#6750a4', '#f3edff');
+    });
+
+    const secondhandToggle = document.getElementById('toggle-secondhand');
+    if (secondhandToggle) {
+      secondhandToggle.addEventListener('click', () => {
+        isSecondhand = !isSecondhand;
+        styleToggle('secondhand', isSecondhand, '#22c55e', '#f0fdf4');
+      });
+    }
+
+    // Auto-mark birth-prep items as private, same as the web app
+    document.getElementById('nesty-category').addEventListener('change', (e) => {
+      if (e.target.value === 'birth_prep' && !isPrivate) {
+        isPrivate = true;
+        styleToggle('private', true, '#6750a4', '#f3edff');
       }
     });
 
-    document.getElementById('toggle-secondhand').addEventListener('click', () => {
-      isSecondhand = !isSecondhand;
-      const toggle = document.getElementById('toggle-secondhand');
-      const toggleSwitch = document.getElementById('toggle-secondhand-switch');
-      if (isSecondhand) {
-        toggle.style.borderColor = '#22c55e';
-        toggle.style.background = '#f0fdf4';
-        toggleSwitch.style.left = '22px';
-        toggleSwitch.style.background = '#22c55e';
-      } else {
-        toggle.style.borderColor = '#e8e4e9';
-        toggle.style.background = 'white';
-        toggleSwitch.style.left = '2px';
-        toggleSwitch.style.background = 'white';
-      }
+    // Cancel button — same as the app's ביטול
+    document.getElementById('nesty-cancel').addEventListener('click', () => {
+      overlay.remove();
     });
 
     // Report wrong image
@@ -2617,7 +2634,7 @@
               name: supabaseSession?.user?.email || 'Extension User',
               email: supabaseSession?.user?.email || 'no-reply@nestyil.com',
               subject: 'דיווח על תמונה שגויה',
-              message: `תמונה שגויה דווחה:\nURL: ${window.location.href}\nתמונה: ${imageUrl}`
+              message: `תמונה שגויה דווחה מהתוסף:\nמוצר: ${document.getElementById('nesty-title')?.value || ''}\nURL: ${window.location.href}\nתמונה: ${imageUrl}`
             })
           });
           if (metaEl) metaEl.style.display = 'none';
@@ -2646,21 +2663,17 @@
       const currentTab = document.getElementById('nesty-mode-current');
       const pasteTab = document.getElementById('nesty-mode-paste');
 
-      if (mode === 'current') {
-        currentTab.style.background = '#86608e';
-        currentTab.style.color = 'white';
-        pasteTab.style.background = '#e8e4e9';
-        pasteTab.style.color = '#1a1a1a';
-        document.getElementById('nesty-current-mode-content').style.display = 'grid';
-        document.getElementById('nesty-paste-mode-content').style.display = 'none';
-      } else {
-        pasteTab.style.background = '#86608e';
-        pasteTab.style.color = 'white';
-        currentTab.style.background = '#e8e4e9';
-        currentTab.style.color = '#1a1a1a';
-        document.getElementById('nesty-current-mode-content').style.display = 'none';
-        document.getElementById('nesty-paste-mode-content').style.display = 'flex';
-      }
+      // App tab styling: active bg #6750a4 white, inactive bg #f3edff purple 70%
+      const setTab = (tab, active) => {
+        tab.style.background = active ? '#6750a4' : '#f3edff';
+        tab.style.color = active ? '#ffffff' : '#6750a4';
+        tab.style.opacity = active ? '1' : '0.7';
+      };
+
+      setTab(currentTab, mode === 'current');
+      setTab(pasteTab, mode === 'paste');
+      document.getElementById('nesty-current-mode-content').style.display = mode === 'current' ? 'grid' : 'none';
+      document.getElementById('nesty-paste-mode-content').style.display = mode === 'paste' ? 'flex' : 'none';
     }
 
     // URL extraction
@@ -2704,6 +2717,11 @@
         }
 
         extractedUrl = url;
+        // Reflect the pasted product in the URL + store fields
+        const urlField = document.getElementById('nesty-url-field');
+        if (urlField) urlField.value = url;
+        const storeField = document.getElementById('nesty-store');
+        if (storeField) storeField.value = new URL(url).hostname.replace(/^www\./, '');
 
         setTimeout(() => switchMode('current'), 1000);
       } catch (error) {
@@ -2743,23 +2761,57 @@
       console.log('🖱️ Submit button clicked!');
 
       const submitBtn = document.getElementById('nesty-submit');
+      const errorBanner = document.getElementById('nesty-error-banner');
+
+      // Validation — same rules and messages as the web app
+      const showError = (msg) => {
+        if (errorBanner) {
+          errorBanner.textContent = msg;
+          errorBanner.style.display = 'block';
+          errorBanner.scrollIntoView({ block: 'nearest' });
+        }
+      };
+      if (errorBanner) errorBanner.style.display = 'none';
+
+      const itemName = document.getElementById('nesty-title').value.trim();
+      const itemCategory = document.getElementById('nesty-category').value;
+      if (!itemName) {
+        showError('יש להזין שם מוצר');
+        return;
+      }
+      if (!itemCategory) {
+        showError('יש לבחור קטגוריה');
+        return;
+      }
+
       submitBtn.disabled = true;
       submitBtn.textContent = 'מוסיף...';
       submitBtn.style.opacity = '0.7';
 
+      // Merge color into notes exactly like the web app ("צבע: X\n<notes>")
+      const colorValue = document.getElementById('nesty-color').value.trim();
+      const notesValue = document.getElementById('nesty-notes').value.trim();
+      let combinedNotes = '';
+      if (colorValue) combinedNotes += `צבע: ${colorValue}`;
+      if (notesValue) combinedNotes += combinedNotes ? `\n${notesValue}` : notesValue;
+
+      const urlFieldValue = document.getElementById('nesty-url-field').value.trim();
+      const storeFieldValue = document.getElementById('nesty-store').value.trim();
+
       const formData = {
         registry_id: userRegistry.id,
-        name: document.getElementById('nesty-title').value,
+        name: itemName,
         price: parseFloat(document.getElementById('nesty-price').value) || 0,
         image_url: imageUrl || null,
-        original_url: extractedUrl || window.location.href,
-        store_name: extractedUrl ? new URL(extractedUrl).hostname : window.location.hostname,
-        category: document.getElementById('nesty-category').value || 'strollers',
+        original_url: urlFieldValue || extractedUrl || window.location.href,
+        store_name: storeFieldValue || (extractedUrl ? new URL(extractedUrl).hostname : window.location.hostname),
+        category: itemCategory,
         quantity: quantity,
         quantity_received: 0,
         is_most_wanted: isMostWanted,
         is_private: isPrivate,
-        notes: document.getElementById('nesty-notes').value || null,
+        notes: combinedNotes || null,
+        added_via: 'extension',
         cheaper_alternative_url: null,
         cheaper_alternative_price: null,
         cheaper_alternative_store: null,
@@ -2822,14 +2874,14 @@
             const prevChecked = !!(autoCloseCheckbox && autoCloseCheckbox.checked);
             footer.innerHTML = `
               <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6b6b6b; cursor: pointer; user-select: none;">
-                <input type="checkbox" id="nesty-autoclose" style="width: 16px; height: 16px; cursor: pointer; accent-color: #86608e;" ${prevChecked ? 'checked' : ''}>
+                <input type="checkbox" id="nesty-autoclose" style="width: 15px; height: 15px; cursor: pointer; accent-color: #6750a4;" ${prevChecked ? 'checked' : ''}>
                 סגור לאחר הוספה
               </label>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <button id="nesty-success-dashboard" style="padding: 10px 20px; background: #22c55e; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; animation: nesty-cta-pulse 1.6s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(34,197,94,0.5);">
+                <button id="nesty-success-dashboard" style="padding: 10px 20px; background: #22c55e; color: white; border: none; border-radius: 9999px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; animation: nesty-cta-pulse 1.6s ease-in-out infinite; box-shadow: 0 0 0 0 rgba(34,197,94,0.5); font-family: 'Assistant', 'Heebo', sans-serif;">
                   לרשימה שלי
                 </button>
-                <button id="nesty-success-close" style="padding: 10px 20px; background: #e8e4e9; color: #1a1a1a; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                <button id="nesty-success-close" style="padding: 10px 20px; background: white; border: 1px solid #e7e0ec; color: #49454f; border-radius: 9999px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
                   סגור
                 </button>
               </div>
@@ -2853,12 +2905,12 @@
       } catch (error) {
         console.error('❌ Error adding item:', error);
         submitBtn.textContent = 'שגיאה - נסה שוב';
-        submitBtn.style.background = '#ef4444';
+        submitBtn.style.background = '#b3261e';
         submitBtn.disabled = false;
 
         setTimeout(() => {
-          submitBtn.textContent = 'הוסף לרשימה';
-          submitBtn.style.background = '#86608e';
+          submitBtn.textContent = '+ הוסף לרשימה';
+          submitBtn.style.background = '#6750a4';
           submitBtn.style.opacity = '1';
         }, 2000);
       }
