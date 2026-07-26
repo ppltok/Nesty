@@ -1080,7 +1080,27 @@ function extractFromGenericDOM(doc: Document, baseUrl?: string): ExtractedProduc
   ]
 
   let price = ''
+  let priceCurrency = ''
+
+  // Priority 1: Open Graph / product meta tags. Shopify (and most platforms)
+  // render these server-side even when the JSON-LD app fails to inject its
+  // schema — this rescues pages whose structured data is intermittently missing.
+  const ogPriceMeta = doc.querySelector(
+    'meta[property="og:price:amount"], meta[property="product:price:amount"]'
+  )
+  const ogPriceRaw = ogPriceMeta?.getAttribute('content') || ''
+  const ogPriceMatch = ogPriceRaw.match(/[\d.,]+/)
+  if (ogPriceMatch) {
+    // Strip thousands separators — og:price:amount can be "7,040.00"
+    price = ogPriceMatch[0].replace(/,/g, '')
+    priceCurrency = doc.querySelector(
+      'meta[property="og:price:currency"], meta[property="product:price:currency"]'
+    )?.getAttribute('content') || ''
+    console.log(`   💰 Found price in og/product meta: ${price} ${priceCurrency}`)
+  }
+
   for (const selector of priceSelectors) {
+    if (price) break
     const element = doc.querySelector(selector)
     if (element) {
       const priceText = element.textContent?.trim() || ''
@@ -1159,7 +1179,7 @@ function extractFromGenericDOM(doc: Document, baseUrl?: string): ExtractedProduc
 
   productData.name = name
   productData.price = price
-  productData.priceCurrency = 'ILS'
+  productData.priceCurrency = priceCurrency || 'ILS'
 
   console.log(`   📊 Generic DOM extraction summary:`)
   console.log(`      Title: ${name ? '✓' : '✗'}`)
@@ -1169,11 +1189,128 @@ function extractFromGenericDOM(doc: Document, baseUrl?: string): ExtractedProduc
   // Require both name and price for successful extraction
   if (productData.name && productData.price) {
     console.log('✅ Generic DOM extraction successful')
-    return productData
+    return convertPriceToILS(productData)
   }
 
   console.log('❌ Generic DOM extraction failed - insufficient data')
   return null
+}
+
+/**
+ * Diagnostics captured when extraction fails — attached to the thrown Error
+ * (as `error.diagnostics`) so AddItemModal can persist them to
+ * extraction_reports and failures become debuggable after the fact.
+ */
+export interface ExtractionDiagnostics {
+  html_length: number
+  page_title: string | null
+  ldjson_types: string[]
+  shopify_js_tried: boolean
+}
+
+export type ExtractionError = Error & { diagnostics?: ExtractionDiagnostics }
+
+/**
+ * Fetch a URL's raw body through the extract-product Edge Function
+ * (bypasses CORS; the function returns the body in the `html` field
+ * regardless of content type).
+ */
+async function fetchViaEdge(
+  url: string,
+  accessToken: string
+): Promise<{ html: string; finalUrl: string }> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+
+  if (!supabaseUrl) {
+    throw new Error('Missing Supabase URL configuration')
+  }
+
+  const response = await fetch(
+    `${supabaseUrl}/functions/v1/extract-product`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url })
+    }
+  )
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.error || 'Failed to fetch URL')
+  }
+
+  const data = await response.json()
+
+  if (!data.success || !data.html) {
+    throw new Error('No HTML returned from server')
+  }
+
+  return { html: data.html, finalUrl: data.finalUrl || url }
+}
+
+/**
+ * Last-resort fallback for Shopify stores whose JSON-LD is missing or broken
+ * (it's usually injected by a third-party SEO app that intermittently fails —
+ * see baby-star.co.il). Shopify always serves /products/<handle>.js with the
+ * full product JSON: title, price (in minor units, e.g. agorot), images.
+ *
+ * Returns null when the URL/page isn't Shopify-shaped or the fetch/parse fails.
+ */
+async function tryShopifyProductJs(
+  pageUrl: string,
+  pageHtml: string,
+  accessToken: string
+): Promise<ExtractedProductData | null> {
+  try {
+    const parsedUrl = new URL(pageUrl)
+    const handleMatch = parsedUrl.pathname.match(/\/products\/([^/]+?)(?:\.js(?:on)?)?\/?$/)
+    if (!handleMatch) return null
+
+    const looksLikeShopify =
+      pageHtml.includes('cdn.shopify.com') || pageHtml.includes('Shopify.theme')
+    if (!looksLikeShopify) return null
+
+    const jsUrl = `${parsedUrl.origin}/products/${handleMatch[1]}.js`
+    console.log('🛟 Trying Shopify product JSON fallback:', jsUrl)
+
+    const { html: body } = await fetchViaEdge(jsUrl, accessToken)
+    const product = JSON.parse(body)
+    if (!product || typeof product.title !== 'string' || !product.title) return null
+
+    // Shopify's .js endpoint returns prices in minor units (agorot/cents)
+    const price = typeof product.price === 'number' && product.price > 0
+      ? (product.price / 100).toFixed(2)
+      : ''
+
+    // The endpoint has no currency field — read the store currency from the
+    // page HTML (Shopify.currency = {"active":"ILS",...} or og:price:currency)
+    const currencyMatch =
+      pageHtml.match(/Shopify\.currency\s*=\s*\{"active":"([A-Z]{3})"/) ||
+      pageHtml.match(/(?:og|product):price:currency"\s+content="([A-Z]{3})"/)
+    const currency = currencyMatch?.[1] || 'ILS'
+
+    const images: string[] = Array.isArray(product.images)
+      ? product.images.filter((i: unknown) => typeof i === 'string')
+      : []
+
+    const result = convertPriceToILS({
+      name: product.title,
+      price,
+      priceCurrency: currency,
+      brand: typeof product.vendor === 'string' ? product.vendor : '',
+      category: '',
+      imageUrls: images.map((i: string) => resolveUrl(i, pageUrl))
+    })
+
+    console.log('✅ Shopify product JSON fallback succeeded')
+    return result
+  } catch (error) {
+    console.warn('   ⚠️ Shopify product JSON fallback failed:', error)
+    return null
+  }
 }
 
 /**
@@ -1190,36 +1327,9 @@ export async function extractProductFromUrl(
 ): Promise<ExtractedProductData> {
   console.log('🌐 Extracting product from URL:', url)
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-
-  if (!supabaseUrl) {
-    throw new Error('Missing Supabase URL configuration')
-  }
-
   try {
     // Call Supabase Edge Function to fetch HTML (bypasses CORS)
-    const response = await fetch(
-      `${supabaseUrl}/functions/v1/extract-product`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ url })
-      }
-    )
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Failed to fetch URL')
-    }
-
-    const data = await response.json()
-
-    if (!data.success || !data.html) {
-      throw new Error('No HTML returned from server')
-    }
+    const data = await fetchViaEdge(url, accessToken)
 
     console.log('✅ Received HTML, parsing...')
 
@@ -1230,10 +1340,51 @@ export async function extractProductFromUrl(
     // Extract product data using same logic as current page
     // Use finalUrl (after redirects) for accurate base URL resolution
     const baseUrl = data.finalUrl || url
-    const productData = extractProductDataFromDocument(doc, baseUrl)
+
+    let productData: ExtractedProductData | null = null
+    let extractionError: ExtractionError | null = null
+    try {
+      productData = extractProductDataFromDocument(doc, baseUrl)
+    } catch (err) {
+      // e.g. the "looks like an article" error — still worth trying the
+      // Shopify fallback, since 'FAQPage'-only JSON-LD triggers it on real
+      // product pages whose Product block is missing
+      extractionError = err as ExtractionError
+    }
+
+    let shopifyJsTried = false
+    if (!productData) {
+      shopifyJsTried = true
+      productData = await tryShopifyProductJs(baseUrl, data.html, accessToken)
+    }
 
     if (!productData) {
-      throw new Error('לא נמצא מידע על מוצר בדף זה')
+      const error: ExtractionError =
+        extractionError ?? new Error('לא נמצא מידע על מוצר בדף זה')
+      error.diagnostics = {
+        html_length: data.html.length,
+        page_title: doc.querySelector('title')?.textContent?.trim().slice(0, 150) || null,
+        ldjson_types: Array.from(
+          doc.querySelectorAll('script[type="application/ld+json"]')
+        ).map((script) => {
+          try {
+            const parsed = JSON.parse(script.textContent || '')
+            const items = Array.isArray(parsed)
+              ? parsed
+              : parsed?.['@graph'] && Array.isArray(parsed['@graph'])
+                ? parsed['@graph']
+                : [parsed]
+            return items
+              .map((item: unknown) =>
+                String((item as Record<string, unknown> | null)?.['@type'] ?? '?'))
+              .join(',')
+          } catch {
+            return 'parse_error'
+          }
+        }),
+        shopify_js_tried: shopifyJsTried,
+      }
+      throw error
     }
 
     console.log('✅ Product extracted:', productData)

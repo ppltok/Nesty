@@ -1832,6 +1832,22 @@
       }
     }
 
+    // Open Graph / product meta tags — rendered server-side even when JSON-LD
+    // is missing (kept in sync with extractFromGenericDOM in productExtraction.ts).
+    // Placed after the DOM selectors because the live DOM reflects sale prices
+    // more reliably than meta tags on some themes.
+    const ogPriceMeta = doc.querySelector(
+      'meta[property="og:price:amount"], meta[property="product:price:amount"]'
+    );
+    const ogPriceRaw = ogPriceMeta?.getAttribute('content') || '';
+    const ogPriceMatch = ogPriceRaw.match(/[\d.,]+/);
+    if (ogPriceMatch) {
+      // Strip thousands separators — og:price:amount can be "7,040.00"
+      const price = ogPriceMatch[0].replace(/,/g, '');
+      console.log('✅ Extracted price from og/product meta:', price);
+      return price;
+    }
+
     // Last resort: scan short text elements for any ₪ price pattern
     const ilsPriceRe = /₪\s*([\d,]+(?:\.\d+)?)/;
     const ilsPriceRevRe = /([\d,]+(?:\.\d+)?)\s*₪/;

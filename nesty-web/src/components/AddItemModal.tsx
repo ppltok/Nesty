@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Plus, Link as LinkIcon, Star, Eye, EyeOff, Package, Palette, Pencil, Link2, Chrome, Check } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { CATEGORIES } from '../data/categories'
 import type { Item } from '../types'
-import { extractProductFromUrl } from '../lib/productExtraction'
+import { extractProductFromUrl, type ExtractionError } from '../lib/productExtraction'
 import { useAuth } from '../contexts/AuthContext'
 import { useExtensionDetection } from '../hooks/useExtensionDetection'
 import { trackItemAdded, trackItemEdited, trackGoogleAdsFirstProductConversion } from '../utils/tracking'
@@ -106,8 +106,14 @@ export default function AddItemModal({
     return { color: '', cleanNotes: notes }
   }
 
+  // Initialize the form only when the modal transitions closed → open.
+  // Re-running on every prefilledData/editItem identity change wipes whatever
+  // the user has typed mid-edit (parent re-renders recreate these props).
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    if (isOpen) {
+    const justOpened = isOpen && !wasOpenRef.current
+    wasOpenRef.current = isOpen
+    if (justOpened) {
       if (editItem) {
         // When editing, always show manual tab with existing data
         setActiveTab('manual')
@@ -221,23 +227,39 @@ export default function AddItemModal({
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'שגיאה בחילוץ המוצר'
       const isArticle = errorMessage.includes('כתבה')
-      const isNoProduct = errorMessage.includes('לא נמצא מידע')
       setExtractionStatus({
         state: 'error',
-        message: (isArticle || isNoProduct)
+        message: isArticle
           ? errorMessage
-          : 'שגיאה בחילוץ המוצר. נסה שוב או מלא ידנית'
+          : 'לא הצלחנו לחלץ את פרטי המוצר, אז שמרנו את הקישור. עוד רגע נעבור למילוי ידני'
       })
 
-      // Auto-report extraction failure for analytics
+      // Don't dead-end the user: carry the URL + store into the manual form
+      // and switch there so only name/category are left to fill by hand
+      let hostname = ''
+      try { hostname = new URL(urlInput).hostname } catch { /* validated above */ }
+      if (!isArticle) {
+        setFormData(prev => ({
+          ...prev,
+          originalUrl: prev.originalUrl || urlInput,
+          storeName: prev.storeName || hostname,
+        }))
+        setTimeout(() => {
+          setActiveTab('manual')
+          setExtractionStatus({ state: 'idle', message: null })
+        }, 2500)
+      }
+
+      // Auto-report extraction failure for analytics, including page
+      // diagnostics (title, ld+json types found) attached by productExtraction
       try {
-        const hostname = new URL(urlInput).hostname
+        const diagnostics = (error as ExtractionError | null)?.diagnostics
         await supabase.from('extraction_reports').insert({
           user_id: session?.user?.id || null,
           url: urlInput,
           hostname,
           error_type: isArticle ? 'non_product_page' : 'no_product_data',
-          extracted_data: { error: errorMessage },
+          extracted_data: { error: errorMessage, ...(diagnostics ? { diagnostics } : {}) },
         })
       } catch {
         // Non-blocking — don't show error for reporting

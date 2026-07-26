@@ -60,6 +60,13 @@ export default function Checklist() {
   } | undefined>()
   const [isFromRecommendedProduct, setIsFromRecommendedProduct] = useState(false)
 
+  // Stable identity for AddItemModal's prefill — an inline object here re-triggers
+  // the modal's init effect on every Checklist re-render and wipes the user's input
+  const addItemPrefill = useMemo(
+    () => prefilledProductData || (prefilledCategory ? { category: prefilledCategory } : undefined),
+    [prefilledProductData, prefilledCategory]
+  )
+
   // === NEW: Redesign state ===
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'done' | 'remaining'>('all')
@@ -522,7 +529,7 @@ export default function Checklist() {
           onClose={() => { handleCloseModal(); setPrefilledProductData(undefined); setIsFromRecommendedProduct(false) }}
           registryId={registry.id}
           onSave={() => { handleCloseModal(); setPrefilledProductData(undefined); setIsFromRecommendedProduct(false); fetchItemsCount() }}
-          prefilledData={prefilledProductData || (prefilledCategory ? { category: prefilledCategory } : undefined)}
+          prefilledData={addItemPrefill}
           forceManualTab={isFromRecommendedProduct}
           highlightColor={isFromRecommendedProduct}
         />
