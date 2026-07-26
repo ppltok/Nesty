@@ -285,6 +285,23 @@ export default function AddItemModal({
     setError(null)
 
     try {
+      // Manual adds that include a product link should still get an image —
+      // when none was provided, make a quick best-effort extraction attempt
+      // for it (time-capped so saving never feels stuck).
+      let imageUrl = formData.imageUrl
+      if (!imageUrl && formData.originalUrl.trim() && session?.access_token) {
+        try {
+          new URL(formData.originalUrl)
+          const extracted = await Promise.race([
+            extractProductFromUrl(formData.originalUrl, session.access_token),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 8000)),
+          ])
+          imageUrl = extracted?.imageUrls?.[0] || ''
+        } catch {
+          // No image found — the item is saved without one
+        }
+      }
+
       let combinedNotes = ''
       if (formData.color) {
         combinedNotes += `צבע: ${formData.color}`
@@ -310,7 +327,7 @@ export default function AddItemModal({
         notes: combinedNotes || null,
         is_most_wanted: formData.isMostWanted,
         is_private: formData.isPrivate,
-        image_url: formData.imageUrl || null,
+        image_url: imageUrl || null,
         // Preserve original price/currency when extraction did EUR/USD/GBP → ILS
         // conversion. Default for source_currency in DB is 'ILS', so only set
         // these columns when the source was actually a foreign currency.
