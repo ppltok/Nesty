@@ -43,6 +43,34 @@
     { id: 'siblings', name: 'תוספות לאחים / תאומים' }
   ];
 
+  // Category auto-suggestion from the product name. Ordered by priority —
+  // the FIRST category with a keyword hit wins (e.g. "עגלת תאומים" must land
+  // on strollers, not siblings). Returns '' when nothing is recognized so the
+  // form keeps showing "בחרו קטגוריה".
+  const CATEGORY_KEYWORDS = [
+    { id: 'strollers', words: ['עגלת', 'עגלה', 'טיולון', 'מנשא', 'stroller', 'buggy', 'pushchair', 'carrier'] },
+    { id: 'car_safety', words: ['סלקל', 'סל קל', 'סל-קל', 'כיסא בטיחות', 'כסא בטיחות', 'מושב בטיחות', 'בוסטר', 'איזופיקס', 'isofix', 'car seat', 'booster'] },
+    { id: 'nursing', words: ['הנקה', 'משאבת חלב', 'שאיבת חלב', 'מחמצץ', 'breast pump', 'nursing'] },
+    { id: 'feeding', words: ['בקבוק', 'מוצץ', 'כיסא אוכל', 'כסא אוכל', 'האכלה', 'סטריליזטור', 'מחמם בקבוקים', 'סינר', 'תמ"ל', 'bottle', 'pacifier', 'high chair', 'sterilizer'] },
+    { id: 'bath', words: ['אמבט', 'חיתול', 'מד חום', 'מדחום', 'משטח החתלה', 'שמפו', 'מגבת', 'קרם החתלה', 'bath', 'diaper', 'towel'] },
+    { id: 'furniture', words: ['מיטת', 'מיטה', 'עריסה', 'עריסת', 'שידה', 'שידת', 'קומודה', 'לול', 'נדנדה', 'טרמפולינה', 'crib', 'bassinet', 'dresser', 'bouncer'] },
+    { id: 'safety', words: ['מוניטור', 'אינטרקום', 'משגוחה', 'שער בטיחות', 'מגן שקעים', 'monitor', 'baby gate'] },
+    { id: 'bedding', words: ['מצעים', 'סדין', 'שמיכה', 'שמיכת', 'כרית', 'מובייל', 'מגן ראש', 'שק שינה', 'sheet', 'blanket', 'swaddle', 'sleeping bag'] },
+    { id: 'clothing', words: ['בגד', 'בגדי', 'אוברול', 'בודי', 'גרביים', 'כובע', "פיג'מה", 'onesie', 'bodysuit', 'romper'] },
+    { id: 'toys', words: ['צעצוע', 'משחק', 'נשכן', 'רעשן', 'בובה', 'קוביות', "ג'ימבורי", 'ספר רך', 'toy', 'rattle', 'teether', 'playmat', 'play mat', 'gym'] },
+    { id: 'birth_prep', words: ['תיק לידה', 'לאחר לידה', 'ליולדת', 'יולדת', 'פדים', 'postpartum'] },
+    { id: 'siblings', words: ['תאומים', 'twins'] }
+  ];
+
+  function guessCategory(name) {
+    if (!name) return '';
+    const n = name.toLowerCase();
+    for (const cat of CATEGORY_KEYWORDS) {
+      if (cat.words.some(w => n.includes(w))) return cat.id;
+    }
+    return '';
+  }
+
   // Global state
   let supabaseSession = null;
   let userRegistry = null;
@@ -2609,6 +2637,18 @@
       }
     });
 
+    // Suggest a category from the extracted product name; when nothing is
+    // recognized the select stays on "בחרו קטגוריה"
+    if (product?.name) {
+      const guessed = guessCategory(product.name);
+      if (guessed) {
+        const catSelect = document.getElementById('nesty-category');
+        catSelect.value = guessed;
+        catSelect.dispatchEvent(new Event('change'));
+        console.log(`🏷️ Category suggested from name: ${guessed}`);
+      }
+    }
+
     // Cancel button — same as the app's ביטול
     document.getElementById('nesty-cancel').addEventListener('click', () => {
       overlay.remove();
@@ -2722,6 +2762,16 @@
         if (urlField) urlField.value = url;
         const storeField = document.getElementById('nesty-store');
         if (storeField) storeField.value = new URL(url).hostname.replace(/^www\./, '');
+
+        // Suggest a category for the pasted product too (don't override a user's choice)
+        const catSelect = document.getElementById('nesty-category');
+        if (catSelect && !catSelect.value) {
+          const guessed = guessCategory(productData.name || '');
+          if (guessed) {
+            catSelect.value = guessed;
+            catSelect.dispatchEvent(new Event('change'));
+          }
+        }
 
         setTimeout(() => switchMode('current'), 1000);
       } catch (error) {
