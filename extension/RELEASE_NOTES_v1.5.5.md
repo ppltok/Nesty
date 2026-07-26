@@ -13,7 +13,9 @@ The in-page form now uses the same design system, fields, and structure as
 the site's add-item modal: purple palette, pill tabs, rounded buttons, and
 the full field set — including new **color**, **store**, and **editable
 product link** fields, required name/category validation, and the full
-category list (incl. הכנה ללידה ולאמא, תוספות לאחים/תאומים). Birth-prep
+category list (incl. הכנה ללידה ולאמא, תוספות לאחים/תאומים). The category
+is auto-suggested from the product name (falls back to "בחרו קטגוריה"
+when unrecognized). Birth-prep
 items auto-mark as private, and the image report is a compact 🐞 button.
 Items added from the extension are now tagged `added_via='extension'` for
 analytics.
@@ -53,7 +55,8 @@ production config) and no stray files.
 ## Chrome Web Store "What's new" text (paste this)
 
 > The add-item form got a full redesign to match the Nesty web app - same
-> look, plus new color, store, and product-link fields. Also fixed a bug
+> look, plus new color, store, and product-link fields, and the category is
+> now suggested automatically from the product name. Also fixed a bug
 > where the extension asked you to log in even though you were already
 > signed in to nestyil.com (happened when several Nesty tabs were open),
 > product images from Shopify stores are now always saved with full URLs,
