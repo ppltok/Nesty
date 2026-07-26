@@ -32,12 +32,24 @@ const SUBJECT = '15% הנחה נוספים בסופהרב 🌿 הטבה בלעד
 const RETARGET_SUBJECT = 'לא לפספס: 15% נוספים על כל מבצעי סופהרב 🌿'
 // v3 subject for the "never copied the code" reminder send.
 const REMINDER_SUBJECT = 'עדיין לא מימשת? ⏳ ההטבה שלך ב-Supherb נגמרת בקרוב'
+// v4 subject for the final-days "last call" send. Code is shown directly in
+// this one — see buildLastCallEmailHtml.
+const LAST_CALL_SUBJECT = '⏳ 5 ימים אחרונים! ההטבה שלך ב-Supherb נגמרת ב-31.7'
+const CODE = 'NESTY15'
 const TEST_EMAILS = ['tomargov73@gmail.com', 'tom@ppltok.com', 'hello@nestyil.com', 'tom@lngvt.shop']
 
 // The email funnels users to the in-app gifts page (where the code + partner
 // redirect live). The click is still tracked via collab-redirect.
 function giftsUrl(userId: string): string {
   return `${SUPABASE_URL}/functions/v1/collab-redirect?c=${COLLAB}&u=${userId}&s=email&to=gifts`
+}
+
+// Last-call variant: skip the in-app detour entirely. The code is already
+// visible in the email, so the CTA goes straight to Supherb (still through
+// collab-redirect, so the click is tracked server-side) — maximizes what
+// Supherb sees on their own site in the campaign's final days.
+function redeemUrl(userId: string): string {
+  return `${SUPABASE_URL}/functions/v1/collab-redirect?c=${COLLAB}&u=${userId}&s=email`
 }
 
 // Open-tracking pixel (Resend's open tracking is off account-wide).
@@ -346,6 +358,111 @@ function buildReminderEmailHtml(firstName: string, gifts: string, unsubscribeUrl
 </html>`
 }
 
+// v4 "last call" email — final days of the offer. Unlike every prior version,
+// the code is shown directly in the email (no in-app detour) and the CTA goes
+// straight to Supherb (still via collab-redirect, so the click is tracked
+// server-side). Trades our own in-app engagement signal for maximizing what
+// Supherb actually sees hit their site before the deadline.
+function buildLastCallEmailHtml(firstName: string, redeem: string, unsubscribeUrl: string, openUrl: string): string {
+  const hi = firstName ? `${firstName}, ` : ''
+  const footer = renderLegalFooter({
+    unsubscribeLinkHtml: `<a href="${unsubscribeUrl}" style="color:#9070b8;text-decoration:underline;">הסרה מרשימת התפוצה</a>`,
+  })
+  return `<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only"/>
+  <title>${LAST_CALL_SUBJECT}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body style="margin:0;padding:0;background:#fdf6f0;font-family:'Heebo',sans-serif;direction:rtl;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf6f0;direction:rtl;">
+  <tr>
+    <td align="center" style="padding:40px 16px 64px;">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;direction:rtl;">
+
+        <tr>
+          <td style="padding-bottom:28px;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td><a href="https://nestyil.com" style="text-decoration:none;"><img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:40px;width:auto;display:block;" /></a></td>
+              <td align="left"><span style="font-size:15px;color:#b3261e;font-weight:700;letter-spacing:0.04em;">⏳ ימים אחרונים</span></td>
+            </tr></table>
+          </td>
+        </tr>
+
+        <!-- HERO — generated visual (product + co-brand lockup + urgency headline baked in) -->
+        <tr>
+          <td style="border-radius:24px;overflow:hidden;">
+            <img src="https://nestyil.com/demo/supherb-reminder-hero.jpg" alt="15% הנחה נוספים על כל האתר! בתוקף עד 31.7.2026 - אל תפספסי"
+                 width="560" style="display:block;width:100%;max-width:560px;height:auto;border-radius:24px;" />
+          </td>
+        </tr>
+
+        <tr><td style="height:18px;"></td></tr>
+
+        <tr>
+          <td style="text-align:center;padding:0 12px;">
+            <p style="margin:0;font-size:16px;color:#3a4f40;line-height:1.8;font-weight:400;max-width:460px;margin-left:auto;margin-right:auto;">
+              ${hi}רצינו לוודא שאת יודעת - נשארו ממש ימים ספורים לממש את ההטבה שלך בסופהרב.
+              הקוד מחכה לך למטה - זה הרגע האחרון להשתמש בו לפני שהוא נעלם.
+            </p>
+          </td>
+        </tr>
+
+        <tr><td style="height:14px;"></td></tr>
+
+        <!-- URGENCY CARD — code shown directly, CTA goes straight to Supherb -->
+        <tr>
+          <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #f4dccb;text-align:center;">
+            <div style="display:inline-block;background:#fbe5e1;border:1px solid #f4acb7;border-radius:100px;padding:6px 16px;margin-bottom:20px;">
+              <span style="font-size:12px;font-weight:700;color:#b3261e;">⏳ ההטבה נגמרת ב-31.7.2026 - זה ממש הסוף</span>
+            </div>
+
+            <h2 style="margin:0 0 20px;font-size:22px;font-weight:800;color:#1f3a26;">15% הנחה נוספים על כל האתר</h2>
+
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+              <tr>
+                <td style="background:#e8f1ea;border:1.5px dashed #4e7a5a;border-radius:14px;padding:16px 20px;text-align:center;">
+                  <div style="font-size:11px;color:#4e7a5a;margin-bottom:4px;">קוד הטבה</div>
+                  <div style="font-size:26px;font-weight:800;letter-spacing:0.14em;color:#25402c;">${CODE}</div>
+                </td>
+              </tr>
+            </table>
+
+            <a href="${redeem}" style="display:block;background:#35573D;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:16px 32px;border-radius:100px;text-align:center;">למימוש ההטבה בסופהרב</a>
+
+            <p style="margin:16px 0 0;font-size:13px;color:#4e7a5a;line-height:1.6;">אחרי ה-31.7 - הקוד כבר לא יעבוד.</p>
+          </td>
+        </tr>
+
+        <tr><td style="height:14px;"></td></tr>
+
+        <tr>
+          <td style="background:#f4f9f5;border:1px dashed #93bd9e;border-radius:20px;padding:24px 32px;text-align:center;">
+            <p style="margin:0;font-size:14px;line-height:1.8;color:#25402c;">
+              מכירה עוד מישהי בהריון? שלחי לה את <strong style="color:#35573D;">Nesty</strong> 🌿 ותגלו יחד עוד הטבות וקופונים.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="padding:30px 0 0;text-align:center;">
+            <a href="https://nestyil.com" style="text-decoration:none;"><img src="https://nestyil.com/Nesty_logo.png" alt="Nesty" style="height:28px;width:auto;margin-bottom:12px;" /></a>
+            ${footer}
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<img src="${openUrl}" width="1" height="1" alt="" style="display:block;border:0;width:1px;height:1px;" />
+</body>
+</html>`
+}
+
 interface Recipient { id: string; email: string; first_name: string | null }
 
 serve(async (req) => {
@@ -357,19 +474,21 @@ serve(async (req) => {
     if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY is not set')
 
     const body = await req.json().catch(() => ({}))
-    const mode: 'test' | 'all' | 'new_users' | 'retarget_top' | 'reminder_notcopied' =
+    const mode: 'test' | 'all' | 'new_users' | 'retarget_top' | 'reminder_notcopied' | 'last_call' =
       body.mode === 'all' ? 'all'
       : body.mode === 'new_users' ? 'new_users'
       : body.mode === 'retarget_top' ? 'retarget_top'
       : body.mode === 'reminder_notcopied' ? 'reminder_notcopied'
+      : body.mode === 'last_call' ? 'last_call'
       : 'test'
     const limit: number | null = typeof body.limit === 'number' ? body.limit : null
     // Test-only override: preview a non-default template against TEST_EMAILS
     // without touching the production recipient RPCs. Ignored for every mode
     // except 'test'.
-    const testTemplate: 'base' | 'retarget' | 'reminder' =
+    const testTemplate: 'base' | 'retarget' | 'reminder' | 'last_call' =
       mode === 'test' && body.template === 'retarget' ? 'retarget'
       : mode === 'test' && body.template === 'reminder' ? 'reminder'
+      : mode === 'test' && body.template === 'last_call' ? 'last_call'
       : 'base'
 
     const supabaseAdmin = createClient(
@@ -419,6 +538,17 @@ serve(async (req) => {
       recipients = ((data ?? []) as Recipient[]).map((u) => ({
         id: u.id, email: u.email, first_name: u.first_name,
       }))
+    } else if (mode === 'last_call') {
+      // v4 final-days send: everyone still eligible who hasn't copied the code,
+      // regardless of prior reminder sends. Own dedup via meta.mode='last_call'.
+      // Default limit is high (Resend account upgraded — single one-shot send).
+      const { data, error } = await supabaseAdmin.rpc('get_collab_lastcall_recipients', {
+        p_limit: limit && limit > 0 ? limit : 1000,
+      })
+      if (error) throw error
+      recipients = ((data ?? []) as Recipient[]).map((u) => ({
+        id: u.id, email: u.email, first_name: u.first_name,
+      }))
     } else {
       // Warmest-first daily batch: the RPC returns consented users not yet sent
       // this campaign, ordered Champions → Super → Active → Started → User,
@@ -450,10 +580,12 @@ serve(async (req) => {
         try {
           const unsubUrl = await buildUnsubscribeUrl(user.id, 'features')
           const gifts = giftsUrl(user.id)
+          const redeem = redeemUrl(user.id)
           const openUrl = openPixelUrl(user.id)
           const effectiveTemplate =
             mode === 'retarget_top' ? 'retarget'
             : mode === 'reminder_notcopied' ? 'reminder'
+            : mode === 'last_call' ? 'last_call'
             : mode === 'test' ? testTemplate
             : 'base'
           const { subject, html } =
@@ -461,6 +593,8 @@ serve(async (req) => {
               ? { subject: RETARGET_SUBJECT, html: buildRetargetEmailHtml(user.first_name ?? '', gifts, unsubUrl, openUrl) }
               : effectiveTemplate === 'reminder'
               ? { subject: REMINDER_SUBJECT, html: buildReminderEmailHtml(user.first_name ?? '', gifts, unsubUrl, openUrl) }
+              : effectiveTemplate === 'last_call'
+              ? { subject: LAST_CALL_SUBJECT, html: buildLastCallEmailHtml(user.first_name ?? '', redeem, unsubUrl, openUrl) }
               : { subject: SUBJECT, html: buildEmailHtml(user.first_name ?? '', gifts, unsubUrl, openUrl) }
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
