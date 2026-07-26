@@ -6,7 +6,17 @@
 
 ---
 
-## 🛠 What's Fixed in v1.5.5
+## 🛠 What's New in v1.5.5
+
+### 0. **Add-item form redesigned to match the Nesty web app**
+The in-page form now uses the same design system, fields, and structure as
+the site's add-item modal: purple palette, pill tabs, rounded buttons, and
+the full field set — including new **color**, **store**, and **editable
+product link** fields, required name/category validation, and the full
+category list (incl. הכנה ללידה ולאמא, תוספות לאחים/תאומים). Birth-prep
+items auto-mark as private, and the image report is a compact 🐞 button.
+Items added from the extension are now tagged `added_via='extension'` for
+analytics.
 
 ### 1. **"Login required" while actually logged in (critical)**
 The extension used to read the login session from only the *first* nestyil.com
@@ -42,8 +52,10 @@ production config) and no stray files.
 
 ## Chrome Web Store "What's new" text (paste this)
 
-> Fixed a bug where the extension asked you to log in even though you were
-> already signed in to nestyil.com (happened when several Nesty tabs were
-> open). Product images from Shopify stores are now always saved with full
-> URLs, and price detection got an extra fallback for stores with broken
+> The add-item form got a full redesign to match the Nesty web app - same
+> look, plus new color, store, and product-link fields. Also fixed a bug
+> where the extension asked you to log in even though you were already
+> signed in to nestyil.com (happened when several Nesty tabs were open),
+> product images from Shopify stores are now always saved with full URLs,
+> and price detection got an extra fallback for stores with broken
 > structured data.
