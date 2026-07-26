@@ -1873,10 +1873,13 @@
   function extractFromShopifyProduct(product) {
     const firstVariant = product.variants?.[0] || product;
 
-    // Collect all possible images
+    // Collect all possible images — Shopify returns protocol-relative URLs
+    // ("//cdn.shopify.com/..."), resolve them so stored image_url is absolute
     const imageUrls = [];
-    if (product.featured_image) imageUrls.push(product.featured_image);
-    if (product.images) imageUrls.push(...product.images);
+    if (product.featured_image) imageUrls.push(resolveUrl(product.featured_image));
+    if (product.images) {
+      imageUrls.push(...product.images.filter(i => typeof i === 'string').map(i => resolveUrl(i)));
+    }
 
     return {
       name: product.title || product.name || '',
