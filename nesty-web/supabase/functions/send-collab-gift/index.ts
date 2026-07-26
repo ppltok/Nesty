@@ -392,10 +392,12 @@ function buildLastCallEmailHtml(firstName: string, redeem: string, unsubscribeUr
           </td>
         </tr>
 
-        <!-- HERO — generated visual (product + co-brand lockup + urgency headline baked in) -->
+        <!-- HERO — dedicated last-call visual (real product + logos, split-screen
+             with a pregnant woman, baby-themed props, badge-style "5" countdown,
+             headline baked in). Distinct from the reminder email's hero image. -->
         <tr>
           <td style="border-radius:24px;overflow:hidden;">
-            <img src="https://nestyil.com/demo/supherb-reminder-hero.jpg" alt="15% הנחה נוספים על כל האתר! בתוקף עד 31.7.2026 - אל תפספסי"
+            <img src="https://nestyil.com/demo/supherb-lastcall-hero.jpg" alt="5 ימים אחרונים! 15% הנחה נוספים - בתוקף עד 31.7.2026"
                  width="560" style="display:block;width:100%;max-width:560px;height:auto;border-radius:24px;" />
           </td>
         </tr>
