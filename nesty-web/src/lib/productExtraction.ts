@@ -72,6 +72,37 @@ function convertPriceToILS(data: ExtractedProductData): ExtractedProductData {
   }
 }
 
+/**
+ * Category auto-suggestion from the product name. Ordered by priority —
+ * the FIRST category with a keyword hit wins (e.g. "עגלת תאומים" must land
+ * on strollers, not siblings). Returns '' when nothing is recognized so the
+ * form keeps showing "בחרו קטגוריה".
+ * Keep in sync with CATEGORY_KEYWORDS in extension/current-build/content.js.
+ */
+const CATEGORY_KEYWORDS: { id: string; words: string[] }[] = [
+  { id: 'strollers', words: ['עגלת', 'עגלה', 'טיולון', 'מנשא', 'stroller', 'buggy', 'pushchair', 'carrier'] },
+  { id: 'car_safety', words: ['סלקל', 'סל קל', 'סל-קל', 'כיסא בטיחות', 'כסא בטיחות', 'מושב בטיחות', 'בוסטר', 'איזופיקס', 'isofix', 'car seat', 'booster'] },
+  { id: 'nursing', words: ['הנקה', 'משאבת חלב', 'שאיבת חלב', 'מחמצץ', 'breast pump', 'nursing'] },
+  { id: 'feeding', words: ['בקבוק', 'מוצץ', 'כיסא אוכל', 'כסא אוכל', 'האכלה', 'סטריליזטור', 'מחמם בקבוקים', 'סינר', 'תמ"ל', 'bottle', 'pacifier', 'high chair', 'sterilizer'] },
+  { id: 'bath', words: ['אמבט', 'חיתול', 'מד חום', 'מדחום', 'משטח החתלה', 'שמפו', 'מגבת', 'קרם החתלה', 'bath', 'diaper', 'towel'] },
+  { id: 'furniture', words: ['מיטת', 'מיטה', 'עריסה', 'עריסת', 'שידה', 'שידת', 'קומודה', 'לול', 'נדנדה', 'טרמפולינה', 'crib', 'bassinet', 'dresser', 'bouncer'] },
+  { id: 'safety', words: ['מוניטור', 'אינטרקום', 'משגוחה', 'שער בטיחות', 'מגן שקעים', 'monitor', 'baby gate'] },
+  { id: 'bedding', words: ['מצעים', 'סדין', 'שמיכה', 'שמיכת', 'כרית', 'מובייל', 'מגן ראש', 'שק שינה', 'sheet', 'blanket', 'swaddle', 'sleeping bag'] },
+  { id: 'clothing', words: ['בגד', 'בגדי', 'אוברול', 'בודי', 'גרביים', 'כובע', "פיג'מה", 'onesie', 'bodysuit', 'romper'] },
+  { id: 'toys', words: ['צעצוע', 'משחק', 'נשכן', 'רעשן', 'בובה', 'קוביות', "ג'ימבורי", 'ספר רך', 'toy', 'rattle', 'teether', 'playmat', 'play mat', 'gym'] },
+  { id: 'birth_prep', words: ['תיק לידה', 'לאחר לידה', 'ליולדת', 'יולדת', 'פדים', 'postpartum'] },
+  { id: 'siblings', words: ['תאומים', 'twins'] },
+]
+
+export function guessCategoryFromName(name: string): string {
+  if (!name) return ''
+  const n = name.toLowerCase()
+  for (const cat of CATEGORY_KEYWORDS) {
+    if (cat.words.some(w => n.includes(w))) return cat.id
+  }
+  return ''
+}
+
 interface OfferSchema {
   price?: string
   priceCurrency?: string

@@ -3,7 +3,7 @@ import { X, Plus, Link as LinkIcon, Star, Eye, EyeOff, Package, Palette, Pencil,
 import { supabase } from '../lib/supabase'
 import { CATEGORIES } from '../data/categories'
 import type { Item } from '../types'
-import { extractProductFromUrl, type ExtractionError } from '../lib/productExtraction'
+import { extractProductFromUrl, guessCategoryFromName, type ExtractionError } from '../lib/productExtraction'
 import { useAuth } from '../contexts/AuthContext'
 import { useExtensionDetection } from '../hooks/useExtensionDetection'
 import { trackItemAdded, trackItemEdited, trackGoogleAdsFirstProductConversion } from '../utils/tracking'
@@ -204,6 +204,9 @@ export default function AddItemModal({
         ...formData,
         name: productData.name,
         price: productData.price,
+        // Auto-suggest a category from the product name (same keyword logic
+        // as the extension); never override a category the user already chose
+        category: formData.category || guessCategoryFromName(productData.name),
         originalUrl: urlInput,
         storeName: new URL(urlInput).hostname,
         notes: productData.brand ? `מותג: ${productData.brand}` : formData.notes,
