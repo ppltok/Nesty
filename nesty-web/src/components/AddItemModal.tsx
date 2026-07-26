@@ -271,6 +271,14 @@ export default function AddItemModal({
   }
 
   const handleSave = async () => {
+    // On the paste tab, "הוסף לרשימה" acts exactly like the quick-extract
+    // button: extract the pasted URL (fills the form + switches to manual)
+    // instead of failing validation on the still-empty name
+    if (!isEditMode && activeTab === 'paste') {
+      await handleExtractUrl()
+      return
+    }
+
     if (!formData.name.trim()) {
       setError('יש להזין שם מוצר')
       return

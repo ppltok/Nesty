@@ -103,9 +103,37 @@ export function guessCategoryFromName(name: string): string {
   return ''
 }
 
-interface OfferSchema {
-  price?: string
+interface PriceSpecificationSchema {
+  price?: string | number
   priceCurrency?: string
+  priceType?: string
+}
+
+interface OfferSchema {
+  price?: string | number
+  priceCurrency?: string
+  priceSpecification?: PriceSpecificationSchema | PriceSpecificationSchema[]
+}
+
+/**
+ * Read the price out of an Offer. Some platforms (WooCommerce SEO plugins,
+ * e.g. segalbaby.co.il) omit offer.price and nest it in priceSpecification[]
+ * instead — where the current sale price is the spec WITHOUT
+ * priceType=ListPrice (ListPrice is the crossed-out original).
+ */
+function priceFromOffer(offer: OfferSchema | undefined): { price: string; currency: string } {
+  if (!offer) return { price: '', currency: '' }
+  if (offer.price != null && offer.price !== '') {
+    return { price: String(offer.price), currency: offer.priceCurrency || '' }
+  }
+  const specData = offer.priceSpecification
+  const specs = Array.isArray(specData) ? specData : specData ? [specData] : []
+  const withPrice = specs.filter(s => s && s.price != null && s.price !== '')
+  const sale = withPrice.find(s => !String(s.priceType || '').includes('ListPrice')) || withPrice[0]
+  if (sale) {
+    return { price: String(sale.price), currency: sale.priceCurrency || offer.priceCurrency || '' }
+  }
+  return { price: '', currency: offer.priceCurrency || '' }
 }
 
 interface ProductSchema {
@@ -190,10 +218,12 @@ function extractFromProduct(data: ProductSchema, baseUrl?: string): ExtractedPro
   // Normalize image URLs (handles both strings and objects, resolves relative URLs)
   const imageUrls = normalizeImageUrls(data.image, baseUrl)
 
+  const { price, currency } = priceFromOffer(offer)
+
   return convertPriceToILS({
     name: data.name || '',
-    price: offer?.price || '',
-    priceCurrency: offer?.priceCurrency || '',
+    price,
+    priceCurrency: currency,
     brand: typeof data.brand === 'object' ? data.brand?.name || '' : data.brand || '',
     category: data.category || '',
     imageUrls: [...new Set(imageUrls)] // Remove duplicates
@@ -221,10 +251,12 @@ function extractFromProductGroup(data: ProductGroupSchema, baseUrl?: string): Ex
     })
   }
 
+  const { price, currency } = priceFromOffer(offer)
+
   return convertPriceToILS({
     name: data.name || '',
-    price: offer?.price || '',
-    priceCurrency: offer?.priceCurrency || '',
+    price,
+    priceCurrency: currency,
     brand: typeof data.brand === 'object' ? data.brand?.name || '' : data.brand || '',
     category: data.category || '',
     imageUrls: [...new Set(imageUrls)] // Remove duplicates

@@ -2174,6 +2174,27 @@
     };
   }
 
+  /**
+   * Read the price out of an Offer. Some platforms (WooCommerce SEO plugins,
+   * e.g. segalbaby.co.il) omit offer.price and nest it in priceSpecification[]
+   * instead — the current sale price is the spec WITHOUT priceType=ListPrice.
+   * Kept in sync with priceFromOffer in nesty-web/src/lib/productExtraction.ts.
+   */
+  function priceFromOffer(offer) {
+    if (!offer) return { price: '', currency: '' };
+    if (offer.price != null && offer.price !== '') {
+      return { price: String(offer.price), currency: offer.priceCurrency || '' };
+    }
+    const specData = offer.priceSpecification;
+    const specs = Array.isArray(specData) ? specData : specData ? [specData] : [];
+    const withPrice = specs.filter(s => s && s.price != null && s.price !== '');
+    const sale = withPrice.find(s => !String(s.priceType || '').includes('ListPrice')) || withPrice[0];
+    if (sale) {
+      return { price: String(sale.price), currency: sale.priceCurrency || offer.priceCurrency || '' };
+    }
+    return { price: '', currency: offer.priceCurrency || '' };
+  }
+
   function extractFromProduct(data, baseUrl) {
     // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
     const offersData = data.offers || data.Offers;
@@ -2202,10 +2223,12 @@
     // Extract images (normalize to string URLs first, resolve relative paths)
     const imageUrls = normalizeImageUrls(data.image, baseUrl);
 
+    const offerPrice = priceFromOffer(offer);
+
     const result = convertPriceToILS({
       name: decodeHtmlEntities(data.name || ''),
-      price: offer?.price || '',
-      priceCurrency: offer?.priceCurrency || '',
+      price: offerPrice.price,
+      priceCurrency: offerPrice.currency,
       brand: data.brand?.name || data.brand || '',
       category: data.category || '',
       imageUrls: filterAndPrioritizeImages([...new Set(imageUrls)])
@@ -2231,10 +2254,12 @@
       });
     }
 
+    const groupOfferPrice = priceFromOffer(offer);
+
     return convertPriceToILS({
       name: data.name || '',
-      price: offer?.price || '',
-      priceCurrency: offer?.priceCurrency || '',
+      price: groupOfferPrice.price,
+      priceCurrency: groupOfferPrice.currency,
       brand: data.brand?.name || data.brand || '',
       category: data.category || '',
       imageUrls: filterAndPrioritizeImages([...new Set(imageUrls)])
