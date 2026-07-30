@@ -166,10 +166,15 @@ serve(async (req) => {
     // 'daily'   — rolling 24-48h window, the ongoing cron behaviour
     // 'backlog' — every pending invite regardless of age; one-shot re-activation
     // 'test'    — renders the template with sample data to TEST_EMAILS, touches no real invite
+    //
+    // 'daily' MUST stay the default: .github/workflows/scheduled-emails.yml calls
+    // this endpoint every day with no request body at all. Defaulting to 'test'
+    // silently turned that existing job into a daily blast at TEST_EMAILS.
+    // Test mode is opt-in only, never a fallback.
     const mode: 'test' | 'backlog' | 'daily' =
       body.mode === 'backlog' ? 'backlog'
-      : body.mode === 'daily' ? 'daily'
-      : 'test'
+      : body.mode === 'test' ? 'test'
+      : 'daily'
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
