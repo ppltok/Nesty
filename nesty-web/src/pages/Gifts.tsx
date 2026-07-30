@@ -80,7 +80,7 @@ export default function Gifts() {
   }, [refreshGiftsCount])
 
   // Mark a gift as received. Toggling back to "not received" also re-marks
-  // the purchase as unseen — same UX as WhatsApp's "mark as unread", so the
+  // the purchase as unseen - same UX as WhatsApp's "mark as unread", so the
   // gifts nav badge reappears until the user revisits the page.
   const handleMarkReceived = async (purchaseId: string) => {
     try {
@@ -224,7 +224,7 @@ export default function Gifts() {
 
   // Nesty × Supherb partner gift (popup + gifts-page card). Audience-gated
   // inside the hook; append ?supherb=1 to force-preview. Must run before any
-  // early return — it calls hooks (rules of hooks).
+  // early return - it calls hooks (rules of hooks).
   const supherbGift = useSupherbGift()
   // The Nesty × Supherb partner gift counts as a received gift in the top stats.
   const giftBonus = supherbGift.eligible ? 1 : 0
@@ -286,7 +286,7 @@ export default function Gifts() {
           />
         </div>
 
-        {/* Nesty × Supherb partner benefit — full banner (collapses into the list) */}
+        {/* Nesty × Supherb partner benefit - full banner (collapses into the list) */}
         {supherbGift.banner}
 
         {/* Filters and View Toggle */}
@@ -351,7 +351,7 @@ export default function Gifts() {
         {/* Gifts Display */}
         {purchases.length === 0 ? (
           <div className="space-y-3">
-            {/* The collapsed Supherb perk must render here too — otherwise
+            {/* The collapsed Supherb perk must render here too - otherwise
                 collapsing it with zero purchases makes it vanish entirely
                 (the grid/list branches below never mount on an empty box). */}
             {supherbGift.listCard}

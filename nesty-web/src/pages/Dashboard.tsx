@@ -160,7 +160,7 @@ export default function Dashboard() {
     setShowPostOnboarding(true)
   }, [popups.loaded, popups.dismissed.post_onboarding, user, isLoadingItems, items.length, tutorialActive, showAddressModal])
 
-  // Partner invite card — fires once for solo registries (no partner_id).
+  // Partner invite card - fires once for solo registries (no partner_id).
   // Only when the user has at least 3 items so it doesn't ambush brand-new
   // accounts on their first session. Dismissed key persists in profiles.
   useEffect(() => {
@@ -172,7 +172,7 @@ export default function Dashboard() {
     setShowPartnerInvite(true)
   }, [popups.loaded, popups.dismissed.partner_invite_card, user, registry, isLoadingItems, items.length, showPostOnboarding, showAddressModal, showSharePrompt])
 
-  // WhatsApp re-capture — for users who finished onboarding without a phone
+  // WhatsApp re-capture - for users who finished onboarding without a phone
   // on file (everyone from before the phone step, plus skippers). Yields to
   // every other modal so it's never part of a popup pile-up. Two exposures
   // max: "לא עכשיו" snoozes 7 days, the post-snooze show is the last one.
@@ -194,7 +194,7 @@ export default function Dashboard() {
     showPostOnboarding, showAddressModal, showSharePrompt, showPartnerInvite,
   ])
 
-  // First-gift celebration toast — fires once when the registry receives its
+  // First-gift celebration toast - fires once when the registry receives its
   // very first purchase. Uses milestone integer 100 (reserved for first_gift)
   // to persist via last_milestone_shown without colliding with item-count
   // milestones (1, 5, 10).
@@ -238,19 +238,19 @@ export default function Dashboard() {
       })
   }, [registry, user])
 
-  // Address modal trigger — gated by signup vintage so the change only
+  // Address modal trigger - gated by signup vintage so the change only
   // affects users who came through the new onboarding (Apr 30, 2026 onward).
   //
   // - NEW users: deferred until they have 3+ items (engagement signal). The
   //   first-item step in onboarding already gives them the wow moment, so
   //   nagging for an address right after is friction at the worst time.
-  // - EXISTING users: original behavior preserved — modal shows immediately
+  // - EXISTING users: original behavior preserved - modal shows immediately
   //   on Dashboard load if registry has no address (and they haven't skipped
   //   it). They never went through the new flow, so flipping the rule mid-
   //   account-life would feel inconsistent.
   // Address modal auto-fire removed (setup-completion plan, PR 1). The modal
   // was one of up to five UIs ambushing the first session; the address ask
-  // now lives where it's actionable — the Finish-Setup panel's address step
+  // now lives where it's actionable - the Finish-Setup panel's address step
   // (and, later, contextually inside the share flow). The modal itself stays,
   // opened via setShowAddressModal from the panel.
 
@@ -366,7 +366,7 @@ export default function Dashboard() {
   const handleItemSave = async () => {
     const beforeCount = itemsCountBeforeSave.current
     await fetchItems()
-    // After refetch, items.length is in a stale closure — read the new count
+    // After refetch, items.length is in a stale closure - read the new count
     // via a targeted DB query. Avoids depending on React state timing.
     if (!registry || !user) return
     const { count } = await supabase
@@ -413,7 +413,7 @@ export default function Dashboard() {
 
   const handleOpenEditModal = (item: Item) => {
     setEditingItem(item)
-    // Snapshot here too — edits don't change the count, so handleItemSave
+    // Snapshot here too - edits don't change the count, so handleItemSave
     // must not compare against a stale snapshot from a previous add.
     itemsCountBeforeSave.current = items.length
     setShowAddItemModal(true)
@@ -1289,7 +1289,7 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 relative z-10">
         {/* Extension Banner */}
-        {/* Deferred out of the empty first session — the extension pitch
+        {/* Deferred out of the empty first session - the extension pitch
             lands once she's added an item and knows what adding feels like. */}
         {items.length >= 1 && <ExtensionBanner />}
 
@@ -1436,7 +1436,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Filters & Content — Full-width sticky bar */}
+        {/* Filters & Content - Full-width sticky bar */}
         <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#e7e0ec]/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.08)] -mx-4 sm:-mx-6 lg:-mx-8 mb-8">
           {/* Row 1: Title + View toggle */}
           <div className="px-4 sm:px-6 pt-4 pb-3 flex items-center justify-between gap-4">
@@ -1556,7 +1556,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Row 3: Category chips — scrollable */}
+          {/* Row 3: Category chips - scrollable */}
           {items.length > 0 && (
             <div className="px-4 sm:px-6 pb-3 overflow-x-auto scrollbar-hide">
               <div className="flex items-center gap-1.5 min-w-max">
@@ -1657,7 +1657,7 @@ export default function Dashboard() {
 
               return (
                 <div key={category.id}>
-                  {/* Category Header — colored like Checklist */}
+                  {/* Category Header - colored like Checklist */}
                   <div className="flex items-center gap-3 mb-6">
                     <div
                       className="flex items-center gap-3 rounded-2xl py-2 px-3 pr-4"

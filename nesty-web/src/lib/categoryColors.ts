@@ -5,7 +5,7 @@
  * lavender (#86608e) and renders as one tone in small UI elements. This
  * map distributes the brand spectrum (lavender / dusty rose / peach / sage
  * / amber / safety green) so categories scan as variety wherever we render
- * them — the home-page marquee, the onboarding first-item step, and any
+ * them - the home-page marquee, the onboarding first-item step, and any
  * future surface that needs distinct category colors.
  *
  * All values stay inside the brand kit's allowed colors.

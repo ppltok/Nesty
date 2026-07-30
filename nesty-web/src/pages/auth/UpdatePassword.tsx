@@ -14,7 +14,7 @@ import { KeyRound, Eye, EyeOff, XCircle } from 'lucide-react'
  * Guard: we require a session to be present. If the link was bad/expired,
  * AuthCallback would have bounced them back to /auth/reset-password, but
  * they can also land here directly if they keep a tab open past the
- * session's lifetime — show the "link expired" state then.
+ * session's lifetime - show the "link expired" state then.
  */
 export default function UpdatePassword() {
   const navigate = useNavigate()

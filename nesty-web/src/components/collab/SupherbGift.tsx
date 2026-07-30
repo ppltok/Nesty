@@ -4,10 +4,10 @@ import { useAuth } from '../../contexts/AuthContext'
 import { trackCollab } from '../../utils/trackCollab'
 
 /**
- * Nesty × Supherb partner-perk surfaces — in-app popup + gifts-page card for the
+ * Nesty × Supherb partner-perk surfaces - in-app popup + gifts-page card for the
  * "extra 15% sitewide" Supherb benefit (NESTY15). First real partner perk.
  *
- * Design per the Supherb brief: WHITE + SUPHERB GREEN only (NO purple — purple
+ * Design per the Supherb brief: WHITE + SUPHERB GREEN only (NO purple - purple
  * reads as a competitor), 🌿 accent (never 🎁/💜), framed as a "הטבה" (benefit),
  * never a "מתנה". Featured product: Tab-in-gum. Valid until 31.7.2026.
  *
@@ -18,7 +18,7 @@ import { trackCollab } from '../../utils/trackCollab'
 const COLLAB = 'supherb'
 const CODE = 'NESTY15'
 const REDEEM_URL = 'https://bit.ly/4g1uf7v'
-// Fixed campaign end (Asia/Jerusalem) — "בתוקף עד 31.7.2026".
+// Fixed campaign end (Asia/Jerusalem) - "בתוקף עד 31.7.2026".
 const OFFER_END = new Date('2026-07-31T23:59:59+03:00').getTime()
 
 const AUDIENCE: 'test' | 'all' = 'all'
@@ -41,9 +41,9 @@ const PRODUCT_IMG = '/demo/supherb-tabingum.png'
 const LOGO_IMG = '/demo/supherb-logo.png'
 
 const BODY_TEXT =
-  'כל אישה בהריון צריכה תוספי תזונה — אז חברנו ל-Supherb, יצרנית תוספי הבריאות הגדולה בישראל. עכשיו את יכולה ליהנות מ-15% הנחה נוספים על כל האתר, בנוסף על מבצעים קיימים באתר. 🌿'
+  'כל אישה בהריון צריכה תוספי תזונה - אז חברנו ל-Supherb, יצרנית תוספי הבריאות הגדולה בישראל. עכשיו את יכולה ליהנות מ-15% הנחה נוספים על כל האתר, בנוסף על מבצעים קיימים באתר. 🌿'
 
-/** Inline coupon/ticket icon — brief requires an SVG, not an emoji or arrow. */
+/** Inline coupon/ticket icon - brief requires an SVG, not an emoji or arrow. */
 function CouponIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -135,7 +135,7 @@ function Countdown() {
   )
   return (
     <div className="mt-3 text-center">
-      <span className="block text-xs font-bold text-[#b3261e] mb-1.5">⏳ ההטבה נגמרת בעוד — בתוקף עד 31.7.2026</span>
+      <span className="block text-xs font-bold text-[#b3261e] mb-1.5">⏳ ההטבה נגמרת בעוד - בתוקף עד 31.7.2026</span>
       <div className="inline-flex gap-2" dir="ltr">
         <Box v={d} l="ימים" /><Box v={pad(h)} l="שעות" /><Box v={pad(m)} l="דקות" />
       </div>
@@ -165,7 +165,7 @@ export function SupherbGiftCard({ onClose }: { onClose: () => void }) {
             <h3 className="text-lg sm:text-xl font-extrabold text-[#1f3a26] leading-tight mb-1">
               15% הנחה נוספים בסופהרב 🌿
             </h3>
-            <p className="text-[12.5px] text-[#4e7a5a] leading-snug mb-1">15% הנחה נוספים על כל האתר — בנוסף על המבצעים הקיימים.</p>
+            <p className="text-[12.5px] text-[#4e7a5a] leading-snug mb-1">15% הנחה נוספים על כל האתר - בנוסף על המבצעים הקיימים.</p>
             <p className="text-sm text-[#25402c] flex items-center gap-1.5 flex-wrap">
               מאת: <span className="font-bold text-[#35573D]">Nesty</span> ×
               <img src={LOGO_IMG} alt="Supherb" className="h-[16px] w-auto inline-block align-middle" />
@@ -186,7 +186,7 @@ export function SupherbGiftCard({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * Collapsed state — looks like a normal gift in the list (as if someone sent it).
+ * Collapsed state - looks like a normal gift in the list (as if someone sent it).
  * Tapping it reopens the full offer popup.
  */
 export function SupherbGiftCollapsed({ onOpen }: { onOpen: () => void }) {
@@ -225,7 +225,7 @@ export function SupherbGiftPopup({ onClose }: { onClose: () => void }) {
           <X className="w-4 h-4" />
         </button>
 
-        {/* hero — Supherb green gradient */}
+        {/* hero - Supherb green gradient */}
         <div className="px-7 pt-8 pb-7 text-center" style={{ background: 'linear-gradient(135deg,#25402c,#4e7a5a 60%,#93bd9e)' }}>
           <div className="inline-flex items-center bg-white rounded-xl px-4 py-1.5 mb-3 shadow-md">
             <img src={LOGO_IMG} alt="Supherb" className="h-6 w-auto" />
@@ -314,7 +314,7 @@ export function useSupherbGift() {
 }
 
 /**
- * Sidebar red-dot indicator. True when the user has an unopened partner gift —
+ * Sidebar red-dot indicator. True when the user has an unopened partner gift -
  * i.e. they're in-audience, the offer is live, and they haven't visited the
  * gifts page to see it yet. Clears as soon as they open /gifts (which fires
  * the OPENED_EVENT). Used by the gift nav icon.

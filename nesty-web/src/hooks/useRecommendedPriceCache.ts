@@ -18,7 +18,7 @@ function loadCache(): Promise<Map<string, CacheRow>> {
         .from('recommended_price_cache')
         .select('url, price, last_checked')
       if (error || !data) {
-        // Don't cache a failed fetch — let the next mount retry.
+        // Don't cache a failed fetch - let the next mount retry.
         cachedPromise = null
         return new Map<string, CacheRow>()
       }

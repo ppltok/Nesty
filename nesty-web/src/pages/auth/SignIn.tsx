@@ -23,7 +23,7 @@ export default function SignIn() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
 
-  // Redirect if already authenticated — honor redirect param first.
+  // Redirect if already authenticated - honor redirect param first.
   // Also triggers after a successful email/password signin, which fires
   // SIGNED_IN in AuthContext and flips isAuthenticated true.
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function SignIn() {
             </p>
           </div>
 
-          {/* Above-the-fold signup CTA — most visitors who hit the wrong
+          {/* Above-the-fold signup CTA - most visitors who hit the wrong
               page default to trying the form; this pill makes the
               correct path unmissable without scrolling. */}
           <Link
@@ -128,7 +128,7 @@ export default function SignIn() {
               <p>{error}</p>
               {/* On a credentials-mismatch we can't tell (anti-enumeration)
                   whether the account doesn't exist, or exists via Google with
-                  no password. Cover both: point to Google (the common trap —
+                  no password. Cover both: point to Google (the common trap -
                   Google account, no password) and to signup. */}
               {error.includes('שגויים') && (
                 <div className="mt-2 text-sm space-y-1">

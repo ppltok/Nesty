@@ -7,7 +7,7 @@
  * helper threads it through and AuthCallback honors it post-auth.
  *
  * We also validate the value against an allowlist to prevent open-redirect
- * attacks — someone could otherwise craft /auth/signup?redirect=https://evil
+ * attacks - someone could otherwise craft /auth/signup?redirect=https://evil
  * and trick a logged-in user into landing on a phishing page after signup.
  */
 

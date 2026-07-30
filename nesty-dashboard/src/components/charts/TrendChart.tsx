@@ -31,7 +31,7 @@ export function TrendChart({ data, lines, xKey = 'day', height = 300, xAxisLabel
 
   return (
     <div className="relative">
-      {/* Y-axis label — rendered as HTML */}
+      {/* Y-axis label - rendered as HTML */}
       {yAxisLabel && (
         <div
           className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1"
@@ -95,7 +95,7 @@ export function TrendChart({ data, lines, xKey = 'day', height = 300, xAxisLabel
           </LineChart>
         </ResponsiveContainer>
 
-        {/* X-axis label — rendered as HTML below the chart */}
+        {/* X-axis label - rendered as HTML below the chart */}
         {xAxisLabel && (
           <div className="text-center -mt-1 mb-1">
             <span className="text-xs font-semibold text-gray-500 tracking-wide">{xAxisLabel}</span>

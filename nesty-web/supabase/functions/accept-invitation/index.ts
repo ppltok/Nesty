@@ -152,7 +152,7 @@ serve(async (req) => {
         .maybeSingle()
 
       if (ownRegistry) {
-        // "Archive" by removing ownership — set owner_id to NULL won't work with FK.
+        // "Archive" by removing ownership - set owner_id to NULL won't work with FK.
         // Instead, we'll delete the user's empty registry or transfer items.
         // For simplicity: delete the user's registry if it has no items,
         // or just detach by setting a flag.
@@ -162,13 +162,13 @@ serve(async (req) => {
           .eq('registry_id', ownRegistry.id)
 
         if (count === 0) {
-          // Empty registry — safe to delete
+          // Empty registry - safe to delete
           await supabaseAdmin
             .from('registries')
             .delete()
             .eq('id', ownRegistry.id)
         } else {
-          // Has items — "archive" by making it private and adding a note
+          // Has items - "archive" by making it private and adding a note
           await supabaseAdmin
             .from('registries')
             .update({

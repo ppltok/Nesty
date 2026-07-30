@@ -112,7 +112,7 @@ export default function SignUp() {
       email: normalizedEmail,
       password,
       options: {
-        // No first_name in options.data — the handle_new_user trigger
+        // No first_name in options.data - the handle_new_user trigger
         // defaults to email prefix, and the user sets their real name in
         // onboarding (same step Google users go through).
         emailRedirectTo: buildCallbackUrl(redirectParam),
@@ -126,7 +126,7 @@ export default function SignUp() {
     }
 
     // Already-registered detection. Supabase's anti-enumeration protection
-    // returns a fake-success for an existing email — but with an empty
+    // returns a fake-success for an existing email - but with an empty
     // `identities` array. We use that (and only that) to show a helpful
     // "you already have an account" screen instead of a check-your-email
     // screen that would never receive a mail. This is the common Google-then-
@@ -162,7 +162,7 @@ export default function SignUp() {
     if (resendError) {
       setResendMessage(translateAuthError(resendError))
     } else {
-      setResendMessage('שלחנו שוב — בדקו את תיבת הדואר.')
+      setResendMessage('שלחנו שוב - בדקו את תיבת הדואר.')
     }
     setCooldownUntil(Date.now() + RESEND_COOLDOWN_SECONDS * 1000)
   }
@@ -193,7 +193,7 @@ export default function SignUp() {
             </p>
             <p className="text-[#49454f] text-sm mb-6 leading-relaxed">
               האימייל הזה כבר רשום אצלנו. אם נרשמת בעבר עם Google, התחברי דרך כפתור
-              Google. אם בחרת סיסמה — התחברי איתה.
+              Google. אם בחרת סיסמה - התחברי איתה.
             </p>
 
             <Link
@@ -270,7 +270,7 @@ export default function SignUp() {
                 ? 'שולחים...'
                 : cooldownRemaining > 0
                   ? `שלחו שוב בעוד ${cooldownRemaining} שניות`
-                  : 'לא קיבלתי — שלחו שוב'}
+                  : 'לא קיבלתי - שלחו שוב'}
             </button>
 
             <button

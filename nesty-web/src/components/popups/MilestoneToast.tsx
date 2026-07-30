@@ -1,6 +1,6 @@
 // Centered celebratory toast shown when the user crosses a meaningful event
 // (item-count milestone, partner joined, first gift received). The first_gift
-// variant is interactive — clicking navigates to /gifts so the user can send
+// variant is interactive - clicking navigates to /gifts so the user can send
 // a thank-you. Other kinds auto-dismiss.
 
 import { useEffect } from 'react'

@@ -76,7 +76,7 @@ async function buildRecipients() {
     const profile = profileMap[ownerId];
     if (!profile || !profile.email) continue;
     if (profile.email_price_alerts === false) {
-      console.log(`  Skipping ${profile.email} — opted out of price alerts`);
+      console.log(`  Skipping ${profile.email} - opted out of price alerts`);
       continue;
     }
     seen.add(ownerId);
@@ -144,7 +144,7 @@ async function preview() {
   const sample = recipients[0];
   const payload = buildEmailPayload(sample);
 
-  // Call send-email with a fake "preview_only" flag — it doesn't support that,
+  // Call send-email with a fake "preview_only" flag - it doesn't support that,
   // so instead we just call the real edge function but redirect to ourselves.
   // For a true preview we reconstruct the price_drop email HTML locally.
   const altPrice = sample.price - CAMPAIGN.savingsIls;
@@ -156,7 +156,7 @@ async function preview() {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Email Preview — Bebe Bath Price Alert</title>
+  <title>Email Preview - Bebe Bath Price Alert</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     body { margin:0; padding:20px; background:#f5f0fa; font-family:'Heebo',sans-serif; }
@@ -167,7 +167,7 @@ async function preview() {
 <body>
 
 <div class="preview-bar">
-  📧 <strong>Email Preview</strong> — Showing email as it will appear for <strong>${firstName}</strong> (${sample.email}) ·
+  📧 <strong>Email Preview</strong> - Showing email as it will appear for <strong>${firstName}</strong> (${sample.email}) ·
   Campaign: <strong>${recipients.length} recipients</strong> total
 </div>
 
@@ -259,7 +259,7 @@ async function preview() {
             <p style="margin:0 0 12px;font-size:36px;">💡</p>
             <h3 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#f5eeff;line-height:1.5;">שתפי את הדיל!</h3>
             <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:#ffffffa6;">
-              שלחי את הקישור לרשימה למשפחה ולחברים —<br/>אולי מישהו ירצה לנצל את ירידת המחיר ולקנות לך מתנה 🎁
+              שלחי את הקישור לרשימה למשפחה ולחברים -<br/>אולי מישהו ירצה לנצל את ירידת המחיר ולקנות לך מתנה 🎁
             </p>
             <a href="https://nestyil.com/dashboard" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">צפי ברשימה שלך</a>
           </td>

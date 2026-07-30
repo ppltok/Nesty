@@ -7,12 +7,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 //
 // Logs one email_events row, then 302s to the destination with UTM params
 // appended, so the click is visible both in SQL (exact, per user) and in
-// GA/GTM (aggregate). Must be deployed with --no-verify-jwt — it is opened
+// GA/GTM (aggregate). Must be deployed with --no-verify-jwt - it is opened
 // straight from a mail client with no Authorization header.
 //
 // SECURITY: `d` comes from the query string, so this is an open-redirect risk.
 // Only hosts on ALLOWED_HOSTS are honoured; anything else falls back to the
-// site root. Never relax this to a substring/startsWith check on the full URL —
+// site root. Never relax this to a substring/startsWith check on the full URL -
 // "https://nestyil.com.evil.tld" would pass. We compare parsed hostnames.
 
 const FALLBACK_URL = 'https://nestyil.com'
@@ -52,7 +52,7 @@ serve(async (req) => {
     final.searchParams.set('utm_content', link)
   }
 
-  // Best-effort logging — a tracking failure must never block the redirect.
+  // Best-effort logging - a tracking failure must never block the redirect.
   try {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',

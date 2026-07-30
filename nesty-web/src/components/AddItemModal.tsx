@@ -199,7 +199,7 @@ export default function AddItemModal({
       // Populate form with extracted data. `price` is already in ILS when
       // the source was EUR/USD/GBP (productExtraction.convertPriceToILS).
       // Hold onto sourcePrice / sourceCurrency in state so they can be
-      // persisted on submit — see handleSubmit.
+      // persisted on submit - see handleSubmit.
       setFormData({
         ...formData,
         name: productData.name,
@@ -265,7 +265,7 @@ export default function AddItemModal({
           extracted_data: { error: errorMessage, ...(diagnostics ? { diagnostics } : {}) },
         })
       } catch {
-        // Non-blocking — don't show error for reporting
+        // Non-blocking - don't show error for reporting
       }
     }
   }
@@ -296,7 +296,7 @@ export default function AddItemModal({
     setError(null)
 
     try {
-      // Manual adds that include a product link should still get an image —
+      // Manual adds that include a product link should still get an image -
       // when none was provided, make a quick best-effort extraction attempt
       // for it (time-capped so saving never feels stuck).
       let imageUrl = formData.imageUrl
@@ -309,7 +309,7 @@ export default function AddItemModal({
           ])
           imageUrl = extracted?.imageUrls?.[0] || ''
         } catch {
-          // No image found — the item is saved without one
+          // No image found - the item is saved without one
         }
       }
 

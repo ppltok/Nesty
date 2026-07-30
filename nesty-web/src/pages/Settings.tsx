@@ -316,7 +316,7 @@ export default function Settings() {
     }
   }
 
-  // Due date sanity bounds — same range as onboarding. Keep these
+  // Due date sanity bounds - same range as onboarding. Keep these
   // values in sync with Onboarding.tsx and the DB CHECK constraint.
   const DUE_DATE_MIN = new Date(Date.now() - 6 * 30 * 86400 * 1000)
     .toISOString().slice(0, 10)
@@ -503,7 +503,7 @@ export default function Settings() {
         )}
 
         <div className="space-y-6">
-          {/* Email preferences quick-link — fixes the old email unsubscribe
+          {/* Email preferences quick-link - fixes the old email unsubscribe
               dead-end where "הסרה מרשימת התפוצה" landed here with no UI. */}
           <Link
             to="/settings/emails"
@@ -515,7 +515,7 @@ export default function Settings() {
             <div className="flex-1 text-right">
               <p className="font-bold text-foreground mb-0.5">ניהול העדפות אימייל</p>
               <p className="text-sm text-muted-foreground">
-                בחרי אילו אימיילים תרצי לקבל — עדכון שבועי, תזכורות, התראות מחיר ועוד
+                בחרי אילו אימיילים תרצי לקבל - עדכון שבועי, תזכורות, התראות מחיר ועוד
               </p>
             </div>
             <ChevronLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
@@ -918,7 +918,7 @@ export default function Settings() {
                 </div>
               </div>
             ) : isRegistryOwner ? (
-              /* No partner, no pending — show invite form */
+              /* No partner, no pending - show invite form */
               <div>
                 <p className="text-muted-foreground text-sm mb-4">
                   הזמינו את בן/בת הזוג לנהל יחד את רשימת התינוק. שניכם תוכלו להוסיף, לערוך ולנהל פריטים.
@@ -947,7 +947,7 @@ export default function Settings() {
                 </div>
               </div>
             ) : (
-              /* Partner viewing — no invite capability */
+              /* Partner viewing - no invite capability */
               <p className="text-muted-foreground text-sm">
                 רק בעל/ת הרשימה יכול/ה להזמין הורה נוסף.
               </p>

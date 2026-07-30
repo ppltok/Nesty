@@ -6,9 +6,9 @@ import { renderLegalFooter } from '../_shared/legal-footer.ts'
 // Nesty × Supherb partner-gift email ("we have a gift for you").
 //
 // First real partner perk. Two modes (POST body { mode }):
-//   'test' (default) — send ONLY to TEST_EMAILS, ignore consent + dedup, so the
+//   'test' (default) - send ONLY to TEST_EMAILS, ignore consent + dedup, so the
 //                       team can re-send while verifying. The 3 internal accounts.
-//   'all'            — send to consented users (marketing_emails +
+//   'all'            - send to consented users (marketing_emails +
 //                       email_feature_announcements + onboarding_completed),
 //                       dedup against email_logs, honour an optional { limit }
 //                       so the rollout can be spread across batches/hours.
@@ -26,14 +26,14 @@ const corsHeaders = {
 }
 
 const COLLAB = 'supherb'
-const COLLAB_KEY = 'collab_supherb' // email_logs.email_type — dedup key
+const COLLAB_KEY = 'collab_supherb' // email_logs.email_type - dedup key
 const SUBJECT = '15% הנחה נוספים בסופהרב 🌿 הטבה בלעדית למשתמשות Nesty'
 // v2 re-engagement subject for the top-tier retarget send.
 const RETARGET_SUBJECT = 'לא לפספס: 15% נוספים על כל מבצעי סופהרב 🌿'
 // v3 subject for the "never copied the code" reminder send.
 const REMINDER_SUBJECT = 'עדיין לא מימשת? ⏳ ההטבה שלך ב-Supherb נגמרת בקרוב'
 // v4 subject for the final-days "last call" send. Code is shown directly in
-// this one — see buildLastCallEmailHtml.
+// this one - see buildLastCallEmailHtml.
 const LAST_CALL_SUBJECT = '⏳ 5 ימים אחרונים! ההטבה שלך ב-Supherb נגמרת ב-31.7'
 const CODE = 'NESTY15'
 const TEST_EMAILS = ['tomargov73@gmail.com', 'tom@ppltok.com', 'hello@nestyil.com', 'tom@lngvt.shop']
@@ -46,7 +46,7 @@ function giftsUrl(userId: string): string {
 
 // Last-call variant: skip the in-app detour entirely. The code is already
 // visible in the email, so the CTA goes straight to Supherb (still through
-// collab-redirect, so the click is tracked server-side) — maximizes what
+// collab-redirect, so the click is tracked server-side) - maximizes what
 // Supherb sees on their own site in the campaign's final days.
 function redeemUrl(userId: string): string {
   return `${SUPABASE_URL}/functions/v1/collab-redirect?c=${COLLAB}&u=${userId}&s=email`
@@ -96,7 +96,7 @@ function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string
           </td>
         </tr>
 
-        <!-- HERO — Supherb green -->
+        <!-- HERO - Supherb green -->
         <tr>
           <td style="background:linear-gradient(135deg,#25402c 0%,#4e7a5a 60%,#93bd9e 100%);border-radius:24px;padding:48px 40px 44px;text-align:center;">
             <!-- co-brand lockup: Supherb logo white pill × Nesty -->
@@ -117,7 +117,7 @@ function buildEmailHtml(firstName: string, gifts: string, unsubscribeUrl: string
 
         <tr><td style="height:14px;"></td></tr>
 
-        <!-- TEASER CARD: no code here — the benefit opens inside Nesty -->
+        <!-- TEASER CARD: no code here - the benefit opens inside Nesty -->
         <tr>
           <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #dcebe0;text-align:center;">
             <div style="display:inline-block;background:#e8f1ea;border:1px solid #bcd6c2;border-radius:100px;padding:6px 16px;margin-bottom:20px;">
@@ -219,7 +219,7 @@ function buildRetargetEmailHtml(firstName: string, gifts: string, unsubscribeUrl
 
         <tr><td style="height:14px;"></td></tr>
 
-        <!-- CARD: no code — opens (and copy-tracking) live in the app -->
+        <!-- CARD: no code - opens (and copy-tracking) live in the app -->
         <tr>
           <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #dcebe0;text-align:center;">
             <div style="display:inline-block;background:#e8f1ea;border:1px solid #bcd6c2;border-radius:100px;padding:6px 16px;margin-bottom:20px;">
@@ -261,7 +261,7 @@ function buildRetargetEmailHtml(firstName: string, gifts: string, unsubscribeUrl
 </html>`
 }
 
-// v3 reminder email — targets users who got the gift email but never copied
+// v3 reminder email - targets users who got the gift email but never copied
 // the code. Leads with urgency/completion framing ("still haven't redeemed?")
 // instead of re-pitching the offer, since the data shows people ARE opening
 // (~28%) but not acting. Same green design, open pixel + tracked link.
@@ -294,7 +294,7 @@ function buildReminderEmailHtml(firstName: string, gifts: string, unsubscribeUrl
           </td>
         </tr>
 
-        <!-- HERO — generated visual (product + co-brand lockup + urgency headline
+        <!-- HERO - generated visual (product + co-brand lockup + urgency headline
              baked in), so no redundant CSS headline needed below. -->
         <tr>
           <td style="border-radius:24px;overflow:hidden;">
@@ -358,7 +358,7 @@ function buildReminderEmailHtml(firstName: string, gifts: string, unsubscribeUrl
 </html>`
 }
 
-// v4 "last call" email — final days of the offer. Unlike every prior version,
+// v4 "last call" email - final days of the offer. Unlike every prior version,
 // the code is shown directly in the email (no in-app detour) and the CTA goes
 // straight to Supherb (still via collab-redirect, so the click is tracked
 // server-side). Trades our own in-app engagement signal for maximizing what
@@ -392,7 +392,7 @@ function buildLastCallEmailHtml(firstName: string, redeem: string, unsubscribeUr
           </td>
         </tr>
 
-        <!-- HERO — dedicated last-call visual (real product + logos, split-screen
+        <!-- HERO - dedicated last-call visual (real product + logos, split-screen
              with a pregnant woman, baby-themed props, badge-style "5" countdown,
              headline baked in). Distinct from the reminder email's hero image. -->
         <tr>
@@ -415,7 +415,7 @@ function buildLastCallEmailHtml(firstName: string, redeem: string, unsubscribeUr
 
         <tr><td style="height:14px;"></td></tr>
 
-        <!-- URGENCY CARD — code shown directly, CTA goes straight to Supherb -->
+        <!-- URGENCY CARD - code shown directly, CTA goes straight to Supherb -->
         <tr>
           <td style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #f4dccb;text-align:center;">
             <div style="display:inline-block;background:#fbe5e1;border:1px solid #f4acb7;border-radius:100px;padding:6px 16px;margin-bottom:20px;">
@@ -543,7 +543,7 @@ serve(async (req) => {
     } else if (mode === 'last_call') {
       // v4 final-days send: everyone still eligible who hasn't copied the code,
       // regardless of prior reminder sends. Own dedup via meta.mode='last_call'.
-      // Default limit is high (Resend account upgraded — single one-shot send).
+      // Default limit is high (Resend account upgraded - single one-shot send).
       const { data, error } = await supabaseAdmin.rpc('get_collab_lastcall_recipients', {
         p_limit: limit && limit > 0 ? limit : 1000,
       })
@@ -627,7 +627,7 @@ serve(async (req) => {
               email: user.email.toLowerCase(),
               meta: { mode },
             })
-            // Dedup log (real rollout + new-user automation — test mode stays re-sendable).
+            // Dedup log (real rollout + new-user automation - test mode stays re-sendable).
             if (mode === 'all' || mode === 'new_users') {
               await supabaseAdmin.from('email_logs').insert({
                 recipient_email: user.email.toLowerCase(),

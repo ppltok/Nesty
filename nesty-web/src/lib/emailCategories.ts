@@ -1,5 +1,5 @@
 // Frontend mirror of supabase/functions/_shared/email-categories.ts.
-// Keep keys + column names in sync with the Deno file — the unsubscribe edge
+// Keep keys + column names in sync with the Deno file - the unsubscribe edge
 // function verifies against the same list.
 
 export type EmailCategoryKey = 'weekly' | 'reminders' | 'features' | 'prices'

@@ -17,7 +17,7 @@ function buildEmailHtml(unsubscribeUrl: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="color-scheme" content="light only"/>
   <meta name="supported-color-modes" content="light"/>
-  <title>ביקשתן — קיבלתן! 💜</title>
+  <title>ביקשתן - קיבלתן! 💜</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     :root { color-scheme: light only; }
@@ -60,7 +60,7 @@ function buildEmailHtml(unsubscribeUrl: string): string {
               <img src="https://nestyil.com/Circle_logo.png" alt="Nesty" style="height:64px;width:64px;display:block;border-radius:50%;" />
             </div>
             <h1 style="margin:0 0 14px;font-size:36px;font-weight:800;color:#ffffff;line-height:1.2;">
-              ביקשתן — קיבלתן! 💜
+              ביקשתן - קיבלתן! 💜
             </h1>
             <p style="margin:0 0 34px;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:440px;margin-left:auto;margin-right:auto;">
               אחת הבקשות שחזרה שוב ושוב: ״אפשר לנהל את הרשימה ביחד עם בן/בת הזוג?״
@@ -85,7 +85,7 @@ function buildEmailHtml(unsubscribeUrl: string): string {
               <tr>
                 <td style="vertical-align:top;padding-left:16px;">
                   <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#3b1f6b;">רשימת ציוד משותפת</p>
-                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">שניכם יכולים להוסיף, לערוך ולמחוק פריטים — מכל מקום, בכל זמן. בלי לשלוח סקרינשוטים בוואטסאפ.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">שניכם יכולים להוסיף, לערוך ולמחוק פריטים - מכל מקום, בכל זמן. בלי לשלוח סקרינשוטים בוואטסאפ.</p>
                 </td>
                 <td width="48" style="vertical-align:top;">
                   <div style="width:42px;height:42px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:14px;text-align:center;line-height:42px;font-size:22px;">🛒</div>
@@ -98,7 +98,7 @@ function buildEmailHtml(unsubscribeUrl: string): string {
               <tr>
                 <td style="vertical-align:top;padding-left:16px;">
                   <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#3b1f6b;">צ'קליסט הריון משותף</p>
-                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">שניכם רואים את אותו צ'קליסט — מי שמסמן, שניכם מתעדכנים. ככה שניכם יודעים מה נשאר.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">שניכם רואים את אותו צ'קליסט - מי שמסמן, שניכם מתעדכנים. ככה שניכם יודעים מה נשאר.</p>
                 </td>
                 <td width="48" style="vertical-align:top;">
                   <div style="width:42px;height:42px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:14px;text-align:center;line-height:42px;font-size:22px;">✅</div>
@@ -124,7 +124,7 @@ function buildEmailHtml(unsubscribeUrl: string): string {
               <tr>
                 <td style="vertical-align:top;padding-left:16px;">
                   <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#3b1f6b;">הזמנה בקליק אחד</p>
-                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">נכנסים להגדרות, מזינים את המייל של בן/בת הזוג, ושולחים הזמנה. תוך שניות — שניכם בפנים.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">נכנסים להגדרות, מזינים את המייל של בן/בת הזוג, ושולחים הזמנה. תוך שניות - שניכם בפנים.</p>
                 </td>
                 <td width="48" style="vertical-align:top;">
                   <div style="width:42px;height:42px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:14px;text-align:center;line-height:42px;font-size:22px;">📩</div>
@@ -158,7 +158,7 @@ function buildEmailHtml(unsubscribeUrl: string): string {
               <tr>
                 <td style="vertical-align:top;padding-left:14px;">
                   <p style="margin:0 0 2px;font-size:14px;font-weight:700;color:#3b1f6b;">הזינו את המייל של בן/בת הזוג</p>
-                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">בחלק ״שיתוף הורה נוסף״ — הזינו את המייל ולחצו ״שלח הזמנה״.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">בחלק ״שיתוף הורה נוסף״ - הזינו את המייל ולחצו ״שלח הזמנה״.</p>
                 </td>
                 <td width="42" style="vertical-align:top;">
                   <div style="width:36px;height:36px;background:linear-gradient(135deg,#7c4dbd,#9b62d4);border-radius:50%;text-align:center;line-height:36px;font-size:15px;color:#fff;font-weight:700;">2</div>
@@ -196,9 +196,9 @@ function buildEmailHtml(unsubscribeUrl: string): string {
             </h3>
             <p style="margin:0 0 28px;font-size:15px;line-height:1.8;color:#ffffff;">
               ההכנה לתינוק היא אחד הרגעים הכי מרגשים, הכי מבלבלים, והכי יפים בחיים.
-              Nesty פה כמו אחות גדולה — לא לשפוט, לא ללחוץ, פשוט לעזור לכם להרגיש מוכנים. ביחד.
+              Nesty פה כמו אחות גדולה - לא לשפוט, לא ללחוץ, פשוט לעזור לכם להרגיש מוכנים. ביחד.
             </p>
-            <a href="https://nestyil.com/settings" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">הזמינו את בן/בת הזוג</a><!-- CTA to invite co-parent — intentionally points to /settings, not unsubscribe -->
+            <a href="https://nestyil.com/settings" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">הזמינו את בן/בת הזוג</a><!-- CTA to invite co-parent - intentionally points to /settings, not unsubscribe -->
           </td>
         </tr>
 
@@ -211,7 +211,7 @@ function buildEmailHtml(unsubscribeUrl: string): string {
               <span style="font-size:12px;font-weight:700;color:#c62828;">💬 אנחנו שומעים אותך</span>
             </div>
             <p style="margin:0 0 16px;font-size:15px;line-height:1.8;color:#7a6090;max-width:420px;margin-left:auto;margin-right:auto;">
-              הפיצ'ר הזה נבנה כי <strong>ביקשתן</strong>. אנחנו ממשיכים לשמוע, ממשיכים לבנות. יש לך רעיון? בקשה? משהו שחסר לך? ספרי לנו — אנחנו פה.
+              הפיצ'ר הזה נבנה כי <strong>ביקשתן</strong>. אנחנו ממשיכים לשמוע, ממשיכים לבנות. יש לך רעיון? בקשה? משהו שחסר לך? ספרי לנו - אנחנו פה.
             </p>
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
@@ -274,12 +274,12 @@ serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    // Per-campaign tag — change this for each new feature drop. Used as
+    // Per-campaign tag - change this for each new feature drop. Used as
     // the email_logs.email_type so we can dedupe (the SAME user must not
     // receive the SAME campaign twice, even if the function is invoked
     // multiple times by accident).
     const FEATURE_KEY = 'feature_drop_coparent'
-    const SUBJECT = 'ביקשתן — קיבלתן! 💜 ניהול משותף עם בן/בת הזוג'
+    const SUBJECT = 'ביקשתן - קיבלתן! 💜 ניהול משותף עם בן/בת הזוג'
 
     // Respect both master opt-out and the per-category "feature announcements" toggle.
     // email_feature_announcements was added in 20260419_email_preferences.sql.
@@ -353,7 +353,7 @@ serve(async (req) => {
           if (res.ok) {
             sent++
             // Per-recipient log so future invocations can skip this user.
-            // Best-effort — failure here doesn't affect the send.
+            // Best-effort - failure here doesn't affect the send.
             await supabaseAdmin.from('email_logs').insert({
               recipient_email: user.email.toLowerCase(),
               email_type: FEATURE_KEY,
@@ -384,7 +384,7 @@ serve(async (req) => {
 
     // (Per-recipient logs are written above on each successful send so
     // future invocations dedup naturally. The previous "all_users" sentinel
-    // log row was misleading — removed.)
+    // log row was misleading - removed.)
 
     return new Response(JSON.stringify({ sent, errors, total: users.length }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

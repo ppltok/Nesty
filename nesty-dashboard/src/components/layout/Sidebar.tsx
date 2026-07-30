@@ -19,6 +19,7 @@ import {
   Megaphone,
   TrendingDown,
   ClipboardList,
+  Handshake,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -30,6 +31,7 @@ const navItems = [
   { to: '/categories', icon: Grid3X3, label: 'Categories' },
   { to: '/extension', icon: Puzzle, label: 'Extension' },
   { to: '/gifts', icon: Gift, label: 'Gifts' },
+  { to: '/collabs', icon: Handshake, label: 'Collabs' },
   { to: '/growth', icon: TrendingUp, label: 'Growth' },
   { to: '/timeline', icon: Calendar, label: 'Timeline' },
   { to: '/email', icon: Mail, label: 'Email' },

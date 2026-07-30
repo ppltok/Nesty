@@ -120,7 +120,7 @@ serve(async (req) => {
     // Send digest email to admin if there are broken images
     if (RESEND_API_KEY && brokenItems.length > 0) {
       const itemsList = brokenItems.slice(0, 10).map(i =>
-        `<li>${i.name} — <code>${i.image_url.substring(0, 60)}...</code></li>`
+        `<li>${i.name} - <code>${i.image_url.substring(0, 60)}...</code></li>`
       ).join('')
 
       await fetch('https://api.resend.com/emails', {
@@ -158,7 +158,7 @@ serve(async (req) => {
       })
       const sortedHosts = Object.entries(byHost).sort((a, b) => b[1] - a[1])
       const hostList = sortedHosts.slice(0, 15).map(([host, count]) =>
-        `<li><strong>${host}</strong> — ${count} דיווחים</li>`
+        `<li><strong>${host}</strong> - ${count} דיווחים</li>`
       ).join('')
 
       await fetch('https://api.resend.com/emails', {
@@ -172,7 +172,7 @@ serve(async (req) => {
           to: ['hello@nestyil.com'],
           subject: `📊 ${recentReports.length} extraction reports (last 24h)`,
           html: `<div dir="rtl" style="font-family:sans-serif;">
-            <h2>דוח חילוצים כושלים — 24 שעות אחרונות</h2>
+            <h2>דוח חילוצים כושלים - 24 שעות אחרונות</h2>
             <p><strong>${recentReports.length}</strong> דיווחים מ-<strong>${sortedHosts.length}</strong> דומיינים שונים:</p>
             <ol>${hostList}</ol>
             <p><a href="https://supabase.com/dashboard/project/wopsrjfdaovlyibivijl/editor/extraction_reports">צפה בטבלה</a></p>

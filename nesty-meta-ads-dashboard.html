@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nesty · Meta Ads Performance Dashboard · Apr 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #86608e;
+    --primary-dark: #6d4e74;
+    --primary-light: #a891ad;
+    --secondary: #a891ad;
+    --secondary-light: #b9a4bd;
+    --accent-pink: #f4acb7;
+    --accent-pink-light: #ffcad4;
+    --accent-peach: #ffd8d7;
+    --background: #faf8fb;
+    --card: #ffffff;
+    --border: #e8e4e9;
+    --muted: #c9c2cb;
+    --muted-fg: #6b6b6b;
+    --foreground: #1a1a1a;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --destructive: #ef4444;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Assistant', system-ui, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    line-height: 1.5;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 40px 48px;
+    border-radius: 24px;
+    margin-bottom: 32px;
+    box-shadow: 0 4px 12px rgba(134, 96, 142, 0.15);
+  }
+  .header h1 {
+    margin: 0 0 8px 0;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .header .subtitle {
+    margin: 0;
+    font-size: 16px;
+    opacity: 0.9;
+  }
+  .header .tagline {
+    margin-top: 16px;
+    font-size: 14px;
+    opacity: 0.75;
+    font-style: italic;
+  }
+
+  /* Period switcher */
+  .period-switcher {
+    display: flex;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 6px;
+    margin-bottom: 24px;
+    width: fit-content;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .period-btn {
+    padding: 10px 24px;
+    border: none;
+    background: transparent;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--muted-fg);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .period-btn.active {
+    background: var(--primary);
+    color: white;
+  }
+  .period-btn:not(.active):hover {
+    background: var(--background);
+    color: var(--foreground);
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 40px;
+  }
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    color: var(--foreground);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--accent-pink-light);
+    color: var(--primary-dark);
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .kpi {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    transition: transform 0.15s;
+  }
+  .kpi:hover { transform: translateY(-2px); }
+  .kpi-label {
+    font-size: 13px;
+    color: var(--muted-fg);
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0;
+    color: var(--primary-dark);
+  }
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--muted-fg);
+    margin: 6px 0 0 0;
+  }
+  .kpi-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-top: 8px;
+  }
+  .kpi-trend.up { background: rgba(34, 197, 94, 0.12); color: var(--success); }
+  .kpi-trend.down { background: rgba(239, 68, 68, 0.12); color: var(--destructive); }
+  .kpi-trend.flat { background: rgba(0,0,0,0.05); color: var(--muted-fg); }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+
+  /* Two-col layout */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  /* Table */
+  .perf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    direction: ltr;
+    text-align: left;
+  }
+  .perf-table th {
+    text-align: left;
+    padding: 12px 10px;
+    border-bottom: 2px solid var(--border);
+    font-weight: 700;
+    color: var(--primary-dark);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .perf-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .perf-table tr:last-child td { border-bottom: none; }
+  .perf-table tr:hover td { background: var(--background); }
+  .perf-table .ad-name {
+    font-weight: 700;
+    color: var(--foreground);
+  }
+  .status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .status-pill.active { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+  .status-pill.inactive { background: rgba(0,0,0,0.06); color: var(--muted-fg); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* Recommendation cards */
+  .reco-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .reco {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    border-right: 4px solid var(--primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .reco.urgent { border-right-color: var(--destructive); }
+  .reco.high { border-right-color: var(--accent-pink); }
+  .reco.medium { border-right-color: var(--primary); }
+  .reco.low { border-right-color: var(--muted); }
+  .reco-priority {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .reco.urgent .reco-priority { background: rgba(239, 68, 68, 0.12); color: var(--destructive); }
+  .reco.high .reco-priority { background: var(--accent-pink-light); color: var(--primary-dark); }
+  .reco.medium .reco-priority { background: rgba(134, 96, 142, 0.12); color: var(--primary-dark); }
+  .reco.low .reco-priority { background: rgba(0,0,0,0.06); color: var(--muted-fg); }
+  .reco h3 {
+    margin: 0 0 8px 0;
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .reco p {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: var(--muted-fg);
+    line-height: 1.55;
+  }
+  .reco-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .reco-meta span {
+    background: var(--background);
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  /* Chart container */
+  .chart-wrap {
+    position: relative;
+    height: 320px;
+  }
+
+  /* Summary box */
+  .summary-box {
+    background: linear-gradient(135deg, var(--accent-pink-light) 0%, var(--accent-peach) 100%);
+    border: 1px solid var(--accent-pink);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 32px;
+  }
+  .summary-box h2 {
+    margin: 0 0 12px 0;
+    font-size: 20px;
+    color: var(--primary-dark);
+  }
+  .summary-box p {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--foreground);
+  }
+  .summary-box strong { color: var(--primary-dark); }
+
+  /* Headline list */
+  .headline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .headline-item {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .headline-item .text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+  .headline-item .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted-fg);
+  }
+  .headline-item .meta span {
+    background: white;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .headline-item .meta .winner {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+  }
+
+  /* 2x2 matrix */
+  .matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .matrix-cell {
+    background: var(--background);
+    border-radius: 12px;
+    padding: 16px;
+    min-height: 140px;
+  }
+  .matrix-cell h4 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted-fg);
+  }
+  .matrix-cell ul {
+    margin: 0;
+    padding-right: 20px;
+    font-size: 14px;
+  }
+  .matrix-cell li { margin-bottom: 6px; }
+  .matrix-do-first { background: rgba(34, 197, 94, 0.08); }
+  .matrix-plan { background: var(--accent-pink-light); }
+  .matrix-fill { background: rgba(134, 96, 142, 0.06); }
+  .matrix-deprio { background: rgba(0,0,0,0.04); }
+
+  .footer {
+    margin-top: 60px;
+    text-align: center;
+    color: var(--muted-fg);
+    font-size: 13px;
+  }
+  .footer .nest { color: var(--primary); font-size: 18px; }
+
+  /* Hide elements per period */
+  .period-hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="header">
+    <h1>🪺 Nesty · Meta Ads Performance</h1>
+    <p class="subtitle">דוח קמפיינים · אפריל 2026 · Apr 1 – Apr 30</p>
+    <p class="tagline">בונים קן, לא מחסן · A live look at what's working</p>
+  </header>
+
+  <!-- PERIOD SWITCHER -->
+  <div class="period-switcher" role="tablist">
+    <button class="period-btn active" data-period="30d">30 ימים אחרונים</button>
+    <button class="period-btn" data-period="7d">7 ימים אחרונים</button>
+  </div>
+
+  <!-- EXEC SUMMARY -->
+  <div class="summary-box">
+    <h2>סיכום מנהלים · Executive Summary</h2>
+    <p id="exec-summary-30d">
+      ב-30 הימים האחרונים השקעת <strong>1,398.70 ₪</strong> וקיבלת <strong>85 הרשמות</strong> בעלות ממוצעת של <strong>16.46 ₪ להרשמה</strong>. CTR ממוצע 1.30% ו-CPC 1.88 ₪. <strong>Price Drop 1.0</strong> ו-<strong>Perfect Nest</strong> מובילים את הביצועים. שתי מודעות (<em>What you really need</em>, <em>First Time Parents</em>) לא רצו בכלל ב-30 הימים האחרונים - צריך לכבות או לרענן.
+    </p>
+    <p id="exec-summary-7d" class="period-hidden">
+      ב-7 הימים האחרונים השקעת <strong>353.14 ₪</strong> וקיבלת <strong>22 הרשמות</strong> בעלות ממוצעת של <strong>16.05 ₪</strong> - שיפור קל מהממוצע של 30 הימים. <strong>Price Drop 1.0</strong> מתרחב יפה (CPL ירד ל-14.30 ₪), אבל <strong>Perfect Nest</strong> מראה סימני עייפות (CPL זינק ל-38.51 ₪, פי 2.7 מהממוצע ל-30 ימים). הקצב היומי עלה מ-46.62 ל-50.45 ₪/יום (+8%).
+    </p>
+  </div>
+
+  <!-- KPI DASHBOARD -->
+  <section class="section">
+    <h2 class="section-title">Key Metrics <span class="badge" id="period-badge">30-day</span></h2>
+    <div class="kpi-grid" id="kpi-grid"></div>
+  </section>
+
+  <!-- CHARTS ROW -->
+  <section class="section">
+    <h2 class="section-title">Campaign Performance</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="margin:0 0 16px 0; font-size:16px;">Spend & Results by Campaign</h3>
+        <div class="chart-wrap"><canvas id="spendChart"></canvas></div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 16px 0; font-size:16px;">Cost per Result (₪)</h3>
+        <div class="chart-wrap"><canvas id="cprChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAMPAIGN TABLE -->
+  <section class="section">
+    <h2 class="section-title">Campaign Breakdown</h2>
+    <div class="card" style="overflow-x:auto;">
+      <table class="perf-table" id="campaign-table"></table>
+    </div>
+  </section>
+
+  <!-- TREND COMPARISON -->
+  <section class="section">
+    <h2 class="section-title">7-Day vs 30-Day Trend</h2>
+    <div class="card">
+      <div class="chart-wrap" style="height: 280px;"><canvas id="trendChart"></canvas></div>
+      <p style="margin: 16px 0 0 0; font-size: 13px; color: var(--muted-fg);">
+        Comparing the last 7 days against the 30-day daily average. The cost-per-result line tells you whether efficiency is holding up; CPC tells you whether creative is starting to fatigue.
+      </p>
+    </div>
+  </section>
+
+  <!-- CREATIVE WINNERS -->
+  <section class="section">
+    <h2 class="section-title">Top Creatives - Headlines</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="margin:0 0 16px 0; font-size:16px;">🏆 Top by Cost-per-Result</h3>
+        <div class="headline-list">
+          <div class="headline-item">
+            <div class="text">תנו להם לקנות בדיוק (אבל בול!) מה שרצית.</div>
+            <div class="meta">
+              <span class="winner">7.27 ₪/result</span>
+              <span>Perfect Nest</span>
+              <span>50.88 ₪ spent · 31 clicks · 1.65% CTR</span>
+            </div>
+          </div>
+          <div class="headline-item">
+            <div class="text">איך לרמוז לסבתא בעדינות? 😉</div>
+            <div class="meta">
+              <span class="winner">9.05 ₪/result</span>
+              <span>Perfect Nest</span>
+              <span>81.49 ₪ · 39 clicks · 1.03% CTR</span>
+            </div>
+          </div>
+          <div class="headline-item">
+            <div class="text">שלחי לינק ותשכחי מהמבוכה</div>
+            <div class="meta">
+              <span class="winner">10.15 ₪/result</span>
+              <span>The Honest Moment</span>
+              <span>91.34 ₪ · 52 clicks · 1.25% CTR</span>
+            </div>
+          </div>
+          <div class="headline-item">
+            <div class="text">בונים קן, לא מחסן.</div>
+            <div class="meta">
+              <span>13.14 ₪/result</span>
+              <span>Present</span>
+              <span>13.14 ₪ · 11 clicks · 1.78% CTR</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 16px 0; font-size:16px;">📈 Top by CTR</h3>
+        <div class="headline-list">
+          <div class="headline-item">
+            <div class="text">לא נעים לבקש? שלחי לינק.</div>
+            <div class="meta">
+              <span class="winner">2.13% CTR</span>
+              <span>Present</span>
+              <span>0.96 ₪ CPC · only 16 ₪ spent</span>
+            </div>
+          </div>
+          <div class="headline-item">
+            <div class="text">למה לשלם על מה שלא צריך? 100% חינם</div>
+            <div class="meta">
+              <span class="winner">2.10% CTR</span>
+              <span>Present</span>
+              <span>1.21 ₪ CPC · 92 clicks · 18.55 ₪/result</span>
+            </div>
+          </div>
+          <div class="headline-item">
+            <div class="text">בונים קן, לא מחסן.</div>
+            <div class="meta">
+              <span>1.78% CTR</span>
+              <span>Present</span>
+              <span>1.19 ₪ CPC · only 13 ₪ spent</span>
+            </div>
+          </div>
+          <div class="headline-item">
+            <div class="text">תנו להם לקנות בדיוק (אבל בול!) מה שרצית.</div>
+            <div class="meta">
+              <span>1.65% CTR</span>
+              <span>Perfect Nest</span>
+              <span>1.64 ₪ CPC · best CPL too</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOP TEXT -->
+  <section class="section">
+    <h2 class="section-title">Top Creatives - Ad Text</h2>
+    <div class="card">
+      <div class="headline-list">
+        <div class="headline-item">
+          <div class="text">"החברים שלך רוצים לקנות לך מתנה שווה, הם פשוט לא יודעים מה יש לך ומה חסר. תעשי להם חיים קלים! רשימת Nesty היא הדרך הכי אלגנטית להגיד 'זה מה שאני צריכה', בלי להגיד מילה."</div>
+          <div class="meta">
+            <span class="winner">12.53 ₪/result</span>
+            <span>Perfect Nest</span>
+            <span>14 results · 175.49 ₪ spent · 0.89% CTR</span>
+          </div>
+        </div>
+        <div class="headline-item">
+          <div class="text">"אחות גדולה הייתה אומרת לך: 'אל תקני עכשיו, חכי שהמחיר ירד.' אבל מי יושבת ובודקת מחירים כל יום? אף אחת. Nesty עושה את זה בשבילך - עוקבת אחרי כל מוצר ברשימה ומתריעה כשהמחיר יורד."</div>
+          <div class="meta">
+            <span class="winner">13.78 ₪/result</span>
+            <span>Price Drop 1.0</span>
+            <span>14 results · 192.85 ₪ spent · 1.33% CTR</span>
+          </div>
+        </div>
+        <div class="headline-item">
+          <div class="text">"מכירה את זה ששואלים 'מה את צריכה?' ואת מגמגמת? Nesty פותרת לך את הפלונטר בחינם."</div>
+          <div class="meta">
+            <span class="winner">7.33 ₪/result</span>
+            <span>Present</span>
+            <span>3 results · only 22 ₪ spent · 2.66% CTR - high potential, scale it</span>
+          </div>
+        </div>
+        <div class="headline-item">
+          <div class="text">"לא בטוחה מה צריך לקנות? הצ'קליסט שלנו מדריך אותך לאורך כל ההריון."</div>
+          <div class="meta">
+            <span>9.55 ₪/result</span>
+            <span>The Honest Moment</span>
+            <span>5 results · 47.73 ₪ spent · 0.89% CTR</span>
+          </div>
+        </div>
+        <div class="headline-item">
+          <div class="text">"בואי נודה על האמת: החברים שלך רוצים לקנות לך, הם פשוט מפחדים לפספס. כשאת שולחת להם Nesty את עושה להם טובה ענקית."</div>
+          <div class="meta">
+            <span style="background: rgba(239,68,68,0.12); color: var(--destructive); border-color: rgba(239,68,68,0.3);">53.15 ₪/result ⚠</span>
+            <span>Present</span>
+            <span>1 result · 53.15 ₪ spent · 1.86% CTR but bad LP→signup</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECOMMENDATIONS -->
+  <section class="section">
+    <h2 class="section-title">Recommendations · המלצות</h2>
+    <div class="reco-grid">
+
+      <div class="reco urgent">
+        <span class="reco-priority">⚡ Urgent · Today</span>
+        <h3>Pause "What you really need" & "First Time Parents"</h3>
+        <p>"What you really need" had <strong>0 impressions in 30 days</strong> - it's not delivering at all. "First Time Parents" had only 84 impressions and zero conversions. They're either creative-rejected, audience-misconfigured, or out-bid. Pause both, diagnose, then either fix or kill.</p>
+        <div class="reco-meta">
+          <span>Effort: Low</span>
+          <span>Impact: Medium</span>
+          <span>Saves budget bleed</span>
+        </div>
+      </div>
+
+      <div class="reco urgent">
+        <span class="reco-priority">⚠ Urgent · This Week</span>
+        <h3>Refresh Perfect Nest creative - fatigue showing</h3>
+        <p>30-day cost/result = <strong>14.38 ₪</strong>. Last 7 days = <strong>38.51 ₪</strong> (+167% worse). CTR dropped from 1.21% → 0.94%, CPC jumped from 2.12 → 3.21 ₪. Classic creative fatigue. Best-performing headline ("איך לרמוז לסבתא בעדינות? 😉") - duplicate the ad with new visuals & 2-3 fresh headline variants in the same voice.</p>
+        <div class="reco-meta">
+          <span>Effort: Medium</span>
+          <span>Impact: High</span>
+          <span>Recover top performer</span>
+        </div>
+      </div>
+
+      <div class="reco high">
+        <span class="reco-priority">🔥 High Priority · This Week</span>
+        <h3>Scale Price Drop 1.0 (and clone it)</h3>
+        <p>Last 7 days CPL = <strong>14.30 ₪</strong> vs 30-day <strong>16.99 ₪</strong> (-16% improvement while spend went up). It's currently <strong>33% of total spend</strong> - there's room to push harder. Increase budget 30-50% and prep a "Price Drop 2.0" with the same hook ("אחות גדולה...") but different visuals before this one fatigues.</p>
+        <div class="reco-meta">
+          <span>Effort: Low</span>
+          <span>Impact: High</span>
+          <span>Best-converting ad</span>
+        </div>
+      </div>
+
+      <div class="reco high">
+        <span class="reco-priority">🔥 High Priority · This Week</span>
+        <h3>Scale-test the "Present" winners</h3>
+        <p>Two Present headlines hit <strong>2.10–2.13% CTR</strong> (best of all ads), and the "מכירה את זה ששואלים..." text variant got <strong>7.33 ₪/result</strong> - but only on 22 ₪ of spend, so the data is thin. Push 100-150 ₪ more behind those winners specifically to validate before scaling further. Also: Present had zero spend in the last 7 days - check why it stopped.</p>
+        <div class="reco-meta">
+          <span>Effort: Low</span>
+          <span>Impact: High</span>
+          <span>Untapped CTR leader</span>
+        </div>
+      </div>
+
+      <div class="reco medium">
+        <span class="reco-priority">📅 Plan · Next Sprint</span>
+        <h3>Lock in your top messaging pillars</h3>
+        <p>The data says Israeli moms are responding to <strong>3 angles</strong>: (1) "אחות גדולה" / older sister voice (Price Drop), (2) social-awkwardness humor ("איך לרמוז לסבתא", "שלחי לינק ותשכחי מהמבוכה"), (3) "בונים קן, לא מחסן" tagline. Build the next creative round around these three angles + 3-4 new visuals each.</p>
+        <div class="reco-meta">
+          <span>Effort: Medium</span>
+          <span>Impact: High</span>
+          <span>Compounding effect</span>
+        </div>
+      </div>
+
+      <div class="reco medium">
+        <span class="reco-priority">📅 Plan · Next Sprint</span>
+        <h3>Improve the LP → registration conversion</h3>
+        <p>You're spending <strong>2.12 ₪ per landing-page-view</strong>, but only <strong>12.9% of LP views convert to registrations</strong>. The clicks and traffic are there - the funnel is leaking after the click. Worth a quick audit: hero copy, form length, RTL/mobile rendering, time-to-CTA. A 5-point conversion lift drops your effective cost-per-result to ~12 ₪.</p>
+        <div class="reco-meta">
+          <span>Effort: Medium</span>
+          <span>Impact: Very High</span>
+          <span>Compounds across all ads</span>
+        </div>
+      </div>
+
+      <div class="reco low">
+        <span class="reco-priority">💡 Nice to Have</span>
+        <h3>Set a target CAC and report against it</h3>
+        <p>Current cost per registration is <strong>16.46 ₪</strong>. Without a target, you can't tell if that's good or bad. Define what a registration is worth (LTV, gift conversion rate, partner share) and you'll know whether to push spend up or pull it back.</p>
+        <div class="reco-meta">
+          <span>Effort: Low</span>
+          <span>Impact: Medium</span>
+          <span>Strategic clarity</span>
+        </div>
+      </div>
+
+      <div class="reco low">
+        <span class="reco-priority">💡 Nice to Have</span>
+        <h3>A/B test feminine-singular vs. couple framing</h3>
+        <p>All current copy uses את (feminine singular) per Nesty brand voice. Test one variant ad set targeting couples (אתם) - specifically partners helping research the registry. Could open a new audience without diluting the core voice.</p>
+        <div class="reco-meta">
+          <span>Effort: Medium</span>
+          <span>Impact: Low</span>
+          <span>Audience expansion test</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 2x2 PRIORITY MATRIX -->
+  <section class="section">
+    <h2 class="section-title">Priority Matrix</h2>
+    <div class="card">
+      <div class="matrix">
+        <div class="matrix-cell matrix-do-first">
+          <h4>High Impact · Low Effort - DO FIRST</h4>
+          <ul>
+            <li>Pause "What you really need" & "First Time Parents"</li>
+            <li>Scale Price Drop 1.0 (+30-50% budget)</li>
+            <li>Push spend behind Present's top headlines</li>
+          </ul>
+        </div>
+        <div class="matrix-cell matrix-plan">
+          <h4>High Impact · High Effort - PLAN</h4>
+          <ul>
+            <li>Refresh Perfect Nest creative (visuals + headline variants)</li>
+            <li>LP conversion rate audit & fix</li>
+            <li>Build next creative round around 3 winning angles</li>
+          </ul>
+        </div>
+        <div class="matrix-cell matrix-fill">
+          <h4>Low Impact · Low Effort - FILL TIME</h4>
+          <ul>
+            <li>Define target CAC for reporting clarity</li>
+            <li>Investigate why Present paused last 7 days</li>
+          </ul>
+        </div>
+        <div class="matrix-cell matrix-deprio">
+          <h4>Low Impact · High Effort - DEPRIORITIZE</h4>
+          <ul>
+            <li>A/B test couple-targeted (אתם) framing</li>
+            <li>Major audience expansion test</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NEXT PERIOD FOCUS -->
+  <section class="section">
+    <h2 class="section-title">Next 30 Days · 3 Priorities</h2>
+    <div class="reco-grid">
+      <div class="reco high">
+        <span class="reco-priority">Priority 1</span>
+        <h3>Refresh & scale</h3>
+        <p>Refresh Perfect Nest with new creative. Scale Price Drop 1.0 budget. Target: keep blended cost-per-result at or below <strong>16 ₪</strong> while raising daily spend to <strong>~75 ₪/day</strong> (+50%).</p>
+      </div>
+      <div class="reco high">
+        <span class="reco-priority">Priority 2</span>
+        <h3>Fix the funnel</h3>
+        <p>Get LP → registration conversion from <strong>12.9% → 18%</strong>. This alone would drop blended cost-per-result to ~11.80 ₪ without changing a single ad.</p>
+      </div>
+      <div class="reco high">
+        <span class="reco-priority">Priority 3</span>
+        <h3>Build the next creative wave</h3>
+        <p>Ship 6 new ad variants across the 3 winning angles (אחות גדולה / social humor / בונים קן). Test by end of next month so you have fatigue-resistance baked in.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="nest">🪺</div>
+    Generated for Nesty · Apr 1 – Apr 30, 2026 · Built with care, not pressure
+  </footer>
+
+</div>
+
+<script>
+// Data straight from the Meta Ads exports
+const data = {
+  '30d': {
+    label: '30-day',
+    range: 'Apr 1 – Apr 30',
+    summary: { spend: 1398.70, impressions: 57052, reach: 20942, clicks: 744, results: 85, lpv: 660, ctr: 1.30, cpc: 1.88, cpr: 16.46, cpm: 24.52, cplpv: 2.12 },
+    campaigns: [
+      { name: 'Perfect Nest',       status: 'active',   spend: 517.57, reach: 7017,  imps: 20083, clicks: 244, ctr: 1.21, cpc: 2.12, results: 36, cpr: 14.38, lpv: 205, cplpv: 2.52 },
+      { name: 'Price Drop 1.0',     status: 'active',   spend: 458.98, reach: 5914,  imps: 18985, clicks: 252, ctr: 1.33, cpc: 1.82, results: 27, cpr: 16.99, lpv: 229, cplpv: 2.00 },
+      { name: 'The Honest Moment',  status: 'active',   spend: 268.84, reach: 4989,  imps: 11742, clicks: 129, ctr: 1.10, cpc: 2.08, results: 16, cpr: 16.80, lpv: 113, cplpv: 2.38 },
+      { name: 'Present',            status: 'active',   spend: 150.74, reach: 2943,  imps: 6158,  clicks: 119, ctr: 1.93, cpc: 1.27, results: 6,  cpr: 25.12, lpv: 113, cplpv: 1.33 },
+      { name: 'First Time Parents', status: 'inactive', spend: 2.57,   reach: 79,    imps: 84,    clicks: 0,   ctr: 0,    cpc: 0,    results: 0,  cpr: 0,     lpv: 0,   cplpv: 0    },
+      { name: 'What you really need', status: 'inactive', spend: 0,    reach: 0,     imps: 0,     clicks: 0,   ctr: 0,    cpc: 0,    results: 0,  cpr: 0,     lpv: 0,   cplpv: 0    }
+    ]
+  },
+  '7d': {
+    label: '7-day',
+    range: 'Apr 24 – Apr 30',
+    summary: { spend: 353.14, impressions: 14399, reach: 6894, clicks: 160, results: 22, lpv: 162, ctr: 1.11, cpc: 2.21, cpr: 16.05, cpm: 24.53, cplpv: 2.18 },
+    campaigns: [
+      { name: 'Price Drop 1.0',     status: 'active',   spend: 271.74, reach: 4546, imps: 11379, clicks: 129, ctr: 1.13, cpc: 2.11, results: 19, cpr: 14.30, lpv: 129, cplpv: 2.11 },
+      { name: 'The Honest Moment',  status: 'active',   spend: 42.89,  reach: 1347, imps: 1745,  clicks: 19,  ctr: 1.09, cpc: 2.26, results: 2,  cpr: 21.45, lpv: 19,  cplpv: 2.26 },
+      { name: 'Perfect Nest',       status: 'active',   spend: 38.51,  reach: 1001, imps: 1275,  clicks: 12,  ctr: 0.94, cpc: 3.21, results: 1,  cpr: 38.51, lpv: 14,  cplpv: 2.75 },
+      { name: 'Present',            status: 'inactive', spend: 0,      reach: 0,    imps: 0,     clicks: 0,   ctr: 0,    cpc: 0,    results: 0,  cpr: 0,     lpv: 0,   cplpv: 0    },
+      { name: 'First Time Parents', status: 'inactive', spend: 0,      reach: 0,    imps: 0,     clicks: 0,   ctr: 0,    cpc: 0,    results: 0,  cpr: 0,     lpv: 0,   cplpv: 0    },
+      { name: 'What you really need', status: 'inactive', spend: 0,    reach: 0,    imps: 0,     clicks: 0,   ctr: 0,    cpc: 0,    results: 0,  cpr: 0,     lpv: 0,   cplpv: 0    }
+    ]
+  }
+};
+
+// 30-day daily avg vs 7-day actual
+const trendData = {
+  spendPerDay: { d30: 46.62, d7: 50.45 },
+  resultsPerDay: { d30: 2.83, d7: 3.14 },
+  cpc: { d30: 1.88, d7: 2.21 },
+  ctr: { d30: 1.30, d7: 1.11 },
+  cpr: { d30: 16.46, d7: 16.05 }
+};
+
+const fmt = {
+  ils: v => '₪' + v.toLocaleString(undefined, { maximumFractionDigits: 2 }),
+  num: v => v.toLocaleString(),
+  pct: v => v.toFixed(2) + '%',
+  delta: (cur, prev) => {
+    if (!prev) return null;
+    return ((cur - prev) / prev) * 100;
+  }
+};
+
+// State
+let currentPeriod = '30d';
+let charts = {};
+
+// KPI rendering
+function renderKPIs() {
+  const d = data[currentPeriod];
+  const o = data[currentPeriod === '30d' ? '7d' : '30d']; // for trend nudge
+  const isShort = currentPeriod === '7d';
+  const grid = document.getElementById('kpi-grid');
+
+  // Daily averages for fair comparison
+  const days = isShort ? 7 : 30;
+  const compareDays = isShort ? 30 : 7;
+  const dailySpend = d.summary.spend / days;
+  const dailyResults = d.summary.results / days;
+
+  const kpis = [
+    { label: 'Total Spend', value: fmt.ils(d.summary.spend), sub: `${fmt.ils(dailySpend)}/day` },
+    { label: 'Registrations', value: d.summary.results, sub: `${dailyResults.toFixed(2)}/day` },
+    { label: 'Cost per Reg.', value: fmt.ils(d.summary.cpr), sub: 'Lower is better' },
+    { label: 'Impressions', value: fmt.num(d.summary.impressions), sub: `Reach ${fmt.num(d.summary.reach)}` },
+    { label: 'Link Clicks', value: fmt.num(d.summary.clicks), sub: `CPC ${fmt.ils(d.summary.cpc)}` },
+    { label: 'CTR', value: fmt.pct(d.summary.ctr), sub: `CPM ${fmt.ils(d.summary.cpm)}` },
+    { label: 'Landing Page Views', value: fmt.num(d.summary.lpv), sub: `${fmt.ils(d.summary.cplpv)} per LPV` },
+    { label: 'LP → Reg. Rate', value: fmt.pct(d.summary.results / d.summary.lpv * 100), sub: 'Conversion of LP visits' }
+  ];
+  grid.innerHTML = kpis.map(k => `
+    <div class="kpi">
+      <p class="kpi-label">${k.label}</p>
+      <p class="kpi-value">${k.value}</p>
+      <p class="kpi-sub">${k.sub}</p>
+    </div>
+  `).join('');
+}
+
+// Table rendering
+function renderTable() {
+  const d = data[currentPeriod];
+  const t = document.getElementById('campaign-table');
+  t.innerHTML = `
+    <thead>
+      <tr>
+        <th>Ad</th>
+        <th>Status</th>
+        <th class="num">Spend</th>
+        <th class="num">Imps</th>
+        <th class="num">Clicks</th>
+        <th class="num">CTR</th>
+        <th class="num">CPC</th>
+        <th class="num">Results</th>
+        <th class="num">Cost/Result</th>
+        <th class="num">LPV</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${d.campaigns.map(c => `
+        <tr>
+          <td class="ad-name">${c.name}</td>
+          <td><span class="status-pill ${c.status}">${c.status}</span></td>
+          <td class="num">${c.spend > 0 ? fmt.ils(c.spend) : '-'}</td>
+          <td class="num">${c.imps > 0 ? fmt.num(c.imps) : '-'}</td>
+          <td class="num">${c.clicks > 0 ? fmt.num(c.clicks) : '-'}</td>
+          <td class="num">${c.ctr > 0 ? fmt.pct(c.ctr) : '-'}</td>
+          <td class="num">${c.cpc > 0 ? fmt.ils(c.cpc) : '-'}</td>
+          <td class="num">${c.results > 0 ? c.results : '-'}</td>
+          <td class="num"><strong>${c.cpr > 0 ? fmt.ils(c.cpr) : '-'}</strong></td>
+          <td class="num">${c.lpv > 0 ? c.lpv : '-'}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  `;
+}
+
+// Charts
+const COLORS = {
+  primary: '#86608e',
+  primaryLight: '#a891ad',
+  pink: '#f4acb7',
+  pinkLight: '#ffcad4',
+  peach: '#ffd8d7',
+  border: '#e8e4e9'
+};
+
+function renderCharts() {
+  const d = data[currentPeriod];
+  const active = d.campaigns.filter(c => c.spend > 0);
+  const labels = active.map(c => c.name);
+
+  // Spend & Results
+  if (charts.spend) charts.spend.destroy();
+  charts.spend = new Chart(document.getElementById('spendChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Spend (₪)', data: active.map(c => c.spend), backgroundColor: COLORS.primary, borderRadius: 8, yAxisID: 'y' },
+        { label: 'Results', data: active.map(c => c.results), backgroundColor: COLORS.pink, borderRadius: 8, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'Assistant', size: 13 } } } },
+      scales: {
+        y: { beginAtZero: true, position: 'left', title: { display: true, text: 'Spend (₪)' } },
+        y1: { beginAtZero: true, position: 'right', title: { display: true, text: 'Results' }, grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+
+  // Cost per result
+  if (charts.cpr) charts.cpr.destroy();
+  const cprData = active.filter(c => c.cpr > 0);
+  charts.cpr = new Chart(document.getElementById('cprChart'), {
+    type: 'bar',
+    data: {
+      labels: cprData.map(c => c.name),
+      datasets: [{
+        label: 'Cost per Result (₪)',
+        data: cprData.map(c => c.cpr),
+        backgroundColor: cprData.map(c =>
+          c.cpr <= 15 ? '#22c55e' :
+          c.cpr <= 20 ? COLORS.primary :
+          c.cpr <= 30 ? COLORS.pink : '#ef4444'
+        ),
+        borderRadius: 8
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, title: { display: true, text: '₪ per registration (lower = better)' } } }
+    }
+  });
+}
+
+function renderTrendChart() {
+  if (charts.trend) charts.trend.destroy();
+  charts.trend = new Chart(document.getElementById('trendChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Daily Spend (₪)', 'Daily Results', 'CPC (₪)', 'CTR (%)', 'Cost / Result (₪)'],
+      datasets: [
+        { label: '30-day daily avg', data: [trendData.spendPerDay.d30, trendData.resultsPerDay.d30, trendData.cpc.d30, trendData.ctr.d30, trendData.cpr.d30], backgroundColor: COLORS.primaryLight, borderRadius: 8 },
+        { label: 'Last 7 days actual', data: [trendData.spendPerDay.d7, trendData.resultsPerDay.d7, trendData.cpc.d7, trendData.ctr.d7, trendData.cpr.d7], backgroundColor: COLORS.primary, borderRadius: 8 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'Assistant', size: 13 } } } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+// Period switching
+document.querySelectorAll('.period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPeriod = btn.dataset.period;
+    document.getElementById('period-badge').textContent = data[currentPeriod].label;
+    document.getElementById('exec-summary-30d').classList.toggle('period-hidden', currentPeriod !== '30d');
+    document.getElementById('exec-summary-7d').classList.toggle('period-hidden', currentPeriod !== '7d');
+    renderKPIs();
+    renderTable();
+    renderCharts();
+  });
+});
+
+// Init
+renderKPIs();
+renderTable();
+renderCharts();
+renderTrendChart();
+</script>
+</body>
+</html>

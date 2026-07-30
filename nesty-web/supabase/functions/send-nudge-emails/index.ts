@@ -143,7 +143,7 @@ function checklistNudgeHtml(firstName: string, unsubscribeUrl: string = 'https:/
               <span style="font-size:12px;font-weight:700;color:#7c4dbd;">✨ מה זה הצ'קליסט?</span>
             </div>
             <p style="margin:0 0 20px;font-size:15px;line-height:1.8;color:#7a6090;">
-              הצ'קליסט של Nesty הוא כלי שמלווה אותך לאורך כל ההיריון — מבדיקות וקניות ועד הכנת הבית לתינוק. הכל מסודר לפי שלבים, עם המלצות מותאמות אישית.
+              הצ'קליסט של Nesty הוא כלי שמלווה אותך לאורך כל ההיריון - מבדיקות וקניות ועד הכנת הבית לתינוק. הכל מסודר לפי שלבים, עם המלצות מותאמות אישית.
             </p>
 
             <!-- Tip 1 -->
@@ -151,7 +151,7 @@ function checklistNudgeHtml(firstName: string, unsubscribeUrl: string = 'https:/
               <tr>
                 <td style="vertical-align:top;padding-left:14px;">
                   <p style="margin:0 0 2px;font-size:14px;font-weight:700;color:#3b1f6b;">סמני מה יש לך כבר</p>
-                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">ראי בדיוק מה עוד חסר — בלי לשכוח כלום.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">ראי בדיוק מה עוד חסר - בלי לשכוח כלום.</p>
                 </td>
                 <td width="42" style="vertical-align:top;">
                   <div style="width:36px;height:36px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:12px;text-align:center;line-height:36px;font-size:18px;">📋</div>
@@ -164,7 +164,7 @@ function checklistNudgeHtml(firstName: string, unsubscribeUrl: string = 'https:/
               <tr>
                 <td style="vertical-align:top;padding-left:14px;">
                   <p style="margin:0 0 2px;font-size:14px;font-weight:700;color:#3b1f6b;">קבלי ציון נסטינג</p>
-                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">ככל שתסמני יותר, הציון עולה — ותדעי כמה מוכנה את.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">ככל שתסמני יותר, הציון עולה - ותדעי כמה מוכנה את.</p>
                 </td>
                 <td width="42" style="vertical-align:top;">
                   <div style="width:36px;height:36px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:12px;text-align:center;line-height:36px;font-size:18px;">🏆</div>
@@ -177,7 +177,7 @@ function checklistNudgeHtml(firstName: string, unsubscribeUrl: string = 'https:/
               <tr>
                 <td style="vertical-align:top;padding-left:14px;">
                   <p style="margin:0 0 2px;font-size:14px;font-weight:700;color:#3b1f6b;">הסתירי מה שלא רלוונטי</p>
-                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">הצ'קליסט מותאם אליך — הסתירי פריטים שלא מתאימים לך.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">הצ'קליסט מותאם אליך - הסתירי פריטים שלא מתאימים לך.</p>
                 </td>
                 <td width="42" style="vertical-align:top;">
                   <div style="width:36px;height:36px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:12px;text-align:center;line-height:36px;font-size:18px;">👁️</div>
@@ -219,7 +219,7 @@ function shareNudgeHtml(firstName: string, itemsCount: number, unsubscribeUrl: s
               הרשימה שלך מוכנה! 🎁
             </h1>
             <p style="margin:0 0 34px;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:420px;margin-left:auto;margin-right:auto;">
-              ${firstName}, יש לך כבר ${itemsCount} פריטים ברשימה — הגיע הזמן לשתף עם משפחה וחברים כדי שידעו מה לקנות!
+              ${firstName}, יש לך כבר ${itemsCount} פריטים ברשימה - הגיע הזמן לשתף עם משפחה וחברים כדי שידעו מה לקנות!
             </p>
             <a href="${ctaUrl}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">📤 שתפי את הרשימה</a>
           </td>
@@ -242,7 +242,7 @@ function shareNudgeHtml(firstName: string, itemsCount: number, unsubscribeUrl: s
               <tr>
                 <td style="vertical-align:top;padding-left:14px;">
                   <p style="margin:0 0 2px;font-size:14px;font-weight:700;color:#3b1f6b;">לחצי על "שתפי את הרשימה"</p>
-                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">בדשבורד של Nesty יש כפתור שיתוף בולט — לחצי עליו.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">בדשבורד של Nesty יש כפתור שיתוף בולט - לחצי עליו.</p>
                 </td>
                 <td width="42" style="vertical-align:top;">
                   <div style="width:36px;height:36px;background:linear-gradient(135deg,#7c4dbd,#9b62d4);border-radius:50%;text-align:center;line-height:36px;font-size:15px;color:#fff;font-weight:700;">1</div>
@@ -255,7 +255,7 @@ function shareNudgeHtml(firstName: string, itemsCount: number, unsubscribeUrl: s
               <tr>
                 <td style="vertical-align:top;padding-left:14px;">
                   <p style="margin:0 0 2px;font-size:14px;font-weight:700;color:#3b1f6b;">בחרי איך לשתף</p>
-                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">וואטסאפ, אימייל, העתקת לינק, או QR Code — מה שנוח לך.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.7;color:#7a6090;">וואטסאפ, אימייל, העתקת לינק, או QR Code - מה שנוח לך.</p>
                 </td>
                 <td width="42" style="vertical-align:top;">
                   <div style="width:36px;height:36px;background:linear-gradient(135deg,#7c4dbd,#9b62d4);border-radius:50%;text-align:center;line-height:36px;font-size:15px;color:#fff;font-weight:700;">2</div>
@@ -288,7 +288,7 @@ function shareNudgeHtml(firstName: string, itemsCount: number, unsubscribeUrl: s
             </div>
             <h3 style="margin:0 0 10px;font-size:20px;font-weight:700;color:#3b1f6b;line-height:1.4;">יש לך חברה בהיריון?</h3>
             <p style="margin:0 0 22px;font-size:14px;line-height:1.8;color:#7a6090;max-width:400px;margin-left:auto;margin-right:auto;">
-              שתפי את הרשימה גם עם חברות בהיריון — ככה הן יוכלו לראות מה קנית, ללמוד ממך ולקבל השראה לרשימה שלהן. 🤰
+              שתפי את הרשימה גם עם חברות בהיריון - ככה הן יוכלו לראות מה קנית, ללמוד ממך ולקבל השראה לרשימה שלהן. 🤰
             </p>
           </td>
         </tr>
@@ -458,7 +458,7 @@ function stalledNudgeHtml(firstName: string, week: number, itemsCount: number, u
 
 // ── Concurrency helper ────────────────────────────────────────────────
 // Process items in parallel batches. Each batch awaits Promise.all before
-// the next one starts — keeps Resend/Supabase load bounded.
+// the next one starts - keeps Resend/Supabase load bounded.
 const BATCH_SIZE = 10
 
 async function processInBatches<T>(
@@ -501,7 +501,7 @@ async function runAllNudges(): Promise<NudgeResults> {
 
   // Users who already received another nudge today shouldn't get a second.
   // Populated as we send each nudge so cross-type dedup works. Safe to
-  // mutate from parallel batches because JS is single-threaded — Set
+  // mutate from parallel batches because JS is single-threaded - Set
   // reads/writes don't yield.
   const nudgedToday = new Set<string>()
 
@@ -647,7 +647,7 @@ async function runAllNudges(): Promise<NudgeResults> {
         )[0]
 
         if (new Date(latestItem.created_at) > twoDaysAgo) {
-          // Too recent — user might still be adding items, wait
+          // Too recent - user might still be adding items, wait
           results.share_nudge.skipped++
           return
         }
@@ -883,7 +883,7 @@ async function runAllNudges(): Promise<NudgeResults> {
 // ── HTTP entry point ──────────────────────────────────────────────────
 // Returns 202 immediately and runs runAllNudges() in the background via
 // EdgeRuntime.waitUntil(). Callers (GitHub Actions, pg_cron) get an
-// instant response — no more curl timeouts as the candidate pool grows.
+// instant response - no more curl timeouts as the candidate pool grows.
 // Errors and the final results summary land in Supabase function logs.
 serve((req) => {
   if (req.method === 'OPTIONS') {
@@ -905,7 +905,7 @@ serve((req) => {
     console.error('send-nudge-emails background run failed:', message)
   })
 
-  // @ts-ignore — EdgeRuntime is provided by the Supabase Edge runtime
+  // @ts-ignore - EdgeRuntime is provided by the Supabase Edge runtime
   EdgeRuntime.waitUntil(work)
 
   return new Response(

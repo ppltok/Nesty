@@ -21,7 +21,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'welcome',
     title: 'ברוכה הבאה ל-Nesty! 🪺',
-    description: 'אם הוספת כבר פריט ראשון — מעולה, הקן שלך כבר מתחיל!\nאת מוזמנת לסיור קצר על הכלים, או לדלג ולהמשיך לבד.',
+    description: 'אם הוספת כבר פריט ראשון - מעולה, הקן שלך כבר מתחיל!\nאת מוזמנת לסיור קצר על הכלים, או לדלג ולהמשיך לבד.',
     route: '/checklist',
     icon: Sparkles,
     special: true,
@@ -194,7 +194,7 @@ export default function OnboardingTutorial({ onComplete, onSkip, onStepChange }:
           ? tooltipEl.getBoundingClientRect().top
           : window.innerHeight * 0.5
         const gap = 32
-        // Tooltip lives at the bottom on mobile — place the spotlight ABOVE it,
+        // Tooltip lives at the bottom on mobile - place the spotlight ABOVE it,
         // but never so high that it gets cut off at the top of the viewport.
         desiredCenter = Math.max(
           40 + rect.height / 2,
@@ -227,7 +227,7 @@ export default function OnboardingTutorial({ onComplete, onSkip, onStepChange }:
     }
   }
 
-  // Tooltip position is FIXED across all steps — only the spotlight moves.
+  // Tooltip position is FIXED across all steps - only the spotlight moves.
   // - Desktop: centered on viewport.
   // - Mobile: pinned above the bottom nav (~96px from the bottom). This keeps
   //   the upper half of the viewport free for the spotlight, so targets near

@@ -216,7 +216,7 @@ export function DateRangePicker() {
             </button>
           </div>
 
-          {/* Presets — horizontal on mobile, sidebar on desktop */}
+          {/* Presets - horizontal on mobile, sidebar on desktop */}
           <div className={cn(
             // Mobile: horizontal scrolling row
             'flex md:flex-col gap-1.5 px-4 py-3 md:py-2 md:px-0 overflow-x-auto md:overflow-x-visible',
@@ -252,7 +252,7 @@ export function DateRangePicker() {
                 <span className="text-sm font-semibold text-gray-900">
                   {MONTH_NAMES[leftMonth.month]} {leftMonth.year}
                 </span>
-                {/* Second month header — hidden on mobile */}
+                {/* Second month header - hidden on mobile */}
                 <span className="hidden md:inline text-sm font-semibold text-gray-900">
                   {MONTH_NAMES[rightMonth.month]} {rightMonth.year}
                 </span>
@@ -274,7 +274,7 @@ export function DateRangePicker() {
                 onDayClick={handleDayClick}
                 onDayHover={setHoverDate}
               />
-              {/* Second calendar — desktop only */}
+              {/* Second calendar - desktop only */}
               <div className="hidden md:block">
                 <MonthGrid
                   year={rightMonth.year}

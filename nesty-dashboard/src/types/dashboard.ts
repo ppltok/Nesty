@@ -10,7 +10,7 @@ export interface DashboardOverview {
   new_gifts: number
   /** Confirmed gifts (period) where buyer email matches the registry owner or co-parent profile. */
   gifts_by_owner: number
-  /** Confirmed gifts (period) where buyer email does NOT match the owner or co-parent — i.e. friends & family. */
+  /** Confirmed gifts (period) where buyer email does NOT match the owner or co-parent - i.e. friends & family. */
   gifts_by_external: number
   platform_gmv: number
   period_gmv: number
@@ -273,4 +273,39 @@ export interface UserJourneyTiming {
   signup_to_item_distribution: { bucket: string; users: number }[]
   share_by_pregnancy_week: { pregnancy_week: number; users: number }[]
   gift_by_pregnancy_week: { pregnancy_week: number; users: number }[]
+}
+
+export interface CollabSummary {
+  collab: string
+  emails_sent: number
+  email_clicks: number
+  popup_views: number
+  popup_reveals: number
+  popup_copies: number
+  popup_cta_clicks: number
+  card_views: number
+  card_reveals: number
+  card_copies: number
+  card_cta_clicks: number
+  total_views: number
+  total_reveals: number
+  total_copies: number
+  total_redeem_clicks: number
+  unique_users: number
+}
+
+export interface CollabDaily {
+  day: string
+  collab: string
+  emails_sent: number
+  email_clicks: number
+  views: number
+  reveals: number
+  copies: number
+  redeem_clicks: number
+}
+
+export interface CollabMetrics {
+  collabs: CollabSummary[]
+  daily: CollabDaily[]
 }

@@ -89,7 +89,7 @@ function calculatePregnancyWeek(dueDateStr: string): number {
 // Each row is a "must-have" item from ITEMS_DATA, with the same recommended
 // products users will see later in /checklist. We pull image+url+price+store
 // directly from the source data so onboarding always matches the rest of
-// the app — no parallel hardcoded list to maintain.
+// the app - no parallel hardcoded list to maintain.
 interface CuratedItem {
   name: string         // product name
   price: number
@@ -167,19 +167,19 @@ const feelings = [
   { value: 'exploring' as const, icon: Heart, title: 'סתם בודקת', description: 'רוצה לראות מה יש פה', bg: 'bg-[#f3edff]', fg: 'text-[#6750a4]' },
 ]
 
-// Subtitle for the first-item step adapts to the user's emotional state —
+// Subtitle for the first-item step adapts to the user's emotional state -
 // same grid for everyone, but the framing matches where she is.
 function firstItemSubtitle(feeling: OnboardingData['feeling']) {
   if (feeling === 'overwhelmed') {
-    return 'בלי לחשוב הרבה — נתחיל בקטן. בחרי פריט אחד שזה הוא בטח יהיה ברשימה שלך.'
+    return 'בלי לחשוב הרבה - נתחיל בקטן. בחרי פריט אחד שזה הוא בטח יהיה ברשימה שלך.'
   }
   if (feeling === 'excited') {
-    return 'בואי נראה את הקסם — בחרי פריט שתאהבי בכיף לראות ברשימה שלך.'
+    return 'בואי נראה את הקסם - בחרי פריט שתאהבי בכיף לראות ברשימה שלך.'
   }
   if (feeling === 'exploring') {
-    return 'הנה דוגמה לאיך זה עובד — בחרי משהו ותראי איך הרשימה מתחילה להיראות.'
+    return 'הנה דוגמה לאיך זה עובד - בחרי משהו ותראי איך הרשימה מתחילה להיראות.'
   }
-  return 'בחרי כמה שבא לך — אחד מכל קטגוריה. או הדביקי קישור מכל חנות.'
+  return 'בחרי כמה שבא לך - אחד מכל קטגוריה. או הדביקי קישור מכל חנות.'
 }
 
 export default function Onboarding() {
@@ -205,7 +205,7 @@ export default function Onboarding() {
     marketingEmails: true, // default ON, disclosure on the final button
   })
 
-  // First-item-step state — users may pick several items, but only one per
+  // First-item-step state - users may pick several items, but only one per
   // essential group (one stroller, one car seat, one bath, etc.). Keyed
   // implicitly by parentItem: picking within a group replaces that group's
   // pick. A pasted-URL item lives under its own 'pasted' group.
@@ -318,19 +318,19 @@ export default function Onboarding() {
       setExtractStatus({ state: 'success', product: extracted })
       setPickedItems((prev) => [...prev.filter((p) => p.parentItem !== 'pasted'), extracted])
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'לא הצלחנו לחלץ — אפשר להוסיף ידנית בהמשך'
+      const msg = err instanceof Error ? err.message : 'לא הצלחנו לחלץ - אפשר להוסיף ידנית בהמשך'
       setExtractStatus({ state: 'error', message: msg })
     }
   }
 
-  // "Skip without an item" — passes an explicit empty list because setState
+  // "Skip without an item" - passes an explicit empty list because setState
   // wouldn't be visible to handleComplete's closure until the next render
   const handleSkipFirstItem = () => {
     setPickedItems([])
     handleComplete([])
   }
 
-  // itemsOverride must be checked with Array.isArray — onClick passes a MouseEvent
+  // itemsOverride must be checked with Array.isArray - onClick passes a MouseEvent
   const handleComplete = async (itemsOverride?: unknown) => {
     const itemsToInsert = Array.isArray(itemsOverride) ? (itemsOverride as CuratedItem[]) : pickedItems
     // Preview mode: short-circuit to celebration without any DB writes
@@ -345,11 +345,11 @@ export default function Onboarding() {
 
     // Session-loss guard. Opening the email-confirmation link inside an
     // in-app browser (Gmail/Instagram webview) can establish the session in
-    // memory but fail to persist it — React still has `user`, but every DB
+    // memory but fail to persist it - React still has `user`, but every DB
     // write goes out as `anon` and dies on RLS with a cryptic English error
     // ("new row violates row-level security policy for table profiles").
     // Verify the session is actually live before writing; try one refresh;
-    // otherwise send to sign-in — onboarding_completed=false routes them
+    // otherwise send to sign-in - onboarding_completed=false routes them
     // straight back here after login.
     const { data: sessionCheck } = await supabase.auth.getSession()
     let liveSession = sessionCheck.session
@@ -359,7 +359,7 @@ export default function Onboarding() {
     }
     if (!liveSession) {
       setIsLoading(false)
-      setError('ההתחברות התנתקה באמצע. מעבירים אותך להתחברות מחדש — ואז מסיימים בקליק.')
+      setError('ההתחברות התנתקה באמצע. מעבירים אותך להתחברות מחדש - ואז מסיימים בקליק.')
       setTimeout(() => navigate('/auth/signin', { replace: true }), 3500)
       return
     }
@@ -373,7 +373,7 @@ export default function Onboarding() {
         due_date: data.dueDate || null,
         onboarding_completed: false,
         marketing_emails: data.marketingEmails,
-        // Israeli spam-law audit trail — proves WHEN the user opted in
+        // Israeli spam-law audit trail - proves WHEN the user opted in
         // (the moment they clicked "סיימי" with the disclosure visible).
         // Set only on opt-in; opt-out path owns the unsubscribed_at column.
         ...(data.marketingEmails
@@ -400,19 +400,19 @@ export default function Onboarding() {
           profileError.message?.includes('row-level security') ||
           profileError.message?.includes('JWT')
         ) {
-          setError('ההתחברות התנתקה באמצע. מעבירים אותך להתחברות מחדש — ואז מסיימים בקליק.')
+          setError('ההתחברות התנתקה באמצע. מעבירים אותך להתחברות מחדש - ואז מסיימים בקליק.')
           setTimeout(() => navigate('/auth/signin', { replace: true }), 3500)
           return
         }
         throw new Error(`שגיאה בעדכון הפרופיל: ${profileError.message}`)
       }
 
-      // WhatsApp opt-in — separate, non-critical write. The CTA on the phone
+      // WhatsApp opt-in - separate, non-critical write. The CTA on the phone
       // step is disabled unless the number is a valid IL mobile, so a value
       // here means an explicit opt-in. Kept out of the main upsert so a
       // missing column (migration not applied yet) can never fail onboarding.
       // Mirrors the marketing-consent audit trail: whatsapp_consented_at
-      // proves WHEN she opted in. Set only on opt-in — skip leaves the
+      // proves WHEN she opted in. Set only on opt-in - skip leaves the
       // columns untouched so re-running onboarding can't clobber a prior one.
       const phoneDigits = data.phoneNumber.replace(/\D/g, '')
       if (isIlMobileValid(phoneDigits)) {
@@ -429,7 +429,7 @@ export default function Onboarding() {
         }
       }
 
-      // Create registry — but reuse an existing one first. A user who closed
+      // Create registry - but reuse an existing one first. A user who closed
       // the tab on the celebration screen still has onboarding_completed=false
       // and is routed back here; inserting unconditionally would give her a
       // second registry, which breaks every "the user's registry" lookup.
@@ -464,7 +464,7 @@ export default function Onboarding() {
         registryData = newRegistry
       }
 
-      // Phase 1: insert the picked items — the wow moment. Users can pick one
+      // Phase 1: insert the picked items - the wow moment. Users can pick one
       // item per essential group, so this may be several rows. The first pick
       // is flagged most-wanted so it shines on the dashboard.
       if (registryData && itemsToInsert.length > 0) {
@@ -487,7 +487,7 @@ export default function Onboarding() {
           .select('id')
         if (itemError) {
           console.error('[onboarding] First-item insert FAILED:', itemError)
-          // Surface to the user so they know — registry still exists, retry-able later
+          // Surface to the user so they know - registry still exists, retry-able later
           setError(`הרשימה נוצרה אבל הוספת הפריט נכשלה: ${itemError.message}. אפשר להוסיף ידנית מהרשימה.`)
         } else if (insertedItems) {
           console.log('[onboarding] ✅ First items added:', insertedItems.length)
@@ -526,14 +526,14 @@ export default function Onboarding() {
             .from('checklist_preferences')
             .upsert(checklistRows, { onConflict: 'user_id,category_id,item_name' })
           if (checklistError) {
-            // Non-critical — the item is already in the registry; checklist
+            // Non-critical - the item is already in the registry; checklist
             // marking is a nicety, never block onboarding for it.
             console.warn('[onboarding] checklist auto-check failed (non-critical):', checklistError)
           }
         }
       }
 
-      // Co-parent invite — fire only after the registry exists (send-invitation
+      // Co-parent invite - fire only after the registry exists (send-invitation
       // needs registry_id). Non-blocking: a failed invite must never fail
       // onboarding. The registry is already created, so the user can retry
       // from Settings.
@@ -572,7 +572,7 @@ export default function Onboarding() {
         })
       }
 
-      // Welcome email — fire and forget
+      // Welcome email - fire and forget
       try {
         const currentWeek = data.dueDate ? calculatePregnancyWeek(data.dueDate) : 12
         const clampedWeek = Math.max(12, Math.min(40, currentWeek))
@@ -645,7 +645,7 @@ export default function Onboarding() {
         // Admin notification: full onboarding-completed signal to
         // hello@nestyil.com. Replaces the old admin_new_user that fired from
         // AuthCallback before any data was collected. Deduped per-user via
-        // profiles.admin_completed_notified_at — only invoke if still null.
+        // profiles.admin_completed_notified_at - only invoke if still null.
         try {
           const { data: profileRow } = await supabase
             .from('profiles')
@@ -769,7 +769,7 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#fffbff] px-4 py-8 relative" dir="rtl">
       <FadedIconsBackground count={40} className="z-0 opacity-70" />
-      {/* Soft corner blobs — sized & positioned to feel like a subtle accent
+      {/* Soft corner blobs - sized & positioned to feel like a subtle accent
           at any viewport. On mobile we shrink them and push slightly off-edge
           so they don't overwhelm the small viewport (was: fixed 288/384 px
           blobs that took over the screen on phones). */}
@@ -783,7 +783,7 @@ export default function Onboarding() {
           <img src={asset('Nesty_logo.png')} alt="Nesty" className="h-16 w-auto" />
         </Link>
 
-        {/* Progress dots — 7 steps now */}
+        {/* Progress dots - 7 steps now */}
         <div className="flex justify-center gap-2 mb-6">
           {[1, 2, 3, 4, 5, 6, 7].map((s) => (
             <div
@@ -926,7 +926,7 @@ export default function Onboarding() {
                 })}
               </div>
 
-              {/* Inline first-time-parent question — compact */}
+              {/* Inline first-time-parent question - compact */}
               <div className="border-t border-[#e7e0ec] pt-3">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Baby className="w-4 h-4 text-[#6750a4]" />
@@ -1041,7 +1041,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* ─────────── Step 5: WhatsApp phone — gift-alert opt-in ─────────── */}
+          {/* ─────────── Step 5: WhatsApp phone - gift-alert opt-in ─────────── */}
           {step === 5 && (
             <div className="space-y-5">
               <div className="text-center">
@@ -1055,7 +1055,7 @@ export default function Onboarding() {
                 </div>
                 <h1 className="text-2xl font-medium text-[#1d192b] flex items-center justify-center gap-2">
                   <Heart className="w-5 h-5 text-[#6750a4] fill-current flex-shrink-0" />
-                  הוסיפי מספר — ואל תפספסי כלום!
+                  הוסיפי מספר - ואל תפספסי כלום!
                   <Heart className="w-5 h-5 text-[#6750a4] fill-current flex-shrink-0" />
                 </h1>
               </div>
@@ -1109,7 +1109,7 @@ export default function Onboarding() {
                 {data.phoneNumber.replace(/\D/g, '').length > 0 &&
                   !isIlMobileValid(data.phoneNumber.replace(/\D/g, '')) && (
                     <p className="text-sm text-red-600 text-center mt-2">
-                      מספר נייד ישראלי — 10 ספרות שמתחילות ב-05{' '}
+                      מספר נייד ישראלי - 10 ספרות שמתחילות ב-05{' '}
                       <Heart className="inline w-3.5 h-3.5 text-[#6750a4] fill-current align-[-2px]" />
                     </p>
                   )}
@@ -1132,7 +1132,7 @@ export default function Onboarding() {
                 </button>
               </div>
 
-              {/* Skip — a real secondary button, not a buried text link.
+              {/* Skip - a real secondary button, not a buried text link.
                   Visible on purpose: the value pitch does the persuading. */}
               <button
                 onClick={() => {
@@ -1144,7 +1144,7 @@ export default function Onboarding() {
                 אוסיף אחר כך
               </button>
 
-              {/* WhatsApp consent — same prominence rules as the marketing
+              {/* WhatsApp consent - same prominence rules as the marketing
                   disclosure on the final step (Israeli spam law). */}
               <p className="text-[12px] text-[#49454f] text-center leading-relaxed px-2">
                 בלחיצה על "כן" את מאשרת קבלת הודעות וואטסאפ מ-Nesty (באבו קפיטל בע"מ).
@@ -1212,7 +1212,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* ─────────── Step 7: First Item — the wow moment ─────────── */}
+          {/* ─────────── Step 7: First Item - the wow moment ─────────── */}
           {step === 7 && (
             <div className="space-y-4">
               <div className="text-center">
@@ -1232,7 +1232,7 @@ export default function Onboarding() {
                 </div>
               )}
 
-              {/* URL paste — compact */}
+              {/* URL paste - compact */}
               <div className="bg-[#f9f7fc] border border-[#e7e0ec] rounded-[16px] p-3">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Link2 className="w-3.5 h-3.5 text-[#6750a4]" />
@@ -1271,11 +1271,11 @@ export default function Onboarding() {
               {/* OR divider */}
               <div className="flex items-center gap-2 text-[10px] text-[#9e9e9e]">
                 <div className="flex-1 border-t border-[#e7e0ec]" />
-                <span>או בחרי מהמומלצים — אפשר אחד מכל קטגוריה</span>
+                <span>או בחרי מהמומלצים - אפשר אחד מכל קטגוריה</span>
                 <div className="flex-1 border-t border-[#e7e0ec]" />
               </div>
 
-              {/* Real essentials — same products users see in /checklist */}
+              {/* Real essentials - same products users see in /checklist */}
               <div className="space-y-3 max-h-[320px] overflow-y-auto -mx-1 px-1">
                 {buildCuratedRows().map(({ group, products }) => {
                   const cat = categoryFor(group.categoryEnum)
@@ -1366,7 +1366,7 @@ export default function Onboarding() {
                 </button>
               </div>
 
-              {/* Marketing disclosure — Israeli spam-law requires the
+              {/* Marketing disclosure - Israeli spam-law requires the
                   consent text to be prominent, not buried at 10px gray. */}
               <p className="text-[12px] text-[#49454f] text-center leading-relaxed px-2">
                 בלחיצה על "סיימי" את מאשרת קבלת אימיילים שיווקיים מ-Nesty
@@ -1377,7 +1377,7 @@ export default function Onboarding() {
                 או בלחיצה על "הסרה" בכל אימייל.
               </p>
 
-              {/* Skip — explicitly clears the picked item */}
+              {/* Skip - explicitly clears the picked item */}
               <button
                 onClick={handleSkipFirstItem}
                 disabled={isLoading}

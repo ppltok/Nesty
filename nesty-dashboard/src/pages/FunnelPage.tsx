@@ -55,7 +55,7 @@ export default function FunnelPage() {
     pct: totalTierUsers > 0 ? (row.users / totalTierUsers) * 100 : 0,
   }))
 
-  // Tier trend — stacked area chart data
+  // Tier trend - stacked area chart data
   const trendData = (tierTrend.data ?? []).map((r) => ({
     week: r.week,
     weekLabel: new Date(r.week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -170,7 +170,7 @@ export default function FunnelPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-1">Flag × Tier Matrix</h2>
           <p className="text-xs text-gray-500 mb-5">
-            Five orthogonal behavioral flags. A user can carry any combination — these don't replace the funnel, they cross with it. Cell shows users with that flag in that tier (and % of the tier).
+            Five orthogonal behavioral flags. A user can carry any combination - these don't replace the funnel, they cross with it. Cell shows users with that flag in that tier (and % of the tier).
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

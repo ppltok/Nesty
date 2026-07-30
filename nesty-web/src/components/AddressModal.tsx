@@ -137,7 +137,7 @@ export default function AddressModal({ isOpen, onClose, registryId, onSave }: Ad
             />
           </div>
 
-          {/* Show Address Toggle — ON by default (visible); turn OFF to hide */}
+          {/* Show Address Toggle - ON by default (visible); turn OFF to hide */}
           <div className="mt-6 p-4 bg-muted-light/50 rounded-xl">
             <button
               type="button"

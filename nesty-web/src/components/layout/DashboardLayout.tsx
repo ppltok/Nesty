@@ -22,7 +22,7 @@ export default function DashboardLayout() {
   const [tutorialCheckComplete, setTutorialCheckComplete] = useState(false)
 
   // Tutorial state management. The trigger is DB-first: any user who finished
-  // onboarding but never completed the tour gets it — reliably, once, on any
+  // onboarding but never completed the tour gets it - reliably, once, on any
   // device. The old trigger required a one-shot sessionStorage flag set at
   // the celebration screen (lost on email-confirmation redirects / new tabs),
   // which is why most users never saw the tutorial at all.
@@ -35,7 +35,7 @@ export default function DashboardLayout() {
     if (!popups.loaded) return
 
     tutorialChecked.current = true
-    // The old one-shot flag is no longer part of the trigger — clean it up.
+    // The old one-shot flag is no longer part of the trigger - clean it up.
     try { sessionStorage.removeItem('nesty_from_onboarding') } catch { /* ignore */ }
 
     if (!profile.onboarding_completed || popups.dismissed.tutorial_done) {
@@ -47,7 +47,7 @@ export default function DashboardLayout() {
     try { localDone = !!localStorage.getItem(getTutorialKey(user.id)) } catch { /* ignore */ }
     if (localDone) {
       // Grandfather: finished the tour on this device before the DB flag
-      // existed — record it account-wide instead of re-showing.
+      // existed - record it account-wide instead of re-showing.
       void dismissPopup(user.id, 'tutorial_done')
       setTutorialCheckComplete(true)
       return
@@ -74,7 +74,7 @@ export default function DashboardLayout() {
   const handleTutorialComplete = () => {
     markTutorialDone()
     setShowTutorial(false)
-    // Land on /checklist after the tutorial — that's where the user starts
+    // Land on /checklist after the tutorial - that's where the user starts
     // engaging with the product (browsing categories, picking items).
     navigate('/checklist')
   }

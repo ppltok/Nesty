@@ -26,7 +26,7 @@
   // Load configuration dynamically from config.js
   let NESTY_CONFIG = null;
 
-  // Categories (Hebrew) — keep in sync with nesty-web/src/data/categories.ts
+  // Categories (Hebrew) - keep in sync with nesty-web/src/data/categories.ts
   const CATEGORIES = [
     { id: 'general', name: 'כללי' },
     { id: 'strollers', name: 'עגלות וטיולים' },
@@ -43,7 +43,7 @@
     { id: 'siblings', name: 'תוספות לאחים / תאומים' }
   ];
 
-  // Category auto-suggestion from the product name. Ordered by priority —
+  // Category auto-suggestion from the product name. Ordered by priority -
   // the FIRST category with a keyword hit wins (e.g. "עגלת תאומים" must land
   // on strollers, not siblings). Returns '' when nothing is recognized so the
   // form keeps showing "בחרו קטגוריה".
@@ -304,7 +304,7 @@
 
   /**
    * Resolve a potentially relative URL to an absolute URL
-   * (mirrors productExtraction.ts — needed for paste-URL mode where the
+   * (mirrors productExtraction.ts - needed for paste-URL mode where the
    * parsed document's relative paths must resolve against the pasted URL)
    */
   function resolveUrl(src, baseUrl) {
@@ -317,7 +317,7 @@
     if (src.startsWith('//')) {
       return 'https:' + src;
     }
-    // Relative — resolve against base URL
+    // Relative - resolve against base URL
     if (baseUrl) {
       try {
         return new URL(src, baseUrl).href;
@@ -617,7 +617,7 @@
         return enrichPriceIfMissing(matchedProduct.result);
       }
 
-      // Single product with no URL match — use it directly (e.g. babyshome slug suffix)
+      // Single product with no URL match - use it directly (e.g. babyshome slug suffix)
       if (allProducts.length === 1) {
         console.log(`✅ Single product in JSON-LD, using it directly`);
         return enrichPriceIfMissing(allProducts[0].result);
@@ -629,7 +629,7 @@
       console.log('⚠️ No valid products found in JSON-LD, trying platform-specific fallback...');
     }
 
-    // Check for non-product page types (Article, BlogPost, etc.) —
+    // Check for non-product page types (Article, BlogPost, etc.) -
     // mirrors productExtraction.ts so pasted article links get a clear error.
     // Paste mode only (doc !== document): live pages keep their DOM fallbacks
     // even when the site emits a stray WebPage/Article JSON-LD block.
@@ -1232,7 +1232,7 @@
             return;
           }
 
-          // Generic number — assume page display currency
+          // Generic number - assume page display currency
           const numMatch = priceText.match(/^[\d,]+\.?\d*$/);
           if (numMatch && numMatch[0].length > 0) {
             foundPrices.push({
@@ -1429,7 +1429,7 @@
       // convert to ILS so Nesty always stores the currency the user sees
       if (productData.price && productData.priceCurrency === 'USD' && pageDisplaysILS) {
         const converted = (parseFloat(productData.price) * FX_TO_ILS.USD).toFixed(2);
-        console.log(`💱 Page shows ILS but got USD price — converting $${productData.price} → ₪${converted}`);
+        console.log(`💱 Page shows ILS but got USD price - converting $${productData.price} → ₪${converted}`);
         productData.price = converted;
         productData.priceCurrency = 'ILS';
       }
@@ -1863,7 +1863,7 @@
       }
     }
 
-    // Open Graph / product meta tags — rendered server-side even when JSON-LD
+    // Open Graph / product meta tags - rendered server-side even when JSON-LD
     // is missing (kept in sync with extractFromGenericDOM in productExtraction.ts).
     // Placed after the DOM selectors because the live DOM reflects sale prices
     // more reliably than meta tags on some themes.
@@ -1873,7 +1873,7 @@
     const ogPriceRaw = ogPriceMeta?.getAttribute('content') || '';
     const ogPriceMatch = ogPriceRaw.match(/[\d.,]+/);
     if (ogPriceMatch) {
-      // Strip thousands separators — og:price:amount can be "7,040.00"
+      // Strip thousands separators - og:price:amount can be "7,040.00"
       const price = ogPriceMatch[0].replace(/,/g, '');
       console.log('✅ Extracted price from og/product meta:', price);
       return price;
@@ -1904,7 +1904,7 @@
   function extractFromShopifyProduct(product) {
     const firstVariant = product.variants?.[0] || product;
 
-    // Collect all possible images — Shopify returns protocol-relative URLs
+    // Collect all possible images - Shopify returns protocol-relative URLs
     // ("//cdn.shopify.com/..."), resolve them so stored image_url is absolute
     const imageUrls = [];
     if (product.featured_image) imageUrls.push(resolveUrl(product.featured_image));
@@ -2136,7 +2136,7 @@
     }
   }
 
-  // FX rates to ILS — keep in sync with nesty-web/src/lib/productExtraction.ts
+  // FX rates to ILS - keep in sync with nesty-web/src/lib/productExtraction.ts
   const FX_TO_ILS = {
     USD: 3.19,
     EUR: 3.43,
@@ -2177,7 +2177,7 @@
   /**
    * Read the price out of an Offer. Some platforms (WooCommerce SEO plugins,
    * e.g. segalbaby.co.il) omit offer.price and nest it in priceSpecification[]
-   * instead — the current sale price is the spec WITHOUT priceType=ListPrice.
+   * instead - the current sale price is the spec WITHOUT priceType=ListPrice.
    * Kept in sync with priceFromOffer in nesty-web/src/lib/productExtraction.ts.
    */
   function priceFromOffer(offer) {
@@ -2278,15 +2278,15 @@
   function launchConfetti(container) {
     if (!container) return;
     const variants = [
-      // 0 — pastel squares raining from top
+      // 0 - pastel squares raining from top
       { colors: ['#f9c6d9', '#d8b4e2', '#a7d7f9', '#fce38a', '#b5ead7'], shape: 'square', count: 28, durationMs: [1400, 2200], size: [6, 10], spread: 'top', gravity: true, spin: true },
-      // 1 — burst of circles from center
+      // 1 - burst of circles from center
       { colors: ['#86608e', '#c48fb5', '#ffd1dc', '#b28dff'], shape: 'circle', count: 22, durationMs: [900, 1500], size: [5, 9], spread: 'center', gravity: false, spin: false },
-      // 2 — golden sparkle stars drifting up
+      // 2 - golden sparkle stars drifting up
       { colors: ['#ffd700', '#ffe58a', '#fff5b7', '#f7c948'], shape: 'star', count: 18, durationMs: [1600, 2400], size: [8, 14], spread: 'bottom', gravity: false, spin: true },
-      // 3 — rainbow streamers (tall rectangles) falling slowly
+      // 3 - rainbow streamers (tall rectangles) falling slowly
       { colors: ['#ff6b6b', '#ffa36b', '#ffe66b', '#6bd46b', '#6b9bff', '#b36bff'], shape: 'streamer', count: 20, durationMs: [1800, 2600], size: [4, 6], spread: 'top', gravity: true, spin: true },
-      // 4 — soft hearts floating up
+      // 4 - soft hearts floating up
       { colors: ['#ff8fa3', '#ffb3c1', '#ffc2d1', '#e2a3bf'], shape: 'heart', count: 14, durationMs: [1600, 2300], size: [12, 18], spread: 'bottom', gravity: false, spin: false }
     ];
     const v = variants[Math.floor(Math.random() * variants.length)];
@@ -2310,7 +2310,7 @@
 
     const host = document.createElement('div');
     host.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:9999;';
-    // container is the modal — ensure it's a positioning context
+    // container is the modal - ensure it's a positioning context
     const prevPos = getComputedStyle(container).position;
     if (prevPos === 'static') container.style.position = 'relative';
     container.appendChild(host);
@@ -2330,7 +2330,7 @@
         base = `width:${size}px;height:${size}px;background:${color};clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);`;
       }
       if (v.shape === 'heart') {
-        // Emoji-based heart — avoids clip-path sizing quirks.
+        // Emoji-based heart - avoids clip-path sizing quirks.
         el.style.cssText = `position:absolute;font-size:${size + 6}px;line-height:1;color:${color};user-select:none;`;
         el.textContent = '♥';
         return el;
@@ -2367,7 +2367,7 @@
     setTimeout(() => { host.remove(); }, cleanupMs);
   }
 
-  // Escape values interpolated into innerHTML — product names from page JSON-LD
+  // Escape values interpolated into innerHTML - product names from page JSON-LD
   // routinely contain quotes (e.g. sizes like 32") and must not break out of attributes
   function escapeHtml(value) {
     return String(value ?? '')
@@ -2423,7 +2423,7 @@
     let isPrivate = false;
     let isSecondhand = false;
 
-    // Shared field styles — mirrors the web app's AddItemModal (manual tab)
+    // Shared field styles - mirrors the web app's AddItemModal (manual tab)
     const LBL = `display: block; font-size: 11px; font-weight: 700; color: #49454f; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; font-family: 'Assistant', 'Heebo', sans-serif;`;
     const INP = `width: 100%; padding: 8px 12px; border: 1px solid #e7e0ec; border-radius: 12px; font-size: 14px; background: #ffffff; color: #1d192b; box-sizing: border-box; font-family: 'Assistant', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;`;
     const EYE_SVG = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
@@ -2432,7 +2432,7 @@
 
     modal.innerHTML = `
       <div class="nesty-modal-header" style="border-bottom: 1px solid #e7e0ec; padding: 12px 20px; flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background: #ffffff; border-radius: 28px 28px 0 0;">
-        <!-- Tab interface — styled like the web app's modal tabs -->
+        <!-- Tab interface - styled like the web app's modal tabs -->
         <div id="nesty-mode-tabs" style="display: flex; gap: 8px; align-items: center;">
           <button id="nesty-mode-current" class="nesty-mode-tab"
                   style="padding: 8px 16px; background: ${currentMode === 'current' ? '#6750a4' : '#f3edff'}; color: ${currentMode === 'current' ? '#ffffff' : '#6750a4'}; opacity: ${currentMode === 'current' ? '1' : '0.7'}; border: none; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: 'Assistant', 'Heebo', sans-serif;">
@@ -2448,10 +2448,10 @@
       </div>
 
       <div class="nesty-modal-body" style="padding: 16px; flex: 1; overflow-y: auto; background: #ffffff;">
-        <!-- Error banner (validation) — same style as the web app -->
+        <!-- Error banner (validation) - same style as the web app -->
         <div id="nesty-error-banner" style="display: none; background: #ffebee; color: #b3261e; padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 500; margin-bottom: 12px; font-family: 'Assistant', 'Heebo', sans-serif;"></div>
 
-        <!-- Current Page Mode Content — same structure as the app's manual tab -->
+        <!-- Current Page Mode Content - same structure as the app's manual tab -->
         <div id="nesty-current-mode-content" style="display: ${currentMode === 'current' ? 'grid' : 'none'}; grid-template-columns: 1fr 1fr; gap: 10px 12px;">
 
           <!-- Name - full width -->
@@ -2619,7 +2619,7 @@
       }
     });
 
-    // Toggle controls — same active colors as the web app's AddItemModal:
+    // Toggle controls - same active colors as the web app's AddItemModal:
     // "הכי רוצה!" red (#b3261e / #ffebee), "פריט פרטי" purple (#6750a4 / #f3edff)
     function styleToggle(prefix, on, color, bg) {
       const toggle = document.getElementById(`toggle-${prefix}`);
@@ -2674,7 +2674,7 @@
       }
     }
 
-    // Cancel button — same as the app's ביטול
+    // Cancel button - same as the app's ביטול
     document.getElementById('nesty-cancel').addEventListener('click', () => {
       overlay.remove();
     });
@@ -2838,7 +2838,7 @@
       const submitBtn = document.getElementById('nesty-submit');
       const errorBanner = document.getElementById('nesty-error-banner');
 
-      // Validation — same rules and messages as the web app
+      // Validation - same rules and messages as the web app
       const showError = (msg) => {
         if (errorBanner) {
           errorBanner.textContent = msg;
@@ -2943,7 +2943,7 @@
           setTimeout(() => overlay.remove(), 1500);
         } else {
           // Replace footer with a persistent success state:
-          // two buttons — "לרשימה שלי" (open dashboard) and "סגור" (close overlay).
+          // two buttons - "לרשימה שלי" (open dashboard) and "סגור" (close overlay).
           const footer = document.getElementById('nesty-footer');
           if (footer) {
             const prevChecked = !!(autoCloseCheckbox && autoCloseCheckbox.checked);

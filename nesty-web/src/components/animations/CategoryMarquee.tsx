@@ -3,7 +3,7 @@ import { categoryGradient } from '../../lib/categoryColors'
 
 /**
  * Narrow horizontal divider that scrolls every checklist category (icon + name)
- * across the page. Pure CSS animation — no JS, no observer overhead.
+ * across the page. Pure CSS animation - no JS, no observer overhead.
  *
  * Placed between sections to act as a soft, on-brand visual break that also
  * communicates the breadth of the checklist at a glance.
@@ -56,7 +56,7 @@ export default function CategoryMarquee() {
       {/*
         Two identical halves with trailing padding equal to the gap, so total
         width is exactly 2× one half. Translating -50% lands precisely on the
-        duplicate's first item — no visible seam.
+        duplicate's first item - no visible seam.
       */}
       {/* dir="ltr" so flex lays children left→right; translateX(-50%) then
           scrolls them leftward (which still matches Hebrew reading direction

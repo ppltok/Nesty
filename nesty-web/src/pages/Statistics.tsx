@@ -36,7 +36,7 @@ export default function Statistics() {
   return (
     <div className="min-h-screen bg-[#fffbff] font-sans text-[#1d192b]" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Hero Banner — aurora flowing background */}
+        {/* Hero Banner - aurora flowing background */}
         <div className="mb-10">
           <div className="bg-[#1d192b] rounded-[32px] p-8 text-white shadow-[0_20px_60px_-15px_rgba(29,25,43,0.4)] relative overflow-hidden group">
             {/* Dynamic flowing aurora background */}

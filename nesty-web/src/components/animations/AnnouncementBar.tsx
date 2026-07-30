@@ -9,7 +9,7 @@ const items = [
 
 /**
  * Sticky lavender announcement bar with endlessly-scrolling value props.
- * Pure CSS marquee — duplicates the list once and translates -50% in a loop
+ * Pure CSS marquee - duplicates the list once and translates -50% in a loop
  * so the seam is invisible.
  */
 // Repeat the small set of items enough times that one "half" is comfortably
@@ -43,14 +43,14 @@ export default function AnnouncementBar() {
       className="bg-gradient-to-l from-[#6750a4] via-[#5a4690] to-[#6750a4] text-white text-xs sm:text-sm font-medium overflow-hidden"
     >
       <div className="relative py-1.5 sm:py-2">
-        {/* Edge fades — sides dissolve into the lavender so the loop seam never shows */}
+        {/* Edge fades - sides dissolve into the lavender so the loop seam never shows */}
         <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[#6750a4] to-transparent z-10" />
         <div className="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-[#6750a4] to-transparent z-10" />
 
         {/*
           Two identical halves with trailing padding equal to the gap, so total
           width is exactly 2× one half. Translating -50% on the outer wrapper
-          lands precisely on the duplicate's first item — no visible seam.
+          lands precisely on the duplicate's first item - no visible seam.
         */}
         {/* dir="ltr" forces left→right flex layout so the strip starts at
             x=0; translateX(-50%) then scrolls it leftward, matching Hebrew

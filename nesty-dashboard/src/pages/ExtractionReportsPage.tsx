@@ -125,7 +125,7 @@ export default function ExtractionReportsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Extraction Reports</h1>
-          <p className="text-sm text-gray-500 mt-1">Bug reports from failed product extractions — grouped by domain</p>
+          <p className="text-sm text-gray-500 mt-1">Bug reports from failed product extractions - grouped by domain</p>
         </div>
         <button
           onClick={() => downloadCSV(sortedRows as unknown as Record<string, unknown>[], 'extraction-reports')}

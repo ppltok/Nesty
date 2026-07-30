@@ -17,9 +17,9 @@
     // ── Inline + floating ────────────────────────────────────────────
     { hostname: 'shilav.co.il',     hasInline: true, anchorSelectors: ['.shopify-payment-button', '[name="add"]'] },
     { hostname: 'motsesim.co.il',   hasInline: true, anchorSelectors: ['.product-form__buttons', '[name="add"]'] },
-    // baby-shark: Elementor renders late — only use block-level parent, never form.cart (flex)
+    // baby-shark: Elementor renders late - only use block-level parent, never form.cart (flex)
     { hostname: 'baby-shark.co.il', hasInline: true, anchorSelectors: ['.elementor-add-to-cart'] },
-    // agalease-baby: standard WooCommerce — form.cart is a block-level form
+    // agalease-baby: standard WooCommerce - form.cart is a block-level form
     { hostname: 'agalease-baby.co.il', hasInline: true, anchorSelectors: ['form.cart'] },
     { hostname: 'baby-star.co.il', hasInline: true, anchorSelectors: ['.add_to_cart_holder'] },
     // ── Floating only ────────────────────────────────────────────────
@@ -155,7 +155,7 @@
       }
     } catch (err) {
       console.error('Nesty button: failed to trigger form', err);
-      showToast(isHebrew ? 'שגיאה בפתיחת Nesty' : 'Nesty error — try clicking the extension icon');
+      showToast(isHebrew ? 'שגיאה בפתיחת Nesty' : 'Nesty error - try clicking the extension icon');
     } finally {
       if (pill) pill.classList.remove('loading');
     }
@@ -229,7 +229,7 @@
     var existing = document.querySelector('.nesty-inline-btn');
     if (existing) {
       if (existing.parentElement === anchor.parentElement) return; // already correct
-      existing.remove(); // wrong placement — re-inject at correct anchor
+      existing.remove(); // wrong placement - re-inject at correct anchor
     }
 
     const btn = document.createElement('button');

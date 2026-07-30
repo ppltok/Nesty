@@ -1,4 +1,4 @@
-// Unified popup/toast state — sourced from profiles (dismissed_popups JSONB
+// Unified popup/toast state - sourced from profiles (dismissed_popups JSONB
 // + last_milestone_shown INT) so a user logging in on a new device doesn't
 // re-see notifications. No localStorage for dedup.
 //
@@ -58,7 +58,7 @@ export function usePopupState(userId: string | undefined): PopupState {
       if (cancelled) return
       if (error || !data) {
         // Columns may not exist yet in local dev without the migration.
-        // Treat as empty state — nothing dismissed, milestone 0.
+        // Treat as empty state - nothing dismissed, milestone 0.
         setState({ dismissed: {}, lastMilestoneShown: 0, loaded: true })
         return
       }
@@ -97,7 +97,7 @@ export async function dismissPopup(
     .eq('id', userId)
   if (error) {
     // If the column doesn't exist yet (migration not applied), swallow the
-    // error — the popup has already been hidden in-memory for this session.
+    // error - the popup has already been hidden in-memory for this session.
     console.warn(`[usePopups] dismissPopup(${key}) failed:`, error.message)
   }
 }

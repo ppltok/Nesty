@@ -9,14 +9,14 @@ interface Props {
 
 export default function CheckoutRegistryPromptModal({ userId, onClose, onView }: Props) {
   const handleView = async () => {
-    // User actually viewed the registry — dismiss permanently.
+    // User actually viewed the registry - dismiss permanently.
     await dismissPopup(userId, 'checkout_registry_5', 'permanent')
     onClose()
     onView()
   }
 
   const handleDismiss = async () => {
-    // "Not now" — snooze for a few days, then nudge again.
+    // "Not now" - snooze for a few days, then nudge again.
     await dismissPopup(userId, 'checkout_registry_5', 'snooze')
     onClose()
   }

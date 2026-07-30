@@ -49,7 +49,7 @@ export const trackGoogleAdsSignupConversion = (userId: string) => {
   });
 };
 
-// Second Google Ads account (AW-17613449177) — PMax campaign on 143-300-1725
+// Second Google Ads account (AW-17613449177) - PMax campaign on 143-300-1725
 const GOOGLE_ADS_ID_PMAX = 'AW-17613449177';
 
 export const trackGoogleAdsPmaxSignupConversion = (userId: string) => {
@@ -255,7 +255,7 @@ export const trackPageView = (params: {
 };
 
 // ===================
-// ENGAGEMENT — EXTENSION & CO-PARENT
+// ENGAGEMENT - EXTENSION & CO-PARENT
 // ===================
 
 export const trackExtensionInstalled = (params: {

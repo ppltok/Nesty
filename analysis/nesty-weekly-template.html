@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nesty - Weekly Metrics</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root{color-scheme:light;--bg:#faf8fb;--card:#fff;--ink:#2c2230;--muted:#7a6f80;--line:#ece6ee;--brand:#86608e;--brand2:#cbb0d4;--good:#2f8f5b;--bad:#c0504d;--amber:#b8862f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Assistant','Heebo',-apple-system,system-ui,sans-serif;padding:24px;line-height:1.45}
+h1{font-size:22px;margin:0 0 2px}
+.sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+.grid{display:grid;gap:16px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.kpi .lbl{font-size:12px;color:var(--muted);margin-bottom:6px}
+.kpi .val{font-size:26px;font-weight:700}
+.kpi .delta{font-size:12px;margin-top:4px;font-weight:600}
+.up{color:var(--good)}.down{color:var(--bad)}.flat{color:var(--muted)}
+.two{grid-template-columns:1.1fr 1fr}
+@media(max-width:820px){.two{grid-template-columns:1fr}}
+.chart-wrap{position:relative;height:300px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:right;padding:8px 6px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:12px}
+.tier-name{font-weight:600}
+.pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:20px;background:#f1eaf4;color:var(--brand);font-weight:600}
+h2{font-size:15px;margin:0 0 12px}
+.note{font-size:12px;color:var(--muted);background:#fbf6ee;border:1px solid #f0e4cf;border-radius:10px;padding:10px 12px;margin-top:12px}
+.note b{color:var(--amber)}
+.foot{font-size:11px;color:var(--muted);margin-top:18px}
+</style>
+</head>
+<body>
+<h1>Nesty Weekly - Tier &amp; Key Metrics 🪺</h1>
+<div class="sub" id="sub">Live Supabase data · week ending 23 Jun 2026 · test accounts excluded · tiers per Product/User-Tiers.md</div>
+
+<div class="grid kpis" id="kpis"></div>
+
+<div class="grid two">
+  <div class="card">
+    <h2>Funnel - current state (all users)</h2>
+    <div class="chart-wrap"><canvas id="funnelChart"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Tier breakdown</h2>
+    <table id="funnelTable"><thead><tr><th>Tier</th><th>Users</th><th>Share</th></tr></thead><tbody></tbody></table>
+    <div class="note" style="background:#f1eaf4;border-color:#e2d2e8;color:var(--brand)">Funnel = current engagement depth of the whole base. KPI cards above track this week's <b>flow</b>.</div>
+  </div>
+</div>
+
+<div class="grid two" style="margin-top:16px">
+  <div class="card">
+    <h2>This week's activity</h2>
+    <table id="actTable"><thead><tr><th>Metric</th><th>Last 7d</th><th>Prior 7d</th><th>Δ</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div class="card">
+    <h2>Add-to-registry by source (last 7d)</h2>
+    <div class="chart-wrap"><canvas id="srcChart"></canvas></div>
+    <div class="note"><b>Extension downloads:</b> true install counts live in the Chrome Web Store dashboard (not in Supabase). Shown here is the in-DB proxy - items added <i>via</i> the extension and distinct users using it.</div>
+  </div>
+</div>
+
+<div class="foot" id="foot">Source: Supabase wopsrjfdaovlyibivijl (profiles · registries · items · purchases). Auto-refreshed every Sunday morning; Slack summary sent to Tom.</div>
+
+<script>
+// ── This week's snapshot (seed: week ending 2026-06-23) ──
+const D = {
+  funnel: {User:221, Started:74, Active:55, 'Super user':40, Champion:24},
+  signups_7d:17, signups_prior_7d:20,
+  items_7d:{total:67, extension:0, paste_url:37, manual:25, untracked:5, distinct_users:13},
+  items_prior_7d:124,
+  ext_users_7d:0,
+  shares_7d:0, shares_total:24,
+  gifts_7d:2, gifts_total_confirmed:13
+};
+const TIERS=['User','Started','Active','Super user','Champion'];
+const totalUsers=TIERS.reduce((s,t)=>s+D.funnel[t],0);
+
+function delta(c,p){const d=c-p;if(p===0&&d===0)return '<span class="flat">-</span>';
+  const pct=p>0?' ('+(d>=0?'+':'')+Math.round(d/p*100)+'%)':'';
+  const cls=d>0?'up':d<0?'down':'flat';const a=d>0?'▲':d<0?'▼':'•';
+  return '<span class="'+cls+'">'+a+' '+(d>=0?'+':'')+d+pct+'</span>';}
+
+// KPIs - weekly flow
+const kpis=[
+  {lbl:'New signups (7d)', val:D.signups_7d, c:D.signups_7d, p:D.signups_prior_7d},
+  {lbl:'Items added (7d)', val:D.items_7d.total, c:D.items_7d.total, p:D.items_prior_7d},
+  {lbl:'Registry shares (7d)', val:D.shares_7d, c:D.shares_7d, p:null, sub:D.shares_total+' all-time'},
+  {lbl:'Gifts received (7d)', val:D.gifts_7d, c:D.gifts_7d, p:null, sub:D.gifts_total_confirmed+' all-time'},
+  {lbl:'Extension users (7d)', val:D.ext_users_7d, c:D.ext_users_7d, p:null, sub:'proxy for installs'}
+];
+document.getElementById('kpis').innerHTML=kpis.map(k=>
+  '<div class="card kpi"><div class="lbl">'+k.lbl+'</div><div class="val">'+k.val+'</div><div class="delta '+(k.p===null?'flat':'')+'">'+
+  (k.p===null?(k.sub||''):delta(k.c,k.p)+' vs prior')+'</div></div>').join('');
+
+// funnel table + chart
+document.querySelector('#funnelTable tbody').innerHTML=TIERS.map(t=>
+  '<tr><td class="tier-name">'+t+'</td><td>'+D.funnel[t]+'</td><td><span class="pill">'+Math.round(D.funnel[t]/totalUsers*100)+'%</span></td></tr>').join('')
+  +'<tr><td class="tier-name">Total</td><td><b>'+totalUsers+'</b></td><td></td></tr>';
+
+// activity table
+const act=[
+  ['New signups', D.signups_7d, D.signups_prior_7d],
+  ['Items added', D.items_7d.total, D.items_prior_7d]
+];
+document.querySelector('#actTable tbody').innerHTML=act.map(r=>
+  '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+delta(r[1],r[2])+'</td></tr>').join('')
+  +'<tr><td>Registry shares</td><td>'+D.shares_7d+'</td><td class="flat">-</td><td class="flat">'+D.shares_total+' total</td></tr>'
+  +'<tr><td>Gifts received</td><td>'+D.gifts_7d+'</td><td class="flat">-</td><td class="flat">'+D.gifts_total_confirmed+' total</td></tr>'
+  +'<tr><td>Items via extension</td><td>'+D.items_7d.extension+'</td><td class="flat">-</td><td class="flat">'+D.ext_users_7d+' users</td></tr>';
+
+const brand='#86608e',brand2='#cbb0d4';
+new Chart(document.getElementById('funnelChart'),{type:'bar',
+  data:{labels:TIERS,datasets:[{label:'users',data:TIERS.map(t=>D.funnel[t]),backgroundColor:[ '#c9b3d0','#b193bd','#9a76a6','#86608e','#5f4068'],borderRadius:6}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true}}}});
+new Chart(document.getElementById('srcChart'),{type:'doughnut',
+  data:{labels:['Paste URL','Manual','Extension','Untracked'],datasets:[{data:[D.items_7d.paste_url,D.items_7d.manual,D.items_7d.extension,D.items_7d.untracked],backgroundColor:['#86608e','#b193bd','#7aa874','#d9cfe0']}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'}}}});
+</script>
+</body>
+</html>

@@ -20,6 +20,7 @@ import ExtractionReportsPage from '@/pages/ExtractionReportsPage'
 import AcquisitionPage from '@/pages/AcquisitionPage'
 import PriceAlertsPage from '@/pages/PriceAlertsPage'
 import ChecklistAnalyticsPage from '@/pages/ChecklistAnalyticsPage'
+import CollabsPage from '@/pages/CollabsPage'
 import { Loader2 } from 'lucide-react'
 
 const queryClient = new QueryClient({
@@ -27,8 +28,8 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes — prevents re-fetching on every page nav
-      gcTime: 10 * 60 * 1000, // 10 minutes — keep cache alive between pages
+      staleTime: 5 * 60 * 1000, // 5 minutes - prevents re-fetching on every page nav
+      gcTime: 10 * 60 * 1000, // 10 minutes - keep cache alive between pages
     },
   },
 })
@@ -69,6 +70,7 @@ function AuthGate() {
             <Route path="/acquisition" element={<AcquisitionPage />} />
             <Route path="/price-alerts" element={<PriceAlertsPage />} />
             <Route path="/checklist" element={<ChecklistAnalyticsPage />} />
+            <Route path="/collabs" element={<CollabsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

@@ -15,7 +15,7 @@ const baseProps = (props: IconProps): SVGProps<SVGSVGElement> => ({
 
 const fillSoft = { fill: 'currentColor', fillOpacity: 0.22, stroke: 'none' } as const
 
-// === 1. General — gift box ===
+// === 1. General - gift box ===
 export const GiftIcon = (props: IconProps) => (
   <svg {...baseProps(props)}>
     <rect x="5" y="13" width="22" height="14" rx="2" {...fillSoft} />
@@ -68,7 +68,7 @@ export const CribIcon = (props: IconProps) => (
   </svg>
 )
 
-// === 5. Safety — baby monitor ===
+// === 5. Safety - baby monitor ===
 export const MonitorIcon = (props: IconProps) => (
   <svg {...baseProps(props)}>
     <rect x="5" y="6" width="22" height="16" rx="3" {...fillSoft} />
@@ -81,7 +81,7 @@ export const MonitorIcon = (props: IconProps) => (
   </svg>
 )
 
-// === 6. Feeding — baby bottle ===
+// === 6. Feeding - baby bottle ===
 export const BottleIcon = (props: IconProps) => (
   <svg {...baseProps(props)}>
     <path d="M12 3h8a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
@@ -93,7 +93,7 @@ export const BottleIcon = (props: IconProps) => (
   </svg>
 )
 
-// === 7. Nursing — heart with droplet ===
+// === 7. Nursing - heart with droplet ===
 export const NursingIcon = (props: IconProps) => (
   <svg {...baseProps(props)}>
     <path d="M16 27s-10-6-10-13a6 6 0 0 1 10-4 6 6 0 0 1 10 4c0 7-10 13-10 13z" {...fillSoft} />
@@ -102,7 +102,7 @@ export const NursingIcon = (props: IconProps) => (
   </svg>
 )
 
-// === 8. Bath — tub with bubbles ===
+// === 8. Bath - tub with bubbles ===
 export const BathIcon = (props: IconProps) => (
   <svg {...baseProps(props)}>
     <circle cx="11" cy="6" r="1.5" {...fillSoft} />
@@ -116,7 +116,7 @@ export const BathIcon = (props: IconProps) => (
   </svg>
 )
 
-// === 9. Clothing — onesie ===
+// === 9. Clothing - onesie ===
 export const OnesieIcon = (props: IconProps) => (
   <svg {...baseProps(props)}>
     <path d="M11 4h10l3 4-3 3v15a2 2 0 0 1-2 2h-2v-4h-4v4h-2a2 2 0 0 1-2-2V11L8 8l3-4z" {...fillSoft} />
@@ -128,7 +128,7 @@ export const OnesieIcon = (props: IconProps) => (
   </svg>
 )
 
-// === 10. Bedding — pillow/cloud ===
+// === 10. Bedding - pillow/cloud ===
 export const PillowIcon = (props: IconProps) => (
   <svg {...baseProps(props)}>
     <path d="M5 11c0-3 2-5 5-5h12c3 0 5 2 5 5v10c0 3-2 5-5 5H10c-3 0-5-2-5-5V11z" {...fillSoft} />
@@ -139,7 +139,7 @@ export const PillowIcon = (props: IconProps) => (
   </svg>
 )
 
-// === 11. Toys — teddy bear ===
+// === 11. Toys - teddy bear ===
 export const TeddyIcon = (props: IconProps) => (
   <svg {...baseProps(props)}>
     <circle cx="9" cy="7" r="2.5" {...fillSoft} />
@@ -156,7 +156,7 @@ export const TeddyIcon = (props: IconProps) => (
   </svg>
 )
 
-// === 12. Birth Prep — mom heart ===
+// === 12. Birth Prep - mom heart ===
 export const MomHeartIcon = (props: IconProps) => (
   <svg {...baseProps(props)}>
     <circle cx="16" cy="9" r="4" {...fillSoft} />
@@ -167,7 +167,7 @@ export const MomHeartIcon = (props: IconProps) => (
   </svg>
 )
 
-// === 13. Siblings — two baby footprints / two hearts ===
+// === 13. Siblings - two baby footprints / two hearts ===
 export const SiblingsIcon = (props: IconProps) => (
   <svg {...baseProps(props)}>
     <circle cx="11" cy="11" r="4" {...fillSoft} />

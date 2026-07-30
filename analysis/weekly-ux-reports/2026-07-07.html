@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nesty Weekly UX &amp; Onboarding Report - 2026-07-07</title>
+<style>
+  :root{
+    --lav:#86608e; --lav-soft:#f3edf5; --ink:#1f1a22; --muted:#6b6270;
+    --line:#e7dfea; --good:#2e7d54; --warn:#b8860b; --bad:#c0392b; --bg:#faf8fb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;font-size:15px}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 24px 80px}
+  header.rpt{border-bottom:3px solid var(--lav);padding-bottom:18px;margin-bottom:8px}
+  h1{font-size:26px;margin:0 0 4px;color:var(--lav)}
+  .sub{color:var(--muted);font-size:14px}
+  h2{font-size:19px;margin:38px 0 12px;color:var(--lav);border-bottom:1px solid var(--line);padding-bottom:6px}
+  h3{font-size:16px;margin:22px 0 8px}
+  p{margin:8px 0}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:18px 0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
+  .card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .card .v{font-size:26px;font-weight:700;margin-top:4px}
+  .card .d{font-size:12.5px;margin-top:4px}
+  .up{color:var(--good)} .down{color:var(--bad)} .flat{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;background:#fff;
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:13.5px}
+  th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line)}
+  th{background:var(--lav-soft);font-weight:600;color:#4a3a50}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  code{background:var(--lav-soft);padding:1px 5px;border-radius:5px;font-size:12.5px}
+  a{color:var(--lav)}
+  .finding{background:#fff;border:1px solid var(--line);border-left:5px solid var(--lav);
+    border-radius:12px;padding:16px 18px;margin:16px 0}
+  .finding.sev-high{border-left-color:var(--bad)}
+  .finding.sev-med{border-left-color:var(--warn)}
+  .finding.sev-low{border-left-color:var(--good)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;
+    text-transform:uppercase;letter-spacing:.03em;vertical-align:middle;margin-inline-start:8px}
+  .tag.high{background:#fdecea;color:var(--bad)}
+  .tag.med{background:#fcf3dd;color:var(--warn)}
+  .tag.low{background:#e6f4ec;color:var(--good)}
+  .finding h3{margin-top:0}
+  .lbl{font-weight:700;color:var(--lav)}
+  .he{direction:rtl;text-align:right;font-family:"Assistant","Heebo",sans-serif}
+  .callout{background:var(--lav-soft);border-radius:12px;padding:14px 18px;margin:16px 0;border:1px solid var(--line)}
+  ul{margin:8px 0 8px 0;padding-inline-start:22px}
+  li{margin:5px 0}
+  .small{font-size:12.5px;color:var(--muted)}
+  .foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+  .pill{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--lav-soft);color:#4a3a50}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="rpt">
+  <h1>Nesty - Weekly UX &amp; Onboarding Report</h1>
+  <div class="sub">Reporting date: <strong>2026-07-07</strong> · Funnel window: last 7 days (2026-06-30 → 07-07) vs. prior 7 days ·
+  Clarity behavior window: last 3 days (API max) · Test accounts excluded</div>
+</header>
+
+<h2>TL;DR</h2>
+<div class="callout">
+  <strong>Growth is up sharply, quality of completion is the problem.</strong> Signups nearly doubled
+  week-over-week (23 → <strong>42</strong>), but onboarding completion slipped from 91.3% to
+  <strong>83.3%</strong>, and <strong>~29% of "completed" users have an empty registry</strong> (10 of 35, 0 items).
+  Co-parent invites are <strong>going out fine (5 sent this week)</strong> - the bottleneck is <strong>acceptance (1 of 5)</strong>.
+  Separately, <strong>Microsoft Clarity captured almost no production sessions</strong> this window (only internal/dev traffic),
+  so page-level friction data is effectively dark - that itself is finding #1.
+</div>
+
+<h2>Funnel - Week over Week</h2>
+<div class="cards">
+  <div class="card"><div class="k">Signups</div><div class="v">42</div><div class="d up">▲ +82.6% (was 23)</div></div>
+  <div class="card"><div class="k">Onboarding completion</div><div class="v">83.3%</div><div class="d down">▼ −8.0pp (was 91.3%)</div></div>
+  <div class="card"><div class="k">Completed users</div><div class="v">35</div><div class="d up">▲ was 21</div></div>
+  <div class="card"><div class="k">Empty owner registries</div><div class="v">29%</div><div class="d up">▲ better (was 48%)</div><div class="small">10 of 35 owners have 0 items</div></div>
+  <div class="card"><div class="k">Co-parent invites sent</div><div class="v">5</div><div class="d up">▲ was 4 · only 1 accepted</div><div class="small">acceptance is the bottleneck</div></div>
+  <div class="card"><div class="k">Avg items (completers)</div><div class="v">2.6</div><div class="d flat">among 35 completed</div></div>
+</div>
+
+<h3>Signups by source</h3>
+<table>
+  <tr><th>Source</th><th class="num">This week</th><th class="num">Prev week</th></tr>
+  <tr><td>(direct / none)</td><td class="num">26</td><td class="num">10</td></tr>
+  <tr><td>Instagram (<code>ig</code>)</td><td class="num">8</td><td class="num">9</td></tr>
+  <tr><td>Facebook (<code>fb</code>)</td><td class="num">8</td><td class="num">4</td></tr>
+  <tr><th>Total</th><th class="num">42</th><th class="num">23</th></tr>
+</table>
+<p class="small">The signup surge is driven mostly by <strong>direct/none</strong> (10 → 26). Paid social (ig+fb) held roughly flat
+(13 → 16). Worth confirming whether the "direct" spike is untagged paid traffic, a share/referral wave, or a PR/organic moment -
+the funnel can't tell them apart because these rows carry no UTM.</p>
+
+<h2>Findings &amp; Recommended Fixes</h2>
+
+<div class="finding sev-high">
+  <h3>1. Clarity is not capturing production traffic <span class="tag high">High</span></h3>
+  <p><span class="lbl">What's wrong:</span> The Clarity <em>live-insights</em> API returned only <strong>5 total sessions</strong>
+  over 3 days - all <code>MacOSX / PC / Israel</code>, landing on <code>localhost:5173</code> and <code>Electron</code>,
+  i.e. the developer's own machine. Zero real production visitor sessions, despite ~18 signups in the same 3-day span.
+  Every friction metric (RageClick, DeadClick, QuickBack, ScriptError, ErrorClick) reads 0 - not because the site is clean,
+  but because <strong>there is nothing to measure</strong>.</p>
+  <p><span class="lbl">Evidence:</span> Traffic = 5 sessions / 3 distinct users / 1 bot; PopularPages are all
+  <code>localhost:5173/*</code> + <code>https://Electron</code>; OS 100% MacOSX; Country 100% Israel. The Clarity tag itself
+  <em>is</em> correctly installed and ungated in <code>nesty-web/index.html</code> (project <code>xi1xr7lx6t</code>, no consent wall),
+  so the tag isn't the bug.</p>
+  <p><span class="lbl">Most likely cause:</span> Nearly all real signups arrive from Instagram/Facebook ads, which open in
+  <strong>Meta in-app webviews on mobile</strong> where Clarity frequently fails to establish a recording session (in-app browser
+  + storage partitioning). Result: the one audience we most need to watch (paid-social mobile) is invisible.</p>
+  <p><span class="lbl">Suggested fix:</span></p>
+  <ul>
+    <li>Open the Clarity dashboard → Recordings, filter last 3 days, and confirm the live count. If it's near-zero, this is real.</li>
+    <li>Verify the tag fires inside a Meta in-app browser: open a Nesty ad link from the Instagram app on a phone and check whether the session appears in Clarity within a few minutes.</li>
+    <li>If in-app webviews are the gap, add a lightweight first-party event fallback (we already have GTM + <code>tracking.ts</code>) so onboarding step drop-off is measurable even when Clarity can't record - don't let the weekly UX signal depend solely on Clarity.</li>
+    <li>Until fixed, treat the "0 friction signals" in these reports as <em>no data</em>, not <em>no problems</em>.</li>
+  </ul>
+</div>
+
+<div class="finding sev-high">
+  <h3>2. Completed-but-empty: ~29% finish onboarding with an empty registry <span class="tag high">High</span></h3>
+  <p><span class="lbl">What's wrong:</span> 11 of 35 completed users have 0 items - but 1 of those (gilibergman) is actually a
+  <strong>co-parent on someone else's registry</strong> (they signed up by accepting Ron's invite), so the true
+  empty-<em>owner</em> count is <strong>10 of 35 (~29%)</strong>. In the flow,
+  step 7 (<code>first_item</code>) is skippable and <code>handleComplete()</code> marks
+  <code>onboarding_completed=true</code> regardless of whether anything was added
+  (<a href="../../nesty-web/src/pages/onboarding/Onboarding.tsx">Onboarding.tsx</a>, <code>handleSkip</code> at step 7 → complete).
+  A registry with nothing in it can't be shared and gets no gifts - this is a silent activation dead-end.</p>
+  <p><span class="lbl">Evidence:</span> 34 of 35 completers created a registry, but only 24 added ≥1 item; avg 2.6 items among all completers.
+  Note several empty-completers have <strong>past due dates</strong> (e.g. <code>2026-03-07</code>, <code>2026-05-18</code>,
+  <code>2026-06-04</code>) - already-postpartum users for whom a registry-first flow may simply be the wrong fit.</p>
+  <p><span class="lbl">Suggested fix:</span></p>
+  <ul>
+    <li><strong>Seed the registry on skip.</strong> Pre-select 1–2 popular curated items on the first-item step so that even a
+    "skip" leaves the registry non-empty (the curated picker already exists via <code>handlePickItem</code>). Turns an empty
+    exit into a warm start the user can edit.</li>
+    <li><strong>Make the dashboard empty-state do the pushing.</strong> For completers with 0 items, the dashboard should open on a
+    focused "add your first item" state (paste-URL + curated grid), not a generic dashboard. Reuse the existing
+    <code>checklist_nudge</code> / engagement-email infra to follow up at 24–48h.</li>
+    <li><strong>Add a postpartum branch.</strong> When <code>due_date</code> is in the past, the first-item copy should pivot from
+    "build your registry" to a postpartum-relevant ask - otherwise these users correctly bounce off a pregnancy-registry framing.</li>
+  </ul>
+</div>
+
+<div class="finding sev-med">
+  <h3>3. Onboarding completion fell 8pp - coincides with the new WhatsApp phone step <span class="tag med">Medium</span></h3>
+  <p><span class="lbl">What's wrong:</span> Completion dropped 91.3% → 83.3% (7 abandoners this week). A new
+  <code>whatsapp_phone</code> step (step 5) was added to the flow in the last release
+  (<code>1cf3c5d Onboarding: WhatsApp phone-capture step</code>). Adding a personal-data ask mid-funnel is a classic drop point.</p>
+  <p><span class="lbl">Evidence:</span> All 7 abandoners this week have <strong>null due_date, null UTM, null landing_page</strong> -
+  i.e. their profiles are essentially empty, consistent with dropping at the very first screen (step 1 <code>name</code>, before
+  due-date is captured). So the aggregate decline could be first-screen friction rather than the phone step specifically - we can't
+  tell the exact step from the DB because the last-step-reached lives only in the Clarity <code>onboarding_step</code> tag
+  (see finding #1). The correlation with the new step is a hypothesis to confirm from recordings.</p>
+  <p><span class="lbl">Suggested fix:</span></p>
+  <ul>
+    <li>Confirm the exact abandonment step from Clarity recordings (filter tag <code>onboarding = in_progress</code>). If drop clusters at step 5, soften or defer the WhatsApp ask to <em>after</em> completion.</li>
+    <li>The WhatsApp step is already skippable - make the skip more visible and reassure why the number is asked (delivery / co-parent), per the "no pressure" brand rule.</li>
+    <li>If drop clusters at step 1, the issue is the entry screen, not the phone step - investigate load/first-paint on mobile in-app browsers.</li>
+  </ul>
+</div>
+
+<div class="finding sev-med">
+  <h3>4. Co-parent: invites are sent, but few get accepted <span class="tag med">Medium</span></h3>
+  <p><span class="lbl">Correction from an earlier draft:</span> co-parent invites are <strong>not</strong> zero. The initial
+  measure counted <code>registries.partner_id</code>, which is only set once a co-parent <em>accepts and links</em> - so it silently
+  dropped every sent-but-pending invite. Reading the real source (<code>registry_invitations</code>) flips the picture: the step
+  works, the <strong>acceptance</strong> is the leak.</p>
+  <p><span class="lbl">What's actually happening:</span> <strong>5 invites sent this week</strong> by 5 distinct inviters
+  (4 last week), but <strong>only 1 accepted</strong> (1 last week). The 4 unaccepted are all <code>pending</code> from
+  this-week signups. All-time, only <strong>16 of 422 registries (3.8%)</strong> end up with a linked partner - consistent with
+  a sending rate that's fine and an acceptance rate near 20%.</p>
+  <table>
+    <tr><th>Sent (UTC)</th><th>Inviter</th><th>Invited</th><th>Status</th></tr>
+    <tr><td>2026-07-06 18:14</td><td>ron.m.bergman@gmail.com</td><td>gilibergman@gmail.com</td><td><span class="pill" style="background:#e6f4ec;color:#2e7d54">accepted</span></td></tr>
+    <tr><td>2026-07-05 10:15</td><td>pritalmergui@gmail.com</td><td>niv.yakobi@gmail.com</td><td><span class="pill">pending</span></td></tr>
+    <tr><td>2026-07-04 23:42</td><td>irakarelin11@gmail.com</td><td>iraluna11@icloud.com</td><td><span class="pill">pending</span></td></tr>
+    <tr><td>2026-07-02 17:35</td><td>saharc450@gmail.com</td><td>saharc460@gmail.com</td><td><span class="pill">pending</span></td></tr>
+    <tr><td>2026-07-02 14:58</td><td>inbarshm93@gmail.com</td><td>odedharth@gmail.com</td><td><span class="pill">pending</span></td></tr>
+  </table>
+  <p><span class="lbl">Suggested fix:</span></p>
+  <ul>
+    <li><strong>Chase the pending invites.</strong> 4 co-parents were invited and never accepted - a reminder email to the invited
+    address (24–72h after send) is the highest-leverage fix. Nothing currently re-nudges an unaccepted invite.</li>
+    <li>Make the accept landing page frictionless - if it requires the invitee to sign up first with no context, that's where they fall off. Show whose registry they're joining and what they'll be able to do before asking them to auth.</li>
+    <li>Keep the invite ask in onboarding, but report <em>both</em> numbers going forward: <code>invites_sent</code> (from
+    <code>registry_invitations</code>) and <code>accepted</code> - not <code>partner_id</code> alone, which understates the top of this funnel.</li>
+  </ul>
+</div>
+
+<h2>Abandoned onboarding - this week (7 users)</h2>
+<p class="small">All have empty profiles (no due date / UTM / landing page captured), consistent with an early-step drop.
+Open each recording via Clarity → Recordings and filter by custom tag <code>user_id</code> (and <code>onboarding = in_progress</code>):
+<a href="https://clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions">clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions</a>.
+An admin alert with this link also fires ~10 min after each abandon via the <code>notify-abandoned-signups</code> edge function.</p>
+<table>
+  <tr><th>Signup (UTC)</th><th>Email</th><th>Source</th><th>user_id (Clarity tag)</th></tr>
+  <tr><td>2026-07-07 07:53</td><td>shirazmarcovich@gmail.com</td><td>direct</td><td><code>1eb0f927-3249-430a-9aaf-692cd396cd80</code></td></tr>
+  <tr><td>2026-07-06 07:32</td><td>yaelfinkelman6@gmail.com</td><td>direct</td><td><code>0741216c-73f6-448b-9b55-84b2dda2443d</code></td></tr>
+  <tr><td>2026-07-06 04:49</td><td>shirush489@gmail.com</td><td>direct</td><td><code>6b64dff6-3b79-4f27-99eb-0168c3ec48d5</code></td></tr>
+  <tr><td>2026-07-04 19:16</td><td>christizg@icloud.com</td><td>direct</td><td><code>9f98ba34-385a-49e4-8cb4-6cb213e126ce</code></td></tr>
+  <tr><td>2026-07-04 13:03</td><td>lironblum96@gmail.com</td><td>direct</td><td><code>5a0ed061-50c5-4c5b-b373-f1eecb98952f</code></td></tr>
+  <tr><td>2026-07-03 07:23</td><td>itay281998@gmail.com</td><td>direct</td><td><code>79562acd-c68d-482d-85f5-506a884d5723</code></td></tr>
+  <tr><td>2026-07-01 06:57</td><td>viktoriadolgonov@gmail.com</td><td>direct</td><td><code>2c03b789-c514-4408-9eb4-a4e3eddf3a89</code></td></tr>
+</table>
+
+<h2>Completed-but-empty - this week (11 users; 10 true empty owners)</h2>
+<p class="small">Finished onboarding but own registry has 0 items. Prime targets for a "add your first item" nudge. One (gilibergman) is
+a co-parent on another registry, not a real leak. Users with a <span class="pill">past due date</span> are likely postpartum and
+may need a different framing (see finding #2).</p>
+<table>
+  <tr><th>Signup (UTC)</th><th>Email</th><th>Due date</th><th>user_id</th></tr>
+  <tr><td>2026-07-06 18:15</td><td>gilibergman@gmail.com</td><td>-</td><td><code>edb4388c-db0e-4c1b-a30e-fc9459d25c22</code> <span class="pill" style="background:#e6f4ec;color:#2e7d54">co-parent on Ron's registry - not a leak</span></td></tr>
+  <tr><td>2026-07-06 09:23</td><td>khenperemen@gmail.com</td><td>2026-12-20</td><td><code>006535d8-a111-4fba-ba68-b2238cf63327</code></td></tr>
+  <tr><td>2026-07-06 08:57</td><td>sdsundagan@gmail.com</td><td>2026-09-03</td><td><code>aeec3f48-5edd-4d07-9499-71699e983bb0</code></td></tr>
+  <tr><td>2026-07-05 06:30</td><td>iralolo03@gmail.com</td><td>-</td><td><code>10d5c841-165f-4457-aa70-3dfe91fad21a</code></td></tr>
+  <tr><td>2026-07-02 14:56</td><td>inbarshm93@gmail.com</td><td>2026-09-10</td><td><code>146c14a5-e34d-4f6b-a781-f7b9ef30139a</code></td></tr>
+  <tr><td>2026-07-02 09:28</td><td>shalev212152@gmail.com</td><td>2026-09-13</td><td><code>519a527c-a2b9-441b-90bc-bc63b5629e1f</code> <span class="pill">ig</span></td></tr>
+  <tr><td>2026-07-02 09:24</td><td>adigolan2016@gmail.com</td><td><span class="pill">2026-06-04 (past)</span></td><td><code>ec3d68d3-5f43-4408-a37b-8ac8498d30eb</code></td></tr>
+  <tr><td>2026-07-02 06:51</td><td>ssss64392@gmail.com</td><td><span class="pill">2026-05-18 (past)</span></td><td><code>bd0dcb02-e5c2-468d-96f0-79c8f7a03f78</code></td></tr>
+  <tr><td>2026-07-01 17:38</td><td>moranzurinam@gmail.com</td><td>2026-10-02</td><td><code>bd43e79b-a8f4-4796-a266-5de8d629e13c</code></td></tr>
+  <tr><td>2026-07-01 14:29</td><td>maevetlmehablim@gmail.com</td><td><span class="pill">2026-03-07 (past)</span></td><td><code>5fa632a2-59c1-485f-8cf2-a353d6638402</code></td></tr>
+  <tr><td>2026-06-30 11:48</td><td>borbara0@gmail.com</td><td>2026-11-15</td><td><code>4a524f83-ad92-4c95-91dc-8bb081e25367</code></td></tr>
+</table>
+
+<h2>Clarity behavior data (last 3 days)</h2>
+<p>Not usable this window - see finding #1. For completeness, the raw signals:</p>
+<table>
+  <tr><th>Metric</th><th class="num">Value</th><th>Note</th></tr>
+  <tr><td>Total sessions</td><td class="num">5</td><td>3 distinct users, 1 bot - all internal/dev</td></tr>
+  <tr><td>RageClick / DeadClick / QuickBack</td><td class="num">0</td><td>No production sessions to measure</td></tr>
+  <tr><td>ScriptError / ErrorClick</td><td class="num">0</td><td>Same caveat</td></tr>
+  <tr><td>Avg scroll depth</td><td class="num">62.2%</td><td>Dev sessions only</td></tr>
+  <tr><td>Top pages</td><td colspan="2"><code>localhost:5173/dashboard</code>, <code>/onboarding</code>, <code>/checklist</code> - all localhost</td></tr>
+</table>
+
+<div class="foot">
+  <strong>Method:</strong> Clarity live-insights API (project <code>xi1xr7lx6t</code>, <code>numOfDays=3</code>, 4 calls: overall / URL / Device / Source).
+  Funnel via Supabase read-only SQL (project <code>wopsrjfdaovlyibivijl</code>), test accounts
+  <code>tom@ppltok.com, ortalgoldi@gmail.com, kehalim.michael@gmail.com, michael.kehalim@gmail.com</code> excluded, SELECT-only.
+  Generated 2026-07-07. Not committed to git.
+</div>
+
+</div>
+</body>
+</html>

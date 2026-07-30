@@ -60,7 +60,7 @@ export default function Checklist() {
   } | undefined>()
   const [isFromRecommendedProduct, setIsFromRecommendedProduct] = useState(false)
 
-  // Stable identity for AddItemModal's prefill — an inline object here re-triggers
+  // Stable identity for AddItemModal's prefill - an inline object here re-triggers
   // the modal's init effect on every Checklist re-render and wipes the user's input
   const addItemPrefill = useMemo(
     () => prefilledProductData || (prefilledCategory ? { category: prefilledCategory } : undefined),
@@ -851,7 +851,7 @@ export default function Checklist() {
                 <ChevronDown className={`w-4 h-4 text-[#49454f] transition-transform flex-shrink-0 ${isCollapsed ? '-rotate-90' : ''}`} />
               </button>
 
-              {/* Items — flat layout: no expand needed */}
+              {/* Items - flat layout: no expand needed */}
               {!isCollapsed && filteredItems.length > 0 && (
                 <div className="border-t border-[#e7e0ec]/60">
                   {filteredItems.map((item, index) => {
@@ -924,7 +924,7 @@ export default function Checklist() {
                             {priority === 'essential' ? 'חובה' : 'פינוק'}
                           </button>
 
-                          {/* Delete — desktop, shown on hover */}
+                          {/* Delete - desktop, shown on hover */}
                           <button
                             onClick={() => hideSuggestion(category.id, item)}
                             className="hidden sm:flex p-1.5 rounded-lg text-[#c0c0c0] hover:text-[#b3261e] hover:bg-[#ffebee] opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
@@ -933,9 +933,9 @@ export default function Checklist() {
                           </button>
                         </div>
 
-                        {/* Row 2: Notes + Quantity + Actions — always visible */}
+                        {/* Row 2: Notes + Quantity + Actions - always visible */}
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 px-3 sm:px-4 pb-2.5 mr-8 sm:mr-10">
-                          {/* Notes — compact inline with label */}
+                          {/* Notes - compact inline with label */}
                           <div className="flex items-center gap-1.5 sm:flex-1 sm:min-w-0">
                             <span className="text-[10px] text-[#9e9e9e] font-medium whitespace-nowrap flex-shrink-0">הערה:</span>
                             <div className="relative flex-1 min-w-0">
@@ -999,7 +999,7 @@ export default function Checklist() {
                           </div>
                         </div>
 
-                        {/* Recommended Products — prominent banner + carousel */}
+                        {/* Recommended Products - prominent banner + carousel */}
                         {hasProducts && (
                           <div className="mx-2 sm:mx-3 mb-2 mr-8 sm:mr-10">
                             <button

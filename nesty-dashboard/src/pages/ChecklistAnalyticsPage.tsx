@@ -11,7 +11,7 @@ import {
   PenLine, TrendingUp, Layers, Star
 } from 'lucide-react'
 
-// Category labels (Hebrew) — must match Checklist.tsx CATEGORIES
+// Category labels (Hebrew) - must match Checklist.tsx CATEGORIES
 const CATEGORY_LABELS: Record<string, string> = {
   strollers: 'Strollers',
   car_safety: 'Car Safety',
@@ -232,7 +232,7 @@ export default function ChecklistAnalyticsPage() {
       .slice(0, 15)
       .map(([name, count]) => ({ name, count }))
 
-    // Custom items (items not in known suggested items — detect by checking if multiple users have same item, or unique per user)
+    // Custom items (items not in known suggested items - detect by checking if multiple users have same item, or unique per user)
     // We'll identify items that appear for only 1 user as likely custom
     const itemUserCount = new Map<string, Set<string>>()
     for (const pref of prefs) {
@@ -551,7 +551,7 @@ export default function ChecklistAnalyticsPage() {
               Custom Items Added by Users ({metrics.customItems.length})
             </h3>
           </div>
-          <p className="text-xs text-gray-500 mb-3">Items unique to one user — potential gaps in suggested items list</p>
+          <p className="text-xs text-gray-500 mb-3">Items unique to one user - potential gaps in suggested items list</p>
           <div className="flex flex-wrap gap-2">
             {metrics.customItems.slice(0, 40).map(item => (
               <span

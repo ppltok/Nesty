@@ -2,7 +2,7 @@
 //
 // Why this exists: Resend's native open/click tracking is off account-wide, and
 // until now only the Supherb collab emails were instrumented (via collab_events).
-// Everything else — weekly updates, all four nudges, invites, welcome — went out
+// Everything else - weekly updates, all four nudges, invites, welcome - went out
 // completely blind. These helpers make every email answerable in SQL.
 //
 // Usage inside an email template:
@@ -13,7 +13,7 @@
 //   <img src="${openPixelUrl({ emailType: 'nudge_first_item', userId })}" width="1" height="1" />
 //
 // Clicks land on the `email-click` function, which logs the row and 302s to the
-// destination with UTM params appended — so the same click shows up both in
+// destination with UTM params appended - so the same click shows up both in
 // email_events (exact, per user) and in GA/GTM (aggregate traffic).
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''

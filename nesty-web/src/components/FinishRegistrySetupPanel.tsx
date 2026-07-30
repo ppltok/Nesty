@@ -1,4 +1,4 @@
-// "סיימי להקים את הקן" — Babylist-style activation checklist that lives on the
+// "סיימי להקים את הקן" - Babylist-style activation checklist that lives on the
 // Dashboard. Steps are tuned to push a registry past the Super-tier threshold
 // (5 items is the hero step). Collapsible (state persisted in localStorage) and
 // auto-dismisses once every step is satisfied. Dismissed/complete state is
@@ -103,7 +103,7 @@ export default function FinishRegistrySetupPanel({
   const extensionLatched = userId ? readFlag(`nesty_ext_installed_${userId}`) : false
 
   // When the extension is detected: persist the latch and fire the install pixel
-  // once (side-effects only — no setState in this effect).
+  // once (side-effects only - no setState in this effect).
   useEffect(() => {
     if (!extensionInstalled || !userId) return
     try {
@@ -174,7 +174,7 @@ export default function FinishRegistrySetupPanel({
       {
         key: 'address',
         label: 'הוספת כתובת וטלפון למשלוח',
-        hint: 'ככה קל לאחרים לדעת לאן לשלוח — ואפשר להשאיר פרטי',
+        hint: 'ככה קל לאחרים לדעת לאן לשלוח - ואפשר להשאיר פרטי',
         icon: MapPin,
         state: hasAddress ? 'done' : 'todo',
         onClick: onAddAddress,
@@ -214,7 +214,7 @@ export default function FinishRegistrySetupPanel({
 
   // Auto-dismiss once everything is satisfied (and detection has settled).
   // `autoComplete` drives the render guard; the effect only persists the
-  // dismissal (a side-effect — no setState here), guarded to fire once.
+  // dismissal (a side-effect - no setState here), guarded to fire once.
   const autoComplete = allSatisfied && !extensionLoading
   const autoDismissedRef = useRef(false)
   useEffect(() => {
@@ -243,7 +243,7 @@ export default function FinishRegistrySetupPanel({
 
   return (
     <div className="mb-8 bg-white rounded-[24px] border border-[#e7e0ec] shadow-[0_4px_20px_rgba(103,80,164,0.06)] overflow-hidden">
-      {/* Header — clicking it (outside the buttons) toggles collapse */}
+      {/* Header - clicking it (outside the buttons) toggles collapse */}
       <div
         onClick={toggleCollapsed}
         className="flex items-start justify-between gap-3 px-6 pt-6 pb-4 cursor-pointer select-none"
@@ -279,7 +279,7 @@ export default function FinishRegistrySetupPanel({
         </div>
       </div>
 
-      {/* Progress bar — always visible, even when collapsed */}
+      {/* Progress bar - always visible, even when collapsed */}
       <div className="px-6 pb-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-bold text-[#6750a4]">
@@ -295,7 +295,7 @@ export default function FinishRegistrySetupPanel({
         </div>
       </div>
 
-      {/* Steps — hidden when collapsed */}
+      {/* Steps - hidden when collapsed */}
       {!collapsed && (
         <ul className="divide-y divide-[#f1edf6]">
           {steps.map((step) => {

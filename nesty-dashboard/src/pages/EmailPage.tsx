@@ -112,7 +112,7 @@ export default function EmailPage() {
     }
   }, [logs.data])
 
-  // Delivery funnel from real log data (must be before early returns — hooks can't be conditional)
+  // Delivery funnel from real log data (must be before early returns - hooks can't be conditional)
   const funnelFromLogs = useMemo(() => {
     const rows = logs.data ?? []
     const total = rows.length
@@ -208,7 +208,7 @@ export default function EmailPage() {
         />
       </div>
 
-      {/* Daily Email Volume by Type — Stacked Bar Chart */}
+      {/* Daily Email Volume by Type - Stacked Bar Chart */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-medium text-gray-900 mb-4">Daily Email Volume by Type</h2>
         {dailyByType.data.length > 0 ? (
@@ -295,7 +295,7 @@ export default function EmailPage() {
                     <td className="px-4 py-3 text-right text-gray-700">{formatNumber(n.acted)}</td>
                     <td className="px-4 py-3 text-right">
                       <span className={n.sent > 0 && n.acted / n.sent > 0.1 ? 'text-green-600 font-medium' : 'text-gray-700'}>
-                        {n.sent > 0 ? formatPercent((n.acted / n.sent) * 100) : '—'}
+                        {n.sent > 0 ? formatPercent((n.acted / n.sent) * 100) : '-'}
                       </span>
                     </td>
                   </tr>
@@ -421,7 +421,7 @@ export default function EmailPage() {
                         {TYPE_LABELS[row.email_type] ?? row.email_type}
                       </td>
                       <td className="px-4 py-3 text-gray-500 max-w-[200px] truncate" title={row.subject ?? ''}>
-                        {row.subject ?? '—'}
+                        {row.subject ?? '-'}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.bg} ${badge.text}`}>
@@ -431,12 +431,12 @@ export default function EmailPage() {
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                         {row.opened_at
                           ? new Date(row.opened_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
-                          : '—'}
+                          : '-'}
                       </td>
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                         {row.clicked_at
                           ? new Date(row.clicked_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
-                          : '—'}
+                          : '-'}
                       </td>
                     </tr>
                   )

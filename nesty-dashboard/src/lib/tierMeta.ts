@@ -7,7 +7,7 @@
  * Each tier exposes:
  *   - label: display name (English, internal only)
  *   - criteria: short rule shown next to the label so a developer never
- *               has to look up "what counts as Active" — it's right there
+ *               has to look up "what counts as Active" - it's right there
  *   - description: one-line context for why this tier matters
  *   - color: chart/bar fill colour
  */
@@ -48,7 +48,7 @@ export const TIER_META: Record<TierName, TierDef> = {
   champion: {
     label: 'Champion',
     criteria: '≥1 item received',
-    description: 'Real outcome — something reached the baby',
+    description: 'Real outcome - something reached the baby',
     color: '#f472b6',
   },
 }

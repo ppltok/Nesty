@@ -1,9 +1,9 @@
-// /settings/emails — granular email preferences page.
+// /settings/emails - granular email preferences page.
 //
 // Layout mirrors the Settings page (max-w-2xl, bg-white rounded-2xl cards).
 // Toggles auto-save on change (no Save button); matches the pattern used in
 // other Nesty settings surfaces. When the master is off, category toggles
-// are visually disabled but their underlying DB values aren't touched — so
+// are visually disabled but their underlying DB values aren't touched - so
 // turning the master back on restores the user's prior category choices.
 
 import { useEffect, useState } from 'react'
@@ -84,7 +84,7 @@ export default function EmailPreferences() {
         .maybeSingle()
       if (cancelled) return
       if (error || !data) {
-        // Migration not applied yet — treat as default (all true).
+        // Migration not applied yet - treat as default (all true).
         setPrefs(DEFAULT_PREFS)
       } else {
         setPrefs({
@@ -127,7 +127,7 @@ export default function EmailPreferences() {
     }
     setSavedKey(column)
     setTimeout(() => setSavedKey((k) => (k === column ? null : k)), 2000)
-    // Profile in the auth context is stale now — refresh so other pages see new values.
+    // Profile in the auth context is stale now - refresh so other pages see new values.
     void refreshProfile?.()
   }
 
@@ -196,7 +196,7 @@ export default function EmailPreferences() {
                 <p className="text-sm font-medium text-foreground mb-1">סוגי אימיילים</p>
                 {masterOff ? (
                   <p className="text-xs text-amber-600">
-                    המתג הראשי כבוי — כל הקטגוריות מושבתות. הפעילי אותו למעלה כדי לנהל העדפות ספציפיות.
+                    המתג הראשי כבוי - כל הקטגוריות מושבתות. הפעילי אותו למעלה כדי לנהל העדפות ספציפיות.
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
@@ -242,7 +242,7 @@ export default function EmailPreferences() {
                     הודעות על קבלת מתנות מחברים ומשפחה
                   </p>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    גם הזמנות לנהל את הרשימה ביחד עם בן/בת הזוג — נשלחות תמיד ולא ניתן לבטל אותן.
+                    גם הזמנות לנהל את הרשימה ביחד עם בן/בת הזוג - נשלחות תמיד ולא ניתן לבטל אותן.
                     הן חלק מהשירות שאת מצפה לו כשמישהו קונה לך מתנה או רוצה להצטרף לרשימה.
                   </p>
                 </div>

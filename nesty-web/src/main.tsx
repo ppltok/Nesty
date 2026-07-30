@@ -67,7 +67,7 @@ if (import.meta.env.DEV) {
 
     previewOnboarding() {
       // Renders the onboarding UI without any DB writes. Bypasses the
-      // route guard via ?preview=1 — Onboarding.tsx detects the same
+      // route guard via ?preview=1 - Onboarding.tsx detects the same
       // flag and stubs handleComplete/handleCelebrationComplete.
       window.location.href = '/onboarding?preview=1'
     },
@@ -90,10 +90,10 @@ if (import.meta.env.DEV) {
   console.log(
     '%c🪺 Nesty dev helpers loaded',
     'color: #86608e; font-weight: bold;',
-    '\n  __nesty.previewOnboarding()       — preview the onboarding UI, no DB writes',
-    '\n  await __nesty.resetOnboarding()   — full reset (deletes registry+items, flips flag)',
-    '\n  __nesty.replayTutorial()          — tutorial only, no DB changes',
-    '\n  await __nesty.me()                — current user',
+    '\n  __nesty.previewOnboarding()       - preview the onboarding UI, no DB writes',
+    '\n  await __nesty.resetOnboarding()   - full reset (deletes registry+items, flips flag)',
+    '\n  __nesty.replayTutorial()          - tutorial only, no DB changes',
+    '\n  await __nesty.me()                - current user',
   )
 }
 

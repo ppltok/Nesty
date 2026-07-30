@@ -37,7 +37,7 @@ export default function ResetPasswordRequest() {
     setIsLoading(false)
 
     if (resetError) {
-      // Only surface true errors (rate limit, network) — not "user not found"
+      // Only surface true errors (rate limit, network) - not "user not found"
       // which Supabase doesn't return here but we still guard against.
       setError(translateAuthError(resetError))
       return

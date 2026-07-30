@@ -7,15 +7,15 @@ import { trackGoogleAdsSignupConversion, trackGoogleAdsPmaxSignupConversion } fr
 /**
  * Universal auth-callback landing page. Handles three flows on the same route:
  *
- *   1. Google OAuth     — tokens arrive in `window.location.hash` (#access_token=...).
+ *   1. Google OAuth     - tokens arrive in `window.location.hash` (#access_token=...).
  *                         Supabase client extracts them automatically via
  *                         `detectSessionInUrl: true`; we wait for getSession().
  *
- *   2. Email confirmation — `?code=...&type=signup` arrives in the query string.
+ *   2. Email confirmation - `?code=...&type=signup` arrives in the query string.
  *                         We exchange the code for a session explicitly
  *                         (PKCE flow) before calling getSession().
  *
- *   3. Password recovery — `?type=recovery` (optionally `?code=...`). We don't
+ *   3. Password recovery - `?type=recovery` (optionally `?code=...`). We don't
  *                         complete the flow here; we hand off to
  *                         /auth/update-password, which consumes the
  *                         PASSWORD_RECOVERY event from AuthContext.
@@ -24,7 +24,7 @@ import { trackGoogleAdsSignupConversion, trackGoogleAdsPmaxSignupConversion } fr
  *   - Look up the profile to decide onboarding vs dashboard.
  *   - Fire the Google Ads signup conversion (deduped per-user) for verified
  *     new signups. The admin notification to hello@nestyil.com is no longer
- *     fired here — it now fires from Onboarding.tsx (admin_onboarding_completed)
+ *     fired here - it now fires from Onboarding.tsx (admin_onboarding_completed)
  *     and from a cron-driven edge function (admin_onboarding_abandoned).
  *   - Honor a safe `?redirect=` param (from invite links) over the default
  *     onboarding/dashboard destination.
@@ -96,7 +96,7 @@ export default function AuthCallback() {
         }
       }
 
-      // ─── 4. OAuth hash tokens — wait for Supabase client to process ──
+      // ─── 4. OAuth hash tokens - wait for Supabase client to process ──
       if (window.location.hash.includes('access_token')) {
         console.log('AuthCallback: access_token in hash, waiting for Supabase to process')
         setStatus('בונים את הקן...')
@@ -134,7 +134,7 @@ export default function AuthCallback() {
       // ─── 6. Profile lookup ─────────────────────────────────
       setStatus('מתחילים להתרגש!')
 
-      // Use maybeSingle() — the handle_new_user trigger may not have run
+      // Use maybeSingle() - the handle_new_user trigger may not have run
       // yet on a brand-new signup, and we tolerate that case.
       const { data: profile } = await supabase
         .from('profiles')

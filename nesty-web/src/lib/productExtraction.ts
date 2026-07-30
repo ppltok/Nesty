@@ -13,7 +13,7 @@
 
 // TypeScript Interfaces
 export interface ExtractedProductData {
-  /** Display price — already converted to ILS when source was a known foreign currency. */
+  /** Display price - already converted to ILS when source was a known foreign currency. */
   name: string
   price: string
   /** Currency of the `price` field. 'ILS' after conversion; the original is preserved in sourceCurrency. */
@@ -27,7 +27,7 @@ export interface ExtractedProductData {
   sourceCurrency?: string
 }
 
-// FX rates to ILS — used when a foreign-currency product page is extracted.
+// FX rates to ILS - used when a foreign-currency product page is extracted.
 // Keep these in sync with the extension's content.js conversion logic.
 // Updated periodically; small drift is acceptable since the user can edit
 // the price before saving.
@@ -47,7 +47,7 @@ const FX_TO_ILS: Record<string, number> = {
  */
 function convertPriceToILS(data: ExtractedProductData): ExtractedProductData {
   const rawCurrency = (data.priceCurrency || '').toUpperCase().trim()
-  // Strip thousands separators — parseFloat("1,299") would return 1
+  // Strip thousands separators - parseFloat("1,299") would return 1
   const rawPrice = parseFloat((data.price || '').replace(/,/g, ''))
 
   // Pass through when there's nothing to convert
@@ -73,7 +73,7 @@ function convertPriceToILS(data: ExtractedProductData): ExtractedProductData {
 }
 
 /**
- * Category auto-suggestion from the product name. Ordered by priority —
+ * Category auto-suggestion from the product name. Ordered by priority -
  * the FIRST category with a keyword hit wins (e.g. "עגלת תאומים" must land
  * on strollers, not siblings). Returns '' when nothing is recognized so the
  * form keeps showing "בחרו קטגוריה".
@@ -118,7 +118,7 @@ interface OfferSchema {
 /**
  * Read the price out of an Offer. Some platforms (WooCommerce SEO plugins,
  * e.g. segalbaby.co.il) omit offer.price and nest it in priceSpecification[]
- * instead — where the current sale price is the spec WITHOUT
+ * instead - where the current sale price is the spec WITHOUT
  * priceType=ListPrice (ListPrice is the crossed-out original).
  */
 function priceFromOffer(offer: OfferSchema | undefined): { price: string; currency: string } {
@@ -170,7 +170,7 @@ function resolveUrl(src: string, baseUrl?: string): string {
   if (src.startsWith('//')) {
     return 'https:' + src
   }
-  // Relative — resolve against base URL
+  // Relative - resolve against base URL
   if (baseUrl) {
     try {
       return new URL(src, baseUrl).href
@@ -237,7 +237,7 @@ function extractFromProductGroup(data: ProductGroupSchema, baseUrl?: string): Ex
   const variants = data.hasVariant || []
   const firstVariant = Array.isArray(variants) ? variants[0] : variants
   // Handle case-insensitive property access (Wix uses "Offers" instead of "offers")
-  // offers can itself be an array — normalize like extractFromProduct does
+  // offers can itself be an array - normalize like extractFromProduct does
   const offersData = (firstVariant as any)?.offers || (firstVariant as any)?.Offers
   const offer = (Array.isArray(offersData) ? offersData[0] : offersData) as OfferSchema | undefined
 
@@ -1147,14 +1147,14 @@ function extractFromGenericDOM(doc: Document, baseUrl?: string): ExtractedProduc
 
   // Priority 1: Open Graph / product meta tags. Shopify (and most platforms)
   // render these server-side even when the JSON-LD app fails to inject its
-  // schema — this rescues pages whose structured data is intermittently missing.
+  // schema - this rescues pages whose structured data is intermittently missing.
   const ogPriceMeta = doc.querySelector(
     'meta[property="og:price:amount"], meta[property="product:price:amount"]'
   )
   const ogPriceRaw = ogPriceMeta?.getAttribute('content') || ''
   const ogPriceMatch = ogPriceRaw.match(/[\d.,]+/)
   if (ogPriceMatch) {
-    // Strip thousands separators — og:price:amount can be "7,040.00"
+    // Strip thousands separators - og:price:amount can be "7,040.00"
     price = ogPriceMatch[0].replace(/,/g, '')
     priceCurrency = doc.querySelector(
       'meta[property="og:price:currency"], meta[property="product:price:currency"]'
@@ -1260,7 +1260,7 @@ function extractFromGenericDOM(doc: Document, baseUrl?: string): ExtractedProduc
 }
 
 /**
- * Diagnostics captured when extraction fails — attached to the thrown Error
+ * Diagnostics captured when extraction fails - attached to the thrown Error
  * (as `error.diagnostics`) so AddItemModal can persist them to
  * extraction_reports and failures become debuggable after the fact.
  */
@@ -1316,7 +1316,7 @@ async function fetchViaEdge(
 
 /**
  * Last-resort fallback for Shopify stores whose JSON-LD is missing or broken
- * (it's usually injected by a third-party SEO app that intermittently fails —
+ * (it's usually injected by a third-party SEO app that intermittently fails -
  * see baby-star.co.il). Shopify always serves /products/<handle>.js with the
  * full product JSON: title, price (in minor units, e.g. agorot), images.
  *
@@ -1348,7 +1348,7 @@ async function tryShopifyProductJs(
       ? (product.price / 100).toFixed(2)
       : ''
 
-    // The endpoint has no currency field — read the store currency from the
+    // The endpoint has no currency field - read the store currency from the
     // page HTML (Shopify.currency = {"active":"ILS",...} or og:price:currency)
     const currencyMatch =
       pageHtml.match(/Shopify\.currency\s*=\s*\{"active":"([A-Z]{3})"/) ||
@@ -1409,7 +1409,7 @@ export async function extractProductFromUrl(
     try {
       productData = extractProductDataFromDocument(doc, baseUrl)
     } catch (err) {
-      // e.g. the "looks like an article" error — still worth trying the
+      // e.g. the "looks like an article" error - still worth trying the
       // Shopify fallback, since 'FAQPage'-only JSON-LD triggers it on real
       // product pages whose Product block is missing
       extractionError = err as ExtractionError

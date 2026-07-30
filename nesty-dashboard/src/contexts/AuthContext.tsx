@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (mounted) setLoading(false)
     })
 
-    // Safety timeout — never stay loading forever
+    // Safety timeout - never stay loading forever
     const timeout = setTimeout(() => {
       if (mounted) setLoading(false)
     }, 5000)

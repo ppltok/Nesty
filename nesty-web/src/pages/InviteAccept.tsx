@@ -50,7 +50,7 @@ export default function InviteAccept() {
       // Use Edge Function to validate (it uses service_role to bypass RLS)
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        // Always include auth — use session if available, else anon key
+        // Always include auth - use session if available, else anon key
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       }
 
@@ -98,7 +98,7 @@ export default function InviteAccept() {
 
       // Check if the logged-in user is the one who SENT this invite
       if (user?.email && result.invited_email !== user.email) {
-        // The logged-in user is NOT the invited person — likely the owner clicking their own link
+        // The logged-in user is NOT the invited person - likely the owner clicking their own link
         setState('wrong_account')
         return
       }
@@ -197,7 +197,7 @@ export default function InviteAccept() {
             </div>
           )}
 
-          {/* Needs auth — redirect to sign up/in */}
+          {/* Needs auth - redirect to sign up/in */}
           {state === 'needs_auth' && inviteInfo && (
             <div>
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -218,14 +218,14 @@ export default function InviteAccept() {
                 </Link>
                 <Link to={`/auth/signin?redirect=/invite/${token}`}>
                   <Button variant="outline" className="w-full mt-2">
-                    כבר יש לי חשבון — התחברות
+                    כבר יש לי חשבון - התחברות
                   </Button>
                 </Link>
               </div>
             </div>
           )}
 
-          {/* Valid — ready to accept */}
+          {/* Valid - ready to accept */}
           {state === 'valid' && inviteInfo && (
             <div>
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -336,7 +336,7 @@ export default function InviteAccept() {
             </div>
           )}
 
-          {/* Wrong account — owner clicking their own invite link */}
+          {/* Wrong account - owner clicking their own invite link */}
           {state === 'wrong_account' && inviteInfo && (
             <div>
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">

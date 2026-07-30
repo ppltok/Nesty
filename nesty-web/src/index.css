@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Endlessly-scrolling marquee — used by AnnouncementBar and CategoryMarquee.
+/* Endlessly-scrolling marquee - used by AnnouncementBar and CategoryMarquee.
  * Inline @keyframes so we don't depend on tailwind.config.js animation extend
  * (which can miss HMR if the config was edited mid-session). */
 @keyframes nesty-marquee {
@@ -557,7 +557,7 @@
    so the icon stays upright. Different speeds + start angles for organic motion.
    ═══════════════════════ */
 
-/* Orbit 1 — Heart: 25s, starts at 0° */
+/* Orbit 1 - Heart: 25s, starts at 0° */
 @keyframes orbit-1 {
   from {
     transform: rotate(0deg);
@@ -586,7 +586,7 @@
   animation: orbit-counter-1 25s linear infinite;
 }
 
-/* Orbit 2 — Gift: 30s, starts at 72° */
+/* Orbit 2 - Gift: 30s, starts at 72° */
 @keyframes orbit-2 {
   from {
     transform: rotate(72deg);
@@ -615,7 +615,7 @@
   animation: orbit-counter-2 30s linear infinite;
 }
 
-/* Orbit 3 — Star: 22s, starts at 144° */
+/* Orbit 3 - Star: 22s, starts at 144° */
 @keyframes orbit-3 {
   from {
     transform: rotate(144deg);
@@ -644,7 +644,7 @@
   animation: orbit-counter-3 22s linear infinite;
 }
 
-/* Orbit 4 — Baby: 28s, starts at 216° */
+/* Orbit 4 - Baby: 28s, starts at 216° */
 @keyframes orbit-4 {
   from {
     transform: rotate(216deg);
@@ -673,7 +673,7 @@
   animation: orbit-counter-4 28s linear infinite;
 }
 
-/* Orbit 5 — Sparkles: 20s, starts at 288° */
+/* Orbit 5 - Sparkles: 20s, starts at 288° */
 @keyframes orbit-5 {
   from {
     transform: rotate(288deg);

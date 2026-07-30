@@ -1,8 +1,8 @@
-// /unsubscribed — public confirmation page users land on after the
+// /unsubscribed - public confirmation page users land on after the
 // unsubscribe edge function flips their preference. The edge function
 // sends them here with ?cat=weekly&action=unsub (or resub).
 //
-// No auth required — users may be logged out when clicking the email link.
+// No auth required - users may be logged out when clicking the email link.
 // Logged-in users see an extra "Manage all preferences" button that links
 // to /settings/emails for granular control.
 
@@ -28,7 +28,7 @@ export default function Unsubscribed() {
       : EMAIL_CATEGORIES[cat as EmailCategoryKey]?.label_he ?? 'אימיילים'
 
   // For re-subscribe, users go through /settings/emails (requires login).
-  // We don't expose a client-side re-subscribe token — only the server has
+  // We don't expose a client-side re-subscribe token - only the server has
   // the signing secret. Keeping it one-sided is fine: unsub needs to work
   // without login; resub is a conscious action that benefits from auth.
   const isUnsub = action === 'unsub'
@@ -70,7 +70,7 @@ export default function Unsubscribed() {
             </p>
           )}
 
-          {/* Primary action — manage all preferences (requires login) */}
+          {/* Primary action - manage all preferences (requires login) */}
           <div className="space-y-3 mt-6">
             <Link
               to="/settings/emails"

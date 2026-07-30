@@ -283,7 +283,7 @@ function generateHTML(d) {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Nesty — User Activation Analysis</title>
+<title>Nesty - User Activation Analysis</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <style>
@@ -315,7 +315,7 @@ function generateHTML(d) {
 </style>
 </head>
 <body>
-<h1>Nesty — User Activation Analysis</h1>
+<h1>Nesty - User Activation Analysis</h1>
 <p class="sub">
   ${totals.all} total users · generated ${new Date(generatedAt).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})} ·
   <span style="color:#d9534f;font-weight:bold">Nonactive</span> (0 items) ·
@@ -398,7 +398,7 @@ function generateHTML(d) {
     </div>
   </div>
   <div class="section-body" id="m6">
-    <p class="note">% of users in each segment with each signal. Avatar not shown — 0% across all groups.</p>
+    <p class="note">% of users in each segment with each signal. Avatar not shown - 0% across all groups.</p>
     <canvas id="profileChart" height="260"></canvas>
   </div>
 </div>
@@ -406,7 +406,7 @@ function generateHTML(d) {
 <!-- 7. Store diversity -->
 <div class="section">
   <div class="section-header">
-    <h2>Store Diversity — Stores per User</h2>
+    <h2>Store Diversity - Stores per User</h2>
     <div style="display:flex;gap:8px;align-items:center">
       <select class="inline-filter" onchange="updateStoreDivChart(this.value)">
         <option value="all">All</option><option value="nonactive">Nonactive</option><option value="newbies">Newbies</option><option value="pros">Pros</option>
@@ -477,14 +477,14 @@ function generateHTML(d) {
     </div>
   </div>
   <div class="section-body" id="m10">
-    <p class="note">Among users who added 2+ items — proxy for how many sessions it took.</p>
+    <p class="note">Among users who added 2+ items - proxy for how many sessions it took.</p>
     <canvas id="spreadChart" height="220"></canvas>
   </div>
 </div>
 
 <!-- 11. Nudge email -->
 <div class="section">
-  <div class="section-header"><h2>Checklist Nudge Email — Effect on Activity</h2><button class="collapse-btn" onclick="toggle('m11')">Hide</button></div>
+  <div class="section-header"><h2>Checklist Nudge Email - Effect on Activity</h2><button class="collapse-btn" onclick="toggle('m11')">Hide</button></div>
   <div class="section-body" id="m11">
     <p class="note">${nudge.sent} users received this email. Did they add items after receiving it?</p>
     <canvas id="nudgeChart" height="200"></canvas>
@@ -498,9 +498,9 @@ function generateHTML(d) {
 
 <!-- 12. Abandon email -->
 <div class="section">
-  <div class="section-header"><h2>Abandon Email — Effect on Activity</h2><button class="collapse-btn" onclick="toggle('m12')">Hide</button></div>
+  <div class="section-header"><h2>Abandon Email - Effect on Activity</h2><button class="collapse-btn" onclick="toggle('m12')">Hide</button></div>
   <div class="section-body" id="m12">
-    <p class="note">${abandon.sent} users received this email — ${abandon.sent < 10 ? 'small sample, directional only.' : ''}</p>
+    <p class="note">${abandon.sent} users received this email - ${abandon.sent < 10 ? 'small sample, directional only.' : ''}</p>
     <canvas id="abandonChart" height="200"></canvas>
     <div class="summary" style="margin-top:16px">
       <div class="card" style="background:#d1e7dd"><div class="num" style="color:#0f5132;font-size:18px">${abandon.converted_after}</div><div class="lbl">Converted after email</div></div>

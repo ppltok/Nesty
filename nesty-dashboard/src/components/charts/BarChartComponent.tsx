@@ -67,7 +67,7 @@ export function BarChartComponent({
 
   return (
     <div className="relative">
-      {/* Y-axis label — rendered as HTML, positioned to the left */}
+      {/* Y-axis label - rendered as HTML, positioned to the left */}
       {yAxisLabel && !isVertical && (
         <div
           className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1"
@@ -153,7 +153,7 @@ export function BarChartComponent({
           </BarChart>
         </ResponsiveContainer>
 
-        {/* X-axis label — rendered as HTML below the chart */}
+        {/* X-axis label - rendered as HTML below the chart */}
         {xAxisLabel && (
           <div className="text-center -mt-1 mb-1">
             <span className="text-xs font-semibold text-gray-500 tracking-wide">{xAxisLabel}</span>

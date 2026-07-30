@@ -1,6 +1,6 @@
 // Post-onboarding wizard: three choice-cards shown once after signup
 // completes. Dismiss persists to profiles.dismissed_popups.post_onboarding.
-// Re-shows on future visits until dismissed (no local cap — the user sees it
+// Re-shows on future visits until dismissed (no local cap - the user sees it
 // until they click a card or "later", then never again).
 
 import { useNavigate } from 'react-router-dom'

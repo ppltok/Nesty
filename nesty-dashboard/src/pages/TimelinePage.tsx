@@ -91,7 +91,7 @@ export default function TimelinePage() {
           title="Recommended Share Week"
           value={m.recommended_share_week != null ? `Week ${m.recommended_share_week}` : 'N/A'}
           icon={<Share2 className="h-5 w-5 text-amber-500" />}
-          tooltip="Recommended week to share registry — 2 weeks before gifts typically start arriving."
+          tooltip="Recommended week to share registry - 2 weeks before gifts typically start arriving."
         />
       </div>
 
@@ -181,7 +181,7 @@ export default function TimelinePage() {
           </div>
         ) : (
           <div className="h-64 flex items-center justify-center text-gray-400">
-            No data — users need a due date set to appear here
+            No data - users need a due date set to appear here
           </div>
         )}
       </div>

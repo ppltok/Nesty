@@ -11,7 +11,7 @@
 // unsubscribe link) should use `all` to flip the master off in one shot.
 //
 // Keep this file in sync with the frontend mirror at
-// nesty-web/src/lib/emailCategories.ts — or better, import from this file
+// nesty-web/src/lib/emailCategories.ts - or better, import from this file
 // when Deno/Vite interop is set up. For now the list is small enough to
 // duplicate safely.
 

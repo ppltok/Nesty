@@ -2,15 +2,15 @@
 //
 // Generates a URL that the `unsubscribe` edge function can verify statelessly.
 // The signature proves "Nesty's server-side code generated this URL for this
-// specific (user, category) pair" — nobody can forge an unsubscribe link
+// specific (user, category) pair" - nobody can forge an unsubscribe link
 // without the secret. We only need HMAC-SHA256; no token table, no expiry
 // management. If the secret is rotated, ALL existing unsubscribe links in
-// user inboxes invalidate — that's the trade-off for statelessness.
+// user inboxes invalidate - that's the trade-off for statelessness.
 //
 // Env vars required:
-//   UNSUBSCRIBE_SECRET — random 64-char hex string, stored in Supabase
+//   UNSUBSCRIBE_SECRET - random 64-char hex string, stored in Supabase
 //                        function secrets. NOT committed to the repo.
-//   SUPABASE_URL       — already available to edge functions.
+//   SUPABASE_URL       - already available to edge functions.
 //
 // Usage (inside an edge function):
 //   import { buildUnsubscribeUrl } from '../_shared/unsubscribe-url.ts'
@@ -42,8 +42,8 @@ async function hmacHex(payload: string): Promise<string> {
 /**
  * Signed payload format: `${userId}:${category}:${action}`.
  * Actions:
- *   'unsub' — flip the category column to false
- *   'resub' — flip the category column to true (used on the /unsubscribed page)
+ *   'unsub' - flip the category column to false
+ *   'resub' - flip the category column to true (used on the /unsubscribed page)
  */
 export async function buildUnsubscribeUrl(
   userId: string,

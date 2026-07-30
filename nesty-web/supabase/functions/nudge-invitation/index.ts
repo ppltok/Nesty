@@ -34,7 +34,7 @@ interface NudgeTemplateOpts {
  *
  * The headline leads with the live item count because that is the most
  * persuasive true fact available ("you are locked out of something already
- * moving"). Registries with no items yet fall back to a neutral headline —
+ * moving"). Registries with no items yet fall back to a neutral headline -
  * "כבר יש 0 פריטים" would read as absurd.
  */
 function buildNudgeHtml(opts: NudgeTemplateOpts): string {
@@ -167,9 +167,9 @@ serve(async (req) => {
     if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY is not set')
 
     const body = await req.json().catch(() => ({}))
-    // 'daily'   — rolling 24-48h window, the ongoing cron behaviour
-    // 'backlog' — every pending invite regardless of age; one-shot re-activation
-    // 'test'    — renders the template with sample data to TEST_EMAILS, touches no real invite
+    // 'daily'   - rolling 24-48h window, the ongoing cron behaviour
+    // 'backlog' - every pending invite regardless of age; one-shot re-activation
+    // 'test'    - renders the template with sample data to TEST_EMAILS, touches no real invite
     //
     // 'daily' MUST stay the default: .github/workflows/scheduled-emails.yml calls
     // this endpoint every day with no request body at all. Defaulting to 'test'
@@ -251,7 +251,7 @@ serve(async (req) => {
       try {
         // An invite whose token already lapsed would land the recipient on an
         // error page AND flip the row to 'expired', permanently killing it.
-        // Never email one of those — refresh expires_at first.
+        // Never email one of those - refresh expires_at first.
         if (!invitation.expires_at || new Date(invitation.expires_at) <= new Date()) {
           console.log(`Skipping ${invitation.invited_email}: token expired`)
           skippedExpired++

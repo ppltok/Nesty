@@ -8,7 +8,7 @@
 // bypass RLS so we do not filter on auth.uid().
 //
 // We type the client as `any` to stay compatible with whichever major
-// version each edge function imports of @supabase/supabase-js — the calls
+// version each edge function imports of @supabase/supabase-js - the calls
 // here only use the public surface (.from / .select / .insert / .eq).
 
 // deno-lint-ignore no-explicit-any
@@ -63,7 +63,7 @@ export async function canSendNudge(
 }
 
 /**
- * Record that a nudge was just sent. Idempotency is not enforced here —
+ * Record that a nudge was just sent. Idempotency is not enforced here -
  * callers must check canSendNudge() first. We insert a fresh row each time
  * so repeats can be analyzed (e.g. which week+variant converts).
  */
@@ -81,7 +81,7 @@ export async function logNudge(
     pregnancy_week: pregnancyWeek,
   })
   if (error) {
-    // Log but don't throw — the email was already sent. Missing the log row
+    // Log but don't throw - the email was already sent. Missing the log row
     // will occasionally allow a duplicate within spacing window, which is
     // acceptable; throwing here would break the send loop for other users.
     console.error(`[nudge-log] Failed to log send for user=${userId} type=${nudgeType}:`, error)
@@ -90,7 +90,7 @@ export async function logNudge(
 
 /**
  * Count prior sends of a nudge type (useful for picking the next variant).
- * Counts grandfather rows too — a grandfathered user who qualifies for a
+ * Counts grandfather rows too - a grandfathered user who qualifies for a
  * real send will see their first real send treated as "send #2" which is
  * fine; the variant escalation is driven by pregnancy week, not count.
  */

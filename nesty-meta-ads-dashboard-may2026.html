@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nesty · Meta Ads Dashboard · May 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Heebo:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --primary:#86608e; --primary-dark:#6d4e74; --primary-light:#a891ad;
+    --secondary:#a891ad; --secondary-light:#b9a4bd;
+    --accent-pink:#f4acb7; --accent-pink-light:#ffcad4; --accent-peach:#ffd8d7;
+    --background:#faf8fb; --card:#ffffff; --border:#e8e4e9; --muted:#c9c2cb;
+    --muted-fg:#6b6b6b; --foreground:#1a1a1a;
+    --success:#22c55e; --warning:#f59e0b; --destructive:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;background:var(--background);color:var(--foreground);line-height:1.5}
+  .container{max-width:1280px;margin:0 auto;padding:32px 24px 80px}
+
+  .header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;padding:40px 48px;border-radius:24px;margin-bottom:28px;box-shadow:0 6px 20px rgba(134,96,142,.18);position:relative;overflow:hidden}
+  .header::after{content:"🪺";position:absolute;left:40px;top:50%;transform:translateY(-50%);font-size:96px;opacity:.12}
+  .header h1{margin:0 0 8px;font-size:32px;font-weight:800;letter-spacing:-.5px}
+  .header .subtitle{margin:0;font-size:16px;opacity:.92}
+  .header .tagline{margin-top:16px;font-size:14px;opacity:.78;font-style:italic}
+
+  .period-switcher{display:flex;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:6px;margin-bottom:24px;width:fit-content;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .period-btn{padding:10px 24px;border:none;background:transparent;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;color:var(--muted-fg);cursor:pointer;transition:.2s}
+  .period-btn.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(134,96,142,.3)}
+  .period-btn:not(.active):hover{background:var(--muted-light,#e8e4e9)}
+
+  .grid{display:grid;gap:18px}
+  .kpis{grid-template-columns:repeat(4,1fr);margin-bottom:28px}
+  @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:540px){.kpis{grid-template-columns:1fr}}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px 24px;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:.2s}
+  .kpi:hover{box-shadow:0 6px 18px rgba(134,96,142,.12);transform:translateY(-2px)}
+  .kpi .label{font-size:13px;font-weight:600;color:var(--muted-fg);margin-bottom:8px}
+  .kpi .value{font-size:30px;font-weight:800;color:var(--primary-dark);letter-spacing:-.5px}
+  .kpi .delta{font-size:13px;font-weight:700;margin-top:6px}
+  .delta.up{color:var(--success)} .delta.down{color:var(--destructive)} .delta.flat{color:var(--muted-fg)}
+
+  .section-title{font-size:20px;font-weight:800;color:var(--primary);margin:36px 0 16px;display:flex;align-items:center;gap:8px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .two-col{grid-template-columns:1.4fr 1fr}
+  @media(max-width:900px){.two-col{grid-template-columns:1fr}}
+  .chart-wrap{position:relative;height:300px}
+  .chart-title{font-size:15px;font-weight:700;color:var(--foreground);margin:0 0 14px}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:12px 10px;text-align:right;border-bottom:1px solid var(--border)}
+  th{font-weight:700;color:var(--muted-fg);font-size:12.5px;cursor:pointer;user-select:none;white-space:nowrap}
+  th:hover{color:var(--primary)}
+  th .arrow{font-size:10px;opacity:.6}
+  tbody tr:hover{background:#faf6fb}
+  td.adname{font-weight:700;color:var(--primary-dark)}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:700}
+  .pill.good{background:#e7f8ee;color:#15803d}
+  .pill.warn{background:#fff4e0;color:#b45309}
+  .pill.bad{background:#fde8e8;color:#b91c1c}
+  .pill.scale{background:#efe7f2;color:var(--primary-dark)}
+
+  .callouts{grid-template-columns:1fr 1fr}
+  @media(max-width:760px){.callouts{grid-template-columns:1fr}}
+  .callout{border-radius:18px;padding:20px 22px}
+  .callout.win{background:linear-gradient(135deg,#f3eef5,#fff);border:1px solid var(--border);border-inline-start:5px solid var(--success)}
+  .callout.concern{background:linear-gradient(135deg,#fdf3f0,#fff);border:1px solid var(--border);border-inline-start:5px solid var(--warning)}
+  .callout h3{margin:0 0 6px;font-size:15px}
+  .callout .big{font-size:17px;font-weight:800;color:var(--primary-dark);margin:4px 0}
+  .callout p{margin:6px 0 0;font-size:13.5px;color:var(--muted-fg)}
+
+  .recs li{margin-bottom:10px;font-size:14px}
+  .rec-group{margin-bottom:18px}
+  .rec-group h4{margin:0 0 8px;font-size:14.5px;font-weight:800}
+  ul.clean{list-style:none;padding:0;margin:0}
+  ul.clean li{padding-inline-start:22px;position:relative;margin-bottom:9px;font-size:14px}
+  ul.clean li::before{content:"🪺";position:absolute;inset-inline-start:0;top:0;font-size:13px}
+
+  .footer{margin-top:40px;text-align:center;color:var(--muted-fg);font-size:13px}
+  .note{font-size:12.5px;color:var(--muted-fg);margin-top:10px;font-style:italic}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>Nesty · דשבורד פרסום Meta</h1>
+    <p class="subtitle">דוח חודשי · 1–31 במאי 2026 · ניתוח 31 ימים מול 7 הימים האחרונים</p>
+    <p class="tagline">בונים קן, לא מחסן 💜</p>
+  </div>
+
+  <div class="period-switcher">
+    <button class="period-btn active" data-period="m31" onclick="setPeriod('m31')">החודש המלא (31 ימים)</button>
+    <button class="period-btn" data-period="d7" onclick="setPeriod('d7')">7 ימים אחרונים</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid kpis" id="kpis"></div>
+
+  <!-- Callouts -->
+  <div class="grid callouts" style="margin-bottom:8px">
+    <div class="callout win">
+      <h3>✨ ההצלחה של החודש</h3>
+      <div class="big">Price Drop 1.0</div>
+      <p>הכי הרבה הרשמות (33) ומשתפר עם הסקייל - עלות להרשמה ירדה ל-₪14.61 ב-7 הימים האחרונים (13% יותר טוב מהחודש). קול "האחות הגדולה" עדיין הזווית הכי ממירה.</p>
+    </div>
+    <div class="callout concern">
+      <h3>😬 לתשומת לב</h3>
+      <div class="big">Price Drop 2.0</div>
+      <p>ה-CTR הכי טוב בחשבון (1.47%) אבל מתעייף מהר - העלות להרשמה קפצה ל-₪37.07 ב-7 הימים האחרונים מול ₪17.94 לחודש. הקריאייטיב נשרף. צריך רוטציה.</p>
+    </div>
+  </div>
+
+  <!-- Trend + Franchise -->
+  <div class="section-title">📈 מגמות יומיות</div>
+  <div class="grid two-col">
+    <div class="card">
+      <p class="chart-title">הוצאה יומית מול הרשמות</p>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="card">
+      <p class="chart-title">חלוקת תקציב לפי משפחת מודעות</p>
+      <div class="chart-wrap"><canvas id="franchiseChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Ad table -->
+  <div class="section-title">🎁 פירוט לפי מודעה <span id="tablePeriodLabel" style="font-size:13px;font-weight:600;color:var(--muted-fg)"></span></div>
+  <div class="card" style="overflow-x:auto">
+    <table id="adTable">
+      <thead><tr>
+        <th onclick="sortTable('name')">מודעה <span class="arrow"></span></th>
+        <th onclick="sortTable('status')">סטטוס</th>
+        <th onclick="sortTable('spend')">הוצאה <span class="arrow"></span></th>
+        <th onclick="sortTable('imps')">חשיפות</th>
+        <th onclick="sortTable('clicks')">קליקים</th>
+        <th onclick="sortTable('ctr')">CTR</th>
+        <th onclick="sortTable('cpc')">CPC</th>
+        <th onclick="sortTable('results')">הרשמות</th>
+        <th onclick="sortTable('cpr')">עלות/הרשמה</th>
+        <th>מצב</th>
+      </tr></thead>
+      <tbody id="adTableBody"></tbody>
+    </table>
+    <p class="note" id="tableNote"></p>
+  </div>
+
+  <!-- Spend vs efficiency chart -->
+  <div class="section-title">⚖️ הוצאה מול יעילות לפי מודעה</div>
+  <div class="card">
+    <div class="chart-wrap" style="height:340px"><canvas id="adBarChart"></canvas></div>
+  </div>
+
+  <!-- MoM -->
+  <div class="section-title">🔁 השוואה חודשית (אפריל → מאי)</div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th style="text-align:right">מדד</th><th>אפריל</th><th>מאי</th><th>שינוי</th></tr></thead>
+      <tbody>
+        <tr><td class="adname" style="text-align:right">הוצאה כוללת</td><td>₪1,398.70</td><td>₪1,558.14</td><td><span class="pill scale">+11.4%</span></td></tr>
+        <tr><td class="adname" style="text-align:right">הרשמות</td><td>85</td><td>93</td><td><span class="pill good">+9.4%</span></td></tr>
+        <tr><td class="adname" style="text-align:right">עלות להרשמה</td><td>₪16.46</td><td>₪16.75</td><td><span class="pill warn">+1.8%</span></td></tr>
+        <tr><td class="adname" style="text-align:right">חשיפות</td><td>57,052</td><td>63,706</td><td><span class="pill scale">+11.7%</span></td></tr>
+        <tr><td class="adname" style="text-align:right">CTR</td><td>1.30%</td><td>1.28%</td><td><span class="pill warn">-1.5%</span></td></tr>
+        <tr><td class="adname" style="text-align:right">CPC</td><td>₪1.88</td><td>₪1.90</td><td><span class="pill warn">+1.1%</span></td></tr>
+        <tr><td class="adname" style="text-align:right">CPM</td><td>₪24.52</td><td>₪24.46</td><td><span class="pill good">-0.2%</span></td></tr>
+      </tbody>
+    </table>
+    <p class="note">סקייל-אפ נקי: ~11% יותר תקציב, נפח פרופורציונלי, אותה עלות ליחידה. היעילות יציבה - סימן לרכז תקציב במנצחים ולכבות את החלשים עכשיו.</p>
+  </div>
+
+  <!-- Recommendations -->
+  <div class="section-title">🎯 המלצות מתועדפות</div>
+  <div class="grid two-col">
+    <div class="card recs">
+      <div class="rec-group">
+        <h4 style="color:var(--destructive)">🔴 דחוף - השבוע</h4>
+        <ul class="clean">
+          <li>לכבות את Perfect Nest הישן. 0 הרשמות בשבוע האחרון, ₪4.50 לקליק - מבזבז תקציב מול הגרסה החדשה שלו (2.0).</li>
+          <li>רוטציה לקריאייטיב של Price Drop 2.0. לשמור על ה-hook המנצח, ויזואל חדש + 2–3 וריאציות כותרת.</li>
+        </ul>
+      </div>
+      <div class="rec-group">
+        <h4 style="color:var(--warning)">🟠 עדיפות גבוהה - הספרינט</h4>
+        <ul class="clean">
+          <li>להגדיל תקציב Price Drop 1.0 ב-30–50%. המנצח הברור - נפח גבוה ומשתפר.</li>
+          <li>להגדיל Perfect Nest 2.0. ₪15.69 לחודש, ₪13.68 בשבוע האחרון, עדיין על תקציב קטן.</li>
+          <li>לרענן או להשבית את The Honest Moment - חזק כל החודש, קרס בסוף.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card recs">
+      <div class="rec-group">
+        <h4 style="color:var(--primary)">🟡 בינוני - 30 הימים הבאים</h4>
+        <ul class="clean">
+          <li>לרכז, לא לפזר. שתי משפחות מוכחות (Price Drop, Perfect Nest) - לעבור לחלוקת תקציב 70/30 לטובת המנצחים.</li>
+          <li>להגדיר יעד CAC. ₪16.75 להרשמה זה מספר בלי תקרה - לחשב מ-LTV ולקבוע גבול.</li>
+        </ul>
+      </div>
+      <div class="rec-group">
+        <h4 style="color:var(--success)">🟢 נחמד שיהיה</h4>
+        <ul class="clean">
+          <li>לבנות Price Drop 3.0 ברזרבה - אותה זווית "אחות גדולה", מוכן להחלפה לפני ש-1.0 מתעייף.</li>
+          <li>להחזיר מעקב Landing Page Views ולחדש סקירות שבועיות.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px;background:linear-gradient(135deg,#f3eef5,#fff)">
+    <p class="note" style="font-style:normal;color:var(--foreground);font-size:13.5px;margin:0">
+      ⚠️ <strong>הערה על נתונים:</strong> הייצוא של מאי לא כלל נתוני Landing Page Views, ולכן מדד ההמרה LP→הרשמה (12.9% באפריל - המנוף הכי משמעותי) לא מוצג החודש. כדאי להחזיר את העמודה לייצוא.
+    </p>
+  </div>
+
+  <div class="footer">
+    Nesty · דשבורד פרסום Meta · נוצר ב-1 ביוני 2026 · 🪺 בונים קן, לא מחסן
+  </div>
+</div>
+
+<script>
+const DATA = {
+  daily: {"days":["05-01","05-02","05-03","05-04","05-05","05-06","05-07","05-08","05-09","05-10","05-11","05-12","05-13","05-14","05-15","05-16","05-17","05-18","05-19","05-20","05-21","05-22","05-23","05-24","05-25","05-26","05-27","05-28","05-29","05-30","05-31"],
+    "spend":[48.63,51.99,75.33,48.38,46.77,39.82,37.04,50.23,52.42,52.72,50.24,44.46,46.26,54.19,46.71,55.3,50.05,51.3,55.54,47.78,46.83,49.91,48.42,60.31,47.1,55.05,48.28,46.54,51.28,41.4,57.86],
+    "results":[3,5,6,5,2,4,0,1,4,2,2,2,6,2,3,6,4,2,1,1,5,1,4,3,3,3,4,0,3,3,3]},
+  kpis: {
+    m31: [
+      {label:"הוצאה כוללת",value:"₪1,558",delta:"+11.4% מאפריל",cls:"up"},
+      {label:"הרשמות",value:"93",delta:"+9.4% מאפריל",cls:"up"},
+      {label:"עלות להרשמה",value:"₪16.75",delta:"+1.8% (יציב)",cls:"flat"},
+      {label:"CTR",value:"1.28%",delta:"CPC ₪1.90",cls:"flat"},
+      {label:"חשיפות",value:"63,706",delta:"+11.7% מאפריל",cls:"up"},
+      {label:"קליקים",value:"818",delta:"CPM ₪24.46",cls:"flat"},
+      {label:"הוצאה יומית",value:"₪50.3",delta:"ממוצע/יום",cls:"flat"},
+      {label:"הרשמות/יום",value:"3.00",delta:"ממוצע/יום",cls:"flat"}
+    ],
+    d7: [
+      {label:"הוצאה כוללת",value:"₪347.5",delta:"7 ימים",cls:"flat"},
+      {label:"הרשמות",value:"19",delta:"2.71/יום",cls:"down"},
+      {label:"עלות להרשמה",value:"₪18.29",delta:"+9.2% מהחודש",cls:"down"},
+      {label:"CTR",value:"1.21%",delta:"-5.5% מהחודש",cls:"down"},
+      {label:"חשיפות",value:"13,279",delta:"7 ימים",cls:"flat"},
+      {label:"קליקים",value:"161",delta:"CPC ₪2.16 (+13.7%)",cls:"down"},
+      {label:"הוצאה יומית",value:"₪49.6",delta:"-1.2% מהחודש",cls:"flat"},
+      {label:"הרשמות/יום",value:"2.71",delta:"-9.7% מהחודש",cls:"down"}
+    ]
+  },
+  ads: {
+    m31: [
+      {name:"Price Drop 1.0",status:"active",spend:557.18,imps:20782,clicks:249,ctr:1.20,cpc:2.24,results:33,cpr:16.88,state:["scale","סקייל"]},
+      {name:"Price Drop 2.0",status:"active",spend:448.45,imps:20029,clicks:295,ctr:1.47,cpc:1.52,results:25,cpr:17.94,state:["warn","מתעייף"]},
+      {name:"Perfect Nest 2.0",status:"active",spend:266.81,imps:11305,clicks:144,ctr:1.27,cpc:1.85,results:17,cpr:15.69,state:["good","יעיל"]},
+      {name:"The Honest Moment",status:"active",spend:187.87,imps:8472,clicks:96,ctr:1.13,cpc:1.96,results:13,cpr:14.45,state:["good","הכי יעיל"]},
+      {name:"Perfect Nest",status:"active",spend:97.83,imps:3118,clicks:34,ctr:1.09,cpc:2.88,results:5,cpr:19.57,state:["bad","לכבות"]}
+    ],
+    d7: [
+      {name:"Price Drop 1.0",status:"active",spend:204.49,imps:7490,clicks:99,ctr:1.32,cpc:2.07,results:14,cpr:14.61,state:["good","▼13% יותר טוב"]},
+      {name:"Price Drop 2.0",status:"active",spend:74.14,imps:3087,clicks:36,ctr:1.17,cpc:2.06,results:2,cpr:37.07,state:["bad","▲107% גרוע"]},
+      {name:"The Honest Moment",status:"active",spend:28.00,imps:1197,clicks:9,ctr:0.75,cpc:3.11,results:1,cpr:28.00,state:["bad","▲94% גרוע"]},
+      {name:"Perfect Nest 2.0",status:"active",spend:27.37,imps:1067,clicks:14,ctr:1.31,cpc:1.95,results:2,cpr:13.68,state:["good","▼13% יותר טוב"]},
+      {name:"Perfect Nest",status:"active",spend:13.51,imps:438,clicks:3,ctr:0.68,cpc:4.50,results:0,cpr:0,state:["bad","0 הרשמות"]}
+    ]
+  },
+  franchise: {
+    labels:["Price Drop 1.0","Price Drop 2.0","Perfect Nest 2.0","The Honest Moment","Perfect Nest (ישן)"],
+    spend:[557.18,448.45,266.81,187.87,97.83]
+  }
+};
+
+let period = "m31";
+let sortKey = "spend", sortDir = -1;
+const NIS = n => "₪"+n.toLocaleString("he-IL",{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2});
+const PAL = ["#86608e","#a891ad","#f4acb7","#ffcad4","#c9c2cb"];
+
+function renderKPIs(){
+  const el=document.getElementById("kpis");
+  el.innerHTML = DATA.kpis[period].map(k=>`
+    <div class="kpi">
+      <div class="label">${k.label}</div>
+      <div class="value">${k.value}</div>
+      <div class="delta ${k.cls}">${k.delta}</div>
+    </div>`).join("");
+}
+
+function renderTable(){
+  document.getElementById("tablePeriodLabel").textContent = period==="m31" ? "· 31 ימים" : "· 7 ימים אחרונים";
+  const rows=[...DATA.ads[period]].sort((a,b)=>{
+    let av=a[sortKey], bv=b[sortKey];
+    if(sortKey==="name"||sortKey==="status"){return sortDir*(""+av).localeCompare(""+bv);}
+    return sortDir*((av||0)-(bv||0));
+  });
+  document.getElementById("adTableBody").innerHTML = rows.map(a=>`
+    <tr>
+      <td class="adname">${a.name}</td>
+      <td><span class="pill ${a.status==='active'?'good':'bad'}">${a.status==='active'?'פעיל':'כבוי'}</span></td>
+      <td>${NIS(a.spend)}</td>
+      <td>${a.imps.toLocaleString('he-IL')}</td>
+      <td>${a.clicks}</td>
+      <td>${a.ctr?a.ctr.toFixed(2)+'%':'-'}</td>
+      <td>${a.cpc?NIS(a.cpc):'-'}</td>
+      <td>${a.results}</td>
+      <td>${a.cpr?NIS(a.cpr):'-'}</td>
+      <td><span class="pill ${a.state[0]}">${a.state[1]}</span></td>
+    </tr>`).join("");
+  document.getElementById("tableNote").textContent = period==="m31"
+    ? "מיון: לחיצה על כותרת עמודה. The Honest Moment ו-Perfect Nest 2.0 הכי יעילים; משפחת Price Drop נושאת את הנפח (65% מהתקציב, 62% מההרשמות)."
+    : "מיון: לחיצה על כותרת עמודה. שימו לב לפיצול המגמות - Price Drop 1.0 ו-Perfect Nest 2.0 משתפרים, Price Drop 2.0 ו-Honest Moment מתעייפים.";
+}
+function sortTable(k){ if(sortKey===k){sortDir*=-1;}else{sortKey=k;sortDir=(k==='name'||k==='status')?1:-1;} renderTable(); renderAdBar(); }
+
+let trendChart, franchiseChart, adBarChart;
+function renderTrend(){
+  const d=DATA.daily;
+  const slice = period==="m31" ? [0,31] : [24,31];
+  const days=d.days.slice(...slice), spend=d.spend.slice(...slice), results=d.results.slice(...slice);
+  if(trendChart) trendChart.destroy();
+  trendChart=new Chart(document.getElementById("trendChart"),{
+    data:{labels:days,datasets:[
+      {type:"bar",label:"הוצאה (₪)",data:spend,backgroundColor:"rgba(134,96,142,.75)",borderRadius:6,yAxisID:"y"},
+      {type:"line",label:"הרשמות",data:results,borderColor:"#f4acb7",backgroundColor:"#f4acb7",borderWidth:3,tension:.35,pointRadius:3,yAxisID:"y1"}
+    ]},
+    options:{maintainAspectRatio:false,responsive:true,
+      plugins:{legend:{position:"top",labels:{font:{family:"Assistant",size:12},boxWidth:14}}},
+      scales:{
+        y:{position:"right",title:{display:true,text:"₪ הוצאה"},grid:{color:"#f0ecf1"}},
+        y1:{position:"left",title:{display:true,text:"הרשמות"},grid:{drawOnChartArea:false},ticks:{precision:0}},
+        x:{grid:{display:false},ticks:{font:{size:10}}}
+      }}
+  });
+}
+function renderFranchise(){
+  const f=DATA.franchise;
+  if(franchiseChart) franchiseChart.destroy();
+  franchiseChart=new Chart(document.getElementById("franchiseChart"),{
+    type:"doughnut",
+    data:{labels:f.labels,datasets:[{data:f.spend,backgroundColor:PAL,borderColor:"#fff",borderWidth:3}]},
+    options:{maintainAspectRatio:false,responsive:true,cutout:"58%",
+      plugins:{legend:{position:"bottom",labels:{font:{family:"Assistant",size:11.5},boxWidth:12,padding:10}},
+        tooltip:{callbacks:{label:c=>` ${c.label}: ₪${c.parsed.toFixed(0)} (${(c.parsed/f.spend.reduce((a,b)=>a+b)*100).toFixed(0)}%)`}}}}
+  });
+}
+function renderAdBar(){
+  const ads=DATA.ads[period];
+  if(adBarChart) adBarChart.destroy();
+  adBarChart=new Chart(document.getElementById("adBarChart"),{
+    data:{labels:ads.map(a=>a.name),datasets:[
+      {type:"bar",label:"הוצאה (₪)",data:ads.map(a=>a.spend),backgroundColor:"rgba(134,96,142,.78)",borderRadius:6,yAxisID:"y",order:2},
+      {type:"line",label:"עלות להרשמה (₪)",data:ads.map(a=>a.cpr||null),borderColor:"#f4acb7",backgroundColor:"#f4acb7",borderWidth:3,pointRadius:5,tension:.3,yAxisID:"y1",order:1}
+    ]},
+    options:{maintainAspectRatio:false,responsive:true,
+      plugins:{legend:{position:"top",labels:{font:{family:"Assistant",size:12},boxWidth:14}},
+        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ₪${(c.parsed.y||0).toFixed(2)}`}}},
+      scales:{
+        y:{position:"right",title:{display:true,text:"₪ הוצאה"},grid:{color:"#f0ecf1"}},
+        y1:{position:"left",title:{display:true,text:"₪ עלות/הרשמה"},grid:{drawOnChartArea:false}},
+        x:{grid:{display:false},ticks:{font:{size:11.5,family:"Assistant"}}}
+      }}
+  });
+}
+
+function setPeriod(p){
+  period=p;
+  document.querySelectorAll(".period-btn").forEach(b=>b.classList.toggle("active",b.dataset.period===p));
+  renderKPIs(); renderTable(); renderTrend(); renderAdBar();
+}
+
+renderKPIs(); renderTable(); renderTrend(); renderFranchise(); renderAdBar();
+</script>
+</body>
+</html>

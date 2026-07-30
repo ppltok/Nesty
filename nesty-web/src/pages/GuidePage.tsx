@@ -20,7 +20,7 @@ interface ParsedSections {
 function parseGuideBody(body: string): ParsedSections {
   let working = body
 
-  // Extract TL;DR — H2 starting with "תשובה קצרה" up to next H2 or hr
+  // Extract TL;DR - H2 starting with "תשובה קצרה" up to next H2 or hr
   const tldrMatch = working.match(
     /## תשובה קצרה[^\n]*\n([\s\S]*?)(?=\n##\s|\n---\s*\n)/
   )
@@ -30,7 +30,7 @@ function parseGuideBody(body: string): ParsedSections {
     working = working.replace(tldrMatch[0], '').trim()
   }
 
-  // Extract FAQ — H2 containing "שאלות שכולן שואלות" up to next H2 or hr
+  // Extract FAQ - H2 containing "שאלות שכולן שואלות" up to next H2 or hr
   const faqMatch = working.match(
     /## שאלות שכולן שואלות[^\n]*\n([\s\S]*?)(?=\n##\s|\n---\s*\n)/
   )
@@ -59,13 +59,13 @@ export default function GuidePage() {
   const { prev, next } = getAdjacentGuides(slug)
   const { tldr, faq, bodyWithoutTldrAndFaq } = parseGuideBody(body)
 
-  // Strip the leading H1 from the body — we render the title in our own header
+  // Strip the leading H1 from the body - we render the title in our own header
   const bodyWithoutTitle = bodyWithoutTldrAndFaq.replace(
     /^# [^\n]+\n+/,
     ''
   )
 
-  // Strip the trailing italic "המדריך נכתב על ידי" line — already in our footer
+  // Strip the trailing italic "המדריך נכתב על ידי" line - already in our footer
   const bodyClean = bodyWithoutTitle.replace(
     /\n*\*המדריך נכתב על ידי[^\n]*\*\s*$/,
     ''
@@ -139,7 +139,7 @@ export default function GuidePage() {
               {theme.topicLabel}
             </span>
 
-            {/* Hero photo — Hebrew headline is burned into the image */}
+            {/* Hero photo - Hebrew headline is burned into the image */}
             <img
               src={asset(`guides/${slug}.png`)}
               alt={frontmatter.title}

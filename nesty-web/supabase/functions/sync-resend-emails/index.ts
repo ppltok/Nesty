@@ -107,7 +107,7 @@ async function runSync() {
       const emailType = classifyEmail(subject, to);
 
       // Skip admin firehose. Tom (tom@ppltok.com) is also Nesty's
-      // founder + a real user — the old version conflated those.
+      // founder + a real user - the old version conflated those.
       // Now we log Tom's user-facing emails (welcome/weekly/nudge/gift)
       // but skip the admin notifications addressed to him.
       const isAdminToTom =
@@ -182,7 +182,7 @@ Deno.serve((req) => {
     console.error("sync-resend-emails background run failed:", msg);
   });
 
-  // @ts-ignore — EdgeRuntime provided by Supabase Edge runtime
+  // @ts-ignore - EdgeRuntime provided by Supabase Edge runtime
   EdgeRuntime.waitUntil(work);
 
   return new Response(JSON.stringify({ status: "accepted" }), {

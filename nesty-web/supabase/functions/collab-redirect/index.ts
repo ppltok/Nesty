@@ -34,7 +34,7 @@ serve(async (req) => {
     ? GIFTS_PAGE_URL
     : (REDEEM_URLS[collab] || FALLBACK_URL)
 
-  // Best-effort logging — a tracking failure must never block the redirect.
+  // Best-effort logging - a tracking failure must never block the redirect.
   try {
     if (collab) {
       const supabaseAdmin = createClient(
@@ -58,7 +58,7 @@ serve(async (req) => {
     status: 302,
     headers: {
       Location: destination,
-      // Don't let proxies/browsers cache the redirect — every open is a click.
+      // Don't let proxies/browsers cache the redirect - every open is a click.
       'Cache-Control': 'no-store, max-age=0',
     },
   })

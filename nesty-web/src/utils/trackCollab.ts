@@ -7,7 +7,7 @@
 // dataLayer push keeps these visible alongside the rest of our GTM funnel.
 //
 // Email-surface events (email_sent, email_link_click) are logged server-side by
-// the send-collab-gift and collab-redirect edge functions — not here.
+// the send-collab-gift and collab-redirect edge functions - not here.
 //
 // Fire-and-forget by design: tracking must never block or break the gift UI.
 
@@ -31,14 +31,14 @@ export function trackCollab(
   source: CollabSource,
   meta?: Record<string, unknown>,
 ): void {
-  // GTM mirror — never throws.
+  // GTM mirror - never throws.
   try {
     if (typeof window !== 'undefined' && window.dataLayer) {
       window.dataLayer.push({ event: 'collab_event', collab, collab_event_type: eventType, collab_source: source, ...meta });
     }
   } catch { /* ignore */ }
 
-  // Supabase insert — best-effort. RLS requires the row's user_id to match the
+  // Supabase insert - best-effort. RLS requires the row's user_id to match the
   // logged-in user, so we resolve the session first and silently skip if absent.
   void (async () => {
     try {
@@ -54,6 +54,6 @@ export function trackCollab(
         user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
         meta: meta ?? null,
       });
-    } catch { /* swallow — tracking failures must not surface to the user */ }
+    } catch { /* swallow - tracking failures must not surface to the user */ }
   })();
 }

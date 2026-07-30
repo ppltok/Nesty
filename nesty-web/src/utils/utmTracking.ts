@@ -20,7 +20,7 @@ export interface Attribution {
 
 /**
  * Call once on app boot. If the current URL has UTM params, captures them
- * (first-touch — doesn't overwrite an existing record unless new UTMs present).
+ * (first-touch - doesn't overwrite an existing record unless new UTMs present).
  */
 export function captureAttributionOnLanding(): void {
   if (typeof window === 'undefined') return

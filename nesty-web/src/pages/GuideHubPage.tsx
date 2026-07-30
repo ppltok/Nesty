@@ -83,7 +83,7 @@ export default function GuideHubPage() {
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary-dark transition-colors rounded-xl px-5 py-2.5 font-bold text-sm md:text-base"
           >
             <Sparkles className="w-4 h-4" />
-            <span>התחילי רשימה — חינם</span>
+            <span>התחילי רשימה - חינם</span>
           </Link>
         </div>
       </header>
@@ -200,7 +200,7 @@ export default function GuideHubPage() {
         </div>
       </section>
 
-      {/* Editorial body — "למה Nesty שונה" + FAQ */}
+      {/* Editorial body - "למה Nesty שונה" + FAQ */}
       <section className="max-w-4xl mx-auto px-6 mt-16 mb-20">
         <article className="prose-nesty">
           <MarkdownRenderer content={editorialBody} />

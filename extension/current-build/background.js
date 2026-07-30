@@ -194,13 +194,13 @@ async function refreshToken(session) {
  * Read the current auth state from the Nesty web app tab(s).
  *
  * The tab's localStorage is the source of truth for *who is signed in*, so we
- * must distinguish three states — "no tab" is not the same as "signed out":
- *   { tabPresent: false, session: null }  — no Nesty tab open; identity unknown
- *   { tabPresent: true,  session: null }  — Nesty tab open but signed out
- *   { tabPresent: true,  session: {...} } — Nesty tab open with an active session
+ * must distinguish three states - "no tab" is not the same as "signed out":
+ *   { tabPresent: false, session: null }  - no Nesty tab open; identity unknown
+ *   { tabPresent: true,  session: null }  - Nesty tab open but signed out
+ *   { tabPresent: true,  session: {...} } - Nesty tab open with an active session
  *
  * A user can have several Nesty tabs open, so we scan them and prefer a tab that
- * is logged in — that way a stray signed-out tab never masks an active session.
+ * is logged in - that way a stray signed-out tab never masks an active session.
  */
 async function readSessionFromTab() {
   console.log(`🔍 Querying ${config.WEB_URL} for session...`);
@@ -234,7 +234,7 @@ async function readSessionFromTab() {
           return { tabPresent: true, session };
         }
       } catch (error) {
-        // Tab may be mid-navigation or not scriptable — try the next one.
+        // Tab may be mid-navigation or not scriptable - try the next one.
         console.warn('⚠️ Could not read a Nesty tab, trying next:', error?.message);
       }
     }
@@ -250,7 +250,7 @@ async function readSessionFromTab() {
 /**
  * Best-effort: write a refreshed session back into the Nesty tab's localStorage
  * (same sb-*-auth-token key) so the web app's Supabase client adopts the rotated
- * tokens instead of later retrying with the now-invalidated old refresh_token —
+ * tokens instead of later retrying with the now-invalidated old refresh_token -
  * which would trip Supabase's refresh-token rotation reuse-detection. Merges into
  * the existing stored object and refuses to cross-write a different user's slot.
  */
@@ -296,7 +296,7 @@ async function writeSessionToTab(session) {
         }
       });
     } catch {
-      // best effort — ignore unscriptable tabs
+      // best effort - ignore unscriptable tabs
     }
   }
 }
@@ -324,9 +324,9 @@ async function getSupabaseSession() {
 
   if (tab.tabPresent) {
     if (!tab.session) {
-      // Signed out on the site — the cached session belongs to nobody now.
+      // Signed out on the site - the cached session belongs to nobody now.
       if (cached) {
-        console.log('🚪 Nesty tab is signed out — clearing cached session');
+        console.log('🚪 Nesty tab is signed out - clearing cached session');
         await chrome.storage.local.remove(['nesty_session']);
       }
       return null;
@@ -336,13 +336,13 @@ async function getSupabaseSession() {
     const cachedUserId = cached?.user?.id;
 
     if (cached && tabUserId && cachedUserId && tabUserId !== cachedUserId) {
-      console.log('🔄 Nesty tab user changed — discarding cached session for previous account');
+      console.log('🔄 Nesty tab user changed - discarding cached session for previous account');
       cached = null;
     }
 
     // Prefer the tab's live (SDK-maintained) session when we have nothing valid
     // cached for this user. This also keeps us from calling the refresh endpoint
-    // ourselves while a healthy tab is open — avoiding rotating the web app's
+    // ourselves while a healthy tab is open - avoiding rotating the web app's
     // refresh_token out from under it (reuse-detection risk).
     if (!cached || (!isSessionValid(cached) && isSessionValid(tab.session))) {
       cached = tab.session;
@@ -355,14 +355,14 @@ async function getSupabaseSession() {
     return null;
   }
 
-  // 3. Fast path — a session we already trust.
+  // 3. Fast path - a session we already trust.
   if (isSessionValid(session)) {
     console.log('✅ Using valid session');
     await chrome.storage.local.set({ nesty_session: session });
     return session;
   }
 
-  // 4. Nothing fresh available anywhere — refresh as a last resort.
+  // 4. Nothing fresh available anywhere - refresh as a last resort.
   if (!session.refresh_token) {
     console.log('❌ No refresh token available');
     await chrome.storage.local.remove(['nesty_session']);

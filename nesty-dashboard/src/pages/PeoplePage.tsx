@@ -95,7 +95,7 @@ export default function PeoplePage() {
           title="Total Users"
           value={formatNumber(s.total_users)}
           icon={<Users className="h-5 w-5 text-blue-500" />}
-          tooltip="All registered primary users (co-parent-only profiles excluded — they appear nested under their primary)."
+          tooltip="All registered primary users (co-parent-only profiles excluded - they appear nested under their primary)."
         />
         <KPICard
           title="Users with Items"
@@ -306,7 +306,7 @@ function ExpandedRow({ user }: { user: PersonRow }) {
 
   return (
     <div className="space-y-4">
-      {/* Co-parent panel — only shown when a partner is linked */}
+      {/* Co-parent panel - only shown when a partner is linked */}
       {user.co_parent && (
         <div className="bg-rose-50/60 border border-rose-200 rounded-lg p-4">
           <div className="flex items-start justify-between gap-4 flex-wrap">

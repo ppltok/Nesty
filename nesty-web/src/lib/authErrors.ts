@@ -10,10 +10,10 @@
  * Design notes:
  *   - We inspect message text lowercased (Supabase doesn't expose stable
  *     codes for every error), plus `error.status` for rate-limit detection.
- *   - SignUp flows must NOT surface "email already exists" — that would
+ *   - SignUp flows must NOT surface "email already exists" - that would
  *     enable account enumeration. Supabase already returns a fake-success
  *     for that case; we don't need to map it here.
- *   - Fallback is intentionally vague — when in doubt, don't guess.
+ *   - Fallback is intentionally vague - when in doubt, don't guess.
  */
 
 export interface AuthErrorShape {
@@ -29,7 +29,7 @@ export function translateAuthError(error: AuthErrorShape | null | undefined): st
   const msg = (error.message ?? '').toLowerCase()
   const status = error.status
 
-  // Rate limiting — Supabase returns HTTP 429 plus messages like
+  // Rate limiting - Supabase returns HTTP 429 plus messages like
   // "Email rate limit exceeded" or "over_email_send_rate_limit"
   if (status === 429 || msg.includes('rate limit') || msg.includes('over_email_send')) {
     return 'יותר מדי ניסיונות. נסו שוב בעוד כמה דקות.'
@@ -37,10 +37,10 @@ export function translateAuthError(error: AuthErrorShape | null | undefined): st
 
   // Wrong password or unknown user on signin.
   // Supabase deliberately returns the same generic error for both cases
-  // (anti-enumeration), so we phrase the message to cover both — the UI
+  // (anti-enumeration), so we phrase the message to cover both - the UI
   // can additionally surface a "sign up" CTA next to it.
   if (msg.includes('invalid login') || msg.includes('invalid credentials')) {
-    return 'האימייל או הסיסמה שגויים — או שעדיין אין לכם חשבון.'
+    return 'האימייל או הסיסמה שגויים - או שעדיין אין לכם חשבון.'
   }
 
   // Tried to sign in before clicking the verification link
@@ -49,7 +49,7 @@ export function translateAuthError(error: AuthErrorShape | null | undefined): st
   }
 
   // Password rejected by server-side policy (Supabase dashboard is set to
-  // require letters + digits + 8 chars minimum — keep message in sync).
+  // require letters + digits + 8 chars minimum - keep message in sync).
   if (
     msg.includes('weak password') ||
     msg.includes('password should be') ||
@@ -65,11 +65,11 @@ export function translateAuthError(error: AuthErrorShape | null | undefined): st
     return 'הקישור פג תוקף. בקשו קישור חדש.'
   }
 
-  // Network / offline — rare but possible
+  // Network / offline - rare but possible
   if (msg.includes('network') || msg.includes('fetch')) {
     return 'אין חיבור לאינטרנט. בדקו את החיבור ונסו שוב.'
   }
 
-  // Last resort — keep it warm, don't blame
+  // Last resort - keep it warm, don't blame
   return 'משהו השתבש, אבל אנחנו על זה. נסו שוב בעוד רגע.'
 }

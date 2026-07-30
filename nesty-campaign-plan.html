@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nesty · תוכנית קמפיינים מסומנת · Segmented Campaign Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Heebo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#86608e; --primary-dark:#6d4e74; --primary-light:#a891ad;
+    --secondary:#a891ad; --secondary-light:#b9a4bd;
+    --accent-pink:#f4acb7; --accent-pink-light:#ffcad4; --accent-peach:#ffd8d7;
+    --background:#faf8fb; --card:#ffffff; --border:#e8e4e9; --muted:#c9c2cb;
+    --muted-fg:#6b6b6b; --foreground:#1a1a1a;
+    --success:#22c55e; --warning:#f59e0b; --destructive:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;background:var(--background);color:var(--foreground);line-height:1.55}
+  .container{max-width:1200px;margin:0 auto;padding:28px 22px 90px}
+  .en{direction:ltr;unicode-bidi:plaintext}
+
+  /* Header */
+  .header{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 70%);color:#fff;padding:48px 48px 44px;border-radius:28px;margin-bottom:26px;box-shadow:0 10px 30px rgba(134,96,142,.22)}
+  .header h1{margin:0 0 10px;font-size:34px;font-weight:800;letter-spacing:-.5px}
+  .header .subtitle{margin:0;font-size:16px;opacity:.92;max-width:620px}
+  .header .tagline{margin-top:18px;font-size:14px;opacity:.8;font-style:italic}
+  .nest{position:absolute;font-size:30px;opacity:.16;animation:float 7s ease-in-out infinite}
+  .nest:nth-child(1){left:6%;top:24%;animation-delay:0s;font-size:54px}
+  .nest:nth-child(2){left:16%;top:64%;animation-delay:1.2s}
+  .nest:nth-child(3){left:30%;top:18%;animation-delay:2.1s;font-size:26px}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-14px) rotate(4deg)}}
+
+  /* Reveal */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  /* Reality banner */
+  .banner{background:linear-gradient(135deg,#fdf3f0,#fff);border:1px solid var(--border);border-inline-start:6px solid var(--accent-pink);border-radius:20px;padding:22px 26px;margin-bottom:30px;display:flex;gap:18px;align-items:flex-start}
+  .banner .icon{font-size:30px;line-height:1}
+  .banner h3{margin:0 0 6px;font-size:17px;color:var(--primary-dark)}
+  .banner p{margin:0;font-size:14.5px;color:var(--muted-fg)}
+  .banner b{color:var(--foreground)}
+
+  .section-title{font-size:23px;font-weight:800;color:var(--primary);margin:46px 0 6px;display:flex;align-items:center;gap:10px}
+  .section-sub{color:var(--muted-fg);font-size:14px;margin:0 0 20px}
+
+  /* Segment bars */
+  .segwrap{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:26px 28px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .segrow{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+  .segrow .lbl{width:160px;font-weight:700;font-size:14px;flex-shrink:0}
+  .segrow .lbl small{display:block;font-weight:600;color:var(--muted-fg);font-size:11.5px}
+  .bar{flex:1;height:30px;background:#f1ecf3;border-radius:10px;overflow:hidden;position:relative}
+  .bar .fill{height:100%;width:0;border-radius:10px;background:linear-gradient(90deg,var(--primary-light),var(--primary));transition:width 1.4s cubic-bezier(.22,1,.36,1)}
+  .segrow .num{width:118px;text-align:start;font-weight:800;color:var(--primary-dark);font-size:15px;flex-shrink:0}
+  .segrow .num small{font-weight:600;color:var(--muted-fg);font-size:11px}
+  .meta-ok{color:var(--success)} .meta-no{color:var(--muted-fg)}
+
+  /* Filter chips */
+  .filters{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 18px}
+  .chip{padding:9px 18px;border:1.5px solid var(--border);background:var(--card);border-radius:999px;font-family:inherit;font-size:13.5px;font-weight:700;color:var(--muted-fg);cursor:pointer;transition:.2s}
+  .chip:hover{border-color:var(--primary-light);color:var(--primary)}
+  .chip.active{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 3px 10px rgba(134,96,142,.28)}
+
+  /* Campaign cards */
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  @media(max-width:840px){.cards{grid-template-columns:1fr}}
+  .ccard{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:0;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:.25s;display:flex;flex-direction:column}
+  .ccard:hover{box-shadow:0 12px 30px rgba(134,96,142,.16);transform:translateY(-3px)}
+  .ccard.hide{display:none}
+  .ctop{padding:22px 24px 18px;cursor:pointer}
+  .ctag{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:999px;margin-bottom:12px}
+  .ctag.now{background:#e7f8ee;color:#15803d}
+  .ctag.email{background:#fff4e0;color:#b45309}
+  .ctag.asset{background:#efe7f2;color:var(--primary-dark)}
+  .ccard h3{margin:0 0 4px;font-size:19px;color:var(--primary-dark)}
+  .ccard .he{font-size:14px;color:var(--muted-fg);font-weight:600;margin-bottom:14px}
+  .seg-pill{display:inline-block;background:#f5f1f7;border:1px solid var(--border);border-radius:8px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--primary-dark);margin-inline-end:6px;margin-bottom:6px}
+  .hook{margin-top:14px;background:linear-gradient(135deg,#f7f2f9,#fff);border:1px dashed var(--primary-light);border-radius:14px;padding:13px 16px;font-size:15px;font-weight:700;color:var(--primary-dark);direction:rtl}
+  .expand-btn{display:flex;align-items:center;justify-content:space-between;padding:13px 24px;border-top:1px solid var(--border);background:#fbf9fc;cursor:pointer;font-weight:700;font-size:13.5px;color:var(--primary)}
+  .expand-btn .arr{transition:transform .3s}
+  .ccard.open .expand-btn .arr{transform:rotate(180deg)}
+  .detail{max-height:0;overflow:hidden;transition:max-height .45s ease}
+  .ccard.open .detail{max-height:1400px}
+  .detail-inner{padding:20px 24px 24px;border-top:1px solid var(--border)}
+  .drow{margin-bottom:14px}
+  .drow .k{font-size:11.5px;font-weight:800;color:var(--muted-fg);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+  .drow .v{font-size:14px}
+  /* Creative mock */
+  .creative{margin-top:6px;background:var(--background);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+  .creative .mock{display:flex;min-height:140px}
+  .creative .mockL,.creative .mockR{flex:1;padding:16px;display:flex;flex-direction:column;justify-content:center;gap:6px;font-size:12.5px}
+  .creative .mockL{background:repeating-linear-gradient(45deg,#fdeef0,#fdeef0 10px,#fce6e9 10px,#fce6e9 20px);color:#9b5b66}
+  .creative .mockR{background:linear-gradient(135deg,#efe7f2,#fff);color:var(--primary-dark);position:relative}
+  .creative .mockR .app{background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-weight:700;box-shadow:0 2px 6px rgba(134,96,142,.12)}
+  .creative .cap{padding:13px 16px;border-top:1px solid var(--border);background:#fff}
+  .creative .cap .hl{font-weight:800;color:var(--foreground);font-size:14.5px;direction:rtl}
+  .creative .cap .body{color:var(--muted-fg);font-size:12.5px;margin-top:4px;direction:rtl}
+  .creative .cta{display:inline-block;margin-top:10px;background:var(--primary);color:#fff;padding:7px 16px;border-radius:10px;font-weight:800;font-size:12.5px}
+  .src{font-size:11px;color:var(--muted)}
+
+  /* Timeline */
+  .timeline{position:relative;padding-inline-start:30px;margin-top:8px}
+  .timeline::before{content:"";position:absolute;inset-inline-start:8px;top:6px;bottom:6px;width:3px;background:linear-gradient(var(--primary),var(--accent-pink))}
+  .tnode{position:relative;margin-bottom:22px}
+  .tnode::before{content:"";position:absolute;inset-inline-start:-26px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--primary);border:3px solid #fff;box-shadow:0 0 0 2px var(--primary-light)}
+  .tnode h4{margin:0 0 4px;font-size:16px;color:var(--primary-dark)}
+  .tnode p{margin:0;font-size:14px;color:var(--muted-fg)}
+  .tnode .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+  .tt{font-size:11.5px;font-weight:700;background:#f5f1f7;border:1px solid var(--border);border-radius:8px;padding:3px 9px;color:var(--primary-dark)}
+
+  /* Formula */
+  .formula{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:760px){.formula{grid-template-columns:1fr}}
+  .fstep{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 20px;transition:.2s}
+  .fstep:hover{border-color:var(--primary-light);transform:translateY(-2px);box-shadow:0 8px 20px rgba(134,96,142,.12)}
+  .fstep .n{display:inline-flex;width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;font-weight:800;align-items:center;justify-content:center;margin-bottom:10px}
+  .fstep h4{margin:0 0 5px;font-size:15px}
+  .fstep p{margin:0;font-size:13px;color:var(--muted-fg)}
+
+  /* Guardrails */
+  .guards{background:linear-gradient(135deg,#f3eef5,#fff);border:1px solid var(--border);border-radius:22px;padding:24px 28px}
+  .guards ul{margin:6px 0 0;padding:0;list-style:none}
+  .guards li{padding-inline-start:26px;position:relative;margin-bottom:11px;font-size:14px}
+  .guards li::before{content:"💜";position:absolute;inset-inline-start:0}
+  .forbidden{color:var(--destructive);font-weight:700;text-decoration:line-through}
+
+  .footer{margin-top:50px;text-align:center;color:var(--muted-fg);font-size:13px}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <span class="nest">🪺</span><span class="nest">🎁</span><span class="nest">✨</span>
+    <h1>תוכנית קמפיינים מסומנת 🪺</h1>
+    <p class="subtitle">פילוח ה-user pool לפי <span class="en">tier × flag</span>, כל פלח עם הזווית, הערוץ והקריאייטיב שלו. נבנה מתוך <span class="en">User-Tiers</span>, <span class="en">Marketing-Angles</span> ו-<span class="en">Ad-Copy-Bank</span>.</p>
+    <p class="tagline">בונים קן, לא מחסן · 1 ביוני 2026</p>
+  </div>
+
+  <div class="banner reveal">
+    <div class="icon">⚖️</div>
+    <div>
+      <h3>קודם כל - מבחן מציאות</h3>
+      <p>כל ה-pool שלנו הוא <b>334 משתמשים</b>. <span class="en">Meta custom audience</span> דורש <b>~100 התאמות</b> כדי לפעול (ושיעור התאמה 50–70%). לכן רוב הקמפיינים מתחילים כ<b>אימייל / in-app</b> (חינם, עובד בכל גודל) ומשתדרגים ל-<span class="en">Meta</span> כשהפלח גדל. רק שני קמפיינים מוכנים ל-<span class="en">Meta</span> כבר עכשיו.</p>
+    </div>
+  </div>
+
+  <!-- Segments -->
+  <div class="section-title reveal">📊 גדלי הפלחים <span style="font-size:13px;font-weight:600;color:var(--muted-fg)">· 1 ביוני 2026</span></div>
+  <p class="section-sub reveal">חמש דרגות funnel (לפי עומק) + flags התנהגותיים. ה-bar מראה כמה משתמשים בכל דרגה, ואם היא מספיק גדולה ל-Meta.</p>
+  <div class="segwrap reveal" id="segwrap"></div>
+
+  <!-- Campaigns -->
+  <div class="section-title reveal">🎯 8 הקמפיינים</div>
+  <p class="section-sub reveal">לחיצה על כרטיס פותחת את הפירוט המלא + הצעת קריאייטיב. סננו לפי ערוץ:</p>
+  <div class="filters reveal" id="filters">
+    <button class="chip active" data-f="all">הכל</button>
+    <button class="chip" data-f="now">🟢 לרוץ עכשיו (Meta)</button>
+    <button class="chip" data-f="email">🟠 אימייל קודם</button>
+    <button class="chip" data-f="asset">🟣 בניית נכס</button>
+  </div>
+  <div class="cards" id="cards"></div>
+
+  <!-- Run order -->
+  <div class="section-title reveal">🗺️ סדר הרצה מומלץ</div>
+  <p class="section-sub reveal">לא לחכות - להריץ את הערוצים החינמיים עכשיו, ולשמור את בונה-הנכס לכשיגיע ה-scale.</p>
+  <div class="timeline reveal">
+    <div class="tnode"><h4>עכשיו - לכאן הולך התקציב</h4><p>שני קהלים מוכנים ל-Meta היום: ה-cohort הכי גדול (0 פריטים) ועוד קהל קר חדש לגמרי.</p><div class="tags"><span class="tt">#2 Finish what you started</span><span class="tt">#8 The Gift Giver</span></div></div>
+    <div class="tnode"><h4>הספרינט - ערוצים חינמיים</h4><p>גבוהי-כוונה, עלות אפסית. כל אחד משתדרג ל-Meta custom audience כשהפלח עובר ~100.</p><div class="tags"><span class="tt">#1 Fill the Nest</span><span class="tt">#3 Send the link</span><span class="tt">#5 They want to buy you a gift</span><span class="tt">#7 Build it together</span></div></div>
+    <div class="tnode"><h4>בנקאות הנכס</h4><p>19 ה-Champions קטנים מדי ל-retargeting - אבל הם זרע ה-lookalike וה-UGC המושלם. לאסוף עדויות עכשיו.</p><div class="tags"><span class="tt">#6 Champion → Lookalike seed</span></div></div>
+  </div>
+
+  <!-- Winning formula -->
+  <div class="section-title reveal">🎨 הפורמולה המנצחת לקריאייטיב</div>
+  <p class="section-sub reveal">6 האלמנטים של ה-split-screen שהביא 71% מההמרות באפריל. כל קריאייטיב חדש שומר על העצמות, מחליף דמות וכאב.</p>
+  <div class="formula reveal" id="formula"></div>
+
+  <!-- Guardrails -->
+  <div class="section-title reveal">🛡️ גבולות גזרה (Brand Voice)</div>
+  <div class="guards reveal">
+    <ul>
+      <li>אסור <span class="forbidden">מבצע</span> / <span class="forbidden">הנחה</span> בשום מקום. קופונים הם <b>מתנות</b>, ורק על מעברים בעלי-מנוף (Active→Super, Super→Sharer). הורים אף פעם לא משלמים על ה-core.</li>
+      <li>נקבה יחיד (את), משפטים עד 15 מילים, עברית יומיומית. "Nesty" נשאר באנגלית.</li>
+      <li>מקסימום 1–2 אמוji לקריאייטיב מהסט המאושר: 🪺 🎁 😉 ✨ 💜 🤍.</li>
+      <li>כל שורה עוברת את מבחן 4 השאלות (אחות גדולה? ישראלי? רגש אמיתי? לא מעצבן?) לפני שמשגרים.</li>
+    </ul>
+  </div>
+
+  <div class="footer">Nesty · תוכנית קמפיינים מסומנת · מבוסס על User-Tiers · Marketing-Angles · Ad-Copy-Bank · 🪺 בונים קן, לא מחסן</div>
+</div>
+
+<script>
+const SEGMENTS=[
+  {lbl:"User",sub:"0 פריטים",n:189,pct:100,meta:"⚠️ Borderline - הכי גדול"},
+  {lbl:"Started",sub:"פריט אחד",n:60,pct:32,meta:"אימייל קודם"},
+  {lbl:"Active",sub:"2+ פריטים",n:41,pct:22,meta:"אימייל קודם"},
+  {lbl:"Super user",sub:"5+ פריטים",n:30,pct:16,meta:"אימייל קודם"},
+  {lbl:"Champion",sub:"קיבלה פריט",n:19,pct:10,meta:"זרע Lookalike"},
+  {lbl:"Has co-parent",sub:"flag",n:10,pct:5,meta:"In-app בלבד"},
+  {lbl:"Self-fulfiller",sub:"flag",n:1,pct:1,meta:"In-app בלבד"},
+  {lbl:"Network-reached",sub:"flag",n:2,pct:1.5,meta:"In-app בלבד"},
+];
+const segwrap=document.getElementById("segwrap");
+segwrap.innerHTML=SEGMENTS.map((s,i)=>`
+  <div class="segrow">
+    <div class="lbl">${s.lbl}<small>${s.sub}</small></div>
+    <div class="bar"><div class="fill" data-w="${s.pct}"></div></div>
+    <div class="num">${s.n} <small>· ${s.meta}</small></div>
+  </div>`).join("");
+
+const CAMPAIGNS=[
+ {id:2,tag:"now",tagTxt:"🟢 לרוץ עכשיו",title:"Finish what you started",he:"User (0 פריטים) → Started · 189",
+  seg:["funnel = User","item count = 0"],size:"189 · הקהל היחיד שגדול מספיק ל-Meta",
+  obj:"Traffic / השלמת onboarding",angle:"WhatsApp Graveyard - להפוך את הבלגן של 17 הצ'אטים לרשימה אחת",
+  hook:"פתחת קן ✨ עכשיו בואי נמלא אותו - דקה וזהו",
+  why:"הסיפור הדומיננטי ב-funnel: 57% מההרשמות לא מוסיפות פריט. Meta-ready היום.",
+  creative:{L:"📱 WhatsApp עמוס<br>17 לינקים · 5 חנויות · ❓",R:"רשימת Nesty נקייה",hl:"הלינק שחוסך 3 מתנות כפולות",body:"מכירה את הרגע שמישהי שואלת \"מה לקנות לך?\" ואת שולחת 17 לינקים? Nesty הופכת את זה לרשימה אחת. חינם.",cta:"בני את הקן שלך",src:"Combo E · H16 + T9 + D2"}},
+
+ {id:8,tag:"now",tagTxt:"🟢 לרוץ עכשיו",title:"The Gift Giver",he:"קהל קר חדש · חברים/משפחה של בהריון",
+  seg:["interests: pregnancy / new-parent gifting","גיל 25–55","כל המגדרים"],size:"Prospecting · קהל קר חדש",
+  obj:"Traffic / Landing Page Views (לא Registration)",angle:"Gift Giver's Relief - לפנות למי שבאמת מוציא את הכסף",
+  hook:"היא כבר בחרה. עכשיו תורך 🎁",
+  why:"לא retarget - קהל חדש ולולאת צמיחה דו-צדדית. חייב ad set נפרד מ-ADV.",
+  creative:{L:"🎁 ידיים עוטפות מתנה",R:"גלילה ברשימת Nesty + חיוך",hl:"היא כבר בחרה. עכשיו תורך",body:"החברה שלך בהריון ושלחה רשימה? את על הצד הקל. נכנסת, בוחרת מתנה מהתקציב שלך, וקונה ישירות.",cta:"בחרי מתנה",src:"Angle: Gift Giver's Relief · T11 + D6"}},
+
+ {id:1,tag:"email",tagTxt:"🟠 אימייל קודם",title:"Fill the Nest",he:"Started (פריט 1, לא Active) · 60",
+  seg:["funnel = Started","item count = 1"],size:"60 · מתחת לרף Meta",
+  obj:"Traffic לרשימה / השלמה ל-Active",angle:"Big Sister + Registry Timer רך - דדליין הלידה אמיתי, אז דחיפות עדינה היא כנה",
+  hook:"הקן שלך מחכה לך 🪺 בואי נוסיף עוד כמה דברים",
+  why:"מעבר ה-activation north-star: פריט #1 הוא מס, פריט #2 הוא בחירה. ה-60 פתחו קן ועצרו.",
+  creative:{L:"🪺 נרסרי רך, חצי-מלא",R:"רשימה עם progress bar 1/5",hl:"הקן שלך מחכה לך",body:"Nesty כמו אחות גדולה. היא יודעת שעדיף סט אחד טוב מעשר מתנות בינוניות. בואי נוסיף עוד כמה.",cta:"חזרי לקן",src:"Big Sister · T12 (מרוכך) + D1"}},
+
+ {id:3,tag:"email",tagTxt:"🟠 אימייל קודם",title:"Send the link",he:"Active+, NOT Sharer · ~80",
+  seg:["funnel ≥ Active","Sharer flag = false"],size:"~80 (על הנייר) · חסום עד share_events",
+  obj:"דחיפת שיתוף הרשימה",angle:"The Honest Moment - להמיס את האשמה של \"אני נשמעת תובענית\"",
+  hook:"בנית רשימה מהממת. עכשיו שלחי לינק 😉",
+  why:"ה-anchor nudge מ-User-Tiers §3.2. מעבר בעל-מנוף - קופון-כמתנה מוצדק אם אימייל לבד לא מזיז.",
+  creative:{L:"😊 close-up חיוך יודע",R:"כפתור שיתוף וואטסאפ",hl:"שלחי לינק ותשכחי מהמבוכה",body:"יש דבר שאף אחד לא מספר לך: כמה מביך לבקש מתנות. Nesty לוקחת את המבוכה מהמשוואה.",cta:"שתפי בוואטסאפ",src:"Combo D · H22 + T10 + D5"}},
+
+ {id:5,tag:"email",tagTxt:"🟠 אימייל קודם",title:"They want to buy you a gift",he:"Super user, NOT Sharer · ~25",
+  seg:["funnel = Super user","Sharer flag = false"],size:"~25 · אימייל → Meta",
+  obj:"Super → Sharer (מעבר בעל-מנוף)",angle:"Gift Giver's Relief הפוך פנימה - להסיר את הסיכון החברתי של לבקש",
+  hook:"החברים שלך רוצים לקנות לך מתנה - תני להם איך 🎁",
+  why:"משתמשות-על (5+ פריטים) שעדיין לא שיתפו. זכאי לתמריץ ממוסגר-כמתנה לפי Monetization-Plan.",
+  creative:{L:"👯 חברות מתלבטות מול טלפון",R:"רשימת Nesty מסודרת",hl:"הרשימה שהחברות שלך ישאלו עליה",body:"\"מה להביא?\" - השאלה שכל חברה רוצה לשאול אבל לא יודעת איך. עם Nesty התשובה היא לינק אחד.",cta:"שתפי את הקן",src:"H19 + T11 + D7"}},
+
+ {id:7,tag:"email",tagTxt:"🟠 אימייל קודם",title:"Build it together",he:"Has co-parent · 10",
+  seg:["partner_id IS NOT NULL"],size:"10 · In-app בלבד, ערך גבוה למשתמש",
+  obj:"הפעלת co-parent",angle:"קן משותף - לחגוג את הבנייה בשניים",
+  hook:"הקן הכי יפה נבנה בשניים 🪺",
+  why:"ה-flag המבני היחיד. co-parent מכפיל את פוטנציאל ה-engagement בכל דרגה.",
+  creative:{L:"👩‍❤️‍👨 שני הורים, נרסרי",R:"רשימה משותפת · 2 avatars",hl:"הקן הכי יפה נבנה בשניים",body:"תכניסי את בן/בת הזוג לקן. כל אחד מוסיף, כולם רואים, המתנות מגיעות בול.",cta:"הזמיני שותף",src:"In-app prompt · Shared nest"}},
+
+ {id:4,tag:"email",tagTxt:"🟠 In-app",title:"Price-watch power user",he:"Super + Self-fulfiller · 1",
+  seg:["funnel ≥ Super","Self-fulfiller = true"],size:"1 היום · מנוף retention עתידי",
+  obj:"Retention · התוסף + price alerts",angle:"Israeli Shopping Reality + price-drop - להישען על התוסף וההתראות",
+  hook:"קונה מכל החנויות? התוסף עוקב אחרי המחירים בשבילך",
+  why:"זוגות שמשתמשים ב-Nesty כצ'קליסט קניות אישי. עסוקים תפעולית אבל בלתי-נראים ל-share nudges.",
+  creative:{L:"🛒 שילב · אמזון · עלי",R:"התראת ירידת מחיר 📉",hl:"שילב, אמזון, עלי - הכל ברשימה אחת",body:"את בוחרת מכל חנות, התוסף עוקב אחרי המחירים. כשמשהו יורד - את הראשונה לדעת.",cta:"הוסיפי את התוסף",src:"T14 + D8 · In-app"}},
+
+ {id:6,tag:"asset",tagTxt:"🟣 בניית נכס",title:"Champion → Lookalike seed",he:"Champion + Sharer + Network-reached · 19",
+  seg:["Champion","Sharer = true","Network-reached = true"],size:"19 זרע · קטן ל-retarget, מושלם ל-LAL",
+  obj:"UGC עכשיו → 1% Lookalike כשהזרע ≥100",
+  angle:"Social proof / עדות → prospecting קר מ-lookalike עם הקריאייטיב המנצח (Grandma Hint)",
+  hook:"Nesty עזרה לך? נשמח לשמוע 💜",
+  why:"\"Prospecting gold\" מ-User-Tiers §3.4. לאסוף עדויות עכשיו, לזרוע lookalike כשעובר את הרף (צפי Q3).",
+  creative:{L:"⭐ ציטוט לקוחה אמיתי",R:"לוגו Nesty + 5 כוכבים",hl:"איך לרמוז לסבתא בעדינות? 😉",body:"החברים שלך רוצים לקנות לך מתנה שווה, הם פשוט לא יודעים מה חסר. תעשי להם חיים קלים.",cta:"בני את הקן שלך",src:"Combo A (ל-LAL) · H1 + T1 + D1"}},
+];
+
+const FORMULA=[
+ {n:1,h:"Split-screen",p:"שמאל = בלאגן מתנות (פוטו). ימין = אפליקציית Nesty + תינוק ישן."},
+ {n:2,h:"דמות ישראלית עם בועת מחשבה",p:'"דוד חיים", "סבתא", "דוד יוסי" - מאויר, נושא את הבדיחה.'},
+ {n:3,h:"כותרת העצמה + עוגן טיפוגרפי",p:"מילה אחת מודגשת/מודגשת בקו - באמת, אף פעם יותר, לינק אחד."},
+ {n:4,h:"הוכחת מוצר",p:"צילום מסך אמיתי של אפליקציית Nesty בצד ימין."},
+ {n:5,h:"עוגן רגשי",p:"תינוק ישן, גוונים ניטרליים רכים."},
+ {n:6,h:"כפתור CTA סגול",p:'"בני את הקן שלך" או וריאנט קרוב.'},
+];
+
+// Render campaigns
+const cardsEl=document.getElementById("cards");
+cardsEl.innerHTML=CAMPAIGNS.map(c=>`
+ <div class="ccard reveal" data-f="${c.tag}">
+   <div class="ctop" onclick="this.parentElement.classList.toggle('open')">
+     <span class="ctag ${c.tag}">${c.tagTxt}</span>
+     <h3><span style="opacity:.5">#${c.id}</span> ${c.title}</h3>
+     <div class="he">${c.he}</div>
+     <div>${c.seg.map(s=>`<span class="seg-pill">${s}</span>`).join("")}</div>
+     <div class="hook">${c.hook}</div>
+   </div>
+   <div class="expand-btn" onclick="this.parentElement.classList.toggle('open')">
+     <span>פירוט + הצעת קריאייטיב</span><span class="arr">▾</span>
+   </div>
+   <div class="detail"><div class="detail-inner">
+     <div class="drow"><div class="k">פלח · גודל</div><div class="v">${c.size}</div></div>
+     <div class="drow"><div class="k">Objective</div><div class="v">${c.obj}</div></div>
+     <div class="drow"><div class="k">זווית שיווקית</div><div class="v">${c.angle}</div></div>
+     <div class="drow"><div class="k">למה</div><div class="v">${c.why}</div></div>
+     <div class="drow"><div class="k">הצעת קריאייטיב</div>
+       <div class="creative">
+         <div class="mock">
+           <div class="mockL">${c.creative.L}</div>
+           <div class="mockR"><div class="app">${c.creative.R}</div></div>
+         </div>
+         <div class="cap">
+           <div class="hl">${c.creative.hl}</div>
+           <div class="body">${c.creative.body}</div>
+           <span class="cta">${c.creative.cta}</span>
+           <div class="src" style="margin-top:8px">📋 ${c.creative.src}</div>
+         </div>
+       </div>
+     </div>
+   </div></div>
+ </div>`).join("");
+
+document.getElementById("formula").innerHTML=FORMULA.map(f=>`
+  <div class="fstep"><span class="n">${f.n}</span><h4>${f.h}</h4><p>${f.p}</p></div>`).join("");
+
+// Filters
+document.getElementById("filters").addEventListener("click",e=>{
+  if(!e.target.classList.contains("chip"))return;
+  document.querySelectorAll("#filters .chip").forEach(c=>c.classList.remove("active"));
+  e.target.classList.add("active");
+  const f=e.target.dataset.f;
+  document.querySelectorAll(".ccard").forEach(card=>{
+    card.classList.toggle("hide", f!=="all" && card.dataset.f!==f);
+  });
+});
+
+// Scroll reveal + bar fill
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{
+    if(en.isIntersecting){
+      en.target.classList.add("in");
+      if(en.target.id==="segwrap"){
+        en.target.querySelectorAll(".fill").forEach(b=>{setTimeout(()=>b.style.width=b.dataset.w+"%",80);});
+      }
+      io.unobserve(en.target);
+    }
+  });
+},{threshold:.12});
+document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

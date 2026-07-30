@@ -13,7 +13,7 @@
 // On any validation error we return a small HTML page (not JSON) since the
 // user is coming from an email client and will see the response in a browser.
 //
-// No auth required — the HMAC signature IS the auth. Anybody who has the
+// No auth required - the HMAC signature IS the auth. Anybody who has the
 // URL can act on it, which is acceptable: the only thing a bad actor can
 // do is opt someone out of their own marketing email. That's reversible
 // with one click on the confirmation page.
@@ -35,7 +35,7 @@ function errorHtml(title: string, message: string): Response {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>${title} — Nesty</title>
+  <title>${title} - Nesty</title>
   <style>
     body { margin:0; padding:48px 16px; font-family: 'Assistant', 'Heebo', sans-serif; background:#f5f0fa; color:#3b1f6b; }
     .card { max-width: 480px; margin: 0 auto; background:#fff; padding:32px; border-radius:20px; border:1.5px solid #e8daf5; text-align:center; }

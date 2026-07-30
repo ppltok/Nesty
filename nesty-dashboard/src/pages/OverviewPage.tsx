@@ -7,7 +7,7 @@ import { PageSkeleton } from '@/components/shared/LoadingSkeleton'
 import { TrendChart } from '@/components/charts/TrendChart'
 import { DonutChart } from '@/components/charts/DonutChart'
 import { formatNumber, formatCurrency, formatPercent } from '@/lib/formatters'
-// BarChartComponent removed — unused on this page
+// BarChartComponent removed - unused on this page
 import {
   Gift,
   Users,
@@ -61,7 +61,7 @@ export default function OverviewPage() {
   const gmvTrend = trend(data.platform_gmv, data.prev_platform_gmv ?? data.platform_gmv)
 
   // Active-registry rate: of the new signups this period, how many have an
-  // active registry? Literal ratio `active_registries / new_users` — can
+  // active registry? Literal ratio `active_registries / new_users` - can
   // exceed 100% when existing users are active too (we surface that as-is;
   // it's informative signal that older cohorts stay engaged).
   const activeRate = data.new_users > 0 ? (data.active_registries / data.new_users) * 100 : 0
@@ -96,7 +96,7 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      {/* KPI Row 1 — period-filtered headline metrics */}
+      {/* KPI Row 1 - period-filtered headline metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="North Star (Gifted 30d)"
@@ -126,20 +126,20 @@ export default function OverviewPage() {
           title="Platform GMV"
           value={formatCurrency(data.platform_gmv)}
           icon={<DollarSign className="h-5 w-5 text-yellow-500" />}
-          tooltip="Gross Merchandise Value — total wishlist value (price x quantity) across all registries."
+          tooltip="Gross Merchandise Value - total wishlist value (price x quantity) across all registries."
           change={gmvTrend.change}
           changePositive={gmvTrend.changePositive}
           subtitle="vs prev period"
         />
       </div>
 
-      {/* KPI Row 1b — gift attribution (who actually bought) */}
+      {/* KPI Row 1b - gift attribution (who actually bought) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <KPICard
           title="Gifts by Friends & Family"
           value={formatNumber(giftsByExternal)}
           icon={<Heart className="h-5 w-5 text-pink-500" />}
-          tooltip="Confirmed gift purchases (this period) where the buyer email does NOT match the registry owner or co-parent — i.e. real external gift-givers."
+          tooltip="Confirmed gift purchases (this period) where the buyer email does NOT match the registry owner or co-parent - i.e. real external gift-givers."
           change={externalGiftsTrend.change}
           changePositive={externalGiftsTrend.changePositive}
           subtitle="vs prev period"
@@ -162,7 +162,7 @@ export default function OverviewPage() {
         />
       </div>
 
-      {/* KPI Row 2 — all-time / structural metrics */}
+      {/* KPI Row 2 - all-time / structural metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <KPICard
           title="Total Users"
@@ -207,7 +207,7 @@ export default function OverviewPage() {
         />
       </div>
 
-      {/* User Tier Funnel — compact view, filtered by signup cohort.
+      {/* User Tier Funnel - compact view, filtered by signup cohort.
        *  Tier definitions imported from @/lib/tierMeta (shared with Funnel page). */}
       {(() => {
         const tf = tierFunnel.data

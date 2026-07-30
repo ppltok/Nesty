@@ -1,8 +1,8 @@
-// WhatsApp re-capture — one-time modal for users who finished onboarding
+// WhatsApp re-capture - one-time modal for users who finished onboarding
 // before the phone step existed (or skipped it). Captures the number inline
 // with the same gift-alert pitch as onboarding step 5.
 //
-// Exposure policy (gentle by design — see the setup-completion plan):
+// Exposure policy (gentle by design - see the setup-completion plan):
 //   1st "לא עכשיו" → snooze timestamp in dismissed_popups.whatsapp_recapture
 //   after 7 days   → shows one final time (finalShow=true)
 //   2nd "לא עכשיו" → permanent dismissal. Saving always dismisses permanently.
@@ -90,7 +90,7 @@ export default function WhatsAppRecaptureModal({ userId, finalShow, onClose, onS
             </div>
             <h2 className="text-xl font-bold text-[#1d192b] mb-2">מעולה, את מחוברת!</h2>
             <p className="text-sm text-[#49454f]">
-              נשלח לך וואטסאפ ברגע שנכנסת המתנה הראשונה. עד אז — שקט.
+              נשלח לך וואטסאפ ברגע שנכנסת המתנה הראשונה. עד אז - שקט.
             </p>
           </div>
         ) : (
@@ -110,7 +110,7 @@ export default function WhatsAppRecaptureModal({ userId, finalShow, onClose, onS
               <Heart className="w-4 h-4 text-[#6750a4] fill-current flex-shrink-0" />
             </h2>
             <p className="text-sm text-[#49454f] mb-4">
-              הוסיפי מספר — ואל תפספסי כלום!
+              הוסיפי מספר - ואל תפספסי כלום!
             </p>
 
             <div className="space-y-2 mb-4 text-right">
@@ -154,7 +154,7 @@ export default function WhatsAppRecaptureModal({ userId, finalShow, onClose, onS
             </div>
             {digits.length > 0 && !valid && (
               <p className="text-xs text-red-600 mt-1.5">
-                מספר נייד ישראלי — 10 ספרות שמתחילות ב-05
+                מספר נייד ישראלי - 10 ספרות שמתחילות ב-05
               </p>
             )}
             {error && <p className="text-xs text-red-600 mt-1.5">{error}</p>}

@@ -8,13 +8,13 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-// Plain management link — settings page, requires login. Used as a fallback
+// Plain management link - settings page, requires login. Used as a fallback
 // only when we can't resolve the recipient to a userId for one-click
 // unsubscribe (e.g. transactional emails to non-Nesty users).
 const MANAGE_LINK = `<a href="https://nestyil.com/settings/emails" style="color:#9070b8;text-decoration:underline;">ניהול העדפות אימייל</a>`
 
 // Look up a profile id by email (for emails where the caller didn't pass
-// userId). Returns null if no match — caller should fall back to MANAGE_LINK.
+// userId). Returns null if no match - caller should fall back to MANAGE_LINK.
 async function lookupUserIdByEmail(email: string): Promise<string | null> {
   if (!email || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null
   try {
@@ -52,7 +52,7 @@ async function buildInlineUnsubLink(
 // RFC 8058 List-Unsubscribe headers. Gmail / Outlook / Apple Mail render a
 // native unsubscribe button when these are present, which dramatically
 // reduces spam complaints (users hit the native button instead of "report
-// spam"). Pass the per-user signed URL — the unsubscribe edge function
+// spam"). Pass the per-user signed URL - the unsubscribe edge function
 // accepts both GET and POST.
 function buildListUnsubHeaders(unsubUrl: string | null): Record<string, string> {
   if (!unsubUrl) return {}
@@ -95,7 +95,7 @@ function buildAdminBrandedEmail(opts: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="color-scheme" content="light only"/>
   <meta name="supported-color-modes" content="light"/>
-  <title>${heroTitle} — Nesty</title>
+  <title>${heroTitle} - Nesty</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>:root { color-scheme: light only; }</style>
 </head>
@@ -368,7 +368,7 @@ serve(async (req) => {
               <span style="font-size:28px;font-weight:400;color:#e4c8ff;">הקן שלך מוכן.</span>
             </h1>
             <p style="margin:0 0 34px;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:420px;margin-left:auto;margin-right:auto;">
-              כל כך שמחים שהצטרפת! Nesty היא הפלטפורמה שתלווה אותך לאורך כל ההיריון — מרשימת קניות חכמה, דרך צ'קליסט מותאם אישית, ועד עדכונים שבועיים על ההתפתחות שלך ושל התינוק. 🌸
+              כל כך שמחים שהצטרפת! Nesty היא הפלטפורמה שתלווה אותך לאורך כל ההיריון - מרשימת קניות חכמה, דרך צ'קליסט מותאם אישית, ועד עדכונים שבועיים על ההתפתחות שלך ושל התינוק. 🌸
             </p>
             <a href="${ctaW}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">✨ בואי נתחיל</a>
           </td>
@@ -410,7 +410,7 @@ serve(async (req) => {
               <tr>
                 <td style="vertical-align:top;padding-left:16px;">
                   <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#3b1f6b;">רשימת קניות חכמה לתינוק</p>
-                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">הוסיפי מוצרים מכל אתר עם התוסף לכרום, סמני מה הכי חשוב, שתפי עם משפחה וחברים — וקבלי מתנות בדיוק ממה שביקשת.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">הוסיפי מוצרים מכל אתר עם התוסף לכרום, סמני מה הכי חשוב, שתפי עם משפחה וחברים - וקבלי מתנות בדיוק ממה שביקשת.</p>
                 </td>
                 <td width="48" style="vertical-align:top;">
                   <div style="width:42px;height:42px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:14px;text-align:center;line-height:42px;font-size:22px;">🎁</div>
@@ -424,7 +424,7 @@ serve(async (req) => {
               <tr>
                 <td style="vertical-align:top;padding-left:16px;">
                   <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#3b1f6b;">צ'קליסט הריון מותאם אישית</p>
-                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">בדיקות, קניות, הכנת הבית — הכל מסודר לפי שלבים ותזמון. סמני מה עשית ותראי כמה התקדמת.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">בדיקות, קניות, הכנת הבית - הכל מסודר לפי שלבים ותזמון. סמני מה עשית ותראי כמה התקדמת.</p>
                 </td>
                 <td width="48" style="vertical-align:top;">
                   <div style="width:42px;height:42px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:14px;text-align:center;line-height:42px;font-size:22px;">✅</div>
@@ -452,7 +452,7 @@ serve(async (req) => {
               <tr>
                 <td style="vertical-align:top;padding-left:16px;">
                   <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#3b1f6b;">מעקב מתנות וברכות</p>
-                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">תקבלי התראה כשמישהו קונה לך מתנה, תוכלי לשלוח תודה, ולעקוב אחרי כל מה שהגיע — בלי להפסיד כלום.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">תקבלי התראה כשמישהו קונה לך מתנה, תוכלי לשלוח תודה, ולעקוב אחרי כל מה שהגיע - בלי להפסיד כלום.</p>
                 </td>
                 <td width="48" style="vertical-align:top;">
                   <div style="width:42px;height:42px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:14px;text-align:center;line-height:42px;font-size:22px;">💝</div>
@@ -472,9 +472,9 @@ serve(async (req) => {
             </div>
             <h3 style="margin:0 0 10px;font-size:20px;font-weight:700;color:#3b1f6b;line-height:1.4;">התקיני את התוסף לכרום</h3>
             <p style="margin:0 0 22px;font-size:14px;line-height:1.8;color:#7a6090;max-width:400px;margin-left:auto;margin-right:auto;">
-              גלשי בכל אתר קניות, לחצי על כפתור Nesty — והמוצר מתווסף ישירות לרשימה שלך. זה ממש קסם! ✨
+              גלשי בכל אתר קניות, לחצי על כפתור Nesty - והמוצר מתווסף ישירות לרשימה שלך. זה ממש קסם! ✨
             </p>
-            <a href="https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll" style="display:inline-block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:100px;">🧩 הוסיפי לכרום — חינם</a>
+            <a href="https://chromewebstore.google.com/detail/add-to-nesty-button/mkkadfpabelceniomobeaejhlfcihkll" style="display:inline-block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:100px;">🧩 הוסיפי לכרום - חינם</a>
           </td>
         </tr>
 
@@ -769,8 +769,8 @@ serve(async (req) => {
         accentColor: '#7c4dbd',
         accentBg: '#f3edff',
         rows: [
-          { label: 'שם', value: userName || '—' },
-          { label: 'אימייל', value: userEmail || '—' },
+          { label: 'שם', value: userName || '-' },
+          { label: 'אימייל', value: userEmail || '-' },
           { label: 'תאריך הרשמה', value: signupDate },
           { label: 'סוג חשבון', value: 'הורה ראשי (Primary)' },
         ],
@@ -795,9 +795,9 @@ serve(async (req) => {
         accentColor: '#be185d',
         accentBg: '#fde6ef',
         rows: [
-          { label: 'שם Co-parent', value: coParentName || '—' },
-          { label: 'אימייל Co-parent', value: coParentEmail || '—' },
-          { label: 'הורה ראשי', value: primaryOwnerName || primaryOwnerEmail || '—' },
+          { label: 'שם Co-parent', value: coParentName || '-' },
+          { label: 'אימייל Co-parent', value: coParentEmail || '-' },
+          { label: 'הורה ראשי', value: primaryOwnerName || primaryOwnerEmail || '-' },
           ...(primaryOwnerName && primaryOwnerEmail
             ? [{ label: 'אימייל הורה ראשי', value: primaryOwnerEmail }]
             : []),
@@ -844,13 +844,13 @@ serve(async (req) => {
         other: 'אחר',
       }
       // Per-stage ✅/❌ checklist for the new 7-step flow. `null` state renders
-      // a neutral dash (unknown — e.g. emails sent by a pre-deploy client).
+      // a neutral dash (unknown - e.g. emails sent by a pre-deploy client).
       const skipped = (key: string) => skippedSteps.includes(key)
       const stageLine = (ok: boolean | null, label: string, extra?: string) =>
         ok === null
           ? `<span style="color:#a087c0;">➖ ${label} <span style="font-weight:400;">(לא ידוע)</span></span>`
           : ok
-            ? `<span style="color:#0a7c4a;font-weight:600;">✅ ${label}</span>${extra ? `<span style="color:#3d3d3d;"> — ${extra}</span>` : ''}`
+            ? `<span style="color:#0a7c4a;font-weight:600;">✅ ${label}</span>${extra ? `<span style="color:#3d3d3d;"> - ${extra}</span>` : ''}`
             : `<span style="color:#c0392b;font-weight:600;">❌ ${label}</span>`
 
       const subjBits = [`שבוע ${pregnancyWeek ?? '?'}`]
@@ -860,7 +860,7 @@ serve(async (req) => {
 
       const firstItemValue = firstItem
         ? [
-            firstItem.name || '—',
+            firstItem.name || '-',
             firstItem.price ? `₪${firstItem.price}` : null,
             firstItem.store ? `· ${firstItem.store}` : null,
             firstItem.category ? `· ${firstItem.category}` : null,
@@ -874,7 +874,7 @@ serve(async (req) => {
         utmSource && `source=${utmSource}`,
         utmMedium && `medium=${utmMedium}`,
         utmCampaign && `campaign=${utmCampaign}`,
-      ].filter(Boolean).join(' · ') || '—'
+      ].filter(Boolean).join(' · ') || '-'
 
       // WhatsApp: prefer the explicit boolean; fall back to skippedSteps from
       // newer clients; pre-deploy clients send neither → unknown (null).
@@ -919,14 +919,14 @@ serve(async (req) => {
         accentColor: '#0a7c4a',
         accentBg: '#e2f5ec',
         rows: [
-          { label: 'שם', value: userName || firstName || '—' },
-          { label: 'אימייל', value: userEmail || '—' },
+          { label: 'שם', value: userName || firstName || '-' },
+          { label: 'אימייל', value: userEmail || '-' },
           { label: 'תאריך הרשמה', value: signupDate },
           ...(typeof minutesToComplete === 'number'
             ? [{ label: 'זמן עד סיום Onboarding', value: `${minutesToComplete} דק'` }]
             : []),
           { label: 'שלבי התהליך', value: stagesValue },
-          { label: 'שבוע הריון', value: typeof pregnancyWeek === 'number' ? String(pregnancyWeek) : '—' },
+          { label: 'שבוע הריון', value: typeof pregnancyWeek === 'number' ? String(pregnancyWeek) : '-' },
           { label: 'UTM', value: utmBits },
           ...(landingPage ? [{ label: 'דף נחיתה', value: landingPage }] : []),
           ...(landingReferrer ? [{ label: 'Referrer', value: landingReferrer }] : []),
@@ -936,7 +936,7 @@ serve(async (req) => {
     } else if (type === 'admin_onboarding_abandoned') {
       // Internal ops email to hello@nestyil.com fired by the
       // notify-abandoned-signups cron job ~10 min after signup if the user
-      // never finished onboarding. Most fields will be empty for abandons —
+      // never finished onboarding. Most fields will be empty for abandons -
       // UTM/landing data is the most useful signal since it's set at landing
       // time, before signup.
       const userId = data?.userId || ''
@@ -963,7 +963,7 @@ serve(async (req) => {
         : ABANDON_STEPS.map((label, idx) => {
             const n = idx + 1
             if (n < lastStep) return `<span style="color:#0a7c4a;font-weight:600;">✅ ${label}</span>`
-            if (n === lastStep) return `<span style="color:#c0392b;font-weight:700;">🛑 ${label} — נעצרה כאן</span>`
+            if (n === lastStep) return `<span style="color:#c0392b;font-weight:700;">🛑 ${label} - נעצרה כאן</span>`
             return `<span style="color:#b8adc0;">⬜ ${label}</span>`
           }).join('<br/>')
 
@@ -980,11 +980,11 @@ serve(async (req) => {
         utmSource && `source=${utmSource}`,
         utmMedium && `medium=${utmMedium}`,
         utmCampaign && `campaign=${utmCampaign}`,
-      ].filter(Boolean).join(' · ') || '—'
+      ].filter(Boolean).join(' · ') || '-'
 
       const abandonSubtitle = lastStep === null
         ? 'נפתח חשבון אך לא הושלם תהליך ההצטרפות'
-        : `נעצרה בשלב ${lastStep}/7 — ${ABANDON_STEPS[lastStep - 1]}`
+        : `נעצרה בשלב ${lastStep}/7 - ${ABANDON_STEPS[lastStep - 1]}`
 
       html = buildAdminBrandedEmail({
         heroEmoji: '⚠️',
@@ -994,8 +994,8 @@ serve(async (req) => {
         accentColor: '#b35400',
         accentBg: '#fef0e0',
         rows: [
-          { label: 'אימייל', value: userEmail || '—' },
-          { label: 'שם (אם קיים)', value: userName || firstName || '—' },
+          { label: 'אימייל', value: userEmail || '-' },
+          { label: 'שם (אם קיים)', value: userName || firstName || '-' },
           { label: 'תאריך הרשמה', value: signupDate },
           ...(typeof minutesSinceSignup === 'number'
             ? [{ label: 'זמן מאז הרשמה', value: `${minutesSinceSignup} דק'` }]
@@ -1017,7 +1017,7 @@ serve(async (req) => {
       })
     } else if (type === 'thank_you') {
       emailSubject = `תודה על המתנה ל${data?.ownerName || ''}! 💝`
-      // Buyer is often a guest with no Nesty account — look up by email and
+      // Buyer is often a guest with no Nesty account - look up by email and
       // gracefully fall back to MANAGE_LINK if they're not in profiles.
       const buyerId = data?.userId || (await lookupUserIdByEmail(recipient))
       const thankYouUnsubLink = await buildInlineUnsubLink(buyerId, 'all')
@@ -1208,7 +1208,7 @@ serve(async (req) => {
             <p style="margin:0 0 12px;font-size:36px;">💡</p>
             <h3 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#f5eeff;line-height:1.5;">שתפי את הדיל!</h3>
             <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:#ffffffa6;">
-              שלחי את הקישור לרשימה למשפחה ולחברים —<br/>אולי מישהו ירצה לנצל את ירידת המחיר ולקנות לך מתנה 🎁
+              שלחי את הקישור לרשימה למשפחה ולחברים -<br/>אולי מישהו ירצה לנצל את ירידת המחיר ולקנות לך מתנה 🎁
             </p>
             <a href="${ctaPD}" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">צפי ברשימה שלך</a>
           </td>
@@ -1275,7 +1275,7 @@ serve(async (req) => {
     }
 
     // Send email via Resend API. Pass List-Unsubscribe + List-Unsubscribe-Post
-    // headers (RFC 8058) when we have a per-user signed URL — Gmail / Outlook /
+    // headers (RFC 8058) when we have a per-user signed URL - Gmail / Outlook /
     // Apple Mail render their native unsubscribe button when these are set,
     // which is the most legally-defensible path for Israeli spam law.
     const listUnsubHeaders = buildListUnsubHeaders(listUnsubUrl)

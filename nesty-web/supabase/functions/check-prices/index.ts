@@ -529,7 +529,7 @@ serve(async (req) => {
           if (item.source_currency && item.source_price && item.source_currency !== 'ILS') {
             // ✅ CURRENCY-AWARE comparison
             if (extracted.currency !== item.source_currency) {
-              // Currency mismatch — skip (rare edge case)
+              // Currency mismatch - skip (rare edge case)
               logEntry.status = 'currency_mismatch'
               logEntry.error_message = `Expected ${item.source_currency}, got ${extracted.currency}`
               logs.push(logEntry)
@@ -659,11 +659,11 @@ serve(async (req) => {
 
           if (!profile?.email) continue
 
-          // Respect email preferences — both the master and per-category toggle.
+          // Respect email preferences - both the master and per-category toggle.
           // Added in 20260419_email_preferences.sql; defaults to true so
           // existing users keep receiving price alerts unless they opt out.
           if (profile.marketing_emails === false || profile.email_price_alerts === false) {
-            console.log(`[check-prices] skipping ${profile.email} — opted out of price alerts`)
+            console.log(`[check-prices] skipping ${profile.email} - opted out of price alerts`)
             continue
           }
 
@@ -673,7 +673,7 @@ serve(async (req) => {
             .slice(0, MAX_ALERTS_PER_EMAIL)
 
           // Insert price_alerts only for the drops that actually go into the
-          // email — inserting for all drops would arm the 7-day cooldown for
+          // email - inserting for all drops would arm the 7-day cooldown for
           // ranked 6+ items that were never emailed.
           const alertInserts = topDrops.map(drop => ({
             item_id: drop.item_id,

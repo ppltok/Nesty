@@ -28,7 +28,7 @@ serve(async (req) => {
     const admin = createClient(supabaseUrl, supabaseServiceKey)
 
     // 1. Pull profiles that look abandoned. We rely on profiles.created_at as
-    //    a proxy for auth.users.created_at — the handle_new_user trigger
+    //    a proxy for auth.users.created_at - the handle_new_user trigger
     //    inserts the profile in the same transaction as the auth row, so the
     //    timestamps differ by milliseconds.
     const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
@@ -55,7 +55,7 @@ serve(async (req) => {
     const result = { checked: candidates?.length || 0, sent: 0, skipped: 0, errors: 0 }
 
     for (const p of candidates || []) {
-      // Skip rows where the matching auth user is unverified — mirrors the
+      // Skip rows where the matching auth user is unverified - mirrors the
       // gating that AuthCallback used to apply for admin_new_user.
       const { data: authUser, error: authErr } = await admin.auth.admin.getUserById(p.id)
       if (authErr || !authUser?.user) {
@@ -67,7 +67,7 @@ serve(async (req) => {
         continue
       }
 
-      // Skip if a pending or accepted co-parent invite exists — that flow
+      // Skip if a pending or accepted co-parent invite exists - that flow
       // owns its own admin notification (admin_co_parent_joined).
       const normalizedEmail = (p.email || '').toLowerCase()
       if (normalizedEmail) {
@@ -78,7 +78,7 @@ serve(async (req) => {
           .in('status', ['pending', 'accepted'])
           .limit(1)
         if (invites && invites.length > 0) {
-          // Mark as notified so we never retry — this user belongs to the
+          // Mark as notified so we never retry - this user belongs to the
           // co-parent flow, not the abandoned-onboarding flow.
           await admin
             .from('profiles')
@@ -95,7 +95,7 @@ serve(async (req) => {
 
       // Stamp the dedupe marker BEFORE sending. If the stamp fails we skip the
       // send entirely (retry next tick); if the send then fails we only lose
-      // one admin email — better than re-sending every 5-minute cron tick.
+      // one admin email - better than re-sending every 5-minute cron tick.
       const { error: updErr } = await admin
         .from('profiles')
         .update({ admin_abandon_notified_at: new Date().toISOString() })
@@ -130,7 +130,7 @@ serve(async (req) => {
       })
 
       if (invokeErr) {
-        // Already stamped — this admin email is lost, but that beats
+        // Already stamped - this admin email is lost, but that beats
         // double-sending on every subsequent tick.
         console.error(`notify-abandoned-signups: invoke failed for ${p.email}`, invokeErr)
         result.errors++

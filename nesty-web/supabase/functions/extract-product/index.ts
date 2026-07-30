@@ -31,7 +31,7 @@ function isPrivateHostname(hostname: string): boolean {
 
   const labels = host.split('.')
 
-  // Plain dotted-quad IPv4 — allow public ranges, reject private/reserved.
+  // Plain dotted-quad IPv4 - allow public ranges, reject private/reserved.
   // Leading zeros (octal ambiguity) are rejected below via the numeric check.
   if (labels.length === 4 && labels.every((l) => /^(0|[1-9]\d{0,2})$/.test(l))) {
     const octets = labels.map(Number)
@@ -107,7 +107,7 @@ serve(async (req) => {
 
     clearTimeout(timeoutId)
 
-    // fetch follows redirects by default — reject if the final URL landed on
+    // fetch follows redirects by default - reject if the final URL landed on
     // a private/internal host (SSRF via redirect)
     if (isPrivateHostname(new URL(response.url).hostname)) {
       return new Response(

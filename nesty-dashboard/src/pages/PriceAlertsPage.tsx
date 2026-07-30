@@ -269,7 +269,7 @@ export default function PriceAlertsPage() {
               {alertData.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                    No price drops detected yet — the agent runs daily
+                    No price drops detected yet - the agent runs daily
                   </td>
                 </tr>
               )}
@@ -320,7 +320,7 @@ export default function PriceAlertsPage() {
               {logData.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                    No price checks run yet — agent runs daily at 10:00 IST
+                    No price checks run yet - agent runs daily at 10:00 IST
                   </td>
                 </tr>
               )}

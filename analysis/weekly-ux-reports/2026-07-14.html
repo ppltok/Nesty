@@ -1,0 +1,136 @@
+<meta charset="utf-8">
+<title>Nesty Weekly UX & Onboarding Report - 2026-07-14</title>
+<style>
+  :root{--lav:#86608e;--ink:#1d192b;--muted:#5f5a66;--bg:#faf8fb;--card:#fff;--line:#ece7ef;--red:#ba1a5c;--amber:#b26a00;--green:#2e7d32;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px}
+  h1{font-size:26px;margin:0 0 4px}
+  h2{font-size:19px;margin:38px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--lav)}
+  h3{font-size:15px;margin:22px 0 8px;color:var(--lav)}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 24px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .card .n{font-size:26px;font-weight:700}
+  .card .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .delta{font-size:12px;font-weight:600;margin-top:4px}
+  .up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13px;margin:12px 0}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line)}
+  th{background:#f3eef5;font-weight:600;font-size:12px}
+  tr:last-child td{border-bottom:none}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
+  .t-red{background:#fde7ef;color:var(--red)} .t-amber{background:#fdf0dd;color:var(--amber)} .t-green{background:#e8f5e9;color:var(--green)} .t-gray{background:#eee;color:#555}
+  .finding{background:var(--card);border:1px solid var(--line);border-inline-start:4px solid var(--lav);border-radius:12px;padding:16px 18px;margin:14px 0}
+  .finding.crit{border-inline-start-color:var(--red)}
+  .finding.warn{border-inline-start-color:var(--amber)}
+  .finding h3{margin-top:0}
+  .finding .lbl{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-top:10px}
+  .finding p{margin:4px 0}
+  code{background:#f2edf4;padding:1px 6px;border-radius:6px;font-size:12px}
+  .he{direction:rtl;text-align:right;font-family:"Assistant","Heebo",sans-serif}
+  a{color:var(--lav)}
+  .foot{margin-top:40px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+</style>
+<div class="wrap">
+  <h1>Nesty - Weekly UX & Onboarding Report</h1>
+  <p class="sub">Week of 2026-07-07 → 2026-07-14 · Clarity behavior (last 3 days) + Supabase funnel (7d vs prior 7d) · Test accounts excluded</p>
+
+  <h2>TL;DR</h2>
+  <div class="finding crit">
+    <p><strong>The registry-building step is the real leak, and it got worse.</strong> Onboarding completion held near normal (78.6%), but <strong>48% of users who finished onboarding this week added zero items</strong> - up from 29% the week before. Nearly half of "completed" users have an empty registry. That, not signup abandonment, is where the funnel bleeds. Clarity backs it up: the <code>/onboarding</code> screen throws a dead-click on 50% of its sessions, and <code>/checklist</code> shows a 37.5% quick-back rate.</p>
+  </div>
+
+  <h2>Funnel - week over week</h2>
+  <div class="cards">
+    <div class="card"><div class="n">42</div><div class="l">Signups</div><div class="delta flat">= 42 prior</div></div>
+    <div class="card"><div class="n">78.6%</div><div class="l">Onboarding completed</div><div class="delta down">▼ 4.7 pts (83.3%)</div></div>
+    <div class="card"><div class="n">48.5%</div><div class="l">Completed but 0 items</div><div class="delta down">▲ 20 pts (28.6%)</div></div>
+    <div class="card"><div class="n">51.5%</div><div class="l">Completers who added items</div><div class="delta down">▼ 20 pts (71.4%)</div></div>
+    <div class="card"><div class="n">5</div><div class="l">Co-parent invites sent</div><div class="delta flat">15% of completers</div></div>
+    <div class="card"><div class="n">31/33</div><div class="l">Completers with a registry</div><div class="delta flat">registry auto-created</div></div>
+  </div>
+  <p style="font-size:13px;color:var(--muted)">Co-parent invites counted from <code>registry_invitations</code> (5 sent); only 2 have been accepted (<code>partner_id</code> set). Registry exists for nearly everyone - the gap is <em>items</em>, not registries.</p>
+
+  <h3>Signups by source (7d)</h3>
+  <table>
+    <tr><th>utm_source</th><th>Signups</th><th>Onboarding completed</th><th>Completion</th></tr>
+    <tr><td>(none / direct / organic)</td><td>24</td><td>15</td><td><span class="tag t-red">62.5%</span></td></tr>
+    <tr><td>ig (paid social)</td><td>10</td><td>10</td><td><span class="tag t-green">100%</span></td></tr>
+    <tr><td>fb (paid social)</td><td>8</td><td>8</td><td><span class="tag t-green">100%</span></td></tr>
+  </table>
+  <p style="font-size:13px;color:var(--muted)"><strong>Paid social converts perfectly through onboarding (18/18).</strong> Every one of the 9 onboarding abandoners is an organic/direct signup. The IG/FB ad audience is high-intent; the leak is entirely in the direct/organic cohort.</p>
+
+  <h2>Microsoft Clarity - behavior signals</h2>
+  <p style="font-size:13px;color:var(--muted)">192 sessions (172 human / 20 bot), 184 distinct users, 88% mobile (IG in-app browser 72, FB in-app 46), 96% Israel. Avg scroll depth 71%, active engagement ~59s/session. Last 3 days only - Clarity API max window.</p>
+  <table>
+    <tr><th>Page</th><th>Worst signal</th><th>Rate</th><th>Read</th></tr>
+    <tr><td><code>/onboarding</code></td><td>Dead clicks</td><td><span class="tag t-red">50% of sessions</span></td><td>Users tap something on the onboarding screen that isn't clickable</td></tr>
+    <tr><td><code>/checklist</code></td><td>Quick-back</td><td><span class="tag t-red">37.5%</span></td><td>Land, bounce straight back - page isn't delivering what they expected</td></tr>
+    <tr><td><code>/gifts</code></td><td>Quick-back</td><td><span class="tag t-amber">26%</span></td><td>Same bounce pattern</td></tr>
+    <tr><td><code>/dashboard</code></td><td>Dead + rage clicks</td><td><span class="tag t-amber">47 dead / 3 rage</span></td><td>Non-interactive elements read as buttons; 3 rage clicks = active frustration</td></tr>
+    <tr><td><code>/statistics</code></td><td>Dead clicks</td><td><span class="tag t-amber">20%</span></td><td>Chart/number elements invite taps that do nothing</td></tr>
+    <tr><td>Ad landing pages (<code>/?utm=…</code>)</td><td>Script errors</td><td><span class="tag t-gray">3.1% overall</span></td><td>JS errors cluster on paid-ad entries - worth a console check</td></tr>
+  </table>
+  <p style="font-size:13px;color:var(--muted)">Homepage shows 50% quick-back but that bucket is dominated by bot + ad-click traffic that bounces immediately - discount it. RageClick overall is very low (0.52%), so no widespread rage; the dashboard cluster is the only real one.</p>
+
+  <h2>Findings & fixes</h2>
+
+  <div class="finding crit">
+    <h3>1. Half of onboarding completers never add an item - and it regressed</h3>
+    <p class="lbl">What went wrong</p>
+    <p>Onboarding can be "completed" without adding a single product. This week 16 of 33 completers (48.5%) have an empty registry, up from 10 of 35 (28.6%) last week. The final onboarding step (<span class="he">"הרגע הכי כיף - יש לך קישור מחנות?"</span>) is skippable, and half the people skip it and then never return to add anything.</p>
+    <p class="lbl">Evidence</p>
+    <p>Supabase: <code>onboarding_completed=true</code> AND 0 items = 48.5% (7d) vs 28.6% (prior 7d). Clarity: <code>/onboarding</code> dead-click on 50% of sessions suggests the add-item interaction on step 7 may not be obviously tappable on mobile.</p>
+    <p class="lbl">Suggested fix</p>
+    <p>Make the empty state work for you. (a) On step 7, if the user skips, don't drop them on an empty dashboard - route to a pre-filled starter checklist ("add these 5 in one tap"). (b) Trigger the existing <code>checklist_nudge</code> email within hours (not days) for completers with 0 items. (c) Instrument step 7 in Clarity with a custom tag so we can see skip-vs-add directly. Start in <code>nesty-web/src/pages/onboarding/Onboarding.tsx</code> (step 7 block, ~line 1216) and the dashboard empty state.</p>
+  </div>
+
+  <div class="finding warn">
+    <h3>2. Organic signups abandon onboarding at the very first screen</h3>
+    <p class="lbl">What went wrong</p>
+    <p>7 of 9 abandoners dropped at step 1 (first name) or before it ever recorded a step. These are all direct/organic - not ad traffic. The first screen (<span class="he">"בואי נכיר!"</span>) asks for a name immediately after signup; on mobile in-app browsers (IG/FB) that extra form field right after account creation is friction.</p>
+    <p class="lbl">Evidence</p>
+    <p>Abandoner <code>onboarding_last_step</code>: null ×4, step 1 ×3, step 5 ×1, step 7 ×1. Clarity dead-click 50% on <code>/onboarding</code>, 88% mobile.</p>
+    <p class="lbl">Suggested fix</p>
+    <p>Pre-fill first name from the auth profile (Google/email display name) so step 1 is a confirm-not-type. Consider making step 1 a single-tap continue when a name already exists. Also verify the onboarding CTA is a real, large, tappable button - the dead-click rate hints the primary action isn't registering taps on some mobile viewports.</p>
+  </div>
+
+  <div class="finding warn">
+    <h3>3. /checklist and /gifts get quick-backed - expectation mismatch</h3>
+    <p class="lbl">What went wrong</p>
+    <p>37.5% of <code>/checklist</code> sessions and 26% of <code>/gifts</code> sessions quick-back (land then immediately return). Users arrive expecting one thing and leave without engaging - likely a slow first paint on in-app browsers or content that doesn't match the entry point (email/ad promise).</p>
+    <p class="lbl">Evidence</p>
+    <p>Clarity QuickbackClick per-URL: checklist 12/32 sessions, gifts 6/19 sessions.</p>
+    <p class="lbl">Suggested fix</p>
+    <p>Check <code>/checklist</code> mobile load time and above-the-fold content in the IG/FB in-app browser. If checklist is being linked from emails, confirm the landing content matches the email's promise. Add a Clarity funnel from email → checklist to confirm the drop.</p>
+  </div>
+
+  <div class="finding">
+    <h3>4. Dashboard dead + rage clicks - non-interactive elements look clickable</h3>
+    <p class="lbl">What went wrong</p>
+    <p>The dashboard has 47 dead clicks across 31 sessions plus 3 rage clicks - the only real rage cluster on the site. Something on the dashboard looks like a button and isn't (stat cards, an image, a badge).</p>
+    <p class="lbl">Suggested fix</p>
+    <p>Watch 2–3 dashboard recordings to find the exact element, then either make it interactive or remove its button-like affordance (cursor, shadow, hover). Low effort, removes visible frustration.</p>
+  </div>
+
+  <h2>Onboarding abandoners this week (9) - with recordings</h2>
+  <p style="font-size:13px;color:var(--muted)">Filter recordings by Custom tag <code>user_id</code> = the UUID and <code>onboarding</code> = <code>in_progress</code>. Steps: 1 name · 2 due date · 3 feeling · 4 referral · 5 WhatsApp · 6 co-parent · 7 add first item. An admin alert email also fires ~10 min after each abandon (notify-abandoned-signups).</p>
+  <table>
+    <tr><th>Email</th><th>Signed up</th><th>Dropped at</th><th>Source</th><th>Recording</th></tr>
+    <tr><td>orenglmz@gmail.com</td><td>07-08 14:45</td><td><span class="tag t-red">intro / pre-step 1</span></td><td>direct</td><td><a href="https://clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions">view</a></td></tr>
+    <tr><td>irisolomon208@gmail.com</td><td>07-08 17:35</td><td><span class="tag t-red">intro / pre-step 1</span></td><td>direct</td><td><a href="https://clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions">view</a></td></tr>
+    <tr><td>adicimerring@gmail.com</td><td>07-09 08:54</td><td><span class="tag t-red">step 1 - name</span></td><td>direct</td><td><a href="https://clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions">view</a></td></tr>
+    <tr><td>mazali.y1995@gmail.com</td><td>07-10 03:53</td><td><span class="tag t-amber">step 7 - add item</span></td><td>direct</td><td><a href="https://clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions">view</a></td></tr>
+    <tr><td>veradolgov1992@gmail.com</td><td>07-10 07:12</td><td><span class="tag t-red">step 1 - name</span></td><td>direct</td><td><a href="https://clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions">view</a></td></tr>
+    <tr><td>merav-g@ynet.co.il</td><td>07-10 13:28</td><td><span class="tag t-red">intro / pre-step 1</span></td><td>direct</td><td><a href="https://clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions">view</a></td></tr>
+    <tr><td>shirel.perugia@gmail.com</td><td>07-11 11:49</td><td><span class="tag t-red">intro / pre-step 1</span></td><td>direct</td><td><a href="https://clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions">view</a></td></tr>
+    <tr><td>yuvalkaradi96@gmail.com</td><td>07-12 07:57</td><td><span class="tag t-amber">step 5 - WhatsApp</span></td><td>direct</td><td><a href="https://clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions">view</a></td></tr>
+    <tr><td>shirantw@gmail.com</td><td>07-13 06:32</td><td><span class="tag t-red">step 1 - name</span></td><td>direct</td><td><a href="https://clarity.microsoft.com/projects/view/xi1xr7lx6t/impressions">view</a></td></tr>
+  </table>
+
+  <div class="foot">
+    Generated 2026-07-14 · Clarity project <span class="mono">xi1xr7lx6t</span> · Supabase <span class="mono">wopsrjfdaovlyibivijl</span> · Read-only. Clarity window = last 3 days (API max); funnel = 7d vs prior 7d. Prior report: <a href="./2026-07-07.html">2026-07-07</a>.
+  </div>
+</div>

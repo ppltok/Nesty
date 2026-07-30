@@ -1,4 +1,4 @@
-// Share prompt — fires when user adds their 5th item AND registry is
+// Share prompt - fires when user adds their 5th item AND registry is
 // not yet shared AND dismissed_popups.share_prompt_5 is not set.
 // Grandfathered: users who already had 5+ items at rollout have this
 // dismissed automatically via migration 3b.
@@ -39,7 +39,7 @@ export default function SharePromptModal({ userId, onClose, onShare }: Props) {
           <p className="text-5xl mb-3">🎉</p>
           <h2 className="text-2xl font-bold text-[#1d192b] mb-2">5 פריטים ברשימה!</h2>
           <p className="text-sm text-[#49454f] mb-6 leading-relaxed">
-            הגיע הזמן לשתף עם המשפחה —<br />
+            הגיע הזמן לשתף עם המשפחה -<br />
             ככה הם ידעו בדיוק מה לקנות לכם.
           </p>
 

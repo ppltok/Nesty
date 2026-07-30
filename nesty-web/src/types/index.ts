@@ -20,7 +20,7 @@ export interface Profile {
   email_notifications: boolean
   marketing_emails: boolean
   // Per-category email opt-ins (see 20260419_email_preferences.sql).
-  // Subordinate to marketing_emails — when master is off, all four below
+  // Subordinate to marketing_emails - when master is off, all four below
   // are effectively off regardless of their stored value.
   email_weekly_pregnancy?: boolean
   email_engagement_reminders?: boolean

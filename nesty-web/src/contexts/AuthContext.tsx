@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const currentUserId = useRef<string | null>(null)
   // Track if a fetch is in progress to prevent race conditions
   const fetchingRef = useRef(false)
-  // Which user's profile/registry we actually loaded — lets SIGNED_IN decide
+  // Which user's profile/registry we actually loaded - lets SIGNED_IN decide
   // whether a fetch is still needed (fires on interactive login AND on tab refocus)
   const dataLoadedFor = useRef<string | null>(null)
 
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Query by owner_id first, fallback to partner_id
       // Two-step approach avoids conflicts with public read RLS policy + maybeSingle()
-      // owner_id has no unique constraint — a user can end up with >1 registry
+      // owner_id has no unique constraint - a user can end up with >1 registry
       // (e.g. interrupted onboarding). maybeSingle() errors on >1 rows, so
       // order+limit to always resolve to the oldest registry instead of none.
       const ownerQuery = supabase
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return ownedRegistry
       }
 
-      // Not an owner — check if partner on someone else's registry
+      // Not an owner - check if partner on someone else's registry
       const partnerQuery = supabase
         .from('registries')
         .select('*')
@@ -240,7 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Handle sign in events
         // During the OAuth boot sequence SIGNED_IN fires before the Supabase
-        // client is fully ready — there we wait for INITIAL_SESSION to fetch.
+        // client is fully ready - there we wait for INITIAL_SESSION to fetch.
         // But INITIAL_SESSION fires only once per page load: an interactive
         // sign-in afterwards (email/password, PKCE code exchange) gets ONLY
         // SIGNED_IN, so profile/registry must be fetched here or they stay

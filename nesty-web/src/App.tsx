@@ -17,7 +17,7 @@ import SignIn from './pages/auth/SignIn'
 import SignUp from './pages/auth/SignUp'
 import AuthCallback from './pages/auth/AuthCallback'
 
-// Lazy-loaded routes — each becomes its own JS chunk that only downloads
+// Lazy-loaded routes - each becomes its own JS chunk that only downloads
 // when the user actually navigates to that route. Cuts initial bundle size
 // significantly without changing UX (each transition adds at most a few
 // hundred ms of download for routes the user hasn't seen yet).
@@ -108,7 +108,7 @@ function AppRoutes() {
       {/* Invitation acceptance (works with or without auth) */}
       <Route path="/invite/:token" element={<InviteAccept />} />
 
-      {/* Unsubscribe confirmation — public on purpose; users may be logged
+      {/* Unsubscribe confirmation - public on purpose; users may be logged
           out when clicking a link from their email client. */}
       <Route path="/unsubscribed" element={<Unsubscribed />} />
 
@@ -116,7 +116,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         {/* Onboarding - no side nav */}
         <Route path="/onboarding" element={
-          // ?preview=1 bypasses the redirect — used by dev helpers to preview
+          // ?preview=1 bypasses the redirect - used by dev helpers to preview
           // the onboarding UI without touching DB state. Onboarding.tsx
           // detects the same flag and stubs handleComplete.
           (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === '1')
@@ -147,7 +147,7 @@ function AppRoutes() {
           {/* Settings page */}
           <Route path="/settings" element={<Settings />} />
 
-          {/* Granular email preferences — linked from every outbound email
+          {/* Granular email preferences - linked from every outbound email
               and from Settings.tsx. */}
           <Route path="/settings/emails" element={<EmailPreferences />} />
         </Route>

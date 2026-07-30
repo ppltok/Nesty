@@ -18,7 +18,7 @@ function buildInvitationEmailHtml(ownerName: string, inviteUrl: string): string 
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="color-scheme" content="light only"/>
   <meta name="supported-color-modes" content="light"/>
-  <title>הזמנה לניהול משותף — Nesty</title>
+  <title>הזמנה לניהול משותף - Nesty</title>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     :root { color-scheme: light only; }
@@ -65,7 +65,7 @@ function buildInvitationEmailHtml(ownerName: string, inviteUrl: string): string 
               <span style="font-size:26px;font-weight:400;color:#e4c8ff;">לנהל יחד את רשימת התינוק! 👶</span>
             </h1>
             <p style="margin:0 0 34px;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:420px;margin-left:auto;margin-right:auto;">
-              ב-Nesty תוכלו לנהל ביחד רשימת ציוד לתינוק — להוסיף מוצרים מכל אתר, לעקוב אחרי מתנות, ולהתארגן יחד בצורה חכמה.
+              ב-Nesty תוכלו לנהל ביחד רשימת ציוד לתינוק - להוסיף מוצרים מכל אתר, לעקוב אחרי מתנות, ולהתארגן יחד בצורה חכמה.
             </p>
             <a href="${ctaUrl}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">💜 הצטרפו לרשימה</a>
           </td>
@@ -84,7 +84,7 @@ function buildInvitationEmailHtml(ownerName: string, inviteUrl: string): string 
               <tr>
                 <td style="vertical-align:top;padding-left:16px;">
                   <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#3b1f6b;">להוסיף מוצרים מכל אתר</p>
-                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">שניכם יכולים להוסיף פריטים לרשימה — מהאתר, מהנייד, או עם התוסף לכרום.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">שניכם יכולים להוסיף פריטים לרשימה - מהאתר, מהנייד, או עם התוסף לכרום.</p>
                 </td>
                 <td width="48" style="vertical-align:top;">
                   <div style="width:42px;height:42px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:14px;text-align:center;line-height:42px;font-size:22px;">🛒</div>
@@ -97,7 +97,7 @@ function buildInvitationEmailHtml(ownerName: string, inviteUrl: string): string 
               <tr>
                 <td style="vertical-align:top;padding-left:16px;">
                   <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:#3b1f6b;">לערוך ולנהל פריטים</p>
-                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">לעדכן כמויות, לסמן מה הכי חשוב, ולמחוק מה שלא צריך — ביחד.</p>
+                  <p style="margin:0;font-size:13px;line-height:1.75;color:#7a6090;">לעדכן כמויות, לסמן מה הכי חשוב, ולמחוק מה שלא צריך - ביחד.</p>
                 </td>
                 <td width="48" style="vertical-align:top;">
                   <div style="width:42px;height:42px;background:linear-gradient(135deg,#f0e8ff,#dcc8f8);border-radius:14px;text-align:center;line-height:42px;font-size:22px;">✏️</div>
@@ -366,7 +366,7 @@ serve(async (req) => {
 
     if (!resendResponse.ok) {
       console.error('Resend API error:', resendResult)
-      // Invitation was created in DB but email failed — still return success
+      // Invitation was created in DB but email failed - still return success
       // The user can resend from Settings
       return new Response(JSON.stringify({ success: true, warning: 'Email delivery failed, can resend from settings' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

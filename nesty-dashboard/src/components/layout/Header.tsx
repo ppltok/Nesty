@@ -41,7 +41,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-        {/* Refresh button — icon only on mobile */}
+        {/* Refresh button - icon only on mobile */}
         <button
           onClick={handleRefresh}
           disabled={refreshing}
@@ -60,7 +60,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         {/* Date range picker */}
         <DateRangePicker />
 
-        {/* User info — hidden on small mobile, show on sm+ */}
+        {/* User info - hidden on small mobile, show on sm+ */}
         <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-gray-200">
           <span className="text-sm text-gray-600 truncate max-w-[120px]">
             {access?.display_name || user?.email}

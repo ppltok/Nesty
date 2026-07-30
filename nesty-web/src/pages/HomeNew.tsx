@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { asset } from '../lib/assets'
-// AnimatedNest removed per user feedback — using original image
+// AnimatedNest removed per user feedback - using original image
 import FadedIconsBackground from '../components/animations/FadedIconsBackground'
 import WaveDivider from '../components/animations/WaveDivider'
 import ParticleBackground from '../components/animations/ParticleBackground'
@@ -12,7 +12,7 @@ import {
     Star, Send, TrendingDown,
     Bell, CheckCircle, Users, Shield, Lock, EyeOff, Gift,
     Chrome, MousePointerClick, Zap, ShoppingBag, ExternalLink,
-    ListChecks, BookOpen, Compass, Sprout, Clock, AlertCircle
+    ListChecks, BookOpen, Compass, Sprout, Clock, AlertCircle, Instagram
 } from 'lucide-react'
 import CategoryMarquee from '../components/animations/CategoryMarquee'
 import AnnouncementBar from '../components/animations/AnnouncementBar'
@@ -21,7 +21,7 @@ export default function HomeNew() {
     const { isAuthenticated } = useAuth()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-    // Live savings counter — starts at 4,500 and keeps ticking up
+    // Live savings counter - starts at 4,500 and keeps ticking up
     const [savingsCount, setSavingsCount] = useState(4500)
     const savingsRef = useRef<HTMLDivElement>(null)
     const hasStarted = useRef(false)
@@ -45,7 +45,7 @@ export default function HomeNew() {
 
     return (
         <div className="min-h-screen bg-[#fffbff] text-[#1d192b] overflow-x-clip" dir="rtl">
-            {/* Sticky stack — announcement bar + header travel together so there's never a gap */}
+            {/* Sticky stack - announcement bar + header travel together so there's never a gap */}
             <div className="sticky top-0 z-[60]">
                 <AnnouncementBar />
                 <header className="bg-[#fffbff]/85 backdrop-blur-2xl border-b border-[#e7e0ec]/50 px-6 py-4">
@@ -164,12 +164,12 @@ export default function HomeNew() {
                                 </div>
                             </div>
 
-                            {/* Hero Image — clean photo, brand headline burned in */}
+                            {/* Hero Image - clean photo, brand headline burned in */}
                             <div className="relative mt-8 lg:mt-0 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                                 <div className="relative mx-auto max-w-lg">
                                     <img
                                         src={asset('home/landing-hero.png')}
-                                        alt="בונים קן, לא מחסן — רשימת לידה אחת מכל החנויות בעולם"
+                                        alt="בונים קן, לא מחסן - רשימת לידה אחת מכל החנויות בעולם"
                                         className="w-full h-auto rounded-[36px] shadow-[0_20px_60px_-15px_rgba(103,80,164,0.2)]"
                                     />
                                 </div>
@@ -195,7 +195,7 @@ export default function HomeNew() {
                                     איך זה עובד
                                 </span>
                                 <h2 className="text-4xl md:text-6xl font-medium text-[#1d192b] tracking-tight mb-4 leading-[1.05]">
-                                    ככה בונים את הקן —
+                                    ככה בונים את הקן -
                                     <br />
                                     <span className="text-[#6750a4]">בשלושה צעדים</span>
                                 </h2>
@@ -205,10 +205,10 @@ export default function HomeNew() {
                             </div>
                         </ScrollReveal>
 
-                        {/* Step cards — equal size, real component mockups (checklist row, recommended product card, registry item card) */}
+                        {/* Step cards - equal size, real component mockups (checklist row, recommended product card, registry item card) */}
                         <div className="relative space-y-8 md:space-y-0 md:grid md:grid-cols-3 md:gap-8">
 
-                            {/* Step 1 — RIGHT (Hebrew first) — Real Checklist row mockup */}
+                            {/* Step 1 - RIGHT (Hebrew first) - Real Checklist row mockup */}
                             <ScrollReveal delay={0}>
                                 <div className="group relative bg-white rounded-[36px] border border-[#eaddff] shadow-[0_12px_32px_-12px_rgba(103,80,164,0.12)] hover:shadow-[0_24px_48px_-16px_rgba(103,80,164,0.25)] hover:-translate-y-1.5 transition-all duration-500 overflow-hidden h-full flex flex-col">
                                     {/* Floating number badge */}
@@ -218,7 +218,7 @@ export default function HomeNew() {
                                         </div>
                                     </div>
 
-                                    {/* Real Checklist mockup — same row design as the actual /checklist page */}
+                                    {/* Real Checklist mockup - same row design as the actual /checklist page */}
                                     <div className="bg-gradient-to-b from-[#f3edff]/50 to-transparent px-6 pt-8 pb-5 min-h-[280px] flex items-center justify-center" dir="rtl">
                                         <div className="bg-white rounded-2xl shadow-sm border border-[#e7e0ec] w-full max-w-[280px] overflow-hidden">
                                             {/* Category header (matches Checklist.tsx category collapse button) */}
@@ -233,7 +233,7 @@ export default function HomeNew() {
                                                     </div>
                                                 </div>
                                             </div>
-                                            {/* Item rows — exact replica of Checklist row layout */}
+                                            {/* Item rows - exact replica of Checklist row layout */}
                                             <div className="divide-y divide-[#e7e0ec]/40">
                                                 <div className="flex items-center gap-2 px-3 py-2.5 bg-[#f9f8fc]">
                                                     <div className="w-6 h-6 rounded-lg border-2 border-[#6750a4] bg-[#6750a4] text-white flex items-center justify-center flex-shrink-0">
@@ -265,13 +265,13 @@ export default function HomeNew() {
                                             <h3 className="text-xl md:text-2xl font-bold text-[#1d192b]">מתחילות מהצ'קליסט</h3>
                                         </div>
                                         <p className="text-[#49454f] leading-relaxed">
-                                            מסמנות ✓ על מה שצריך, מסירות מה שלא, מעדכנות כמויות. הצ'קליסט בנוי עם מומחים — את לא בונה אותו מאפס.
+                                            מסמנות ✓ על מה שצריך, מסירות מה שלא, מעדכנות כמויות. הצ'קליסט בנוי עם מומחים - את לא בונה אותו מאפס.
                                         </p>
                                     </div>
                                 </div>
                             </ScrollReveal>
 
-                            {/* Step 2 — CENTER — Real recommended product card (Anex IQ Pro) */}
+                            {/* Step 2 - CENTER - Real recommended product card (Anex IQ Pro) */}
                             <ScrollReveal delay={150}>
                                 <div className="group relative bg-gradient-to-br from-[#ffd8e4]/40 via-white to-[#f3edff]/40 rounded-[36px] border-2 border-[#f4acb7]/60 shadow-[0_12px_32px_-12px_rgba(244,172,183,0.3)] hover:shadow-[0_24px_48px_-16px_rgba(244,172,183,0.5)] hover:-translate-y-1.5 transition-all duration-500 overflow-hidden h-full flex flex-col">
                                     {/* Highlighted ribbon */}
@@ -290,7 +290,7 @@ export default function HomeNew() {
 
                                     {/* Real "מוצרים מומלצים" card from the actual Checklist */}
                                     <div className="px-6 pt-8 pb-5 min-h-[280px] flex flex-col items-center justify-center" dir="rtl">
-                                        {/* "מוצרים מומלצים" green banner — exact match to Checklist.tsx line 994 */}
+                                        {/* "מוצרים מומלצים" green banner - exact match to Checklist.tsx line 994 */}
                                         <div className="w-full max-w-[280px] flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-l from-[#e8f5e9] to-[#f1f8e9] ring-1 ring-[#a5d6a7]/60 mb-2">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-7 h-7 rounded-lg bg-[#2e7d32] text-white flex items-center justify-center">
@@ -302,7 +302,7 @@ export default function HomeNew() {
                                                 </div>
                                             </div>
                                         </div>
-                                        {/* Real product card — matches Checklist.tsx line 1023 */}
+                                        {/* Real product card - matches Checklist.tsx line 1023 */}
                                         <div className="w-full max-w-[200px] bg-white rounded-xl border border-[#e7e0ec] p-2.5 shadow-sm">
                                             <img
                                                 src="https://www.baby-star.co.il/cdn/shop/files/medium-AnexIQ_Darke_2.webp?v=1768127011&width=600"
@@ -334,13 +334,13 @@ export default function HomeNew() {
                                             <h3 className="text-xl md:text-2xl font-bold text-[#1d192b]">מוסיפות פריטים בקליק</h3>
                                         </div>
                                         <p className="text-[#49454f] leading-relaxed">
-                                            לכל פריט בצ'קליסט יש מוצרים מומלצים — בוחרים, לוחצים "הוסף", והוא ברשימה. או גוררים קישור מכל חנות אחרת.
+                                            לכל פריט בצ'קליסט יש מוצרים מומלצים - בוחרים, לוחצים "הוסף", והוא ברשימה. או גוררים קישור מכל חנות אחרת.
                                         </p>
                                     </div>
                                 </div>
                             </ScrollReveal>
 
-                            {/* Step 3 — LEFT — Real Registry public-view item card */}
+                            {/* Step 3 - LEFT - Real Registry public-view item card */}
                             <ScrollReveal delay={300}>
                                 <div className="group relative bg-white rounded-[36px] border border-[#eaddff] shadow-[0_12px_32px_-12px_rgba(103,80,164,0.12)] hover:shadow-[0_24px_48px_-16px_rgba(103,80,164,0.25)] hover:-translate-y-1.5 transition-all duration-500 overflow-hidden h-full flex flex-col">
                                     {/* Floating number badge */}
@@ -350,7 +350,7 @@ export default function HomeNew() {
                                         </div>
                                     </div>
 
-                                    {/* Real Registry ItemCard — what guests see at the shared URL */}
+                                    {/* Real Registry ItemCard - what guests see at the shared URL */}
                                     <div className="bg-gradient-to-b from-[#d1fae5]/20 to-transparent px-6 pt-8 pb-5 min-h-[280px] flex flex-col items-center justify-center" dir="rtl">
                                         <div className="w-full max-w-[240px] bg-white rounded-[24px] rounded-tr-[4px] border border-[#e7e0ec] overflow-hidden shadow-sm">
                                             {/* Image */}
@@ -392,7 +392,7 @@ export default function HomeNew() {
                                             <h3 className="text-xl md:text-2xl font-bold text-[#1d192b]">משתפות עם המשפחה</h3>
                                         </div>
                                         <p className="text-[#49454f] leading-relaxed">
-                                            קישור אחד בוואטסאפ — והם רואים בדיוק את זה. ככה הם בוחרים מתנה ומסמנים שקנו, בלי כפילויות.
+                                            קישור אחד בוואטסאפ - והם רואים בדיוק את זה. ככה הם בוחרים מתנה ומסמנים שקנו, בלי כפילויות.
                                         </p>
                                     </div>
                                 </div>
@@ -421,7 +421,7 @@ export default function HomeNew() {
                     </div>
                 </section>
 
-                {/* Category marquee — narrow scrolling divider */}
+                {/* Category marquee - narrow scrolling divider */}
                 <CategoryMarquee />
 
                 {/* ══════════ REGISTRY EXAMPLE ══════════ */}
@@ -499,7 +499,7 @@ export default function HomeNew() {
                             <ScrollReveal>
                                 <div className="text-center lg:text-right">
                                     <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">אנחנו עוקבות אחרי המחירים בשבילכם</h2>
-                                    <p className="text-xl text-[#49454f] mb-8 leading-relaxed">הוסיפו מוצר לרשימה ותשכחו מזה. <bdi>Nesty</bdi> בודקת כל יום אם המחיר ירד — ואם כן, שולחת לכם הודעה. ככה חוסכים בלי מאמץ.</p>
+                                    <p className="text-xl text-[#49454f] mb-8 leading-relaxed">הוסיפו מוצר לרשימה ותשכחו מזה. <bdi>Nesty</bdi> בודקת כל יום אם המחיר ירד - ואם כן, שולחת לכם הודעה. ככה חוסכים בלי מאמץ.</p>
                                     <div className="flex justify-center lg:justify-start">
                                         <ul className="space-y-4 text-right">
                                             <li className="flex items-center gap-4">
@@ -542,7 +542,7 @@ export default function HomeNew() {
                                                 <img src={asset('anex IQ Image.webp')} alt="עגלת Anex IQ" className="w-20 h-20 rounded-[20px] object-cover flex-shrink-0" />
                                                 <div>
                                                     <h3 className="font-bold text-[#1d192b] text-lg mb-1">עגלת Anex IQ</h3>
-                                                    <p className="text-[#49454f] flex items-center gap-1.5"><AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />המחיר ירד — אולי זה רגע טוב לקנות!</p>
+                                                    <p className="text-[#49454f] flex items-center gap-1.5"><AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />המחיר ירד - אולי זה רגע טוב לקנות!</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3 p-4 bg-red-50 rounded-[16px] mb-3">
@@ -568,7 +568,7 @@ export default function HomeNew() {
                     </div>
                 </section>
 
-                {/* Wave Divider — smart engine fffbff → chrome-ext lavender */}
+                {/* Wave Divider - smart engine fffbff → chrome-ext lavender */}
                 <WaveDivider color="#f3edff" bgColor="#fffbff" />
 
                 {/* ══════════ CHROME EXTENSION ══════════ */}
@@ -691,7 +691,7 @@ export default function HomeNew() {
                     </div>
                 </section>
 
-                {/* Wave Divider — chrome-ext lavender → privacy grey */}
+                {/* Wave Divider - chrome-ext lavender → privacy grey */}
                 <WaveDivider color="#f2f0f4" bgColor="#f3edff" />
 
                 {/* ══════════ PRIVACY ══════════ */}
@@ -700,7 +700,7 @@ export default function HomeNew() {
                         <ScrollReveal>
                             <img
                                 src={asset('home/privacy-hero.png')}
-                                alt="הקן שלכם, החוקים שלכם — את שולטת במה שמשותף ומה נשאר רק שלך"
+                                alt="הקן שלכם, החוקים שלכם - את שולטת במה שמשותף ומה נשאר רק שלך"
                                 className="w-full h-auto rounded-[32px] shadow-[0_20px_60px_-15px_rgba(103,80,164,0.18)] mb-12"
                                 loading="lazy"
                             />
@@ -751,7 +751,7 @@ export default function HomeNew() {
                                         <span className="bg-[#d1fae5] text-[#065f46] px-3 py-1 rounded-full text-xs font-bold">חדש!</span>
                                     </div>
                                     <h2 className="text-4xl md:text-5xl font-medium text-[#1d192b] tracking-tight mb-6">להכין את הקן ביחד, כמו שצריך.</h2>
-                                    <p className="text-xl text-[#49454f] mb-8 leading-relaxed">ההכנה לתינוק היא מסע של שניים. עכשיו שניכם יכולים לנהל את הרשימה, הצ'קליסט והמתנות — מכל מקום, בכל רגע.</p>
+                                    <p className="text-xl text-[#49454f] mb-8 leading-relaxed">ההכנה לתינוק היא מסע של שניים. עכשיו שניכם יכולים לנהל את הרשימה, הצ'קליסט והמתנות - מכל מקום, בכל רגע.</p>
                                     <div className="flex justify-center lg:justify-start">
                                         <ul className="space-y-4 text-right">
                                             <li className="flex items-center gap-4">
@@ -764,7 +764,7 @@ export default function HomeNew() {
                                             </li>
                                             <li className="flex items-center gap-4">
                                                 <div className="w-12 h-12 bg-[#d1fae5] rounded-[14px] flex items-center justify-center flex-shrink-0"><CheckCircle className="w-6 h-6 text-[#059669]" /></div>
-                                                <span className="text-lg text-[#1d192b]">צ'קליסט, מתנות והכל — משותף</span>
+                                                <span className="text-lg text-[#1d192b]">צ'קליסט, מתנות והכל - משותף</span>
                                             </li>
                                         </ul>
                                     </div>
@@ -786,17 +786,17 @@ export default function HomeNew() {
                                             <div className="space-y-3">
                                                 <div className="flex items-center gap-3 p-3 bg-[#f9f7fc] rounded-[14px]">
                                                     <CheckCircle className="w-5 h-5 text-green-500" />
-                                                    <span className="text-sm text-[#1d192b]">עגלה — Anex IQ</span>
+                                                    <span className="text-sm text-[#1d192b]">עגלה - Anex IQ</span>
                                                     <span className="mr-auto text-xs text-[#49454f]">תם הוסיף</span>
                                                 </div>
                                                 <div className="flex items-center gap-3 p-3 bg-[#f9f7fc] rounded-[14px]">
                                                     <CheckCircle className="w-5 h-5 text-green-500" />
-                                                    <span className="text-sm text-[#1d192b]">מוניטור — Nanit</span>
+                                                    <span className="text-sm text-[#1d192b]">מוניטור - Nanit</span>
                                                     <span className="mr-auto text-xs text-[#49454f]">קרן הוסיפה</span>
                                                 </div>
                                                 <div className="flex items-center gap-3 p-3 bg-[#ffd8e4]/30 rounded-[14px]">
                                                     <Star className="w-5 h-5 text-[#6750a4] fill-[#eaddff]" />
-                                                    <span className="text-sm text-[#1d192b] font-medium">כיסא בטיחות — Cybex</span>
+                                                    <span className="text-sm text-[#1d192b] font-medium">כיסא בטיחות - Cybex</span>
                                                     <span className="mr-auto text-xs bg-[#6750a4] text-white px-2 py-0.5 rounded-full">Most Wanted</span>
                                                 </div>
                                             </div>
@@ -947,7 +947,16 @@ export default function HomeNew() {
                             <Link to="/" className="flex items-center mb-4">
                                 <img src={asset('logo.png')} alt="Nesty" className="h-12 w-auto" />
                             </Link>
-                            <p className="text-[#49454f] max-w-sm"><bdi>Nesty</bdi> — כמו אחות גדולה שעוזרת לכם להתארגן. רשימת ציוד חכמה מכל חנות, שיתוף עם המשפחה, וחיסכון אוטומטי.</p>
+                            <p className="text-[#49454f] max-w-sm"><bdi>Nesty</bdi> - כמו אחות גדולה שעוזרת לכם להתארגן. רשימת ציוד חכמה מכל חנות, שיתוף עם המשפחה, וחיסכון אוטומטי.</p>
+                            <a
+                                href="https://www.instagram.com/your_nesty_/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Nesty באינסטגרם"
+                                className="mt-5 inline-flex items-center justify-center w-11 h-11 rounded-xl bg-white border border-[#e7e0ec] text-[#86608e] hover:text-white hover:bg-[#86608e] hover:border-[#86608e] transition-colors"
+                            >
+                                <Instagram className="w-5 h-5" />
+                            </a>
                         </div>
                         <div>
                             <h3 className="font-bold text-[#1d192b] mb-4">קישורים</h3>
