@@ -131,12 +131,39 @@ export const trackRegistryViewed = (params: {
   items_count: number;
   referral_source?: string;
 }) => {
+  const referral = params.referral_source || document.referrer || 'direct';
+
   pushEvent('registry_viewed', {
     registry_id: params.registry_id,
     viewer_id: params.viewer_id,
     items_count: params.items_count,
-    referral_source: params.referral_source || document.referrer || 'direct',
+    referral_source: referral,
   });
+
+  // Also persist server-side. The dataLayer push above is invisible to SQL (and
+  // silently no-ops when GTM is blocked), which is why the dashboard's registry
+  // views metric had no source. Fire-and-forget: never block or break the page.
+  try {
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/track-registry-view`;
+    const payload = JSON.stringify({
+      registry_id: params.registry_id,
+      viewer_id: params.viewer_id,
+      referral_source: referral,
+    });
+    // sendBeacon survives the page being closed mid-request; fetch is the fallback.
+    if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }));
+    } else {
+      void fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
+    }
+  } catch {
+    // Tracking must never surface to the viewer.
+  }
 };
 
 export const trackGiftPurchased = (params: {
