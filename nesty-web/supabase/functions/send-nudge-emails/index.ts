@@ -309,50 +309,95 @@ function shareNudgeHtml(firstName: string, itemsCount: number, unsubscribeUrl: s
 //   12–20: gentle, 21–27: practical, 28–33: urgent, 34+: final.
 // Max 3 total sends (including grandfather). Min 14 days between sends.
 
-function pickFirstItemVariant(week: number): { variant: NudgeVariant; subject: (name: string) => string; body: string; cta: string } {
+// ── Shared building blocks (match the welcome + invite-reminder house style) ──
+// One 46px colored tile + title + body. Email-safe: nested tables, no flexbox.
+function tileRow(bg: string, color: string, icon: string, title: string, text: string, last = false): string {
+  const pad = last ? '0' : '18px'
+  return `
+              <tr>
+                <td width="60" valign="top" style="padding:0 0 ${pad};">
+                  <div style="width:46px;height:46px;border-radius:14px;background:${bg};text-align:center;line-height:46px;font-size:22px;">${icon}</div>
+                </td>
+                <td valign="top" style="padding:4px 0 ${pad};">
+                  <p style="margin:0 0 3px;font-size:15px;font-weight:700;color:${color};">${title}</p>
+                  <p style="margin:0;font-size:14px;color:#7a6090;line-height:1.8;">${text}</p>
+                </td>
+              </tr>`
+}
+
+// Gradient hero + CTA. `headlineHtml` may contain an inline highlight chip.
+function heroBlock(headlineHtml: string, body: string, cta: string, href: string): string {
+  return `
+        <tr>
+          <td class="hero-bg" style="background:linear-gradient(145deg,#6a35b0 0%,#9b62d4 60%,#c4a0e8 100%);border-radius:24px;padding:44px 40px;text-align:center;">
+            <div style="display:inline-block;background:#ffffff;border-radius:50%;padding:2px;margin-bottom:18px;line-height:0;">
+              <img src="https://nestyil.com/Circle_logo.png" alt="Nesty" style="height:56px;width:56px;display:block;border-radius:50%;" />
+            </div>
+            <h1 style="margin:0 0 14px;font-size:26px;font-weight:800;color:#ffffff;line-height:1.45;">${headlineHtml}</h1>
+            <p style="margin:0 0 26px;font-size:15px;color:#ffffffd9;line-height:1.8;max-width:400px;margin-left:auto;margin-right:auto;">${body}</p>
+            <a href="${href}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:100px;">${cta}</a>
+          </td>
+        </tr>`
+}
+
+function cardBlock(title: string, rows: string): string {
+  return `
+        <tr><td style="height:10px;"></td></tr>
+        <tr>
+          <td class="white-card" style="background:#fff;border-radius:20px;padding:32px 36px;border:1.5px solid #e8daf5;">
+            <h2 style="margin:0 0 22px;font-size:18px;font-weight:700;color:#3b1f6b;text-align:center;">${title}</h2>
+            <table width="100%" cellpadding="0" cellspacing="0" style="direction:rtl;">${rows}
+            </table>
+          </td>
+        </tr>`
+}
+
+function pickFirstItemVariant(week: number): { variant: NudgeVariant; subject: (name: string) => string; headline: string; body: string; cta: string } {
   if (week <= 20) {
     return {
       variant: 'gentle',
-      subject: (n) => `${n}, הצ'קליסט מחכה לך — בואי נציץ? 🌱`,
-      body: `יש לך המון זמן, אבל זה רגע טוב להתחיל להכיר את הצ'קליסט — בלי לחץ, רק לעבור על הדברים שכדאי להבין מראש.`,
+      subject: (n) => `${n}, הצ'קליסט מחכה לך - בואי נציץ? 🌱`,
+      headline: 'יש זמן, אבל שווה להציץ',
+      body: `יש לך המון זמן, אבל זה רגע טוב להתחיל להכיר את הצ'קליסט - בלי לחץ, רק לעבור על הדברים שכדאי להבין מראש.`,
       cta: 'פתחי את הצ\'קליסט',
     }
   }
   if (week <= 27) {
     return {
       variant: 'practical',
-      subject: (n) => `${n}, הגענו לשבוע ${week} ועדיין לא התחלנו — בואי נתחיל ביחד 🪺`,
-      body: `רוב ההורים מתחילים להוסיף פריטים סביב השבוע הזה. העגלות, המיטות והסלקלים דורשים מחקר — כדאי להתחיל עכשיו.`,
+      subject: (n) => `${n}, הגענו לשבוע ${week} ועדיין לא התחלנו - בואי נתחיל ביחד 🪺`,
+      headline: `שבוע ${week} - זה הזמן להתחיל`,
+      body: `רוב ההורים מתחילים להוסיף פריטים סביב השבוע הזה. העגלות, המיטות והסלקלים דורשים מחקר - כדאי להתחיל עכשיו.`,
       cta: 'התחילי עם פריט ראשון',
     }
   }
   if (week <= 33) {
     return {
       variant: 'urgent',
-      subject: (n) => `${n}, שבוע ${week} — הגיע הזמן לבנות את הרשימה! 📦`,
+      subject: (n) => `${n}, שבוע ${week} - הגיע הזמן לבנות את הרשימה! 📦`,
+      headline: `שבוע ${week} - והרשימה עוד ריקה`,
       body: `משלוחים לוקחים זמן, מחקר לוקח זמן, והבחירה של בני המשפחה לוקחת זמן. כדאי להתחיל עכשיו.`,
       cta: 'הוסיפי פריט עכשיו',
     }
   }
   return {
     variant: 'final',
-    subject: (n) => `${n}, שבוע ${week} — לפחות את 5 הדברים הכי חשובים 🍼`,
-    body: `זה באמת הזמן. גם אם לא כל הרשימה מוכנה — לפחות כיסא בטיחות, מיטה, בקבוקים, אמבט וטטרות. הנה איך מתחילים:`,
+    subject: (n) => `${n}, שבוע ${week} - לפחות את 5 הדברים הכי חשובים 🍼`,
+    headline: `שבוע ${week} - לפחות את החיוניים`,
+    body: `זה באמת הזמן. גם אם לא כל הרשימה מוכנה - לפחות כיסא בטיחות, מיטה, בקבוקים, אמבט וטטרות.`,
     cta: 'פתחי את הצ\'קליסט',
   }
 }
 
 function firstItemNudgeHtml(firstName: string, week: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
-  const { body, cta } = pickFirstItemVariant(week)
-  const content = `
-        <tr>
-          <td style="background:#fff;border-radius:20px;padding:36px 36px 30px;border:1.5px solid #e8daf5;text-align:right;">
-            <p style="margin:0 0 12px;font-size:28px;">🪺</p>
-            <h2 style="margin:0 0 14px;font-size:22px;font-weight:700;color:#3b1f6b;line-height:1.4;">היי ${firstName}!</h2>
-            <p style="margin:0 0 18px;font-size:15px;line-height:1.8;color:#5a4470;">${body}</p>
-            <a href="https://nestyil.com/checklist" style="display:inline-block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;">${cta} ←</a>
-          </td>
-        </tr>`
+  const { headline, body, cta } = pickFirstItemVariant(week)
+  const content =
+    heroBlock(`${firstName}, ${headline}`, body, cta, 'https://nestyil.com/checklist') +
+    cardBlock('שלוש דרכים להתחיל', [
+      tileRow('#ede2fb', '#6a35b0', '🪺', 'מהצ\'קליסט המוכן', 'רשימה מסודרת לפי שלבי ההריון. סמני מה רלוונטי לך, והפריטים נכנסים לרשימה.'),
+      tileRow('#d9f2ed', '#1f7d70', '✨', 'מכל חנות באינטרנט', 'עם התוסף לכרום כל מוצר נכנס לרשימה בלחיצה אחת, מכל אתר בארץ.'),
+      tileRow('#fce7f3', '#b03a6e', '💜', 'ביחד עם בן/בת הזוג', 'רשימה משותפת מתמלאת מהר יותר - כל אחד מוסיף את מה שהוא מבין בו.', true),
+    ].join(''))
   return emailWrapper(content, unsubscribeUrl)
 }
 
@@ -366,37 +411,38 @@ function pickStalledVariant(week: number, itemsCount: number): { variant: NudgeV
     return {
       variant: 'gentle',
       subject: (n) => `${n}, חסרים לך עוד כמה דברים 🍼`,
-      body: `יש לך ${itemsCount} פריטים ברשימה — תיכף נבחן מה עוד אמהות בשבוע ${week} אוהבות להוסיף.`,
+      body: `זה התחלה יפה. בואי נראה מה עוד אמהות בשבוע ${week} אוהבות להוסיף.`,
       cta: 'מה עוד כדאי להוסיף?',
     }
   }
   if (week <= 32) {
     return {
       variant: 'practical',
-      subject: (n) => `${n}, הרשימה שלך בשבוע ${week} — מה עוד חסר?`,
-      body: `יש לך ${itemsCount} פריטים. הממוצע ב-Nesty הוא 12. בדקי את הצ'קליסט — יש כנראה כמה דברים חיוניים שעוד לא ברשימה.`,
+      subject: (n) => `${n}, הרשימה שלך בשבוע ${week} - מה עוד חסר?`,
+      body: `הממוצע ב-Nesty הוא 12 פריטים. יש כנראה כמה דברים חיוניים שעוד לא נכנסו לרשימה שלך.`,
       cta: 'פתחי את הצ\'קליסט',
     }
   }
   return {
     variant: 'urgent',
-    subject: (n) => `${n}, שבוע ${week} — כדאי להזמין עכשיו, משלוחים לוקחים זמן 📦`,
-    body: `יש לך ${itemsCount} פריטים — פחות מהממוצע. פריטים חיוניים כמו כיסא בטיחות, מיטה ובקבוקים לוקחים זמן להגיע. הזמיני היום.`,
+    subject: (n) => `${n}, שבוע ${week} - כדאי להזמין עכשיו, משלוחים לוקחים זמן 📦`,
+    body: `זה פחות מהממוצע, ופריטים חיוניים כמו כיסא בטיחות, מיטה ובקבוקים לוקחים זמן להגיע. שווה להשלים היום.`,
     cta: 'השלימי את הרשימה',
   }
 }
 
 function stalledNudgeHtml(firstName: string, week: number, itemsCount: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
   const { body, cta } = pickStalledVariant(week, itemsCount)
-  const content = `
-        <tr>
-          <td style="background:#fff;border-radius:20px;padding:36px 36px 30px;border:1.5px solid #e8daf5;text-align:right;">
-            <p style="margin:0 0 12px;font-size:28px;">🪺</p>
-            <h2 style="margin:0 0 14px;font-size:22px;font-weight:700;color:#3b1f6b;line-height:1.4;">היי ${firstName}!</h2>
-            <p style="margin:0 0 18px;font-size:15px;line-height:1.8;color:#5a4470;">${body}</p>
-            <a href="https://nestyil.com/checklist" style="display:inline-block;background:linear-gradient(135deg,#7c4dbd,#9b62d4);color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:100px;">${cta} ←</a>
-          </td>
-        </tr>`
+  // Same amber count-chip device as the co-parent reminder: the real number is
+  // the most concrete thing we can put in front of her.
+  const headline = `${firstName}, יש לך <span style="background:#ffd98a;color:#5c3d00;border-radius:10px;padding:2px 12px;">${itemsCount} פריטים</span> ברשימה`
+  const content =
+    heroBlock(headline, body, cta, 'https://nestyil.com/checklist') +
+    cardBlock('מה בדרך כלל עוד חסר', [
+      tileRow('#ede2fb', '#6a35b0', '🪺', 'הציוד הגדול', 'עגלה, מיטה, כיסא בטיחות. אלה שדורשים הכי הרבה מחקר וזמן אספקה.'),
+      tileRow('#fde4dc', '#c0563a', '🎁', 'היומיום', 'בקבוקים, חיתולים, מגבונים, טטרות. הדברים שנגמרים מהר ושוות לבקש מראש.'),
+      tileRow('#fce7f3', '#b03a6e', '💜', 'ביחד עם בן/בת הזוג', 'שני זוגות עיניים מוצאים את מה שחסר. אפשר להוסיף אותו/ה לרשימה בדקה.', true),
+    ].join(''))
   return emailWrapper(content, unsubscribeUrl)
 }
 
