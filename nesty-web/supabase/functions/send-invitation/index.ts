@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { trackedUrl, openPixelTag } from '../_shared/email-tracking.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const WEB_URL = Deno.env.get('WEB_URL') || 'https://nestyil.com'
@@ -66,7 +67,7 @@ function buildInvitationEmailHtml(ownerName: string, inviteUrl: string): string 
             <p style="margin:0 0 34px;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:420px;margin-left:auto;margin-right:auto;">
               ב-Nesty תוכלו לנהל ביחד רשימת ציוד לתינוק — להוסיף מוצרים מכל אתר, לעקוב אחרי מתנות, ולהתארגן יחד בצורה חכמה.
             </p>
-            <a href="${inviteUrl}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">💜 הצטרפו לרשימה</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">💜 הצטרפו לרשימה</a>
           </td>
         </tr>
 
@@ -131,7 +132,7 @@ function buildInvitationEmailHtml(ownerName: string, inviteUrl: string): string 
             <p style="margin:0 0 28px;font-size:14px;line-height:1.8;color:#ffffff;">
               לחצו על הכפתור, הירשמו תוך דקה,<br/>והתחילו לנהל את הרשימה ביחד.
             </p>
-            <a href="${inviteUrl}" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">💜 הצטרפו לרשימה</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">💜 הצטרפו לרשימה</a>
           </td>
         </tr>
 
@@ -167,6 +168,7 @@ function buildInvitationEmailHtml(ownerName: string, inviteUrl: string): string 
     </td>
   </tr>
 </table>
+${openPixelTag({ emailType: T_INV, userId: null })}
 </body>
 </html>`
 }
@@ -341,6 +343,8 @@ serve(async (req) => {
     }
 
     const inviteUrl = `${WEB_URL}/invite/${invitationToken}`
+  const T_INV = 'invitation'
+  const ctaUrl = trackedUrl(inviteUrl, { emailType: T_INV, userId: null, link: 'cta' })
     const emailHtml = buildInvitationEmailHtml(ownerName, inviteUrl)
 
     const resendResponse = await fetch('https://api.resend.com/emails', {

@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { trackedUrl, openPixelTag } from '../_shared/email-tracking.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const WEB_URL = Deno.env.get('WEB_URL') || 'https://nestyil.com'
@@ -38,6 +39,8 @@ interface NudgeTemplateOpts {
  */
 function buildNudgeHtml(opts: NudgeTemplateOpts): string {
   const { ownerName, itemCount, inviteUrl, expiryLabel } = opts
+  const T = 'invite_reminder'
+  const ctaUrl = trackedUrl(inviteUrl, { emailType: T, userId: null, link: 'cta' })
   const headline = itemCount > 0
     ? `כבר יש <span style="background:#ffd98a;color:#5c3d00;border-radius:10px;padding:2px 12px;">${itemCount} פריטים</span> ברשימה של ${ownerName}`
     : `הרשימה של ${ownerName} מחכה לכם`
@@ -89,7 +92,7 @@ function buildNudgeHtml(opts: NudgeTemplateOpts): string {
             <p style="margin:0 0 28px;font-size:15px;color:#ffffffd9;line-height:1.8;max-width:400px;margin-left:auto;margin-right:auto;">
               ${subhead}
             </p>
-            <a href="${inviteUrl}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:100px;">הצטרפו לרשימה</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:100px;">הצטרפו לרשימה</a>
           </td>
         </tr>
 
@@ -150,6 +153,7 @@ ${benefit('#fce7f3', '#b03a6e', '💜', 'להחליט ביחד, לא לקבל ד
     </td>
   </tr>
 </table>
+${openPixelTag({ emailType: T, userId: null })}
 </body>
 </html>`
 }

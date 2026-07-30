@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { trackedUrl, openPixelTag } from '../_shared/email-tracking.ts'
 import { buildUnsubscribeUrl } from '../_shared/unsubscribe-url.ts'
 import type { EmailCategoryKey } from '../_shared/email-categories.ts'
 
@@ -310,6 +311,8 @@ serve(async (req) => {
       const userId = data?.userId || (await lookupUserIdByEmail(recipient))
       const unsubscribeLink = await buildInlineUnsubLink(userId, 'all')
       listUnsubUrl = userId ? await buildUnsubscribeUrl(userId, 'all') : null
+      const T_W = 'welcome'
+      const ctaW = trackedUrl('https://nestyil.com/dashboard', { emailType: T_W, userId, link: 'cta' })
       html = `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -367,7 +370,7 @@ serve(async (req) => {
             <p style="margin:0 0 34px;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:420px;margin-left:auto;margin-right:auto;">
               כל כך שמחים שהצטרפת! Nesty היא הפלטפורמה שתלווה אותך לאורך כל ההיריון — מרשימת קניות חכמה, דרך צ'קליסט מותאם אישית, ועד עדכונים שבועיים על ההתפתחות שלך ושל התינוק. 🌸
             </p>
-            <a href="https://nestyil.com/dashboard" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">✨ בואי נתחיל</a>
+            <a href="${ctaW}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">✨ בואי נתחיל</a>
           </td>
         </tr>
 
@@ -485,7 +488,7 @@ serve(async (req) => {
             <p style="margin:0 0 28px;font-size:14px;line-height:1.8;color:#ffffffa6;">
               בינתיים, פתחי את האפליקציה, התקיני את התוסף לכרום,<br/>והתחילי לבנות את הרשימה שלך.
             </p>
-            <a href="https://nestyil.com/dashboard" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">פתחי את Nesty</a>
+            <a href="${ctaW}" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">פתחי את Nesty</a>
           </td>
         </tr>
 
@@ -1062,6 +1065,8 @@ serve(async (req) => {
         </html>
       `
     } else if (type === 'price_drop') {
+      const T_PD = 'price_drop'
+      const ctaPD = trackedUrl('https://nestyil.com/dashboard', { emailType: T_PD, userId: (data?.userId ?? null), link: 'cta' })
       const firstName = data?.firstName || 'את'
       const drops = data?.drops || []
       const userId = data?.userId || (await lookupUserIdByEmail(to || data?.ownerEmail || ''))
@@ -1205,7 +1210,7 @@ serve(async (req) => {
             <p style="margin:0 0 24px;font-size:14px;line-height:1.8;color:#ffffffa6;">
               שלחי את הקישור לרשימה למשפחה ולחברים —<br/>אולי מישהו ירצה לנצל את ירידת המחיר ולקנות לך מתנה 🎁
             </p>
-            <a href="https://nestyil.com/dashboard" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">צפי ברשימה שלך</a>
+            <a href="${ctaPD}" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">צפי ברשימה שלך</a>
           </td>
         </tr>
 

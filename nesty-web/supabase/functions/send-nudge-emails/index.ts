@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { trackedUrl, openPixelTag } from '../_shared/email-tracking.ts'
 import { calculatePregnancyWeek } from '../_shared/pregnancy.ts'
 import { canSendNudge, logNudge, type NudgeVariant } from '../_shared/nudge-log.ts'
 import { buildUnsubscribeUrl } from '../_shared/unsubscribe-url.ts'
@@ -12,7 +13,7 @@ const corsHeaders = {
 }
 
 // ── Shared email wrapper ──────────────────────────────────────────────
-function emailWrapper(content: string, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
+function emailWrapper(content: string, unsubscribeUrl: string = 'https://nestyil.com/settings/emails', pixel: string = ''): string {
   return `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -107,12 +108,15 @@ ${content}
     </td>
   </tr>
 </table>
+${pixel}
 </body>
 </html>`
 }
 
 // ── Checklist nudge email (1 week after onboarding, no checklist activity) ──
-function checklistNudgeHtml(firstName: string, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
+function checklistNudgeHtml(firstName: string, unsubscribeUrl: string = 'https://nestyil.com/settings/emails', userId: string | null = null): string {
+  const T = 'nudge_checklist'
+  const ctaUrl = trackedUrl('https://nestyil.com/checklist', { emailType: T, userId, link: 'cta' })
   const content = `
         <!-- HERO -->
         <tr>
@@ -126,7 +130,7 @@ function checklistNudgeHtml(firstName: string, unsubscribeUrl: string = 'https:/
             <p style="margin:0 0 34px;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:420px;margin-left:auto;margin-right:auto;">
               שמנו לב שעוד לא התחלת עם הצ'קליסט. אנחנו כאן לעזור לך לסדר הכל בקלות!
             </p>
-            <a href="https://nestyil.com/checklist" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">✅ לצ'קליסט שלי</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">✅ לצ'קליסט שלי</a>
           </td>
         </tr>
 
@@ -193,15 +197,17 @@ function checklistNudgeHtml(firstName: string, unsubscribeUrl: string = 'https:/
             <p style="margin:0 0 28px;font-size:14px;line-height:1.8;color:#ffffffa6;">
               פשוט תפתחי את הצ'קליסט, תסמני מה שכבר יש לך,<br/>ותני ל-Nesty לדאוג לשאר.
             </p>
-            <a href="https://nestyil.com/checklist" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">פתחי את הצ'קליסט</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">פתחי את הצ'קליסט</a>
           </td>
         </tr>`
 
-  return emailWrapper(content, unsubscribeUrl)
+  return emailWrapper(content, unsubscribeUrl, openPixelTag({ emailType: T, userId }))
 }
 
 // ── Share registry nudge email (3+ items, not shared yet) ──
-function shareNudgeHtml(firstName: string, itemsCount: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
+function shareNudgeHtml(firstName: string, itemsCount: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails', userId: string | null = null): string {
+  const T = 'nudge_share'
+  const ctaUrl = trackedUrl('https://nestyil.com/dashboard', { emailType: T, userId, link: 'cta' })
   const content = `
         <!-- HERO -->
         <tr>
@@ -215,7 +221,7 @@ function shareNudgeHtml(firstName: string, itemsCount: number, unsubscribeUrl: s
             <p style="margin:0 0 34px;font-size:16px;color:#ffffffd9;line-height:1.8;font-weight:400;max-width:420px;margin-left:auto;margin-right:auto;">
               ${firstName}, יש לך כבר ${itemsCount} פריטים ברשימה — הגיע הזמן לשתף עם משפחה וחברים כדי שידעו מה לקנות!
             </p>
-            <a href="https://nestyil.com/dashboard" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">📤 שתפי את הרשימה</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:#fff;color:#7c4dbd;font-size:15px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:16px 44px;border-radius:100px;">📤 שתפי את הרשימה</a>
           </td>
         </tr>
 
@@ -297,11 +303,11 @@ function shareNudgeHtml(firstName: string, itemsCount: number, unsubscribeUrl: s
             <p style="margin:0 0 28px;font-size:14px;line-height:1.8;color:#ffffffa6;">
               שתפי את הרשימה עכשיו כדי שהמשפחה<br/>והחברים ידעו בדיוק מה לקנות.
             </p>
-            <a href="https://nestyil.com/dashboard" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">שתפי את הרשימה</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.03em;text-decoration:none;padding:15px 40px;border-radius:100px;">שתפי את הרשימה</a>
           </td>
         </tr>`
 
-  return emailWrapper(content, unsubscribeUrl)
+  return emailWrapper(content, unsubscribeUrl, openPixelTag({ emailType: T, userId }))
 }
 
 // ── First Item Nudge (repeatable, pregnancy-week-aware) ───────────────
@@ -389,16 +395,18 @@ function pickFirstItemVariant(week: number): { variant: NudgeVariant; subject: (
   }
 }
 
-function firstItemNudgeHtml(firstName: string, week: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
+function firstItemNudgeHtml(firstName: string, week: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails', userId: string | null = null): string {
+  const T = 'nudge_first_item'
+  const ctaUrl = trackedUrl('https://nestyil.com/checklist', { emailType: T, userId, link: 'cta' })
   const { headline, body, cta } = pickFirstItemVariant(week)
   const content =
-    heroBlock(`${firstName}, ${headline}`, body, cta, 'https://nestyil.com/checklist') +
+    heroBlock(`${firstName}, ${headline}`, body, cta, ctaUrl) +
     cardBlock('שלוש דרכים להתחיל', [
       tileRow('#ede2fb', '#6a35b0', '🪺', 'מהצ\'קליסט המוכן', 'רשימה מסודרת לפי שלבי ההריון. סמני מה רלוונטי לך, והפריטים נכנסים לרשימה.'),
       tileRow('#d9f2ed', '#1f7d70', '✨', 'מכל חנות באינטרנט', 'עם התוסף לכרום כל מוצר נכנס לרשימה בלחיצה אחת, מכל אתר בארץ.'),
       tileRow('#fce7f3', '#b03a6e', '💜', 'ביחד עם בן/בת הזוג', 'רשימה משותפת מתמלאת מהר יותר - כל אחד מוסיף את מה שהוא מבין בו.', true),
     ].join(''))
-  return emailWrapper(content, unsubscribeUrl)
+  return emailWrapper(content, unsubscribeUrl, openPixelTag({ emailType: T, userId }))
 }
 
 // ── Registry Stalled Nudge (repeatable, pregnancy-week-aware) ─────────
@@ -431,19 +439,21 @@ function pickStalledVariant(week: number, itemsCount: number): { variant: NudgeV
   }
 }
 
-function stalledNudgeHtml(firstName: string, week: number, itemsCount: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
+function stalledNudgeHtml(firstName: string, week: number, itemsCount: number, unsubscribeUrl: string = 'https://nestyil.com/settings/emails', userId: string | null = null): string {
+  const T = 'nudge_stalled'
+  const ctaUrl = trackedUrl('https://nestyil.com/checklist', { emailType: T, userId, link: 'cta' })
   const { body, cta } = pickStalledVariant(week, itemsCount)
   // Same amber count-chip device as the co-parent reminder: the real number is
   // the most concrete thing we can put in front of her.
   const headline = `${firstName}, יש לך <span style="background:#ffd98a;color:#5c3d00;border-radius:10px;padding:2px 12px;">${itemsCount} פריטים</span> ברשימה`
   const content =
-    heroBlock(headline, body, cta, 'https://nestyil.com/checklist') +
+    heroBlock(headline, body, cta, ctaUrl) +
     cardBlock('מה בדרך כלל עוד חסר', [
       tileRow('#ede2fb', '#6a35b0', '🪺', 'הציוד הגדול', 'עגלה, מיטה, כיסא בטיחות. אלה שדורשים הכי הרבה מחקר וזמן אספקה.'),
       tileRow('#fde4dc', '#c0563a', '🎁', 'היומיום', 'בקבוקים, חיתולים, מגבונים, טטרות. הדברים שנגמרים מהר ושוות לבקש מראש.'),
       tileRow('#fce7f3', '#b03a6e', '💜', 'ביחד עם בן/בת הזוג', 'שני זוגות עיניים מוצאים את מה שחסר. אפשר להוסיף אותו/ה לרשימה בדקה.', true),
     ].join(''))
-  return emailWrapper(content, unsubscribeUrl)
+  return emailWrapper(content, unsubscribeUrl, openPixelTag({ emailType: T, userId }))
 }
 
 // ── Concurrency helper ────────────────────────────────────────────────
@@ -552,7 +562,7 @@ async function runAllNudges(): Promise<NudgeResults> {
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
               subject: `${user.first_name || 'את'}, הצ'קליסט מחכה לך! ✅`,
-              html: checklistNudgeHtml(user.first_name || 'את', unsubUrl),
+              html: checklistNudgeHtml(user.first_name || 'את', unsubUrl, user.id),
               headers: {
                 'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
                 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
@@ -655,7 +665,7 @@ async function runAllNudges(): Promise<NudgeResults> {
               from: 'Nesty <hello@nestyil.com>',
               to: [user.email],
               subject: `${user.first_name || 'את'}, הרשימה שלך מוכנה לשיתוף! 🎁`,
-              html: shareNudgeHtml(user.first_name || 'את', itemsCount, unsubUrl),
+              html: shareNudgeHtml(user.first_name || 'את', itemsCount, unsubUrl, user.id),
               headers: {
                 'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
                 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
@@ -749,7 +759,7 @@ async function runAllNudges(): Promise<NudgeResults> {
             from: 'Nesty <hello@nestyil.com>',
             to: [user.email],
             subject: subject(user.first_name || 'את'),
-            html: firstItemNudgeHtml(user.first_name || 'את', week, unsubUrl),
+            html: firstItemNudgeHtml(user.first_name || 'את', week, unsubUrl, user.id),
             headers: {
               'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
               'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
@@ -843,7 +853,7 @@ async function runAllNudges(): Promise<NudgeResults> {
             from: 'Nesty <hello@nestyil.com>',
             to: [user.email],
             subject: subject(user.first_name || 'את'),
-            html: stalledNudgeHtml(user.first_name || 'את', week, itemsCount, unsubUrl),
+            html: stalledNudgeHtml(user.first_name || 'את', week, itemsCount, unsubUrl, user.id),
             headers: {
               'List-Unsubscribe': `<${unsubUrl}>, <mailto:hello@nestyil.com?subject=unsubscribe>`,
               'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',

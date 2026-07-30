@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { trackedUrl, openPixelTag } from '../_shared/email-tracking.ts'
 import { buildUnsubscribeUrl } from '../_shared/unsubscribe-url.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
@@ -493,7 +494,11 @@ function generateWeeklyEmailHtml(
   weekData: WeekData,
   actionHtml: string = '',
   unsubscribeUrl: string = 'https://nestyil.com/settings/emails',
+  userId: string | null = null,
 ): string {
+  const T = 'weekly'
+  const ctaUrl = trackedUrl('https://nestyil.com/checklist', { emailType: T, userId, link: 'cta' })
+  const pixel = openPixelTag({ emailType: T, userId })
   const progressPercent = Math.round((weekData.week / 40) * 100)
   const weeksRemaining = 40 - weekData.week
   const symptoms = extractSymptoms(weekData.body)
@@ -680,7 +685,7 @@ function generateWeeklyEmailHtml(
             <p style="margin:0 0 28px;font-size:14px;color:#ffffffa6;line-height:1.8;">
               הצ׳קליסט מחכה לך באפליקציה — סמני מה כבר הספקת ותראי כמה התקדמת! ✨
             </p>
-            <a href="https://nestyil.com/checklist" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.02em;text-decoration:none;padding:15px 36px;border-radius:100px;">פתחי את Nesty</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.02em;text-decoration:none;padding:15px 36px;border-radius:100px;">פתחי את Nesty</a>
           </td>
         </tr>
 
@@ -769,12 +774,16 @@ function generateWeeklyEmailHtml(
     </td>
   </tr>
 </table>
+${pixel}
 </body>
 </html>`
 }
 
 // ── Week 40 celebration email HTML ──────────────────────────────────
-function generateCelebrationEmailHtml(firstName: string, unsubscribeUrl: string = 'https://nestyil.com/settings/emails'): string {
+function generateCelebrationEmailHtml(firstName: string, unsubscribeUrl: string = 'https://nestyil.com/settings/emails', userId: string | null = null): string {
+  const T = 'weekly_week40'
+  const ctaUrl = trackedUrl('https://nestyil.com', { emailType: T, userId, link: 'cta' })
+  const pixel = openPixelTag({ emailType: T, userId })
   return `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -927,7 +936,7 @@ function generateCelebrationEmailHtml(firstName: string, unsubscribeUrl: string 
             <p style="margin:0 0 24px;font-size:15px;color:#ffffffa6;line-height:1.8;">
               הרגע הגדול כבר כאן. אנחנו שולחים לך חיבוק ענק ומחכים לבשורות טובות!
             </p>
-            <a href="https://nestyil.com" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:15px 36px;border-radius:100px;">פתחי את Nesty</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:15px 36px;border-radius:100px;">פתחי את Nesty</a>
           </td>
         </tr>
 
@@ -984,6 +993,7 @@ function generateCelebrationEmailHtml(firstName: string, unsubscribeUrl: string 
     </td>
   </tr>
 </table>
+${pixel}
 </body>
 </html>`
 }
@@ -993,7 +1003,11 @@ function generatePostpartumEmailHtml(
   firstName: string,
   weekData: PostpartumWeekData,
   unsubscribeUrl: string = 'https://nestyil.com/settings/emails',
+  userId: string | null = null,
 ): string {
+  const T = 'weekly_postpartum'
+  const ctaUrl = trackedUrl('https://nestyil.com/gifts', { emailType: T, userId, link: 'cta' })
+  const pixel = openPixelTag({ emailType: T, userId })
   const tips = weekData.tips.split('.').map(t => t.trim()).filter(t => t.length > 10)
   const tipsFormatted = tips.slice(0, 3)
   const tipEmojis = ['💡', '📋', '🎯']
@@ -1133,7 +1147,7 @@ function generatePostpartumEmailHtml(
             <p style="margin:0 0 28px;font-size:14px;color:#ffffffa6;line-height:1.8;">
               סמני מתנות שהתקבלו, שלחי תודות — והרשימה תישאר מסודרת!
             </p>
-            <a href="https://nestyil.com/gifts" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.02em;text-decoration:none;padding:15px 36px;border-radius:100px;">פתחי את Nesty</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#c4a0e8,#9b62d4);color:#ffffff;font-size:14px;font-weight:700;letter-spacing:0.02em;text-decoration:none;padding:15px 36px;border-radius:100px;">פתחי את Nesty</a>
           </td>
         </tr>
 
@@ -1203,6 +1217,7 @@ function generatePostpartumEmailHtml(
     </td>
   </tr>
 </table>
+${pixel}
 </body>
 </html>`
 }
@@ -1370,7 +1385,7 @@ serve(async (req) => {
 
         if (currentWeek === 40) {
           // ── Week 40: Special celebration email ──
-          html = generateCelebrationEmailHtml(firstName, unsubscribeUrl)
+          html = generateCelebrationEmailHtml(firstName, unsubscribeUrl, profile.id)
           subject = `🎉 ${firstName}, הגעת לשבוע 40! המסע המדהים שלך מגיע לשיא 💜`
 
         } else if (currentWeek > 40) {
@@ -1381,7 +1396,7 @@ serve(async (req) => {
             results.push({ email: profile.email, week: currentWeek, status: 'no_data' })
             continue
           }
-          html = generatePostpartumEmailHtml(firstName, ppData, unsubscribeUrl)
+          html = generatePostpartumEmailHtml(firstName, ppData, unsubscribeUrl, profile.id)
           subject = `${ppData.milestoneEmoji} ${ppData.milestone} — ${firstName}, איך את והתינוק? 💜`
 
         } else {
@@ -1395,7 +1410,7 @@ serve(async (req) => {
           const registryState = await fetchRegistryState(supabaseAdmin, profile.id)
           const action = getWeeklyAction(currentWeek, registryState)
           const actionHtml = renderWeeklyActionHtml(action)
-          html = generateWeeklyEmailHtml(firstName, weekData, actionHtml, unsubscribeUrl)
+          html = generateWeeklyEmailHtml(firstName, weekData, actionHtml, unsubscribeUrl, profile.id)
           subject = `🌿 שבוע ${currentWeek} — ${firstName}, התינוק שלך בגודל של ${weekData.fruit} ${weekData.fruitEmoji}`
         }
 
