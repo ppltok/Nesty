@@ -16,8 +16,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 //                   code + partner redirect live inside the popup/card)
 //        default  → the partner redeem link (direct redemption)
 
-const REDEEM_URLS: Record<string, string> = {
-  supherb: 'https://bit.ly/4g1uf7v',
+// Each partner perk carries its own end date. Emails live in inboxes long
+// after a campaign closes - roughly 1,900 Supherb emails are still out there -
+// and forwarding those clicks to the partner would land people on a checkout
+// page promising a discount whose code no longer works. Once `endsAt` passes we
+// keep logging the click but send them to Nesty's gifts page instead.
+const COLLABS: Record<string, { redeemUrl: string; endsAt: string }> = {
+  supherb: { redeemUrl: 'https://bit.ly/4g1uf7v', endsAt: '2026-07-31T23:59:59+03:00' },
 }
 
 const GIFTS_PAGE_URL = 'https://nestyil.com/gifts'
@@ -30,9 +35,12 @@ serve(async (req) => {
   const source = url.searchParams.get('s') || 'email'
   const to = url.searchParams.get('to') || ''
 
-  const destination = to === 'gifts'
+  const config = COLLABS[collab]
+  const expired = config ? Date.now() >= new Date(config.endsAt).getTime() : true
+
+  const destination = (to === 'gifts' || expired || !config)
     ? GIFTS_PAGE_URL
-    : (REDEEM_URLS[collab] || FALLBACK_URL)
+    : (config.redeemUrl || FALLBACK_URL)
 
   // Best-effort logging - a tracking failure must never block the redirect.
   try {
@@ -48,6 +56,9 @@ serve(async (req) => {
         source,
         user_id: userId,
         user_agent: req.headers.get('user-agent'),
+        // Post-campaign clicks still tell us the emails are being read; flag
+        // them so they don't get counted as redemptions in the funnel.
+        meta: expired ? { expired: true } : null,
       })
     }
   } catch (err) {
