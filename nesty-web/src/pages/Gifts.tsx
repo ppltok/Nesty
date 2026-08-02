@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase'
 import { safeGetItem, safeSetItem } from '../lib/storage-version'
 import { useDashboardLayout } from '../components/layout/DashboardLayout'
 import { CATEGORIES } from '../data/categories'
-import { useSupherbGift } from '../components/collab/SupherbGift'
 import type { Purchase } from '../types'
 
 type ViewMode = 'grid' | 'list'
@@ -222,13 +221,6 @@ export default function Gifts() {
   const thankYousNeeded = purchases.filter(p => !p.thanked_at && p.buyer_phone && p.status === 'confirmed').length
   const receivedCount = purchases.filter(p => p.is_received).length
 
-  // Nesty × Supherb partner gift (popup + gifts-page card). Audience-gated
-  // inside the hook; append ?supherb=1 to force-preview. Must run before any
-  // early return - it calls hooks (rules of hooks).
-  const supherbGift = useSupherbGift()
-  // The Nesty × Supherb partner gift counts as a received gift in the top stats.
-  const giftBonus = supherbGift.eligible ? 1 : 0
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#fffbff] flex items-center justify-center" dir="rtl">
@@ -242,7 +234,6 @@ export default function Gifts() {
 
   return (
     <div className="min-h-screen bg-[#fffbff] font-sans text-[#1d192b]" dir="rtl">
-      {supherbGift.popup}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
 
         {/* Header Title */}
@@ -262,9 +253,9 @@ export default function Gifts() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <StatCard
             icon={Gift}
-            value={totalGifts + giftBonus}
+            value={totalGifts}
             label="מתנות התקבלו"
-            subLabel={`מתוכן ${receivedCount + giftBonus} אצלכם`}
+            subLabel={`מתוכן ${receivedCount} אצלכם`}
             bgClass="bg-[#f3edff] border-[#eaddff]"
             colorClass="bg-white text-[#6750a4]"
           />
@@ -285,9 +276,6 @@ export default function Gifts() {
             colorClass="bg-white text-[#33691e]"
           />
         </div>
-
-        {/* Nesty × Supherb partner benefit - full banner (collapses into the list) */}
-        {supherbGift.banner}
 
         {/* Filters and View Toggle */}
         {purchases.length > 0 && (
@@ -351,10 +339,6 @@ export default function Gifts() {
         {/* Gifts Display */}
         {purchases.length === 0 ? (
           <div className="space-y-3">
-            {/* The collapsed Supherb perk must render here too - otherwise
-                collapsing it with zero purchases makes it vanish entirely
-                (the grid/list branches below never mount on an empty box). */}
-            {supherbGift.listCard}
             <div className="bg-white rounded-[40px] rounded-tr-[12px] rounded-bl-[12px] border border-[#e7e0ec] p-16 text-center shadow-sm">
             <div className="w-24 h-24 bg-[#f5f5f5] rounded-full flex items-center justify-center mx-auto mb-6 text-[#49454f]">
               <Gift className="w-12 h-12" />
@@ -385,7 +369,6 @@ export default function Gifts() {
           </div>
         ) : viewMode === 'grid' ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {supherbGift.listCard}
             {filteredPurchases.map((purchase) => (
               <PurchaseCard
                 key={purchase.id}
@@ -400,7 +383,6 @@ export default function Gifts() {
           </div>
         ) : (
           <div className="space-y-3">
-            {supherbGift.listCard}
             {filteredPurchases.map((purchase) => (
               <PurchaseListItem
                 key={purchase.id}

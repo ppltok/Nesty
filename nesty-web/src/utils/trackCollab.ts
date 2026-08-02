@@ -6,10 +6,15 @@
 // GTM. The Supabase insert is what powers the dashboard's Collabs page; the
 // dataLayer push keeps these visible alongside the rest of our GTM funnel.
 //
-// Email-surface events (email_sent, email_link_click) are logged server-side by
-// the send-collab-gift and collab-redirect edge functions - not here.
+// Email-surface events (email_link_click) are logged server-side by the
+// collab-redirect edge function - not here.
 //
 // Fire-and-forget by design: tracking must never block or break the gift UI.
+//
+// Currently unused: the Supherb campaign ended 31.7.2026 and its component was
+// removed. Kept deliberately as part of the reusable partner-perk stack
+// (collab_events + collab-redirect + collab-open + the dashboard Collabs page),
+// so the next partner is a config job rather than a rebuild.
 
 import { supabase } from '../lib/supabase';
 
