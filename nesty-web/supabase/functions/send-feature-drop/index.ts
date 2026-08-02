@@ -324,6 +324,10 @@ serve(async (req) => {
 
     let sent = 0
     let errors = 0
+    // Counts dedup-log write failures. Any non-zero value means future runs
+    // would re-send to people we already mailed, so we stop rather than
+    // continue through the list.
+    let dedupFailures = 0
 
     // Send in batches of 10 to respect Resend rate limits
     for (let i = 0; i < eligibleUsers.length; i += 10) {
@@ -352,16 +356,32 @@ serve(async (req) => {
 
           if (res.ok) {
             sent++
-            // Per-recipient log so future invocations can skip this user.
-            // Best-effort - failure here doesn't affect the send.
-            await supabaseAdmin.from('email_logs').insert({
+            // Per-recipient log so future invocations skip this user.
+            //
+            // This write is NOT best-effort: it is the dedup record. If it
+            // fails silently, every later run re-sends to this person. That is
+            // exactly how the Supherb new_users cron mailed 89 people the same
+            // promo 5-10 times - a CHECK constraint rejected the insert and
+            // nobody looked at the error. Surface the failure loudly.
+            //
+            // dedupe_key has a unique index, so a duplicate raises
+            // unique_violation (23505) rather than quietly inserting a second
+            // row - that case means "already sent" and is safe to ignore.
+            const { error: logError } = await supabaseAdmin.from('email_logs').insert({
               recipient_email: user.email.toLowerCase(),
               email_type: FEATURE_KEY,
+              dedupe_key: `${FEATURE_KEY}:${user.email.toLowerCase()}`,
               subject: SUBJECT,
               status: 'sent',
               sent_at: new Date().toISOString(),
               provider: 'resend',
             })
+            if (logError && logError.code !== '23505') {
+              dedupFailures++
+              console.error(
+                `DEDUP LOG FAILED for ${user.email} - future runs would re-send. ${logError.code}: ${logError.message}`,
+              )
+            }
             console.log(`Sent to ${user.email}`)
           } else {
             const err = await res.json()
@@ -376,6 +396,23 @@ serve(async (req) => {
 
       await Promise.all(promises)
 
+      // Hard stop: if the dedup log is not recording sends, continuing would
+      // mail the rest of the list now and the whole list again on every later
+      // run. Better to abort with a loud error than to spam.
+      if (dedupFailures > 0) {
+        console.error(`ABORTING after ${sent} sends: ${dedupFailures} dedup-log writes failed.`)
+        return new Response(
+          JSON.stringify({
+            sent,
+            errors,
+            dedup_failures: dedupFailures,
+            aborted: true,
+            message: 'Dedup logging failed - aborted to avoid duplicate sends. Fix email_logs writes before re-running.',
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+
       // Small delay between batches
       if (i + 10 < eligibleUsers.length) {
         await new Promise(r => setTimeout(r, 1000))
@@ -386,7 +423,7 @@ serve(async (req) => {
     // future invocations dedup naturally. The previous "all_users" sentinel
     // log row was misleading - removed.)
 
-    return new Response(JSON.stringify({ sent, errors, total: users.length }), {
+    return new Response(JSON.stringify({ sent, errors, dedup_failures: dedupFailures, total: users.length }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err: any) {
