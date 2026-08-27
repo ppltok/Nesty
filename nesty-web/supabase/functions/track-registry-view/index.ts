@@ -16,13 +16,31 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // The client calls this fire-and-forget; it must never slow down or break the
 // page, so every failure path still returns 200.
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+// The client sends this via navigator.sendBeacon, which ALWAYS makes a
+// credentialed request. A wildcard Access-Control-Allow-Origin is illegal on a
+// credentialed response, so the browser threw every beacon away and the
+// dashboard's Registry Traffic metric stayed near-empty. Echo the caller's
+// origin (from an allowlist) and set Allow-Credentials instead.
+const ALLOWED_ORIGINS = new Set([
+  'https://nestyil.com',
+  'https://www.nestyil.com',
+  'http://localhost:5173',
+])
+
+function corsFor(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') ?? ''
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.has(origin) ? origin : 'https://nestyil.com',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  }
 }
 
 serve(async (req) => {
+  const corsHeaders = corsFor(req)
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }

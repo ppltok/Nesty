@@ -19,7 +19,6 @@ import {
   Filter,
 } from 'lucide-react'
 import type { Registry, Profile, Item, ItemCategory } from '../types'
-import { getDaysUntilDueDate } from '../lib/utils'
 import PurchaseModal from '../components/PurchaseModal'
 import PriceStatusBadge from '../components/PriceStatusBadge'
 import { remainingQuantity, isPurchased } from '../types'
@@ -27,7 +26,10 @@ import { CATEGORIES } from '../data/categories'
 import { trackRegistryViewed } from '../utils/tracking'
 
 interface RegistryWithOwner extends Registry {
-  profiles: Pick<Profile, 'first_name' | 'last_name' | 'due_date' | 'email'>
+  // Only first_name is readable by anonymous visitors - the owner's email,
+  // phone and due date are not exposed to the public registry page. The
+  // gift-notification recipient is resolved server-side in send-email.
+  profiles: Pick<Profile, 'first_name'>
 }
 
 type ViewMode = 'grid' | 'list'
@@ -107,7 +109,7 @@ export default function PublicRegistry() {
           .from('registries')
           .select(`
             *,
-            profiles!owner_id (first_name, last_name, due_date, email)
+            profiles!owner_id (first_name)
           `)
           .eq('slug', slug)
           .single()
@@ -130,16 +132,13 @@ export default function PublicRegistry() {
             return
           }
 
-          // We have the registry but no profile data - use fallback values
-          // This allows unauthenticated users to view the registry
+          // We have the registry but no profile data - fall back to an empty
+          // name so the heading renders registry.title instead. Do NOT put the
+          // title in first_name: the heading prefixes "הרשימה של", and the
+          // title already starts with it ("הרשימה של הרשימה של Hila").
           const registryWithFallbackProfile = {
             ...registryOnly,
-            profiles: {
-              first_name: registryOnly.title || 'הורים',
-              last_name: '',
-              due_date: null,
-              email: ''
-            }
+            profiles: { first_name: '' }
           } as RegistryWithOwner
 
           setRegistry(registryWithFallbackProfile)
@@ -282,7 +281,11 @@ export default function PublicRegistry() {
   }
 
   const owner = registry.profiles
-  const daysUntilDue = owner.due_date ? getDaysUntilDueDate(owner.due_date) : null
+  // The owner's due date is deliberately not sent to anonymous visitors - it
+  // was part of the bulk-scrapeable PII set (name + due date + phone) behind
+  // the nesty_outreach leak. The countdown comes back once the public page
+  // reads through a per-slug RPC; until then it simply doesn't render.
+  const daysUntilDue: number | null = null
   const totalRemaining = availableItems.reduce((sum, i) => sum + remainingQuantity(i), 0)
   const showUrgency = purchaseStats.count >= 1 && totalRemaining > 0 && totalRemaining < 10
   const urgencyText = totalRemaining === 1
@@ -354,7 +357,7 @@ export default function PublicRegistry() {
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 py-16 sm:py-20 text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#1d192b] mb-6 tracking-tight drop-shadow-sm leading-[1.1]">
-            הרשימה של {owner.first_name} {owner.last_name}
+            {owner.first_name ? `הרשימה של ${owner.first_name}` : registry.title}
           </h1>
 
           {daysUntilDue !== null && daysUntilDue > 0 && (
@@ -599,8 +602,10 @@ export default function PublicRegistry() {
         onSuccess={handlePurchaseSuccess}
         registryId={registry?.id}
         ownerInfo={registry ? {
-          name: `${owner.first_name} ${owner.last_name}`,
-          email: owner.email
+          // No email: send-email resolves the registry owner server-side from
+          // itemId, so an anonymous gift-giver never receives her address.
+          name: owner.first_name || registry.title || 'הורים',
+          email: ''
         } : undefined}
         addressInfo={registry ? {
           isPrivate: registry.address_is_private ?? true,
