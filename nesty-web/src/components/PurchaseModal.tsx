@@ -95,30 +95,31 @@ export default function PurchaseModal({
     itemPrice: number
     storeName: string
     giftMessage: string | null
+    itemId?: string
+    purchaseId?: string
   }) => {
     if (!ownerInfo) return
 
     try {
-      // Send notification to registry owner. Skip when the fallback registry
-      // path (unauthenticated profile fetch) left the owner email empty.
-      if (ownerInfo.email) {
-        await supabase.functions.invoke('send-email', {
-          body: {
-            type: 'purchase_notification',
-            to: ownerInfo.email,
-            data: {
-              ownerName: ownerInfo.name,
-              buyerName: purchaseData.buyerName,
-              buyerEmail: purchaseData.buyerEmail,
-              itemName: purchaseData.itemName,
-              itemPrice: purchaseData.itemPrice,
-              itemImage: item?.image_url || '',
-              storeName: purchaseData.storeName,
-              giftMessage: purchaseData.giftMessage,
-            },
+      // Notify the registry owner. We deliberately do NOT pass `to`: an
+      // anonymous gift-giver can't read the owner's email (nor should she),
+      // so send-email resolves it from itemId server-side.
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'purchase_notification',
+          data: {
+            ownerName: ownerInfo.name,
+            buyerName: purchaseData.buyerName,
+            buyerEmail: purchaseData.buyerEmail,
+            itemName: purchaseData.itemName,
+            itemPrice: purchaseData.itemPrice,
+            itemImage: item?.image_url || '',
+            storeName: purchaseData.storeName,
+            giftMessage: purchaseData.giftMessage,
+            itemId: purchaseData.itemId,
           },
-        })
-      }
+        },
+      })
 
       // Send thank you email to buyer
       await supabase.functions.invoke('send-email', {
@@ -130,6 +131,7 @@ export default function PurchaseModal({
             buyerName: purchaseData.buyerName,
             itemName: purchaseData.itemName,
             itemPrice: purchaseData.itemPrice,
+            purchaseId: purchaseData.purchaseId,
           },
         },
       })
@@ -267,7 +269,9 @@ export default function PurchaseModal({
         // Don't throw - purchase was recorded, item update is secondary
       }
 
-      // Send email notifications (don't await - let it run in background)
+      // Send email notifications (don't await - let it run in background).
+      // itemId/purchaseId let send-email resolve both recipients server-side
+      // instead of trusting whatever address the browser passes.
       sendEmailNotifications({
         buyerName: formData.buyerName.trim(),
         buyerEmail: formData.buyerEmail.trim().toLowerCase(),
@@ -275,6 +279,8 @@ export default function PurchaseModal({
         itemPrice: item.price,
         storeName: storeName,
         giftMessage: formData.giftMessage.trim() || null,
+        itemId: item.id,
+        purchaseId: insertedPurchase?.[0]?.id,
       })
 
       // Track the gift purchase

@@ -33,6 +33,139 @@ async function lookupUserIdByEmail(email: string): Promise<string | null> {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Caller trust + server-side recipient resolution.
+//
+// This function used to take `to` straight from the request body with no
+// caller check at all, which made it an open relay: anybody holding the
+// public anon key (it ships in the web bundle AND the Chrome extension)
+// could send a Nesty-branded email from hello@nestyil.com to any address.
+//
+// Rule now: possession of the anon key is NOT authorization. Only the
+// service role may name an arbitrary recipient. For everyone else the
+// recipient is derived from data we can verify server-side.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Caller =
+  | { kind: 'service' }
+  | { kind: 'user'; id: string; email: string }
+  | { kind: 'anon' }
+
+function adminClient() {
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
+async function classifyCaller(req: Request): Promise<Caller> {
+  const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '').trim()
+  if (!token) return { kind: 'anon' }
+  // Other edge functions (check-prices, accept-invitation, notify-abandoned-
+  // signups) call us with the service-role key.
+  if (SUPABASE_SERVICE_ROLE_KEY && token === SUPABASE_SERVICE_ROLE_KEY) return { kind: 'service' }
+  try {
+    const { data } = await adminClient().auth.getUser(token)
+    if (data?.user?.email) {
+      return { kind: 'user', id: data.user.id, email: data.user.email.toLowerCase() }
+    }
+  } catch {
+    // Anon key (or a bad token) lands here - it is not a user session.
+  }
+  return { kind: 'anon' }
+}
+
+// A purchase is only "recent" for the few minutes around the gift flow. This
+// bounds replay: an attacker can't mine old purchases to mail past buyers.
+const RECENT_PURCHASE_WINDOW_MS = 15 * 60 * 1000
+
+function recentCutoff(): string {
+  return new Date(Date.now() - RECENT_PURCHASE_WINDOW_MS).toISOString()
+}
+
+// items -> registries -> profiles.email  (who should be told about a gift).
+// Done as three explicit hops rather than a PostgREST embed: the embed form
+// is sensitive to FK naming and would fail silently into "no recipient".
+async function ownerEmailForItem(itemId: string): Promise<string | null> {
+  try {
+    const admin = adminClient()
+    const { data: item } = await admin
+      .from('items')
+      .select('registry_id')
+      .eq('id', itemId)
+      .maybeSingle()
+    if (!item?.registry_id) return null
+
+    const { data: registry } = await admin
+      .from('registries')
+      .select('owner_id')
+      .eq('id', item.registry_id)
+      .maybeSingle()
+    if (!registry?.owner_id) return null
+
+    const { data: owner } = await admin
+      .from('profiles')
+      .select('email')
+      .eq('id', registry.owner_id)
+      .maybeSingle()
+    return owner?.email ?? null
+  } catch (err) {
+    console.warn('[send-email] ownerEmailForItem failed:', err)
+    return null
+  }
+}
+
+// Transition path: the deployed frontend does not send itemId yet, so resolve
+// the owner from the purchase row the buyer just created.
+async function ownerEmailViaRecentPurchase(buyerEmail: string): Promise<string | null> {
+  try {
+    const { data } = await adminClient()
+      .from('purchases')
+      .select('item_id, created_at')
+      .eq('buyer_email', buyerEmail.toLowerCase())
+      .gte('created_at', recentCutoff())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    return data?.item_id ? await ownerEmailForItem(data.item_id) : null
+  } catch (err) {
+    console.warn('[send-email] ownerEmailViaRecentPurchase failed:', err)
+    return null
+  }
+}
+
+// Preferred path once the frontend passes the inserted purchase id.
+async function buyerEmailForPurchase(purchaseId: string): Promise<string | null> {
+  try {
+    const { data } = await adminClient()
+      .from('purchases')
+      .select('buyer_email')
+      .eq('id', purchaseId)
+      .maybeSingle()
+    return data?.buyer_email ?? null
+  } catch (err) {
+    console.warn('[send-email] buyerEmailForPurchase failed:', err)
+    return null
+  }
+}
+
+// Confirms `email` really is the buyer on a purchase made moments ago, so the
+// thank-you note can only reach someone who actually just gifted something.
+async function isRecentBuyerEmail(email: string): Promise<boolean> {
+  try {
+    const { data } = await adminClient()
+      .from('purchases')
+      .select('id')
+      .eq('buyer_email', email.toLowerCase())
+      .gte('created_at', recentCutoff())
+      .limit(1)
+      .maybeSingle()
+    return !!data?.id
+  } catch (err) {
+    console.warn('[send-email] isRecentBuyerEmail failed:', err)
+    return false
+  }
+}
+
 // Build the inline "הסרה מרשימת התפוצה" link for a marketing email. Prefers
 // the one-click signed URL; falls back to MANAGE_LINK if userId is unknown.
 async function buildInlineUnsubLink(
@@ -259,6 +392,9 @@ interface EmailRequest {
     landingReferrer?: string
     // For price drop email
     userId?: string  // needed to build the signed unsubscribe URL
+    // Used to resolve the recipient server-side instead of trusting `to`.
+    itemId?: string
+    purchaseId?: string
     drops?: Array<{
       itemName: string
       imageUrl: string
@@ -288,6 +424,71 @@ serve(async (req) => {
 
     const requestData: EmailRequest = await req.json()
     const { type, to, data, name, email, subject: contactSubject, message } = requestData
+
+    // ── Authorization gate ──────────────────────────────────────────────────
+    // Decide WHO may be mailed before we render anything. `recipientOverride`
+    // wins over whatever the type branch computes from `to`.
+    const caller = await classifyCaller(req)
+    let recipientOverride: string | null = null
+
+    const forbidden = (reason: string) =>
+      new Response(JSON.stringify({ success: false, error: reason }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 403,
+      })
+
+    if (caller.kind !== 'service') {
+      switch (type) {
+        case 'contact':
+          // Public contact form. The branch hardcodes hello@nestyil.com, so
+          // there is no recipient to spoof.
+          break
+
+        case 'purchase_notification': {
+          // The gift-giver is anonymous by design, so we can't require auth -
+          // but we can prove the recipient. Derive the registry owner from the
+          // purchase itself and ignore `to` entirely.
+          const derived =
+            (data?.itemId ? await ownerEmailForItem(data.itemId) : null) ??
+            (data?.buyerEmail ? await ownerEmailViaRecentPurchase(data.buyerEmail) : null)
+          if (!derived) return forbidden('Cannot resolve the registry owner for this purchase')
+          recipientOverride = derived
+          break
+        }
+
+        case 'thank_you': {
+          // Only somebody who actually just recorded a purchase gets thanked.
+          const derived =
+            (data?.purchaseId ? await buyerEmailForPurchase(data.purchaseId) : null) ??
+            (to && (await isRecentBuyerEmail(to)) ? to : null)
+          if (!derived) return forbidden('Recipient does not match a recent purchase')
+          recipientOverride = derived
+          break
+        }
+
+        case 'welcome':
+          // Onboarding sends this for the signed-in user - and only for her.
+          if (caller.kind !== 'user') return forbidden('Authentication required')
+          recipientOverride = caller.email
+          break
+
+        case 'admin_new_user':
+        case 'admin_co_parent_joined':
+        case 'admin_onboarding_completed':
+        case 'admin_onboarding_abandoned':
+          // These land in Nesty's own inbox (hardcoded in the branch), but we
+          // still don't want anonymous callers filling it with noise.
+          if (caller.kind !== 'user') return forbidden('Authentication required')
+          break
+
+        case 'price_drop':
+          // Only the check-prices cron sends these.
+          return forbidden('Service role required')
+
+        default:
+          return forbidden('Unsupported email type')
+      }
+    }
 
     let emailSubject: string
     let html: string
@@ -1278,6 +1479,16 @@ serve(async (req) => {
     // headers (RFC 8058) when we have a per-user signed URL - Gmail / Outlook /
     // Apple Mail render their native unsubscribe button when these are set,
     // which is the most legally-defensible path for Israeli spam law.
+    // Server-resolved recipient always wins over anything the caller supplied,
+    // applied here so no type branch above can reintroduce a spoofed `to`.
+    if (recipientOverride) recipient = recipientOverride
+    if (!recipient) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'No recipient could be resolved' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 },
+      )
+    }
+
     const listUnsubHeaders = buildListUnsubHeaders(listUnsubUrl)
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
