@@ -102,24 +102,24 @@ BEGIN
   -- When do users share their registry (by pregnancy week)?
   share_by_week AS (
     SELECT
-      40 - EXTRACT(DAY FROM (fs.due_date - fs.shared_at::date)) / 7 AS pregnancy_week,
+      (40 - FLOOR((fs.due_date - fs.shared_at::date) / 7.0))::int AS pregnancy_week,
       COUNT(*) AS users_shared
     FROM first_share fs
     WHERE fs.due_date IS NOT NULL
     GROUP BY pregnancy_week
-    HAVING 40 - EXTRACT(DAY FROM (fs.due_date - fs.shared_at::date)) / 7 BETWEEN 0 AND 42
+    HAVING (40 - FLOOR((fs.due_date - fs.shared_at::date) / 7.0))::int BETWEEN 0 AND 42
     ORDER BY pregnancy_week
   ),
 
   -- When do users receive first gift (by pregnancy week)?
   gift_by_week AS (
     SELECT
-      40 - EXTRACT(DAY FROM (fg.due_date - fg.first_gift_at::date)) / 7 AS pregnancy_week,
+      (40 - FLOOR((fg.due_date - fg.first_gift_at::date) / 7.0))::int AS pregnancy_week,
       COUNT(*) AS users_gifted
     FROM first_gift fg
     WHERE fg.due_date IS NOT NULL
     GROUP BY pregnancy_week
-    HAVING 40 - EXTRACT(DAY FROM (fg.due_date - fg.first_gift_at::date)) / 7 BETWEEN 0 AND 42
+    HAVING (40 - FLOOR((fg.due_date - fg.first_gift_at::date) / 7.0))::int BETWEEN 0 AND 42
     ORDER BY pregnancy_week
   ),
 
