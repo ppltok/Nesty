@@ -55,6 +55,74 @@ function isPrivateHostname(hostname: string): boolean {
   return false
 }
 
+// The check above is purely lexical, so "shop.example.com" passes even when
+// its A record points at 127.0.0.1 or 169.254.169.254 (the cloud metadata
+// endpoint). Resolve the name and judge the ADDRESS, not the string.
+//
+// Resolution goes through Deno.resolveDns when the runtime exposes it and
+// falls back to DNS-over-HTTPS otherwise.
+async function resolveHostIps(hostname: string): Promise<string[] | null> {
+  const ips: string[] = []
+
+  // deno-lint-ignore no-explicit-any
+  const denoAny = Deno as any
+  if (typeof denoAny.resolveDns === 'function') {
+    for (const kind of ['A', 'AAAA'] as const) {
+      try {
+        const recs = await denoAny.resolveDns(hostname, kind)
+        if (Array.isArray(recs)) ips.push(...recs)
+      } catch {
+        // NXDOMAIN for one record type is normal - keep going.
+      }
+    }
+    if (ips.length > 0) return ips
+  }
+
+  // DNS-over-HTTPS fallback (Cloudflare). type 1 = A, 28 = AAAA.
+  try {
+    for (const type of ['A', 'AAAA']) {
+      const res = await fetch(
+        `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(hostname)}&type=${type}`,
+        { headers: { accept: 'application/dns-json' }, signal: AbortSignal.timeout(4000) },
+      )
+      if (!res.ok) continue
+      const body = await res.json()
+      for (const ans of body?.Answer ?? []) {
+        if (ans?.type === 1 || ans?.type === 28) ips.push(String(ans.data))
+      }
+    }
+  } catch {
+    // fall through
+  }
+
+  return ips.length > 0 ? ips : null
+}
+
+/**
+ * Reject when the hostname is lexically internal OR resolves to a
+ * private/reserved address.
+ *
+ * If resolution yields nothing we fall back to the lexical verdict rather
+ * than hard-failing: a name that genuinely does not resolve will fail the
+ * fetch anyway, and a DoH outage would otherwise take the paste-URL feature
+ * down for everyone.
+ */
+async function isBlockedTarget(hostname: string): Promise<boolean> {
+  if (isPrivateHostname(hostname)) return true
+
+  const ips = await resolveHostIps(hostname)
+  if (!ips) {
+    console.warn(`[extract-product] could not resolve ${hostname}; lexical check only`)
+    return false
+  }
+  const bad = ips.find((ip) => isPrivateHostname(ip))
+  if (bad) {
+    console.warn(`[extract-product] ${hostname} resolves to non-public address ${bad}`)
+    return true
+  }
+  return false
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -82,8 +150,8 @@ serve(async (req) => {
       throw new Error('Only HTTP and HTTPS protocols are allowed')
     }
 
-    // Block private/internal hosts (SSRF)
-    if (isPrivateHostname(parsedUrl.hostname)) {
+    // Block private/internal hosts (SSRF) - lexically AND by resolved address
+    if (await isBlockedTarget(parsedUrl.hostname)) {
       return new Response(
         JSON.stringify({ success: false, error: 'URL points to a private or internal host' }),
         {
@@ -93,30 +161,52 @@ serve(async (req) => {
       )
     }
 
-    // Fetch external URL with timeout
+    // Follow redirects by hand so EVERY hop is validated. Letting fetch
+    // follow them and only checking the final URL leaves the intermediate
+    // hops unchecked, and a redirect chain is the easiest way to reach an
+    // internal address from an innocent-looking starting URL.
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
 
-    const response = await fetch(url, {
-      method: 'GET',
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    })
+    let currentUrl = parsedUrl.toString()
+    let response: Response
+    const MAX_REDIRECTS = 5
 
-    clearTimeout(timeoutId)
+    try {
+      for (let hop = 0; ; hop++) {
+        response = await fetch(currentUrl, {
+          method: 'GET',
+          redirect: 'manual',
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        })
 
-    // fetch follows redirects by default - reject if the final URL landed on
-    // a private/internal host (SSRF via redirect)
-    if (isPrivateHostname(new URL(response.url).hostname)) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'URL redirected to a private or internal host' }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
+        const location = response.headers.get('location')
+        if (response.status < 300 || response.status >= 400 || !location) break
+
+        if (hop >= MAX_REDIRECTS) {
+          throw new Error('Too many redirects')
         }
-      )
+
+        const next = new URL(location, currentUrl)
+        if (!['http:', 'https:'].includes(next.protocol)) {
+          throw new Error('Redirect to a non-HTTP protocol was blocked')
+        }
+        if (await isBlockedTarget(next.hostname)) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'URL redirected to a private or internal host' }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 400,
+            }
+          )
+        }
+        currentUrl = next.toString()
+      }
+    } finally {
+      clearTimeout(timeoutId)
     }
 
     if (!response.ok) {
@@ -126,7 +216,7 @@ serve(async (req) => {
     const html = await response.text()
 
     return new Response(
-      JSON.stringify({ success: true, html, finalUrl: response.url }),
+      JSON.stringify({ success: true, html, finalUrl: currentUrl }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
