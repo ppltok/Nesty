@@ -18,6 +18,7 @@ import {
   Banknote,
   Filter,
 } from 'lucide-react'
+import { getDaysUntilDueDate } from '../lib/utils'
 import type { Registry, Profile, Item, ItemCategory } from '../types'
 import PurchaseModal from '../components/PurchaseModal'
 import PriceStatusBadge from '../components/PriceStatusBadge'
@@ -25,11 +26,13 @@ import { remainingQuantity, isPurchased } from '../types'
 import { CATEGORIES } from '../data/categories'
 import { trackRegistryViewed } from '../utils/tracking'
 
+// Shape returned by the get_public_registry RPC. The owner's email and phone
+// are never part of it; the gift-notification recipient is resolved
+// server-side in send-email from the item id.
 interface RegistryWithOwner extends Registry {
-  // Only first_name is readable by anonymous visitors - the owner's email,
-  // phone and due date are not exposed to the public registry page. The
-  // gift-notification recipient is resolved server-side in send-email.
   profiles: Pick<Profile, 'first_name'>
+  owner_first_name?: string | null
+  owner_due_date?: string | null
 }
 
 type ViewMode = 'grid' | 'list'
@@ -104,65 +107,30 @@ export default function PublicRegistry() {
       setError(null)
 
       try {
-        // First, try to fetch registry with owner profile (works for authenticated users)
-        const { data: registryData, error: registryError } = await supabase
-          .from('registries')
-          .select(`
-            *,
-            profiles!owner_id (first_name)
-          `)
-          .eq('slug', slug)
-          .single()
+        // One server-side call instead of reading registries/profiles directly.
+        // The RPC needs the slug, so nobody can enumerate every registry, and
+        // it masks the shipping address when the owner marked it private -
+        // previously the address was sent to every visitor and only hidden in
+        // the browser. It also returns the owner's due date for the countdown,
+        // which is safe here precisely because the call is per-slug.
+        const { data: rows, error: registryError } = await supabase
+          .rpc('get_public_registry', { p_slug: slug })
 
-        if (registryError) {
-          console.error('Error fetching registry with profile:', registryError)
+        const row = rows?.[0]
 
-          // If the join to profiles failed (RLS issue for unauthenticated users),
-          // try fetching just the registry without the profile join
-          const { data: registryOnly, error: registryOnlyError } = await supabase
-            .from('registries')
-            .select('*')
-            .eq('slug', slug)
-            .single()
-
-          if (registryOnlyError || !registryOnly) {
-            console.error('Error fetching registry:', registryOnlyError)
-            setError('הרשימה לא נמצאה')
-            setIsLoading(false)
-            return
-          }
-
-          // We have the registry but no profile data - fall back to an empty
-          // name so the heading renders registry.title instead. Do NOT put the
-          // title in first_name: the heading prefixes "הרשימה של", and the
-          // title already starts with it ("הרשימה של הרשימה של Hila").
-          const registryWithFallbackProfile = {
-            ...registryOnly,
-            profiles: { first_name: '' }
-          } as RegistryWithOwner
-
-          setRegistry(registryWithFallbackProfile)
-        } else if (!registryData) {
-          setError('הרשימה לא נמצאה')
-          setIsLoading(false)
-          return
-        } else {
-          setRegistry(registryData as RegistryWithOwner)
-        }
-
-        // Get registry ID for items query
-        const registryId = registryData?.id || (await supabase
-          .from('registries')
-          .select('id')
-          .eq('slug', slug)
-          .single()
-        ).data?.id
-
-        if (!registryId) {
+        if (registryError || !row) {
+          if (registryError) console.error('Error fetching registry:', registryError)
           setError('הרשימה לא נמצאה')
           setIsLoading(false)
           return
         }
+
+        setRegistry({
+          ...row,
+          profiles: { first_name: row.owner_first_name ?? '' },
+        } as RegistryWithOwner)
+
+        const registryId = row.id
 
         // Fetch public items
         const { data: itemsData, error: itemsError } = await supabase
@@ -281,11 +249,12 @@ export default function PublicRegistry() {
   }
 
   const owner = registry.profiles
-  // The owner's due date is deliberately not sent to anonymous visitors - it
-  // was part of the bulk-scrapeable PII set (name + due date + phone) behind
-  // the nesty_outreach leak. The countdown comes back once the public page
-  // reads through a per-slug RPC; until then it simply doesn't render.
-  const daysUntilDue: number | null = null
+  // Safe to show again: the due date now arrives through get_public_registry,
+  // which requires the slug, so it can't be scraped across all registries the
+  // way a plain SELECT on profiles could.
+  const daysUntilDue = registry.owner_due_date
+    ? getDaysUntilDueDate(registry.owner_due_date)
+    : null
   const totalRemaining = availableItems.reduce((sum, i) => sum + remainingQuantity(i), 0)
   const showUrgency = purchaseStats.count >= 1 && totalRemaining > 0 && totalRemaining < 10
   const urgencyText = totalRemaining === 1
