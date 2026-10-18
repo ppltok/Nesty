@@ -3,7 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { trackedUrl, openPixelTag } from '../_shared/email-tracking.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-const WEB_URL = Deno.env.get('WEB_URL') || 'https://nestyil.com'
+// Hardcoded, not the WEB_URL secret: that still holds the old GitHub Pages
+// host, which email-click's allowlist rejects - the CTA then lands on the
+// homepage with the invite token stripped.
+const WEB_URL = 'https://nestyil.com'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +14,8 @@ const corsHeaders = {
 }
 
 function buildInvitationEmailHtml(ownerName: string, inviteUrl: string): string {
+  const T_INV = 'invitation'
+  const ctaUrl = trackedUrl(inviteUrl, { emailType: T_INV, userId: null, link: 'cta' })
   return `<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -366,8 +371,6 @@ serve(async (req) => {
     }
 
     const inviteUrl = `${WEB_URL}/invite/${invitationToken}`
-  const T_INV = 'invitation'
-  const ctaUrl = trackedUrl(inviteUrl, { emailType: T_INV, userId: null, link: 'cta' })
     const emailHtml = buildInvitationEmailHtml(ownerName, inviteUrl)
 
     const resendResponse = await fetch('https://api.resend.com/emails', {

@@ -3,7 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { trackedUrl, openPixelTag } from '../_shared/email-tracking.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-const WEB_URL = Deno.env.get('WEB_URL') || 'https://nestyil.com'
+// Hardcoded, not the WEB_URL secret: that still holds the old GitHub Pages
+// host, which email-click's allowlist rejects - the CTA then lands on the
+// homepage with the invite token stripped.
+const WEB_URL = 'https://nestyil.com'
 
 // Co-parent invitees usually have no Nesty account, so the HMAC unsubscribe
 // helper (which is keyed to a profiles row) can't be used here. Israeli law
