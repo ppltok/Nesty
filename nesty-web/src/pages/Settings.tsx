@@ -24,6 +24,7 @@ import {
 import { Link, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { trackCoParentInvitationSent } from '../utils/tracking'
+import { normalizeEmail, isValidEmail } from '../lib/email'
 import type { RegistryInvitation, Profile } from '../types'
 
 export default function Settings() {
@@ -80,6 +81,9 @@ export default function Settings() {
   const [pendingInvitation, setPendingInvitation] = useState<RegistryInvitation | null>(null)
   const [partnerProfile, setPartnerProfile] = useState<Profile | null>(null)
   const [showRemovePartnerConfirm, setShowRemovePartnerConfirm] = useState(false)
+  // Shown inside the co-parent card, not the page-top banner - that banner is
+  // scrolled out of view down here, which is how a failed send read as sent.
+  const [inviteNotice, setInviteNotice] = useState<{ ok: boolean; text: string } | null>(null)
 
   // Delete account
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -144,20 +148,33 @@ export default function Settings() {
     fetchCoParentData()
   }, [fetchCoParentData])
 
+  const showInviteNotice = (ok: boolean, text: string) => {
+    const notice = { ok, text }
+    setInviteNotice(notice)
+    if (ok) setTimeout(() => setInviteNotice((cur) => (cur === notice ? null : cur)), 4000)
+  }
+
+  // send-invitation answers 200 + `warning` when the invite row was saved but
+  // Resend didn't take the email - that is not a success for the user.
+  // (LRI/PDI isolate the address so the RTL sentence around it doesn't flip it.)
+  const emailNotSentText = (email: string) =>
+    `המייל ל-\u2066${email}\u2069 לא יצא. בדקי שהכתובת נכונה ונסי שוב עם "שלח מחדש".`
+
   // Send co-parent invitation
   const handleSendInvitation = async () => {
     if (!registry || !profile || !user) return
-    const email = inviteEmail.trim().toLowerCase()
-    if (!email || !email.includes('@')) {
-      showError('נא להזין כתובת מייל תקינה')
+    const email = normalizeEmail(inviteEmail)
+    if (!isValidEmail(email)) {
+      showInviteNotice(false, 'נא להזין כתובת מייל תקינה')
       return
     }
-    if (email === profile.email) {
-      showError('לא ניתן להזמין את עצמך')
+    if (email === normalizeEmail(profile.email)) {
+      showInviteNotice(false, 'לא ניתן להזמין את עצמך')
       return
     }
 
     setInviteLoading(true)
+    setInviteNotice(null)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('No session')
@@ -180,17 +197,22 @@ export default function Settings() {
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Failed to send invitation')
 
+      setInviteEmail('')
+      await fetchCoParentData()
+      if (result.warning) {
+        console.warn('Invitation saved but email not sent:', result.warning)
+        showInviteNotice(false, emailNotSentText(email))
+        return
+      }
       trackCoParentInvitationSent({
         registry_id: registry.id,
         user_id: user.id,
         invited_email: email,
       })
-      setInviteEmail('')
-      await fetchCoParentData()
-      showSuccess('ההזמנה נשלחה בהצלחה!')
-    } catch (err: any) {
+      showInviteNotice(true, 'ההזמנה נשלחה בהצלחה!')
+    } catch (err) {
       console.error('Error sending invitation:', err)
-      showError(err.message || 'שגיאה בשליחת ההזמנה')
+      showInviteNotice(false, (err instanceof Error && err.message) || 'שגיאה בשליחת ההזמנה')
     } finally {
       setInviteLoading(false)
     }
@@ -200,6 +222,7 @@ export default function Settings() {
   const handleResendInvitation = async () => {
     if (!pendingInvitation) return
     setInviteLoading(true)
+    setInviteNotice(null)
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('No session')
@@ -224,10 +247,15 @@ export default function Settings() {
       if (!response.ok) throw new Error(result.error || 'Failed to resend')
 
       await fetchCoParentData()
-      showSuccess('ההזמנה נשלחה מחדש!')
-    } catch (err: any) {
+      if (result.warning) {
+        console.warn('Invitation saved but email not sent:', result.warning)
+        showInviteNotice(false, emailNotSentText(normalizeEmail(pendingInvitation.invited_email)))
+        return
+      }
+      showInviteNotice(true, 'ההזמנה נשלחה מחדש!')
+    } catch (err) {
       console.error('Error resending invitation:', err)
-      showError(err.message || 'שגיאה בשליחה מחדש')
+      showInviteNotice(false, (err instanceof Error && err.message) || 'שגיאה בשליחה מחדש')
     } finally {
       setInviteLoading(false)
     }
@@ -802,6 +830,19 @@ export default function Settings() {
               <h2 className="text-lg font-bold text-foreground">שיתוף הורה נוסף</h2>
             </div>
 
+            {inviteNotice && (
+              <div
+                role={inviteNotice.ok ? 'status' : 'alert'}
+                className={
+                  inviteNotice.ok
+                    ? 'bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-4 text-sm'
+                    : 'bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-xl mb-4 text-sm'
+                }
+              >
+                {inviteNotice.text}
+              </div>
+            )}
+
             {/* Partner is linked */}
             {registry?.partner_id && partnerProfile ? (
               <div>
@@ -927,7 +968,10 @@ export default function Settings() {
                 <div className="flex gap-3">
                   <Input
                     value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
+                    onChange={(e) => {
+                      setInviteEmail(e.target.value)
+                      if (inviteNotice && !inviteNotice.ok) setInviteNotice(null)
+                    }}
                     placeholder="כתובת המייל של בן/בת הזוג"
                     type="email"
                     dir="ltr"

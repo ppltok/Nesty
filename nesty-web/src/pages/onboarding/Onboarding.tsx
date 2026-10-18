@@ -41,6 +41,7 @@ import {
 import { getAttributionForProfile } from '../../utils/utmTracking'
 import { extractProductFromUrl } from '../../lib/productExtraction'
 import { formatIlPhone, isIlMobileValid, ilToE164 } from '../../lib/phone'
+import { normalizeEmail, isValidEmail } from '../../lib/email'
 import { ITEMS_DATA, CATEGORIES } from '../../data/categories'
 import { categoryGradient } from '../../lib/categoryColors'
 
@@ -193,6 +194,9 @@ export default function Onboarding() {
   const [step, setStep] = useState<Step>(1)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Address the co-parent invite failed for - shown on the celebration screen
+  // so she knows to resend from Settings instead of assuming it went out.
+  const [partnerInviteFailedFor, setPartnerInviteFailedFor] = useState<string | null>(null)
   const [data, setData] = useState<OnboardingData>({
     firstName: '',
     lastName: '',
@@ -274,7 +278,8 @@ export default function Onboarding() {
     }
   }
 
-  const isEmailValid = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim())
+  const isEmailValid = (s: string) => isValidEmail(normalizeEmail(s))
+  const isOwnEmail = (s: string) => !!user?.email && normalizeEmail(s) === normalizeEmail(user.email)
 
   const handlePickItem = (item: CuratedItem) => {
     setPickedItems((prev) => {
@@ -536,18 +541,22 @@ export default function Onboarding() {
       // Co-parent invite - fire only after the registry exists (send-invitation
       // needs registry_id). Non-blocking: a failed invite must never fail
       // onboarding. The registry is already created, so the user can retry
-      // from Settings.
+      // from Settings - and the celebration screen tells her so. A 200 with
+      // `warning` means the invite row was saved but the email never left.
       if (registryData && data.partnerEmail.trim() && isEmailValid(data.partnerEmail)) {
+        const partnerEmail = normalizeEmail(data.partnerEmail)
+        let inviteSent = false
         try {
-          const { error: inviteErr } = await supabase.functions.invoke('send-invitation', {
+          const { data: inviteRes, error: inviteErr } = await supabase.functions.invoke('send-invitation', {
             body: {
               registry_id: registryData.id,
-              invited_email: data.partnerEmail.trim().toLowerCase(),
+              invited_email: partnerEmail,
             },
           })
-          if (inviteErr) {
-            console.warn('[onboarding] co-parent invite failed (non-critical):', inviteErr)
-          } else if (user) {
+          if (inviteErr || inviteRes?.warning) {
+            console.warn('[onboarding] co-parent invite not sent (non-critical):', inviteErr || inviteRes.warning)
+          } else {
+            inviteSent = true
             trackOnboardingStep({
               user_id: user.id,
               step: 6,
@@ -558,6 +567,7 @@ export default function Onboarding() {
         } catch (inviteErr) {
           console.warn('[onboarding] co-parent invite error (non-critical):', inviteErr)
         }
+        setPartnerInviteFailedFor(inviteSent ? null : partnerEmail)
       }
 
       if (registryData) {
@@ -624,7 +634,9 @@ export default function Onboarding() {
     if (step === 1) return data.firstName.trim().length > 0
     if (step === 2) return isDueDateValid(data.dueDate)
     // Co-parent email is optional, but if typed it must be valid.
-    if (step === 6) return data.partnerEmail.trim() === '' || isEmailValid(data.partnerEmail)
+    if (step === 6) {
+      return data.partnerEmail.trim() === '' || (isEmailValid(data.partnerEmail) && !isOwnEmail(data.partnerEmail))
+    }
     return true
   }
 
@@ -762,6 +774,14 @@ export default function Onboarding() {
       <OnboardingCelebration
         userName={data.firstName || 'משתמש'}
         onComplete={handleCelebrationComplete}
+        notice={
+          partnerInviteFailedFor && (
+            <>
+              אופס, המייל ל-<bdi dir="ltr">{partnerInviteFailedFor}</bdi> לא יצא.
+              {' '}אפשר לשלוח אותו שוב מההגדרות, זה לוקח שנייה.
+            </>
+          )
+        }
       />
     )
   }
@@ -1180,6 +1200,11 @@ export default function Onboarding() {
                   <p className="text-sm text-red-600 text-center mt-2">
                     בדקי שהאימייל תקין{' '}
                     <Heart className="inline w-3.5 h-3.5 text-[#6750a4] fill-current align-[-2px]" />
+                  </p>
+                )}
+                {isEmailValid(data.partnerEmail) && isOwnEmail(data.partnerEmail) && (
+                  <p className="text-sm text-red-600 text-center mt-2">
+                    זה האימייל שלך 😉 צריך את של בן/בת הזוג
                   </p>
                 )}
               </div>

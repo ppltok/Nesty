@@ -173,6 +173,23 @@ ${openPixelTag({ emailType: T_INV, userId: null })}
 </html>`
 }
 
+// Same normalize + check as nesty-web/src/lib/email.ts - keep them in step.
+// A pasted "mailto:name@gmail.com" was once stored and mailed as-is, so strip
+// what a paste drags along (bidi marks, mailto: and its ?subject= tail).
+function normalizeEmail(raw: string): string {
+  let s = raw
+    .replace(/[\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '')
+    .trim()
+    .toLowerCase()
+  if (s.startsWith('mailto:')) s = s.slice('mailto:'.length).split('?')[0].trim()
+  return s
+}
+
+const EMAIL_RE =
+  /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*\.[a-z]{2,63}$/i
+
+const isValidEmail = (email: string) => email.length <= 254 && EMAIL_RE.test(email)
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -223,7 +240,13 @@ serve(async (req) => {
       })
     }
 
-    const email = invited_email.trim().toLowerCase()
+    const email = typeof invited_email === 'string' ? normalizeEmail(invited_email) : ''
+    if (!isValidEmail(email)) {
+      return new Response(JSON.stringify({ error: 'כתובת המייל לא נראית תקינה. בדקי אותה ונסי שוב.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Verify the user owns this registry
     const { data: registry, error: regError } = await supabaseAdmin

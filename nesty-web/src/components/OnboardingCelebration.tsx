@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import confetti from 'canvas-confetti'
 import { Sparkles, PartyPopper } from 'lucide-react'
 
 interface OnboardingCelebrationProps {
   userName: string
   onComplete: () => void
+  /** Gentle heads-up under the copy, e.g. a co-parent invite that didn't go out. */
+  notice?: ReactNode
 }
 
-export default function OnboardingCelebration({ userName, onComplete }: OnboardingCelebrationProps) {
+export default function OnboardingCelebration({ userName, onComplete, notice }: OnboardingCelebrationProps) {
   const [showButton, setShowButton] = useState(false)
 
   useEffect(() => {
@@ -93,6 +95,12 @@ export default function OnboardingCelebration({ userName, onComplete }: Onboardi
         <p className="text-[#49454f] mb-8">
           עכשיו נוסיף עוד כמה פרטים קטנים ואתם מוכנים להתחיל לבנות את הקן שלכם
         </p>
+
+        {notice && (
+          <p role="status" className="mb-8 px-4 py-3 rounded-2xl bg-[#fef3dd] text-sm text-[#49454f] leading-relaxed">
+            {notice}
+          </p>
+        )}
 
         {/* Continue Button */}
         <div className={`transition-all duration-500 ${showButton ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
